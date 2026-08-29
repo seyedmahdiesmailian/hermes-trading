@@ -93,6 +93,29 @@ class BacktestEngineTests(unittest.TestCase):
         self.assertEqual(backtest_ohlc(rows, sig, min_rr=1.5)["trades"], 0)
         self.assertEqual(backtest_ohlc(rows, sig, min_rr=1.0)["trades"], 1)
 
+    def test_style_tagged_and_excluded(self):
+        # signals carry their execution_style into the trade log; exclude_styles
+        # drops matching signals (prefix match) before the position gate
+        rows = [
+            {"time": 1, "open": 100, "high": 108, "low": 99, "close": 100},
+            {"time": 2, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"time": 3, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"time": 4, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"time": 5, "open": 100, "high": 108, "low": 99, "close": 100},
+        ]
+        sig = lambda row: ({"side": "BUY", "entry": 100, "sl": 95, "tp": 110, "style": "aggressive_premium_entry"}
+                           if row["time"] == 1 else
+                           {"side": "BUY", "entry": 100, "sl": 95, "tp": 110, "style": "pullback_continuation"}
+                           if row["time"] == 4 else None)
+        # one position at a time: trade 1 occupies bars 1-4 → trade at bar 4 blocked
+        full = backtest_ohlc(rows, sig)
+        self.assertEqual(full["trades"], 1)
+        self.assertEqual(full["trade_log"][0]["style"], "aggressive_premium_entry")
+        # excluding the aggressive style drops it; the later pullback is then taken
+        excl = backtest_ohlc(rows, sig, exclude_styles=["aggressive"])
+        self.assertEqual(excl["trades"], 1)
+        self.assertEqual(excl["trade_log"][0]["style"], "pullback_continuation")
+
     def test_breakeven_move_converts_full_loss_to_scratch(self):
         # +0.6R move then reversal to entry: BE move saves the trade
         rows = [

@@ -69,17 +69,30 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         if not bp:
             return None
         return {"side": bp["side"], "entry": float(bp["entry_price"]),
-                "sl": float(bp["sl"]), "tp": float(bp["tp"])}
+                "sl": float(bp["sl"]), "tp": float(bp["tp"]),
+                "style": decision.get("execution_style")}
     except Exception:
         return None
 
 
-def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: int = 500) -> dict:
-    """Run backtest on real OHLC data from Bridge."""
+def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: int = 500,
+                 exclude_styles: list[str] | None = None, data: dict | None = None) -> dict:
+    """Run backtest on real OHLC data from Bridge.
+
+    exclude_styles: drop signals whose decision execution_style matches one of
+    these prefixes (e.g. ["aggressive"] disables every aggressive entry path).
+    data: optional pre-fetched {"M15": [...], "H1": [...], "H4": [...]} so
+    A/B comparisons run on byte-identical datasets instead of re-fetching.
+    """
     # Fetch data
-    m15_data = fetch_all_ohlc(bridge, symbol, "M15", count)
-    h1_data = fetch_all_ohlc(bridge, symbol, "H1", count)
-    h4_data = fetch_all_ohlc(bridge, symbol, "H4", count)
+    if data:
+        m15_data = data.get("M15") or []
+        h1_data = data.get("H1") or []
+        h4_data = data.get("H4") or []
+    else:
+        m15_data = fetch_all_ohlc(bridge, symbol, "M15", count)
+        h1_data = fetch_all_ohlc(bridge, symbol, "H1", count)
+        h4_data = fetch_all_ohlc(bridge, symbol, "H4", count)
 
     if not m15_data or not h1_data or not h4_data:
         return {"ok": False, "error": "insufficient_data", "counts": {"M15": len(m15_data), "H1": len(h1_data), "H4": len(h4_data)}}
@@ -100,6 +113,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         breakeven_at_r=0.5,   # live trade management: BE move at +0.5R
         partial_tp1_share=0.5,  # live TP ladder: 50% at first target
         spread=0.20,          # XAUUSD demo round-trip cost
+        exclude_styles=exclude_styles,
     )
     result["ok"] = True
     result["symbol"] = symbol

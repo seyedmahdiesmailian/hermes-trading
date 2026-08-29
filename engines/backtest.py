@@ -11,6 +11,7 @@ def backtest_ohlc(
     breakeven_at_r: float = 0.0,
     partial_tp1_share: float = 0.0,
     spread: float = 0.0,
+    exclude_styles: list[str] | None = None,
 ) -> dict:
     """Backtest with live-modeled constraints.
 
@@ -54,7 +55,7 @@ def backtest_ohlc(
             wins += 1
         else:
             losses += 1
-        trade_log.append({**{k: t[k] for k in ("entry_index", "side", "entry")},
+        trade_log.append({**{k: t[k] for k in ("entry_index", "side", "entry", "style")},
                           "exit_index": index, "exit": round(exit_price, 2),
                           "pnl": round(net, 2), "exit_reason": reason})
 
@@ -121,11 +122,16 @@ def backtest_ohlc(
             continue
         if min_grade and str(signal.get("grade", "")).upper() < min_grade:
             continue
+        if exclude_styles:
+            style = str(signal.get("style") or "")
+            if any(style.startswith(p) for p in exclude_styles):
+                continue
 
         open_trade = {
             "entry_index": index, "side": side, "entry": entry,
             "sl": sl, "orig_sl": sl, "tp": tp,
             "be_moved": False, "partial_taken": 0, "realized": 0.0,
+            "style": signal.get("style"),
         }
 
     # unfinished trade: force-close at last bar's close (marked as its raw result)
