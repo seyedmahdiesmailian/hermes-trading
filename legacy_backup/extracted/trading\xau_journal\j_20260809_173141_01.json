@@ -1,0 +1,35 @@
+{
+  "id": "j_20260809_173141_01",
+  "timestamp": "2026-08-09T17:31:41.858199",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "smc_confidence": 0.871,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "session": "weekend",
+    "market_open": false,
+    "defcon": "yellow",
+    "macro_dxy": "+0.055% flat",
+    "macro_spx": "+0.214% risk_on",
+    "macro_silver": "+0.594% bullish",
+    "higher_tf_alignment": "bullish_all",
+    "next_news": "Core CPI Wed Aug 12 16:00 IRT"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (Sunday Night). market_open=False, session=weekend, volatility=none, session_risk=0.0. قانون قطعی: Market closed → wait. هیچ پوزیشن بازی نیست. تحلیل تکنیکال (SMC bullish با conf=0.87, merged bullish با 0.78, alignment=bullish_all) صرفاً آکادمیک است و تا باز شدن بازار غیرقابل اجرا. DEFCON YELLOW (loss_streak=3) یادآور احتیاط است. رویداد مهم: Core CPI/CPI چهارشنبه ۱۲ آگوست ساعت ۱۶:۰۰ تهران. ⏳ منتظر سشن جدید (دوشنبه، Asia/London) هستیم.",
+    "risk_check": {
+      "market_open": false,
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "trade_allowed": false,
+      "reason": "بازار بسته — آخر هفته"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

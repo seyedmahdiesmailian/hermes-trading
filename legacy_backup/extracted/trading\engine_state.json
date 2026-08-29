@@ -1,0 +1,27 @@
+{
+  "daily": {
+    "2026-08-06": {
+      "realized_pnl": -8.44,
+      "loss_streak": 5,
+      "trades": 6
+    },
+    "2026-08-07": {
+      "realized_pnl": -11.86,
+      "loss_streak": 6,
+      "trades": 7
+    }
+  },
+  "cooldowns": {
+    "XAUUSD": {
+      "until": "2026-08-07T12:25:31.344811",
+      "reason": "post_open"
+    }
+  },
+  "positions": {
+    "97731780": {
+      "partial_done": false,
+      "be_done": false,
+      "pyramid_count": 0
+    }
+  }
+}

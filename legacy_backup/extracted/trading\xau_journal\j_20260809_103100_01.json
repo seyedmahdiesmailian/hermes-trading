@@ -1,0 +1,35 @@
+{
+  "id": "j_20260809_103100_01",
+  "timestamp": "2026-08-09T10:31:00",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "market_open": false,
+    "defcon": "yellow"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته (weekend) — market_open=false | session=weekend | session_risk=0.0 | volatility=none | liquidity=none. قانون صریح: Market closed -> wait. بدون تغییر نسبت به سایکل قبل (09:41). هیچ پوزیشن بازی برای مدیریت وجود ندارد. منتظر بازگشایی بازار در دوشنبه هستیم. DEFCON YELLOW (loss_streak=3) — در اولین ورود هفته جدید ریسک نصف خواهد بود. زمینه تکنیکال صعودی (SMC=0.87, merged=0.78, alignment=bullish_all) — در صورت تأیید با بازگشایی، آماده ارزیابی long.",
+    "risk_check": {
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "defcon_loss_streak": 3,
+      "trade_allowed": false,
+      "market_open": false,
+      "risk_budget_usd": 8.97,
+      "open_positions": 0,
+      "weekend_block": true
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

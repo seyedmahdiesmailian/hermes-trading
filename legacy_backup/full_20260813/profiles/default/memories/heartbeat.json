@@ -1,0 +1,8 @@
+{
+  "last_hermes_decision": "2026-08-11T13:54:58.065984",
+  "mode": "hermes_degraded",
+  "defer_to_code": false,
+  "risk_multiplier": 0.75,
+  "status": "active",
+  "last_decision": "wait"
+}

@@ -1,0 +1,32 @@
+{
+  "id": "j_20260808_171844_01",
+  "timestamp": "2026-08-08T17:18:44.323866",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "market_open": false,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "smc_bias": "bullish",
+    "smc_confidence": 0.87,
+    "classic_bias": "neutral",
+    "classic_regime": "range",
+    "merged_bias": "bullish",
+    "merged_confidence": 0.78,
+    "balance": 1338.71,
+    "positions": 0
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (market_open=False). طبق قانون اول، هیچ معاملهای در بازار بسته انجام نمیشود. تحلیل SMC (bullish با confidence=0.87) و merged (bullish با confidence=0.78) معتبر هستند ولی تا باز شدن بازار به تعویق میافتند. رژیم کلاسیک range است. فقط heartbeat آپدیت میشود و منتظر باز شدن بازار میمانیم.",
+    "risk_check": {
+      "trade_allowed": true,
+      "risk_usd": 8.97,
+      "regime": "defensive",
+      "block_reason": "market_closed"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

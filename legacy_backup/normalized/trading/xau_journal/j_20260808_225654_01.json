@@ -1,0 +1,35 @@
+{
+  "id": "j_20260808_225654_01",
+  "timestamp": "2026-08-08T22:56:54.214417",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "symbol": "XAUUSD",
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "value_zone": [
+      4141.88,
+      4276.07
+    ],
+    "atr": 7.16,
+    "session_detail": "weekend_closed",
+    "market_open": false,
+    "defcon": "YELLOW"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (آخر هفته)؛ هیچ پوزیشن باز نیست. طبق قوانین، ورود در آخر هفته ممنوع است و ریسک سشن صفر. DEFCON زرد و ریسک نصف. تصمیم: صبر (wait).",
+    "risk_check": {
+      "trade_allowed": true,
+      "risk_usd": 8.97,
+      "risk_mult": 0.75,
+      "defcon": "YELLOW",
+      "session_risk_mult": 0.0
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

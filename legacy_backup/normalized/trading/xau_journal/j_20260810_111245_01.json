@@ -1,0 +1,57 @@
+{
+  "id": "j_20260810_111245_01",
+  "timestamp": "2026-08-10T11:12:45.617842",
+  "decision_by": "hermes",
+  "session": "london",
+  "market_snapshot": {
+    "price": 4355.06,
+    "bid": 4355.06,
+    "ask": 4355.18,
+    "spread": 0.12,
+    "bias": "bullish",
+    "regime": "breakout_continuation",
+    "smc_confidence": 0.932,
+    "merged_confidence": 0.47,
+    "atr": 7.71,
+    "session": "london",
+    "market_open": true,
+    "killzone": "dead",
+    "defcon": "yellow",
+    "macro_dxy": "-0.047% flat",
+    "macro_spx": "+0.031% neutral",
+    "macro_silver": "+0.858% bullish",
+    "higher_tf_alignment": "bullish_all",
+    "h4_position": 0.94,
+    "d1_position": 0.96,
+    "h1_structure": "bos_bullish",
+    "m5_classic_bias": "neutral",
+    "m5_smc_confidence": 0.866,
+    "m5_divergence": "bearish",
+    "divergence_signal": "medium",
+    "ote_zone": [
+      4323.02,
+      4330.94
+    ],
+    "premium_discount": "premium",
+    "volume_ratio": 0.44,
+    "next_news": "Core CPI/CPI Wed Aug 12",
+    "heartbeat_mode": "hermes_degraded",
+    "minutes_since_last_hermes": 109.6,
+    "risk_budget_allowed": false,
+    "risk_budget_reason": "setup_grade_block",
+    "account_balance": 1338.71,
+    "open_positions": 0
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🔒 تصمیم WAIT — بایاس کلی bullish (SMC conf=0.932، H1 bos_bullish، alignment bullish_all) و مکرو مساعد (Silver +0.86%، DXY flat) اما شرایط ورود LONG برقرار نیست:\n\n1) risk_budget مسدود شده (setup_grade_block، trade_allowed=False) — سیستم مدیریت ریسک خودش ورود را رد کرده.\n2) قیمت 4355 در پریمیوم عمیق H4/D1 (pos 0.94/0.96) و بالای OTE (4323-4331) — ورود لانگ در این قیمت = chase در premium بدون POI\n3) M5 divergence خرسی (medium) علیه جهت LONG، بدون همگرایی چند-TF\n4) M5 classic bias خنثی (NEUTRAL) — عدم تایید ساختار lower-TF\n5) merged confidence پایین (0.47) — زیر آستانه ورود\n6) DEFCON YELLOW (loss_streak=3) — حالت تدافعی، ریسک نصف، بدون رانر\n7) بدون Killzone فعال (session=dead)، حجم پایین (0.44x)\n\nجمعبندی: منتظر ریتریس قیمت به OTE (4323-4331) + تایید ساختار M5 + رفع divergence + بهبود DEFCON/risk budget",
+    "risk_check": {
+      "entry_allowed": false,
+      "action": "wait",
+      "reason": "risk_budget_blocked_setup_grade_block + price_in_premium_above_ote + m5_divergence_bearish + merged_conf_low + defcon_yellow + no_killzone"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

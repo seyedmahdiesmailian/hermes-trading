@@ -1,0 +1,3524 @@
+[
+  {
+    "path": "_RESTORE_GUIDE_FA.md",
+    "size": 6970,
+    "kind": "markdown",
+    "sha16": "c1afc94f170d34df"
+  },
+  {
+    "path": "_RESTORE_MANIFEST.json",
+    "size": 1250,
+    "kind": "json",
+    "sha16": "b33f1a2d48477f23"
+  },
+  {
+    "path": "_inventory.json",
+    "size": 88751,
+    "kind": "json",
+    "sha16": "b863ed8d21a41fc9"
+  },
+  {
+    "path": "cron\\jobs.json",
+    "size": 13611,
+    "kind": "json",
+    "sha16": "cbf9834a26ca4a98"
+  },
+  {
+    "path": "memories\\MEMORY.md",
+    "size": 1813,
+    "kind": "markdown",
+    "sha16": "04b6289a97ec6d9d"
+  },
+  {
+    "path": "memories\\USER.md",
+    "size": 1362,
+    "kind": "markdown",
+    "sha16": "ef21a455ede5b5ae"
+  },
+  {
+    "path": "profiles\\default\\",
+    "size": 0,
+    "kind": "other",
+    "sha16": "e3b0c44298fc1c14"
+  },
+  {
+    "path": "profiles\\default\\memories\\decision_journal.json",
+    "size": 739,
+    "kind": "json",
+    "sha16": "7bbf6ec33c6689e1"
+  },
+  {
+    "path": "profiles\\default\\memories\\decision_journal.jsonl",
+    "size": 1128,
+    "kind": "json",
+    "sha16": "1ea2a320f37bbb05"
+  },
+  {
+    "path": "profiles\\default\\memories\\decision_journal.md",
+    "size": 2413,
+    "kind": "markdown",
+    "sha16": "084d81f5c67297f6"
+  },
+  {
+    "path": "profiles\\default\\memories\\heartbeat.json",
+    "size": 189,
+    "kind": "json",
+    "sha16": "0b905768a31537e9"
+  },
+  {
+    "path": "profiles\\default\\memories\\trading_decisions.md",
+    "size": 938,
+    "kind": "markdown",
+    "sha16": "65d4fe829e96e5aa"
+  },
+  {
+    "path": "profiles\\default\\memories\\xauusd_decision_journal.json",
+    "size": 3937,
+    "kind": "json",
+    "sha16": "6527521f1399da19"
+  },
+  {
+    "path": "profiles\\default\\memories\\xauusd_decisions.jsonl",
+    "size": 1293,
+    "kind": "json",
+    "sha16": "07e74dfd379e4fa6"
+  },
+  {
+    "path": "profiles\\default\\memories\\xauusd_journal.txt",
+    "size": 641,
+    "kind": "other",
+    "sha16": "8396551649a4733f"
+  },
+  {
+    "path": "scripts\\gold_monitor.sh",
+    "size": 97,
+    "kind": "script",
+    "sha16": "790b14bb9e4b1297"
+  },
+  {
+    "path": "scripts\\gold_monitor_legacy.sh",
+    "size": 92,
+    "kind": "script",
+    "sha16": "c5bc6c52e99865e9"
+  },
+  {
+    "path": "scripts\\gold_plan_monitor.sh",
+    "size": 118,
+    "kind": "script",
+    "sha16": "b20887623f749f82"
+  },
+  {
+    "path": "scripts\\make_report.mjs",
+    "size": 23996,
+    "kind": "other",
+    "sha16": "158b64dff66680c9"
+  },
+  {
+    "path": "scripts\\mt5_account_risk.py",
+    "size": 3930,
+    "kind": "python",
+    "sha16": "94edef057b68b398"
+  },
+  {
+    "path": "scripts\\mt5_direct.py",
+    "size": 17690,
+    "kind": "python",
+    "sha16": "93290d3cf8d7090f"
+  },
+  {
+    "path": "scripts\\mt5_direct_runner.py",
+    "size": 748,
+    "kind": "python",
+    "sha16": "135d1f19d27b5080"
+  },
+  {
+    "path": "scripts\\mt5_engine.py",
+    "size": 50053,
+    "kind": "python",
+    "sha16": "7b22b3ced479d485"
+  },
+  {
+    "path": "scripts\\mt5_scan_tmp.py",
+    "size": 7574,
+    "kind": "python",
+    "sha16": "4c0eba65a65bbfd8"
+  },
+  {
+    "path": "scripts\\mt5_xau_calendar.py",
+    "size": 8622,
+    "kind": "python",
+    "sha16": "9adbdadeb177c2f7"
+  },
+  {
+    "path": "scripts\\mt5_xau_context.py",
+    "size": 8023,
+    "kind": "python",
+    "sha16": "69673fc89f4e6555"
+  },
+  {
+    "path": "scripts\\mt5_xau_decision_collector.py",
+    "size": 28884,
+    "kind": "python",
+    "sha16": "73ee6bd64064008b"
+  },
+  {
+    "path": "scripts\\mt5_xau_defcon.py",
+    "size": 10508,
+    "kind": "python",
+    "sha16": "b3ef473ed93ceb62"
+  },
+  {
+    "path": "scripts\\mt5_xau_divergence.py",
+    "size": 9610,
+    "kind": "python",
+    "sha16": "7bc256c62d5b9f02"
+  },
+  {
+    "path": "scripts\\mt5_xau_heartbeat.py",
+    "size": 4489,
+    "kind": "python",
+    "sha16": "963094afdd5a4f9e"
+  },
+  {
+    "path": "scripts\\mt5_xau_journal.py",
+    "size": 5760,
+    "kind": "python",
+    "sha16": "a070d00b9438745b"
+  },
+  {
+    "path": "scripts\\mt5_xau_macro.py",
+    "size": 10356,
+    "kind": "python",
+    "sha16": "1995b5a3cf818b33"
+  },
+  {
+    "path": "scripts\\mt5_xau_orchestrator.py",
+    "size": 5181,
+    "kind": "python",
+    "sha16": "9b7f43756ee0ad3d"
+  },
+  {
+    "path": "scripts\\mt5_xau_plan.py",
+    "size": 8021,
+    "kind": "python",
+    "sha16": "833e2b48ad9b7f8f"
+  },
+  {
+    "path": "scripts\\mt5_xau_presession.py",
+    "size": 9604,
+    "kind": "python",
+    "sha16": "ff7251168ae88775"
+  },
+  {
+    "path": "scripts\\mt5_xau_report.py",
+    "size": 8965,
+    "kind": "python",
+    "sha16": "e16bd4e9997da142"
+  },
+  {
+    "path": "scripts\\mt5_xau_review.py",
+    "size": 7244,
+    "kind": "python",
+    "sha16": "44d934d6f83e3740"
+  },
+  {
+    "path": "scripts\\mt5_xau_runtime.py",
+    "size": 38111,
+    "kind": "python",
+    "sha16": "097382343014cbf3"
+  },
+  {
+    "path": "scripts\\mt5_xau_session.py",
+    "size": 5730,
+    "kind": "python",
+    "sha16": "0f66086467ce502f"
+  },
+  {
+    "path": "scripts\\mt5_xau_smc.py",
+    "size": 37643,
+    "kind": "python",
+    "sha16": "5e0b5fa2e2370a43"
+  },
+  {
+    "path": "scripts\\mt5_xau_storage.py",
+    "size": 3820,
+    "kind": "python",
+    "sha16": "fc74382cdf95c39a"
+  },
+  {
+    "path": "scripts\\mt5_xau_trade_management.py",
+    "size": 6256,
+    "kind": "python",
+    "sha16": "d8c5c396e5a1bdee"
+  },
+  {
+    "path": "scripts\\mt5_xau_trade_mgr.py",
+    "size": 9601,
+    "kind": "python",
+    "sha16": "c7d8f1ef1cd1f2a4"
+  },
+  {
+    "path": "scripts\\mt5_xau_weekly_review.py",
+    "size": 10064,
+    "kind": "python",
+    "sha16": "3d882ce58fbf91b3"
+  },
+  {
+    "path": "scripts\\package-lock.json",
+    "size": 7920,
+    "kind": "json",
+    "sha16": "516fa8ade71e5366"
+  },
+  {
+    "path": "scripts\\package.json",
+    "size": 49,
+    "kind": "json",
+    "sha16": "1ad896461fe8445f"
+  },
+  {
+    "path": "scripts\\tests\\conftest.py",
+    "size": 144,
+    "kind": "python",
+    "sha16": "0cb67ba91674c07e"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_account_performance.py",
+    "size": 1036,
+    "kind": "python",
+    "sha16": "d125b7e50d27cff6"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_account_risk.py",
+    "size": 2212,
+    "kind": "python",
+    "sha16": "910abdfd16e44da3"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_direct_management.py",
+    "size": 1523,
+    "kind": "python",
+    "sha16": "d73c4f892c666cdc"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_direct_sltp.py",
+    "size": 367,
+    "kind": "python",
+    "sha16": "8b1d71a19f315a6e"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_multi_account_policy.py",
+    "size": 1150,
+    "kind": "python",
+    "sha16": "b7ec289e7e6b89e0"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_runtime_performance_policy.py",
+    "size": 595,
+    "kind": "python",
+    "sha16": "500ff6a7835bbf1b"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_context.py",
+    "size": 2193,
+    "kind": "python",
+    "sha16": "a18ac23568dee720"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_context_quality.py",
+    "size": 1084,
+    "kind": "python",
+    "sha16": "a9241468fb04e3ab"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_context_regime.py",
+    "size": 2406,
+    "kind": "python",
+    "sha16": "bda92ed26eaef063"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_edge_cases.py",
+    "size": 3434,
+    "kind": "python",
+    "sha16": "c802cc7122678d1a"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_entry_guard.py",
+    "size": 1399,
+    "kind": "python",
+    "sha16": "1d5ccdf5d78cfbe3"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_execution.py",
+    "size": 1432,
+    "kind": "python",
+    "sha16": "98004a0b584b6f26"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_exit_analysis.py",
+    "size": 2014,
+    "kind": "python",
+    "sha16": "9eb4ffa477f3c0c8"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_history_snapshots.py",
+    "size": 1561,
+    "kind": "python",
+    "sha16": "a3f3035a644af56d"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_insights_filter.py",
+    "size": 3388,
+    "kind": "python",
+    "sha16": "d9ec37731acd8bd3"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_integration.py",
+    "size": 1574,
+    "kind": "python",
+    "sha16": "169fc48676af9441"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_management_report.py",
+    "size": 1000,
+    "kind": "python",
+    "sha16": "ea3ff8992600df3d"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_orchestrator.py",
+    "size": 1144,
+    "kind": "python",
+    "sha16": "e22a752fe8998b98"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_performance_feedback.py",
+    "size": 1430,
+    "kind": "python",
+    "sha16": "0fe7d8a7b94a17f5"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_plan.py",
+    "size": 3633,
+    "kind": "python",
+    "sha16": "c366d7fe18cdc6c2"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_plan_lifecycle.py",
+    "size": 2165,
+    "kind": "python",
+    "sha16": "2796aa0fa5067945"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_quality_gates.py",
+    "size": 2089,
+    "kind": "python",
+    "sha16": "af1921fc1b46aa62"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_reassessment.py",
+    "size": 1184,
+    "kind": "python",
+    "sha16": "a226bd26994563d5"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_reassessment_log.py",
+    "size": 572,
+    "kind": "python",
+    "sha16": "3aa70d104ba9fb76"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_report.py",
+    "size": 3019,
+    "kind": "python",
+    "sha16": "ffcc2b14e737f334"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_report_headlines.py",
+    "size": 1505,
+    "kind": "python",
+    "sha16": "9a3076ea5ab45332"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_report_persian_style.py",
+    "size": 1305,
+    "kind": "python",
+    "sha16": "7d3bb2b781459f77"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_risk_adaptation.py",
+    "size": 549,
+    "kind": "python",
+    "sha16": "b4214d6e3445b692"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_risk_override_wiring.py",
+    "size": 2050,
+    "kind": "python",
+    "sha16": "efda19ded2fd7d43"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_decisions.py",
+    "size": 3583,
+    "kind": "python",
+    "sha16": "326e1488a4ddd66e"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_headlines.py",
+    "size": 933,
+    "kind": "python",
+    "sha16": "ab3e8c4c083daa03"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_live_management.py",
+    "size": 2458,
+    "kind": "python",
+    "sha16": "b56fe79d0d212a19"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_management.py",
+    "size": 2224,
+    "kind": "python",
+    "sha16": "33ddca1bec713264"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_persistence.py",
+    "size": 1412,
+    "kind": "python",
+    "sha16": "9600ac1731165112"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_reporting.py",
+    "size": 957,
+    "kind": "python",
+    "sha16": "b58174f7b89ed828"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_sizing.py",
+    "size": 511,
+    "kind": "python",
+    "sha16": "c76f51ecb3c5f1bd"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_runtime_state.py",
+    "size": 972,
+    "kind": "python",
+    "sha16": "8e873256a98e08cd"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_setup_ledger.py",
+    "size": 3087,
+    "kind": "python",
+    "sha16": "5f379f56d5482b85"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_setup_memory.py",
+    "size": 1759,
+    "kind": "python",
+    "sha16": "de31f6240e3140a4"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_sizing.py",
+    "size": 2187,
+    "kind": "python",
+    "sha16": "a7026a35c240e3c7"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_smc.py",
+    "size": 24891,
+    "kind": "python",
+    "sha16": "35a48a52af341220"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_storage.py",
+    "size": 1719,
+    "kind": "python",
+    "sha16": "04a261d628d8f226"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_target_geometry.py",
+    "size": 2342,
+    "kind": "python",
+    "sha16": "01f9dfab22e6511c"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_trade_management.py",
+    "size": 4504,
+    "kind": "python",
+    "sha16": "ca4036a3799abbeb"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_trader_execution.py",
+    "size": 2345,
+    "kind": "python",
+    "sha16": "28a5454c5269f7c0"
+  },
+  {
+    "path": "scripts\\tests\\test_mt5_xau_trading_insights.py",
+    "size": 4594,
+    "kind": "python",
+    "sha16": "72ac08097c5b36eb"
+  },
+  {
+    "path": "trading\\calendar_cache.json",
+    "size": 2762,
+    "kind": "json",
+    "sha16": "1f3be7575d4063fe"
+  },
+  {
+    "path": "trading\\engine_state.json",
+    "size": 483,
+    "kind": "json",
+    "sha16": "84e93ba1bace2427"
+  },
+  {
+    "path": "trading\\journal\\events.csv",
+    "size": 1727,
+    "kind": "csv",
+    "sha16": "4024fb77c0f1f794"
+  },
+  {
+    "path": "trading\\journal\\trades.csv",
+    "size": 1457,
+    "kind": "csv",
+    "sha16": "e44f3538b7c01d06"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_104951.json",
+    "size": 12350,
+    "kind": "json",
+    "sha16": "a44d7be2d8106459"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_105004.json",
+    "size": 12329,
+    "kind": "json",
+    "sha16": "98fe8353c0931847"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_110203.json",
+    "size": 12353,
+    "kind": "json",
+    "sha16": "38ff21fc62e7cc0c"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_110824.json",
+    "size": 10846,
+    "kind": "json",
+    "sha16": "9a115ddc0eeab29a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_110825.json",
+    "size": 10815,
+    "kind": "json",
+    "sha16": "72ca36ca5f85af37"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_111734.json",
+    "size": 10797,
+    "kind": "json",
+    "sha16": "cd3024aacaedf2b4"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_113303.json",
+    "size": 10768,
+    "kind": "json",
+    "sha16": "b47f125d42a7c5b7"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_113941.json",
+    "size": 10910,
+    "kind": "json",
+    "sha16": "c865b0b93162dc90"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_114046.json",
+    "size": 10859,
+    "kind": "json",
+    "sha16": "ca6c99f9701bfc3e"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_114835.json",
+    "size": 10963,
+    "kind": "json",
+    "sha16": "4f26e221e087399c"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_120404.json",
+    "size": 11315,
+    "kind": "json",
+    "sha16": "7e08f2e9b071d35f"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_120543.json",
+    "size": 11337,
+    "kind": "json",
+    "sha16": "085df37f1f5c35ea"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_120544.json",
+    "size": 11337,
+    "kind": "json",
+    "sha16": "f35c859783f16212"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_121312.json",
+    "size": 11702,
+    "kind": "json",
+    "sha16": "bf9cd161661f5b73"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_121313.json",
+    "size": 11722,
+    "kind": "json",
+    "sha16": "5329bf7681ed588a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_121935.json",
+    "size": 11690,
+    "kind": "json",
+    "sha16": "2ce8160dfcd300d5"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_122510.json",
+    "size": 15220,
+    "kind": "json",
+    "sha16": "940611eb8e2a045c"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_122835.json",
+    "size": 11784,
+    "kind": "json",
+    "sha16": "60ef36f5b9c36194"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_123505.json",
+    "size": 11809,
+    "kind": "json",
+    "sha16": "a46e4efdfc0149d2"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_123741.json",
+    "size": 11764,
+    "kind": "json",
+    "sha16": "2958a69a497218b9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_125036.json",
+    "size": 11733,
+    "kind": "json",
+    "sha16": "49b6eda27a0d7f2b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_125548.json",
+    "size": 11745,
+    "kind": "json",
+    "sha16": "43a19357b276c5a1"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_125905.json",
+    "size": 11814,
+    "kind": "json",
+    "sha16": "692af3652433d656"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_130236.json",
+    "size": 11793,
+    "kind": "json",
+    "sha16": "a2db2d93c57ed3b9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_130605.json",
+    "size": 11819,
+    "kind": "json",
+    "sha16": "3d57859aa48539a5"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_130937.json",
+    "size": 11810,
+    "kind": "json",
+    "sha16": "a5c3c2da8237ab86"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_131305.json",
+    "size": 11825,
+    "kind": "json",
+    "sha16": "bf571eec3050fbe2"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_131637.json",
+    "size": 11817,
+    "kind": "json",
+    "sha16": "d050fc6676246231"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_132005.json",
+    "size": 11800,
+    "kind": "json",
+    "sha16": "0ee5126aacca7562"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_132148.json",
+    "size": 11802,
+    "kind": "json",
+    "sha16": "19c0d4e8b402d50e"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_132337.json",
+    "size": 11788,
+    "kind": "json",
+    "sha16": "739f85fd2cb685ae"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_132355.json",
+    "size": 11810,
+    "kind": "json",
+    "sha16": "da61ab9c6d4caead"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_132356.json",
+    "size": 11821,
+    "kind": "json",
+    "sha16": "8ad1fdb51c6afc8f"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_132705.json",
+    "size": 11765,
+    "kind": "json",
+    "sha16": "5e4284ceb172e2a3"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_133037.json",
+    "size": 11769,
+    "kind": "json",
+    "sha16": "2c1052fbbdd2ab49"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_133406.json",
+    "size": 11767,
+    "kind": "json",
+    "sha16": "565af20f2a83367c"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_133738.json",
+    "size": 11757,
+    "kind": "json",
+    "sha16": "d5d187f81b325449"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_134106.json",
+    "size": 11777,
+    "kind": "json",
+    "sha16": "ad822568aa90b538"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_134438.json",
+    "size": 11772,
+    "kind": "json",
+    "sha16": "77e02de3169f6f74"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_134806.json",
+    "size": 11770,
+    "kind": "json",
+    "sha16": "60bb1fcb6bb1be13"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_135138.json",
+    "size": 11772,
+    "kind": "json",
+    "sha16": "a21d6ca34b1383b7"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_135506.json",
+    "size": 11744,
+    "kind": "json",
+    "sha16": "1e6b239f43f583d8"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_135838.json",
+    "size": 11761,
+    "kind": "json",
+    "sha16": "c22baa40b978c2f0"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_140206.json",
+    "size": 11764,
+    "kind": "json",
+    "sha16": "bb8de8e1b3efaa77"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_140538.json",
+    "size": 11811,
+    "kind": "json",
+    "sha16": "3a2defead713fed2"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_140906.json",
+    "size": 11815,
+    "kind": "json",
+    "sha16": "6bfbafb770c3439d"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_141238.json",
+    "size": 11818,
+    "kind": "json",
+    "sha16": "cfe3a49e3731352d"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_141606.json",
+    "size": 11802,
+    "kind": "json",
+    "sha16": "b48ec1fac792bbfc"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_141938.json",
+    "size": 11835,
+    "kind": "json",
+    "sha16": "a9c19eacf6f493a9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_142307.json",
+    "size": 11806,
+    "kind": "json",
+    "sha16": "0cfd06107999509e"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_142639.json",
+    "size": 11779,
+    "kind": "json",
+    "sha16": "e83bebdc29c1a6d3"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_143007.json",
+    "size": 11837,
+    "kind": "json",
+    "sha16": "57db77876d8ee168"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_143339.json",
+    "size": 11823,
+    "kind": "json",
+    "sha16": "34871a23a93ac105"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_143707.json",
+    "size": 11801,
+    "kind": "json",
+    "sha16": "26b20bbec8bfaa4b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_144041.json",
+    "size": 11795,
+    "kind": "json",
+    "sha16": "f75b86ed3fc37a2b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_144407.json",
+    "size": 11797,
+    "kind": "json",
+    "sha16": "78c382dbd9803ef4"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_144739.json",
+    "size": 11776,
+    "kind": "json",
+    "sha16": "998fff2b2250e872"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_145107.json",
+    "size": 11787,
+    "kind": "json",
+    "sha16": "ee5ab990088670e9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_145440.json",
+    "size": 11764,
+    "kind": "json",
+    "sha16": "745009a871a21020"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_145807.json",
+    "size": 11733,
+    "kind": "json",
+    "sha16": "465feadd9089b4d5"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_150146.json",
+    "size": 12770,
+    "kind": "json",
+    "sha16": "7ad986269b9c97c2"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_150508.json",
+    "size": 12775,
+    "kind": "json",
+    "sha16": "252f2f04678046fc"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_150818.json",
+    "size": 12793,
+    "kind": "json",
+    "sha16": "3460d56c101d283d"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_150819.json",
+    "size": 12779,
+    "kind": "json",
+    "sha16": "dcaec249676eafe9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_150840.json",
+    "size": 12773,
+    "kind": "json",
+    "sha16": "ac54572e0dc58710"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_151208.json",
+    "size": 12907,
+    "kind": "json",
+    "sha16": "96fe5ef199022652"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_151342.json",
+    "size": 12905,
+    "kind": "json",
+    "sha16": "2a5b2f6319fac897"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_151540.json",
+    "size": 12857,
+    "kind": "json",
+    "sha16": "96880fc12a82ee17"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_151908.json",
+    "size": 12854,
+    "kind": "json",
+    "sha16": "84a905df3e3c85e3"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_151924.json",
+    "size": 12884,
+    "kind": "json",
+    "sha16": "f1b84aa7f012d864"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_152240.json",
+    "size": 12874,
+    "kind": "json",
+    "sha16": "a7788fa61f1bc644"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_152609.json",
+    "size": 12886,
+    "kind": "json",
+    "sha16": "3294475d37457da8"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_152940.json",
+    "size": 12905,
+    "kind": "json",
+    "sha16": "edc58e843a26e194"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_153308.json",
+    "size": 12922,
+    "kind": "json",
+    "sha16": "b96ee5ae9b6d7696"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_153640.json",
+    "size": 12966,
+    "kind": "json",
+    "sha16": "ad097790cea5aca9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_154008.json",
+    "size": 12929,
+    "kind": "json",
+    "sha16": "bd6032a77b378f6d"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_154341.json",
+    "size": 12898,
+    "kind": "json",
+    "sha16": "3c97ef7ef67f7276"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_154627.json",
+    "size": 12933,
+    "kind": "json",
+    "sha16": "a9a0b392b4bdfdd9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_154708.json",
+    "size": 12918,
+    "kind": "json",
+    "sha16": "3d19e03166c947b7"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_155041.json",
+    "size": 12922,
+    "kind": "json",
+    "sha16": "496ef38175d5f74e"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_155410.json",
+    "size": 12899,
+    "kind": "json",
+    "sha16": "9b0a269ce80462b1"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_155741.json",
+    "size": 12894,
+    "kind": "json",
+    "sha16": "1306daf3dea8b420"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_192322.json",
+    "size": 12914,
+    "kind": "json",
+    "sha16": "2ee3adfc0813a0ee"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_192703.json",
+    "size": 12832,
+    "kind": "json",
+    "sha16": "e4c14b81edf7bea1"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_193018.json",
+    "size": 12936,
+    "kind": "json",
+    "sha16": "ae4fb52f9dd5c7f4"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_193146.json",
+    "size": 12793,
+    "kind": "json",
+    "sha16": "111c62a2cd3f92ea"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_193405.json",
+    "size": 12929,
+    "kind": "json",
+    "sha16": "85b6324d97d957d7"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_193718.json",
+    "size": 12769,
+    "kind": "json",
+    "sha16": "3947cd71f2fc2e30"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194104.json",
+    "size": 12839,
+    "kind": "json",
+    "sha16": "54410bc39f0cbddf"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194418.json",
+    "size": 12811,
+    "kind": "json",
+    "sha16": "0fc529e9e5ee0583"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194622.json",
+    "size": 12786,
+    "kind": "json",
+    "sha16": "7ed4ff1bb68af449"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194623.json",
+    "size": 12785,
+    "kind": "json",
+    "sha16": "6c6fb77a9b2dfa5e"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194648.json",
+    "size": 12769,
+    "kind": "json",
+    "sha16": "0687a143e8fc8810"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194649.json",
+    "size": 12738,
+    "kind": "json",
+    "sha16": "52d579718bdc8939"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194716.json",
+    "size": 16262,
+    "kind": "json",
+    "sha16": "6c2128f77b8271d9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194804.json",
+    "size": 12833,
+    "kind": "json",
+    "sha16": "71d3f865e63f32aa"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_194902.json",
+    "size": 16325,
+    "kind": "json",
+    "sha16": "592577788753264c"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_195119.json",
+    "size": 12888,
+    "kind": "json",
+    "sha16": "4fbc670048c907b9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_195504.json",
+    "size": 12896,
+    "kind": "json",
+    "sha16": "e0e11a83bad26dda"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_195819.json",
+    "size": 12897,
+    "kind": "json",
+    "sha16": "9f6b33e237f1bb32"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_200204.json",
+    "size": 12881,
+    "kind": "json",
+    "sha16": "52fbf880e1aa561b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_200519.json",
+    "size": 12886,
+    "kind": "json",
+    "sha16": "534f6c628b2a39e0"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_200904.json",
+    "size": 12928,
+    "kind": "json",
+    "sha16": "cf9757d2d40ad4fd"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_201219.json",
+    "size": 12889,
+    "kind": "json",
+    "sha16": "122408641e4df52a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_201604.json",
+    "size": 12897,
+    "kind": "json",
+    "sha16": "658db55f0bbb59bc"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_201919.json",
+    "size": 12876,
+    "kind": "json",
+    "sha16": "0b7c283c91531ad5"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_202305.json",
+    "size": 12894,
+    "kind": "json",
+    "sha16": "ccf0aef8b940e89a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_202620.json",
+    "size": 12926,
+    "kind": "json",
+    "sha16": "0e9f38fda871ef8b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_203005.json",
+    "size": 12947,
+    "kind": "json",
+    "sha16": "727a2a66a99dd155"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_203320.json",
+    "size": 12936,
+    "kind": "json",
+    "sha16": "14eac39f0bc4dfc6"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_203705.json",
+    "size": 12942,
+    "kind": "json",
+    "sha16": "119bf3f2d54cab3f"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_204020.json",
+    "size": 12938,
+    "kind": "json",
+    "sha16": "633ce5955b1b4fee"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_204405.json",
+    "size": 12940,
+    "kind": "json",
+    "sha16": "8ff44a181c8f3666"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_204720.json",
+    "size": 12928,
+    "kind": "json",
+    "sha16": "f89bda8e8f3acf14"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_205106.json",
+    "size": 12930,
+    "kind": "json",
+    "sha16": "7c376033d09569fc"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_205212.json",
+    "size": 12963,
+    "kind": "json",
+    "sha16": "18068b7b938fdadd"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_205312.json",
+    "size": 12979,
+    "kind": "json",
+    "sha16": "dafe8229a87cb24b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_205313.json",
+    "size": 12971,
+    "kind": "json",
+    "sha16": "0b6d403d8abec22d"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_205420.json",
+    "size": 12933,
+    "kind": "json",
+    "sha16": "5245deabcc8d446a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_205805.json",
+    "size": 12959,
+    "kind": "json",
+    "sha16": "8e0029d81d9562ad"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_210121.json",
+    "size": 12980,
+    "kind": "json",
+    "sha16": "656dbde2917250ef"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_210505.json",
+    "size": 12971,
+    "kind": "json",
+    "sha16": "3fec81270741e852"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_210821.json",
+    "size": 12929,
+    "kind": "json",
+    "sha16": "57cac49aff7d5aa3"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_211206.json",
+    "size": 12995,
+    "kind": "json",
+    "sha16": "3d8450d5d7dfcb73"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_211428.json",
+    "size": 12955,
+    "kind": "json",
+    "sha16": "e9ff8ba936cfb338"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_211521.json",
+    "size": 12923,
+    "kind": "json",
+    "sha16": "7ad227f61c436481"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_211906.json",
+    "size": 12956,
+    "kind": "json",
+    "sha16": "130b5c27c008affd"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_212222.json",
+    "size": 12937,
+    "kind": "json",
+    "sha16": "ffb9d7ebae2537ed"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_212606.json",
+    "size": 12919,
+    "kind": "json",
+    "sha16": "58415d60343ed9af"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_212921.json",
+    "size": 12939,
+    "kind": "json",
+    "sha16": "deb36bcbbb82c53a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_213306.json",
+    "size": 12965,
+    "kind": "json",
+    "sha16": "1da06314992aebdf"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_213621.json",
+    "size": 12928,
+    "kind": "json",
+    "sha16": "7bae5a4fba0a07fd"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_214006.json",
+    "size": 12962,
+    "kind": "json",
+    "sha16": "612ccf1e61a7d88b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_214322.json",
+    "size": 12959,
+    "kind": "json",
+    "sha16": "ba6acb85bb14740f"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_214706.json",
+    "size": 12949,
+    "kind": "json",
+    "sha16": "e6be33f5665c8962"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_215022.json",
+    "size": 12973,
+    "kind": "json",
+    "sha16": "8840bef1ebe6d561"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_215200.json",
+    "size": 15356,
+    "kind": "json",
+    "sha16": "322d0a0eb245c0df"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_215201.json",
+    "size": 15355,
+    "kind": "json",
+    "sha16": "e0c3cda1b9fa7e3f"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_215407.json",
+    "size": 15352,
+    "kind": "json",
+    "sha16": "bd8631ce8c301580"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_215722.json",
+    "size": 15256,
+    "kind": "json",
+    "sha16": "e3c894f12293631a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_220107.json",
+    "size": 15353,
+    "kind": "json",
+    "sha16": "21793fc013b71e42"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_220422.json",
+    "size": 15275,
+    "kind": "json",
+    "sha16": "5cd7d37f00245d74"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_220807.json",
+    "size": 15245,
+    "kind": "json",
+    "sha16": "c8e2670bf4da0bf2"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_221122.json",
+    "size": 15296,
+    "kind": "json",
+    "sha16": "086e7fea612a4cd5"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_221507.json",
+    "size": 15260,
+    "kind": "json",
+    "sha16": "6171e1237ab67883"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_221822.json",
+    "size": 15357,
+    "kind": "json",
+    "sha16": "1ba9b45f1e510f7b"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_222207.json",
+    "size": 15275,
+    "kind": "json",
+    "sha16": "f9f75d9aafcee158"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_222522.json",
+    "size": 17389,
+    "kind": "json",
+    "sha16": "90a50ae2b7616131"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_222907.json",
+    "size": 17502,
+    "kind": "json",
+    "sha16": "76f29bf627f2e674"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_223223.json",
+    "size": 17491,
+    "kind": "json",
+    "sha16": "081763ccb2b0c59c"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_223607.json",
+    "size": 17515,
+    "kind": "json",
+    "sha16": "1ee5c851ad851a2a"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_223923.json",
+    "size": 17512,
+    "kind": "json",
+    "sha16": "07b7b01fc6ff3ad7"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_224308.json",
+    "size": 17429,
+    "kind": "json",
+    "sha16": "ab3dce8b6b3e0cf4"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_224623.json",
+    "size": 17499,
+    "kind": "json",
+    "sha16": "7437a19773c56269"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_224858.json",
+    "size": 17422,
+    "kind": "json",
+    "sha16": "b38f2e6f2f15ebb9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_225008.json",
+    "size": 17390,
+    "kind": "json",
+    "sha16": "c089d789436e3dfb"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_225323.json",
+    "size": 17415,
+    "kind": "json",
+    "sha16": "12aa75f042bf8357"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_225708.json",
+    "size": 17467,
+    "kind": "json",
+    "sha16": "9256e85c515a55be"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_230023.json",
+    "size": 17457,
+    "kind": "json",
+    "sha16": "bbb21658942c3039"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_230341.json",
+    "size": 7636,
+    "kind": "json",
+    "sha16": "6c1a8bcec3a408e6"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_230408.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "884bc198c14390e5"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_230723.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "763514993b29838d"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_231109.json",
+    "size": 7633,
+    "kind": "json",
+    "sha16": "328f9510d830e07d"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_231423.json",
+    "size": 7630,
+    "kind": "json",
+    "sha16": "cebd2910d43a1343"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_231809.json",
+    "size": 7603,
+    "kind": "json",
+    "sha16": "326070128f0baa9e"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_232124.json",
+    "size": 7636,
+    "kind": "json",
+    "sha16": "61f7ffdf01eeafda"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_232509.json",
+    "size": 7630,
+    "kind": "json",
+    "sha16": "83eb868dcde0d5f3"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_232824.json",
+    "size": 7630,
+    "kind": "json",
+    "sha16": "de120fb033106eeb"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_233209.json",
+    "size": 7630,
+    "kind": "json",
+    "sha16": "73e415de166eafa9"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_233524.json",
+    "size": 7633,
+    "kind": "json",
+    "sha16": "1283793e04735dc3"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_233909.json",
+    "size": 7549,
+    "kind": "json",
+    "sha16": "6a17e2ea7b506940"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_234224.json",
+    "size": 7627,
+    "kind": "json",
+    "sha16": "7e35845c5d1e3910"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_234609.json",
+    "size": 7648,
+    "kind": "json",
+    "sha16": "8db746e351dcd350"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_234924.json",
+    "size": 7600,
+    "kind": "json",
+    "sha16": "70189e6d32e46a58"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_235309.json",
+    "size": 7633,
+    "kind": "json",
+    "sha16": "0cc2a158e76a2cd6"
+  },
+  {
+    "path": "trading\\reports\\report_20260806_235624.json",
+    "size": 7615,
+    "kind": "json",
+    "sha16": "188e74f29d42d424"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_000010.json",
+    "size": 7624,
+    "kind": "json",
+    "sha16": "9f7dc44c58348891"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_000324.json",
+    "size": 7621,
+    "kind": "json",
+    "sha16": "b64cd6f772d8b3a1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_000710.json",
+    "size": 7588,
+    "kind": "json",
+    "sha16": "fdd9b11bbfc3f11e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_001025.json",
+    "size": 7630,
+    "kind": "json",
+    "sha16": "fcfb844afe4fa10d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_001410.json",
+    "size": 7636,
+    "kind": "json",
+    "sha16": "93e0fcf865405ad0"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_001725.json",
+    "size": 7627,
+    "kind": "json",
+    "sha16": "357e3bc909cc3256"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_002110.json",
+    "size": 7627,
+    "kind": "json",
+    "sha16": "78ea44668ccf569b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_002425.json",
+    "size": 7630,
+    "kind": "json",
+    "sha16": "7716d90c5d0379ac"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_002810.json",
+    "size": 7627,
+    "kind": "json",
+    "sha16": "017f5e8332d3ae39"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_003125.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "251a25d97d020103"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_003510.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "03b59833d8d20d9f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_003825.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "d31782ea562704f3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_004210.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "5676526a424dc8a9"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_004526.json",
+    "size": 7588,
+    "kind": "json",
+    "sha16": "43d4305afe75ffd5"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_004910.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "c3ce1e880e67b084"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_005225.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "0b5b76ebc774e06d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_005610.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "4f0ada24079e7c53"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_005926.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "d8c8f11f5d19cc4d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_010311.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "64130428a20cac67"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_010626.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "69fb962cd452936c"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_011011.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "019e10f4e700f551"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_011326.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "28a22f2799aab2c1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_011711.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "64130428a20cac67"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_012026.json",
+    "size": 7594,
+    "kind": "json",
+    "sha16": "b4d4d2899ab95ba5"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_012411.json",
+    "size": 7591,
+    "kind": "json",
+    "sha16": "296cdd669ea1524c"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_012726.json",
+    "size": 7586,
+    "kind": "json",
+    "sha16": "40e7de4cf2140b34"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_013111.json",
+    "size": 7734,
+    "kind": "json",
+    "sha16": "37a661c17b7c66e9"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_013427.json",
+    "size": 7731,
+    "kind": "json",
+    "sha16": "9574bf8e37b47d60"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_013812.json",
+    "size": 7640,
+    "kind": "json",
+    "sha16": "74be668a54c7b93a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_014127.json",
+    "size": 7637,
+    "kind": "json",
+    "sha16": "7d12819433af471e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_014512.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "8f750fdd0ca8cbf0"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_014827.json",
+    "size": 7640,
+    "kind": "json",
+    "sha16": "543edaac39e29854"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_015212.json",
+    "size": 7601,
+    "kind": "json",
+    "sha16": "7db629ac2dbb7ffd"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_015527.json",
+    "size": 7652,
+    "kind": "json",
+    "sha16": "74fe916cba440026"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_015912.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "d8ab8358b682d16d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_020227.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "5e8bb42fbd96fe97"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_020612.json",
+    "size": 7646,
+    "kind": "json",
+    "sha16": "654cb904758eba09"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_020927.json",
+    "size": 7598,
+    "kind": "json",
+    "sha16": "c1082c69bcc52656"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_021313.json",
+    "size": 7640,
+    "kind": "json",
+    "sha16": "d5cebe8d7847ed58"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_021627.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "7b24ac56699eca73"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_022012.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "7f001961ab3597ca"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_022328.json",
+    "size": 7637,
+    "kind": "json",
+    "sha16": "4a545ff3c66af643"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_022713.json",
+    "size": 7637,
+    "kind": "json",
+    "sha16": "25e4475df5bba7a0"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_023028.json",
+    "size": 7637,
+    "kind": "json",
+    "sha16": "0a0882701bee3110"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_023413.json",
+    "size": 7640,
+    "kind": "json",
+    "sha16": "9b62c25be38f4cfb"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_023728.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "22e6ce3a4ab57b24"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_024113.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "d35a9a01f6fe28d3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_024428.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "f8d4c99ee7fdfa48"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_024814.json",
+    "size": 7598,
+    "kind": "json",
+    "sha16": "e65e307398a03f77"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_025128.json",
+    "size": 7634,
+    "kind": "json",
+    "sha16": "e38476ad34075318"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_025513.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "67cf8c1fe170dabb"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_025828.json",
+    "size": 7595,
+    "kind": "json",
+    "sha16": "106f117db8a3781a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_030214.json",
+    "size": 7640,
+    "kind": "json",
+    "sha16": "2a8200ca90cd1207"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_030528.json",
+    "size": 7643,
+    "kind": "json",
+    "sha16": "83fd943850ada056"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_030914.json",
+    "size": 7640,
+    "kind": "json",
+    "sha16": "e7d055ac41569cc9"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_031229.json",
+    "size": 7637,
+    "kind": "json",
+    "sha16": "a99c4cbbc9f87ac4"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_031614.json",
+    "size": 7640,
+    "kind": "json",
+    "sha16": "e7bb685300843650"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_031929.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "5ef87d73cb2be574"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_032314.json",
+    "size": 7631,
+    "kind": "json",
+    "sha16": "7b16c20849fc5de6"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_032629.json",
+    "size": 7628,
+    "kind": "json",
+    "sha16": "51ce04851aeda7ac"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_033014.json",
+    "size": 7565,
+    "kind": "json",
+    "sha16": "1d24c4075bfdccf6"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_033329.json",
+    "size": 7598,
+    "kind": "json",
+    "sha16": "f131a3b6f94bbd01"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_033714.json",
+    "size": 7601,
+    "kind": "json",
+    "sha16": "97a2ab7d56d1bff0"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_034029.json",
+    "size": 7598,
+    "kind": "json",
+    "sha16": "abb8b44f0d918f9a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_034414.json",
+    "size": 7610,
+    "kind": "json",
+    "sha16": "487215a763688c0b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_034729.json",
+    "size": 7619,
+    "kind": "json",
+    "sha16": "f4643e6fe95f99e3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_035115.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "f8eceb3ebc2bafa3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_035430.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "070deea419fb6c08"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_035815.json",
+    "size": 7607,
+    "kind": "json",
+    "sha16": "2e4333bcb67ef8e3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_040130.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "afef62a9ab42fba1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_040515.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "17f4a229e4ac05cd"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_040830.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "2feb3b4bba81c9ae"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_041215.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "f2469fdac234dba1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_041530.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "000325851848c1ab"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_041915.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "d337dc5a02a468a1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_042230.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "9407359adcbe0c4f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_042615.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "6bbdad058d58195f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_042930.json",
+    "size": 7619,
+    "kind": "json",
+    "sha16": "d5fb9eb2ffa66a39"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_043316.json",
+    "size": 7610,
+    "kind": "json",
+    "sha16": "dc346bd548f2820d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_043631.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "2b44b968cf55af9f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_044016.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "8dc076de078f3230"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_044331.json",
+    "size": 7610,
+    "kind": "json",
+    "sha16": "5d5e9cde3296023e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_044716.json",
+    "size": 7619,
+    "kind": "json",
+    "sha16": "bf1d6b627ad8d5eb"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_045031.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "478045ca168f7639"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_045416.json",
+    "size": 7574,
+    "kind": "json",
+    "sha16": "915d070479e84ada"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_045731.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "b08ceb7ef1b44365"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_050116.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "ebd837f5e66adc06"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_050431.json",
+    "size": 7625,
+    "kind": "json",
+    "sha16": "1501d05ac1e7394d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_050816.json",
+    "size": 7607,
+    "kind": "json",
+    "sha16": "9213b3cd60d949ac"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_051131.json",
+    "size": 7565,
+    "kind": "json",
+    "sha16": "bbfc791e87384251"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_051516.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "5bfd7ea1c5605c3a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_051832.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "b7a826eb2888a842"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_052153.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "c6fd8afb2037403b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_052154.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "063dccf16b91f0ad"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_052216.json",
+    "size": 7601,
+    "kind": "json",
+    "sha16": "19b059be5abd02a0"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_052532.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "1dc10062fe7524f0"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_052917.json",
+    "size": 7628,
+    "kind": "json",
+    "sha16": "2cb1c9f98bb9b7f4"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_053232.json",
+    "size": 7628,
+    "kind": "json",
+    "sha16": "ce3b57f6ef6fe460"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_053348.json",
+    "size": 8272,
+    "kind": "json",
+    "sha16": "665275555bb56b04"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_053349.json",
+    "size": 8265,
+    "kind": "json",
+    "sha16": "9567458964ce9a74"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_053617.json",
+    "size": 8250,
+    "kind": "json",
+    "sha16": "047c404d1874327d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_053932.json",
+    "size": 8266,
+    "kind": "json",
+    "sha16": "450756e7909faae3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_054317.json",
+    "size": 8266,
+    "kind": "json",
+    "sha16": "33bbfab56625c439"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_054632.json",
+    "size": 8221,
+    "kind": "json",
+    "sha16": "f70e328895dbef55"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_055017.json",
+    "size": 8265,
+    "kind": "json",
+    "sha16": "f4121109bdab6648"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_055332.json",
+    "size": 8269,
+    "kind": "json",
+    "sha16": "d2b3b0e2b13fcfba"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_055717.json",
+    "size": 8266,
+    "kind": "json",
+    "sha16": "a208ff6b2ec39914"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_060033.json",
+    "size": 8259,
+    "kind": "json",
+    "sha16": "c5daea2b93782402"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_060417.json",
+    "size": 8266,
+    "kind": "json",
+    "sha16": "4717e6ba1a8abc2f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_060733.json",
+    "size": 7613,
+    "kind": "json",
+    "sha16": "88332b1f844db19b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_061117.json",
+    "size": 7625,
+    "kind": "json",
+    "sha16": "29b9c4aaea55aec1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_061433.json",
+    "size": 7604,
+    "kind": "json",
+    "sha16": "847d952a2306583f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_061818.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "97d8ac06df03206e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_062133.json",
+    "size": 7625,
+    "kind": "json",
+    "sha16": "1c0b1a464e22c27e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_062518.json",
+    "size": 8266,
+    "kind": "json",
+    "sha16": "664e5c96a01fb780"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_062833.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "374ac2bbe8194ddd"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_063218.json",
+    "size": 8263,
+    "kind": "json",
+    "sha16": "7d3b8aff95f49d0d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_063533.json",
+    "size": 8256,
+    "kind": "json",
+    "sha16": "838f21dc34e16d38"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_063918.json",
+    "size": 8260,
+    "kind": "json",
+    "sha16": "286265bc13b047d9"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_064233.json",
+    "size": 8272,
+    "kind": "json",
+    "sha16": "7fa7a7a9cddf98ea"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_064618.json",
+    "size": 8272,
+    "kind": "json",
+    "sha16": "505162b3a745ae3a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_064934.json",
+    "size": 8263,
+    "kind": "json",
+    "sha16": "cd4318510cd5b503"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_065318.json",
+    "size": 8269,
+    "kind": "json",
+    "sha16": "8183c8698f5df2e3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_065634.json",
+    "size": 8270,
+    "kind": "json",
+    "sha16": "4176dc4a237d0717"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_070019.json",
+    "size": 8263,
+    "kind": "json",
+    "sha16": "7a3095080036dc35"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_070334.json",
+    "size": 8256,
+    "kind": "json",
+    "sha16": "4ed5da3a48acec5d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_070719.json",
+    "size": 8227,
+    "kind": "json",
+    "sha16": "1e5e95c361043459"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_071034.json",
+    "size": 8263,
+    "kind": "json",
+    "sha16": "36d6becda0b49edb"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_071419.json",
+    "size": 8265,
+    "kind": "json",
+    "sha16": "d4839b30c5682eed"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_071734.json",
+    "size": 8262,
+    "kind": "json",
+    "sha16": "ffc15bf2a394841b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_072119.json",
+    "size": 8248,
+    "kind": "json",
+    "sha16": "bda6fcc25c4cc597"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_072434.json",
+    "size": 8257,
+    "kind": "json",
+    "sha16": "59a62a440280cca2"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_072819.json",
+    "size": 8258,
+    "kind": "json",
+    "sha16": "e2c070ba916020db"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_073134.json",
+    "size": 8269,
+    "kind": "json",
+    "sha16": "6166c5ae072591fe"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_073519.json",
+    "size": 8233,
+    "kind": "json",
+    "sha16": "39415f2529193309"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_073835.json",
+    "size": 8272,
+    "kind": "json",
+    "sha16": "e27d69d41d24ff8b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_074220.json",
+    "size": 8269,
+    "kind": "json",
+    "sha16": "0942bdf2211b7f60"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_074535.json",
+    "size": 8272,
+    "kind": "json",
+    "sha16": "8082205d7eceda2c"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_074920.json",
+    "size": 8265,
+    "kind": "json",
+    "sha16": "d75e9e2650f9be6b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_075235.json",
+    "size": 8259,
+    "kind": "json",
+    "sha16": "8c3cef30932b3a2b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_075620.json",
+    "size": 8262,
+    "kind": "json",
+    "sha16": "94cb457823c47c0a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_075935.json",
+    "size": 8257,
+    "kind": "json",
+    "sha16": "49d68c73863ed0cd"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_080320.json",
+    "size": 8254,
+    "kind": "json",
+    "sha16": "1eccbecaa70b7854"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_080635.json",
+    "size": 8257,
+    "kind": "json",
+    "sha16": "58ac953781d02d14"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_081020.json",
+    "size": 8257,
+    "kind": "json",
+    "sha16": "431b26da807808fc"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_081335.json",
+    "size": 8263,
+    "kind": "json",
+    "sha16": "a1e468c85ff4777e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_081720.json",
+    "size": 8262,
+    "kind": "json",
+    "sha16": "b2c9bde49899dada"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_082035.json",
+    "size": 8263,
+    "kind": "json",
+    "sha16": "44837f9e6385bfcd"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_082420.json",
+    "size": 8266,
+    "kind": "json",
+    "sha16": "6d06d15b81f2956e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_082735.json",
+    "size": 8253,
+    "kind": "json",
+    "sha16": "058db4776bfb4d1c"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_083121.json",
+    "size": 8269,
+    "kind": "json",
+    "sha16": "7613cbdaad661d1b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_083436.json",
+    "size": 8254,
+    "kind": "json",
+    "sha16": "a2c7dd233c6f731e"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_083821.json",
+    "size": 8245,
+    "kind": "json",
+    "sha16": "ad89da2526aac7f1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_084136.json",
+    "size": 8252,
+    "kind": "json",
+    "sha16": "bda07f6828e6f619"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_084351.json",
+    "size": 8275,
+    "kind": "json",
+    "sha16": "f9f466a5f42bc046"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_084353.json",
+    "size": 11159,
+    "kind": "json",
+    "sha16": "6c409482694d3108"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_084521.json",
+    "size": 7634,
+    "kind": "json",
+    "sha16": "fb7fc2af6189ea32"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_084836.json",
+    "size": 7674,
+    "kind": "json",
+    "sha16": "d0db557ab87bf92f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_085221.json",
+    "size": 7662,
+    "kind": "json",
+    "sha16": "a1d1de0f3ee3ae83"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_085536.json",
+    "size": 7633,
+    "kind": "json",
+    "sha16": "bf56b1e03024d27b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_085921.json",
+    "size": 7689,
+    "kind": "json",
+    "sha16": "0c8cd2ce29e9bfbd"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_090237.json",
+    "size": 7681,
+    "kind": "json",
+    "sha16": "17fcb76a634645f2"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_090621.json",
+    "size": 7709,
+    "kind": "json",
+    "sha16": "99752a43159906e2"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_090937.json",
+    "size": 7675,
+    "kind": "json",
+    "sha16": "ef0da493e192f6bb"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_091321.json",
+    "size": 7678,
+    "kind": "json",
+    "sha16": "8f802a5dbc88fb4b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_091637.json",
+    "size": 7663,
+    "kind": "json",
+    "sha16": "f11ba5a5e52f500a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_092022.json",
+    "size": 7678,
+    "kind": "json",
+    "sha16": "79cb6070dabc1134"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_092337.json",
+    "size": 7687,
+    "kind": "json",
+    "sha16": "bfff5508a994a59a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_092722.json",
+    "size": 7680,
+    "kind": "json",
+    "sha16": "34c22e70ef90e662"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_093037.json",
+    "size": 7768,
+    "kind": "json",
+    "sha16": "dffcef23996bad2f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_093422.json",
+    "size": 7639,
+    "kind": "json",
+    "sha16": "20110fa5def5b604"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_093737.json",
+    "size": 7636,
+    "kind": "json",
+    "sha16": "fc89d4795247ab1b"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_094122.json",
+    "size": 7677,
+    "kind": "json",
+    "sha16": "aa8fa6992fad756f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_094437.json",
+    "size": 7689,
+    "kind": "json",
+    "sha16": "83ede78d837476f0"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_094822.json",
+    "size": 7684,
+    "kind": "json",
+    "sha16": "69115f0d873c440d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_095138.json",
+    "size": 7681,
+    "kind": "json",
+    "sha16": "f46ed28875055cd1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_095522.json",
+    "size": 7684,
+    "kind": "json",
+    "sha16": "e31efb2997827264"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_095838.json",
+    "size": 7690,
+    "kind": "json",
+    "sha16": "127cd773a61040f3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_100223.json",
+    "size": 7648,
+    "kind": "json",
+    "sha16": "b19bafec223542ad"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_100538.json",
+    "size": 7681,
+    "kind": "json",
+    "sha16": "c00294f158069827"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_100923.json",
+    "size": 7684,
+    "kind": "json",
+    "sha16": "84a5407fa823a389"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_101238.json",
+    "size": 7666,
+    "kind": "json",
+    "sha16": "d4becda053e63883"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_101623.json",
+    "size": 7671,
+    "kind": "json",
+    "sha16": "7f8f1ec2c12cbfa9"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_101938.json",
+    "size": 7636,
+    "kind": "json",
+    "sha16": "ec3c184803fc59c5"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_102331.json",
+    "size": 7645,
+    "kind": "json",
+    "sha16": "444de5ad8d34bb54"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_102638.json",
+    "size": 7680,
+    "kind": "json",
+    "sha16": "a77a48960eb3ab42"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_103024.json",
+    "size": 11128,
+    "kind": "json",
+    "sha16": "9327e48b3b52dddf"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_103339.json",
+    "size": 7670,
+    "kind": "json",
+    "sha16": "2ab4ef1c8ee035cd"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_103723.json",
+    "size": 7676,
+    "kind": "json",
+    "sha16": "19ae95a1ecf1bb99"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_104039.json",
+    "size": 7689,
+    "kind": "json",
+    "sha16": "e7bcb2347748db3a"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_104429.json",
+    "size": 7691,
+    "kind": "json",
+    "sha16": "fb8fb50f7542a2ea"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_104739.json",
+    "size": 7689,
+    "kind": "json",
+    "sha16": "4ec2bdb40cdf07e2"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_105129.json",
+    "size": 7689,
+    "kind": "json",
+    "sha16": "8af44155c75295a3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_105439.json",
+    "size": 7644,
+    "kind": "json",
+    "sha16": "304ed44248db9e79"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_105829.json",
+    "size": 11166,
+    "kind": "json",
+    "sha16": "eec4ebf1d17e1028"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_110139.json",
+    "size": 7676,
+    "kind": "json",
+    "sha16": "58e815fa91920727"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_110529.json",
+    "size": 7675,
+    "kind": "json",
+    "sha16": "6097d4d584a65750"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_110839.json",
+    "size": 7686,
+    "kind": "json",
+    "sha16": "b1e627a4df92747d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_111229.json",
+    "size": 7686,
+    "kind": "json",
+    "sha16": "c72dd05428f99ec6"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_111539.json",
+    "size": 7652,
+    "kind": "json",
+    "sha16": "fe38240bc2014285"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_111929.json",
+    "size": 7695,
+    "kind": "json",
+    "sha16": "8fbaf43db6132fa4"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_112240.json",
+    "size": 7701,
+    "kind": "json",
+    "sha16": "a824e1b37d813c65"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_112630.json",
+    "size": 7698,
+    "kind": "json",
+    "sha16": "9facb4e841493325"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_112940.json",
+    "size": 7695,
+    "kind": "json",
+    "sha16": "c33405abeab87c4d"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_113330.json",
+    "size": 7692,
+    "kind": "json",
+    "sha16": "dec8ea691f9d94a5"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_113640.json",
+    "size": 7701,
+    "kind": "json",
+    "sha16": "15ee57e13249955f"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_114030.json",
+    "size": 7773,
+    "kind": "json",
+    "sha16": "dd1fcb5552858164"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_114340.json",
+    "size": 7673,
+    "kind": "json",
+    "sha16": "bed3a702a0ec870c"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_114730.json",
+    "size": 7677,
+    "kind": "json",
+    "sha16": "68c5525f51a59ef8"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_115040.json",
+    "size": 7671,
+    "kind": "json",
+    "sha16": "f754363bbdc425c7"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_115430.json",
+    "size": 7669,
+    "kind": "json",
+    "sha16": "d3e3bf1a1e58da16"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_115740.json",
+    "size": 7686,
+    "kind": "json",
+    "sha16": "1a40362b21769228"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_120130.json",
+    "size": 7708,
+    "kind": "json",
+    "sha16": "49d03ff7456df1d1"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_120440.json",
+    "size": 11127,
+    "kind": "json",
+    "sha16": "a6e4bf2ceed48050"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_120830.json",
+    "size": 7775,
+    "kind": "json",
+    "sha16": "5e84b3b6d17ae2e5"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_121140.json",
+    "size": 7778,
+    "kind": "json",
+    "sha16": "6d1bead0d0b87fa4"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_121531.json",
+    "size": 11107,
+    "kind": "json",
+    "sha16": "938e2618561dc4c2"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_121840.json",
+    "size": 7652,
+    "kind": "json",
+    "sha16": "a8de2734f28664c3"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_122231.json",
+    "size": 7616,
+    "kind": "json",
+    "sha16": "081fea9f7cdec155"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_122541.json",
+    "size": 7667,
+    "kind": "json",
+    "sha16": "87d7459a1f97e826"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_122931.json",
+    "size": 7665,
+    "kind": "json",
+    "sha16": "c90c65f15b9c3de8"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_123241.json",
+    "size": 7665,
+    "kind": "json",
+    "sha16": "67cc7c856e4a1e69"
+  },
+  {
+    "path": "trading\\reports\\report_20260807_123631.json",
+    "size": 7671,
+    "kind": "json",
+    "sha16": "53387b21e388800c"
+  },
+  {
+    "path": "trading\\xau_heartbeat\\heartbeat.json",
+    "size": 917,
+    "kind": "json",
+    "sha16": "57a609535eae2d80"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_170139_01.json",
+    "size": 1262,
+    "kind": "json",
+    "sha16": "d8fbfdd78439a869"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_171844_01.json",
+    "size": 1200,
+    "kind": "json",
+    "sha16": "af6e26e1a3cc4423"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_174311_01.json",
+    "size": 1455,
+    "kind": "json",
+    "sha16": "e8cb26d33b02785b"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_180056_01.json",
+    "size": 1067,
+    "kind": "json",
+    "sha16": "3198af2e0970f8a1"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_180457_01.json",
+    "size": 875,
+    "kind": "json",
+    "sha16": "293b2ad98ea2de4a"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_182128_01.json",
+    "size": 1506,
+    "kind": "json",
+    "sha16": "458fdfea72cf5d82"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_183940_01.json",
+    "size": 1345,
+    "kind": "json",
+    "sha16": "9fd4b9661f7570fc"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_185801_01.json",
+    "size": 1901,
+    "kind": "json",
+    "sha16": "d3dc8395d079ec2e"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_195006_01.json",
+    "size": 2184,
+    "kind": "json",
+    "sha16": "7c74c82ff4221f19"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_200930_01.json",
+    "size": 982,
+    "kind": "json",
+    "sha16": "5fd2e8bda61a26e1"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_205837_01.json",
+    "size": 1151,
+    "kind": "json",
+    "sha16": "afd959046a41ceb0"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_220300_01.json",
+    "size": 1548,
+    "kind": "json",
+    "sha16": "d475104f09316268"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_222000_01.json",
+    "size": 1413,
+    "kind": "json",
+    "sha16": "691cde7321dcb3b1"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_225654_01.json",
+    "size": 999,
+    "kind": "json",
+    "sha16": "25133e80a3532e26"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260808_231417_01.json",
+    "size": 1177,
+    "kind": "json",
+    "sha16": "766c8095f60a61b6"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_000349_01.json",
+    "size": 1271,
+    "kind": "json",
+    "sha16": "797ed117c9597949"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_002200_01.json",
+    "size": 1220,
+    "kind": "json",
+    "sha16": "1b2f7844a26d0372"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_003648_01.json",
+    "size": 1467,
+    "kind": "json",
+    "sha16": "902ef41863d3e6bb"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_003900_01.json",
+    "size": 1022,
+    "kind": "json",
+    "sha16": "676489e735c1fc07"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_005600_01.json",
+    "size": 1161,
+    "kind": "json",
+    "sha16": "8b472cae947a07bc"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_011300_01.json",
+    "size": 1209,
+    "kind": "json",
+    "sha16": "91c9d8e6bcfcc95f"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_015100_01.json",
+    "size": 1385,
+    "kind": "json",
+    "sha16": "6f0eda48f1915975"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_020800_01.json",
+    "size": 1497,
+    "kind": "json",
+    "sha16": "d2261435dcb6025f"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_024200_01.json",
+    "size": 1394,
+    "kind": "json",
+    "sha16": "4502d27fe2a8d92f"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_030118_01.json",
+    "size": 1323,
+    "kind": "json",
+    "sha16": "0f5c7ffc892b4742"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_042300_01.json",
+    "size": 1472,
+    "kind": "json",
+    "sha16": "2f0b788e4248dfb3"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_043957_01.json",
+    "size": 1457,
+    "kind": "json",
+    "sha16": "6a5830fcdd8b9f43"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_051503_01.json",
+    "size": 1349,
+    "kind": "json",
+    "sha16": "952ed735cb958056"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_060700_01.json",
+    "size": 1612,
+    "kind": "json",
+    "sha16": "05dff80c56e09cf9"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_071111_01.json",
+    "size": 1397,
+    "kind": "json",
+    "sha16": "a84af2f3ffbf4a8a"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_074307_01.json",
+    "size": 1605,
+    "kind": "json",
+    "sha16": "f23a630d593a4ded"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_080207_01.json",
+    "size": 903,
+    "kind": "json",
+    "sha16": "8490246ce1977bd9"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_081808_01.json",
+    "size": 1109,
+    "kind": "json",
+    "sha16": "ea6aa7fd459cb06f"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_083500_01.json",
+    "size": 1429,
+    "kind": "json",
+    "sha16": "56f9041197f18484"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_094100_01.json",
+    "size": 1370,
+    "kind": "json",
+    "sha16": "4f967b81c6ae4cac"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_103100_01.json",
+    "size": 1423,
+    "kind": "json",
+    "sha16": "90e3b428326df15a"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_110313_01.json",
+    "size": 1392,
+    "kind": "json",
+    "sha16": "3acbe88fb4c6a539"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_113750_01.json",
+    "size": 1748,
+    "kind": "json",
+    "sha16": "386a8614d467e2ba"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_115500_01.json",
+    "size": 1852,
+    "kind": "json",
+    "sha16": "a684c47fc38c07e1"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_131533_01.json",
+    "size": 2226,
+    "kind": "json",
+    "sha16": "1a8c4d0c57588aa6"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_140430_01.json",
+    "size": 1122,
+    "kind": "json",
+    "sha16": "5932631e470e1a22"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_145630_01.json",
+    "size": 1342,
+    "kind": "json",
+    "sha16": "662ac0d2e3acdf9b"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_161800_01.json",
+    "size": 1494,
+    "kind": "json",
+    "sha16": "e45a59d014d83e71"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_173141_01.json",
+    "size": 1562,
+    "kind": "json",
+    "sha16": "0bb5f4096c7db491"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_182025_01.json",
+    "size": 1778,
+    "kind": "json",
+    "sha16": "d9a2694f11e8f166"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_183000_weekly_review.json",
+    "size": 3852,
+    "kind": "json",
+    "sha16": "bd2d0d79540257d9"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_185300_01.json",
+    "size": 1524,
+    "kind": "json",
+    "sha16": "3c1383321457f512"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260809_213600_01.json",
+    "size": 1202,
+    "kind": "json",
+    "sha16": "379891687f0421e0"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_061002_01.json",
+    "size": 858,
+    "kind": "json",
+    "sha16": "1bea9152a155189f"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_085236_01.json",
+    "size": 2211,
+    "kind": "json",
+    "sha16": "779fd64cda857562"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_091505_01.json",
+    "size": 2350,
+    "kind": "json",
+    "sha16": "4261d1d7076a641d"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_111245_01.json",
+    "size": 2754,
+    "kind": "json",
+    "sha16": "53bc2f1ccd79fe82"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_132900_01.json",
+    "size": 2810,
+    "kind": "json",
+    "sha16": "9a63e224552c5869"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_143723_01.json",
+    "size": 3305,
+    "kind": "json",
+    "sha16": "96eeb1958ea00358"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_150512_01.json",
+    "size": 3131,
+    "kind": "json",
+    "sha16": "778cfb5212162743"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_162100_01.json",
+    "size": 3771,
+    "kind": "json",
+    "sha16": "9a0ffa1e1d32d13c"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_183457_01.json",
+    "size": 3674,
+    "kind": "json",
+    "sha16": "61476370f2918a56"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_213948_01.json",
+    "size": 3864,
+    "kind": "json",
+    "sha16": "cf4235b32f53f904"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_224649_01.json",
+    "size": 5429,
+    "kind": "json",
+    "sha16": "0c5a236b09e66a1e"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260810_234352_01.json",
+    "size": 5153,
+    "kind": "json",
+    "sha16": "a12e7c59e570dcd0"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260811_010925_01.json",
+    "size": 6288,
+    "kind": "json",
+    "sha16": "1e939b29dc450e05"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260811_025556_01.json",
+    "size": 7222,
+    "kind": "json",
+    "sha16": "063493ca87646e9e"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260811_031942_01.json",
+    "size": 7611,
+    "kind": "json",
+    "sha16": "8835e8217f2a060d"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260811_033800_01.json",
+    "size": 8116,
+    "kind": "json",
+    "sha16": "7fb51360043998a6"
+  },
+  {
+    "path": "trading\\xau_journal\\j_20260813_165105_01.json",
+    "size": 1351,
+    "kind": "json",
+    "sha16": "3090127f341cdb6d"
+  },
+  {
+    "path": "trading\\xau_journal\\learning_WEEK_2026-W32.md",
+    "size": 791,
+    "kind": "markdown",
+    "sha16": "ab68cc9ed37c4447"
+  },
+  {
+    "path": "trading\\xau_plan\\current_plan.json",
+    "size": 18395,
+    "kind": "json",
+    "sha16": "86f41854d6e06870"
+  },
+  {
+    "path": "trading\\xau_plan\\current_presession.json",
+    "size": 4824,
+    "kind": "json",
+    "sha16": "f1a467e6f0ccf9da"
+  },
+  {
+    "path": "trading\\xau_plan\\daily_bias_20260811.json",
+    "size": 960,
+    "kind": "json",
+    "sha16": "44d3b3816d98b880"
+  },
+  {
+    "path": "trading\\xau_plan\\performance_state.json",
+    "size": 137,
+    "kind": "json",
+    "sha16": "6b834b4566715e99"
+  },
+  {
+    "path": "trading\\xau_plan\\plan_history\\20260807_130944_xau-f56c09ef.json",
+    "size": 709,
+    "kind": "json",
+    "sha16": "b22ca375671c1450"
+  },
+  {
+    "path": "trading\\xau_plan\\plan_history\\20260807_174658_xau-4c97f2ce.json",
+    "size": 963,
+    "kind": "json",
+    "sha16": "526fbeffa0622505"
+  },
+  {
+    "path": "trading\\xau_plan\\plan_history\\20260807_215447_xau-9a0019e8.json",
+    "size": 1075,
+    "kind": "json",
+    "sha16": "83adcd4d52258842"
+  },
+  {
+    "path": "trading\\xau_plan\\plan_history\\20260808_020251_xau-52a32bc7.json",
+    "size": 1078,
+    "kind": "json",
+    "sha16": "ab17e05d83eb0512"
+  },
+  {
+    "path": "trading\\xau_plan\\plan_history\\20260808_072719_xau-fb1a9496.json",
+    "size": 1147,
+    "kind": "json",
+    "sha16": "43e618ac0faa0211"
+  },
+  {
+    "path": "trading\\xau_plan\\plan_history\\20260808_130826_xau-c85d05df.json",
+    "size": 18387,
+    "kind": "json",
+    "sha16": "89112c4d90b9ba46"
+  },
+  {
+    "path": "trading\\xau_plan\\presession_20260808.json",
+    "size": 3568,
+    "kind": "json",
+    "sha16": "7414ecff39ae013d"
+  },
+  {
+    "path": "trading\\xau_plan\\presession_20260810.json",
+    "size": 3575,
+    "kind": "json",
+    "sha16": "6593f866f1339408"
+  },
+  {
+    "path": "trading\\xau_plan\\presession_20260811.json",
+    "size": 3572,
+    "kind": "json",
+    "sha16": "2ea452dc2d7f067f"
+  },
+  {
+    "path": "trading\\xau_plan\\presession_20260813.json",
+    "size": 4824,
+    "kind": "json",
+    "sha16": "f1a467e6f0ccf9da"
+  },
+  {
+    "path": "trading\\xau_plan\\reassessment_log.csv",
+    "size": 468,
+    "kind": "csv",
+    "sha16": "df7a46e86d5143e3"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\latest_snapshot.json",
+    "size": 5122,
+    "kind": "json",
+    "sha16": "2ecc156400d726ee"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\snapshot_20260808_094136.json",
+    "size": 1468,
+    "kind": "json",
+    "sha16": "e0f3e88e3ca5d174"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\snapshot_20260808_104423.json",
+    "size": 1468,
+    "kind": "json",
+    "sha16": "1ceb2b5284695ee6"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\snapshot_20260808_104841.json",
+    "size": 3610,
+    "kind": "json",
+    "sha16": "7a9768423a2364ef"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\snapshot_20260808_120642.json",
+    "size": 5121,
+    "kind": "json",
+    "sha16": "e2ffd69d2a7ec539"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\snapshot_20260808_121307.json",
+    "size": 5121,
+    "kind": "json",
+    "sha16": "ec5510a88364c9ad"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\snapshot_20260808_121345.json",
+    "size": 5121,
+    "kind": "json",
+    "sha16": "d79a9ac209215c0f"
+  },
+  {
+    "path": "trading\\xau_plan\\review_snapshots\\snapshot_20260808_130826.json",
+    "size": 5122,
+    "kind": "json",
+    "sha16": "2ecc156400d726ee"
+  },
+  {
+    "path": "trading\\xau_plan\\runtime_state.json",
+    "size": 163,
+    "kind": "json",
+    "sha16": "b946b6ecc72c2d23"
+  }
+]

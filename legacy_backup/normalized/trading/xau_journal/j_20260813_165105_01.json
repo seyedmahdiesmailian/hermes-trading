@@ -1,0 +1,37 @@
+{
+  "id": "j_20260813_165105_01",
+  "timestamp": "2026-08-13T16:51:05.307517",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "price": 4390.92,
+    "bid": 4390.92,
+    "ask": 4391.04,
+    "bias": "neutral",
+    "regime": "range",
+    "smc_confidence": 0.0,
+    "atr": 7.88,
+    "h1_structure": "range",
+    "macro_alignment": "conflicting",
+    "session": "newyork",
+    "killzone": "inactive",
+    "news_risk": true,
+    "next_event": "Core PPI m/m (just released -0.8h ago)",
+    "defcon": "yellow",
+    "loss_streak": 3
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "خبر مهم Core PPI دقایقی پیش منتشر شده (0.8h ago) و بازار هنوز واکنش نشان نداده. DEFCON زرد با loss_streak=3. SMC bias خنثی با confidence=0.0. ماکروها در تناقض. H1 رنج. فاقد divergence و M5 OB. هیچ killzone فعال. هیچ سیگنال قاطع وجود ندارد => منتظر مانده تا بازار جهت خود را نشان دهد و نوسانات پسخبر فروکش کند.",
+    "risk_check": {
+      "trade_allowed": true,
+      "risk_usd": 4.49,
+      "risk_multiplier": 0.75,
+      "max_positions": 1,
+      "open_positions": 0
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

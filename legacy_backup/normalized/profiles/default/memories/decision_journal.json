@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-08-11T13:54:58.065984",
+  "decision": "wait",
+  "reason": "DEFCON YELLOW (3 loss streak) + اعتماد پایین (0.47) + تضاد M5/H1 با بایاس بالادستی + PowerOf3 در فاز distribution + CPI بااثر بالا فردا. صبر برای وضوح پس از خبر و اصلاح بایاس.",
+  "context": {
+    "defcon": "yellow",
+    "merged_confidence": 0.47,
+    "m5_bias_classic": "neutral",
+    "m5_bias_smc": "bearish",
+    "h1_structure": "bos_bearish",
+    "power_of_three": "distribution",
+    "macro_alignment": "bullish_all",
+    "divergence_m5": "hidden_bullish",
+    "session": "newyork_killzone_active",
+    "news_tomorrow": "4x_high_impact_CPI",
+    "risk_multiplier": 0.75
+  }
+}

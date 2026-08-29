@@ -1,0 +1,59 @@
+{
+  "id": "j_20260809_131533_01",
+  "timestamp": "2026-08-09T13:15:33.930000",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "merged_action": "long",
+    "atr": 7.16,
+    "m5_atr": 3.31,
+    "h1_structure": "range",
+    "session": "weekend",
+    "market_open": false,
+    "killzone": "newyork (but market closed)",
+    "defcon": "yellow",
+    "macro_dxy": "flat",
+    "macro_silver": "up",
+    "macro_spx": "risk_on",
+    "higher_tf_alignment": "bullish_all",
+    "ote_zone": {
+      "low": 4297.96,
+      "high": 4313.86
+    },
+    "poi": "A",
+    "power_of_three": "distribution",
+    "divergence": "none",
+    "account_balance": 1338.71,
+    "account_equity": 1338.71,
+    "open_positions": 0,
+    "heartbeat_mode": "hermes_degraded",
+    "minutes_since_last_hermes": 79.3,
+    "next_high_impact_news": "CPI Wed Aug 12 16:00 IRST"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته (آخر هفته — Sunday). session=weekend, volatility=none, session_risk_multiplier=0.0. قانون قطعی: market closed -> wait. بازار جمعه بسته شد و تا دوشنبه باز نمیشود. سیگنال SMC bullish با confidence=0.871، merged bullish با confidence=0.78، alignment H4/D1/W1=bullish_all — همگی صرفاً اطلاعاتی هستند. وضعیت DEFCON YELLOW با loss_streak=3. رویداد مهم بعدی: CPI روز چهارشنبه ۱۲ آگوست ساعت ۱۶:۰۰. تا باز شدن بازار هیچ اقدامی قابل انجام نیست. ⏳",
+    "risk_check": {
+      "market_open": false,
+      "session_risk_multiplier": 0.0,
+      "session": "weekend",
+      "killzone_active": false,
+      "defcon": "yellow",
+      "defcon_loss_streak": 3,
+      "trade_allowed": false,
+      "reason_blocked": "market_closed_weekend",
+      "next_market_open": "Monday (Aug 11)",
+      "heartbeat_status": "hermes_degraded"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

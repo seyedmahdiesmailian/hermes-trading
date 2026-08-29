@@ -1,0 +1,41 @@
+{
+  "id": "j_20260808_182128_01",
+  "timestamp": "2026-08-08T18:21:28.000446",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "market_open": false,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "balance": 1338.71,
+    "equity": 1338.71,
+    "open_positions": 0,
+    "smc_bias": "bullish",
+    "smc_confidence": 0.87,
+    "classic_bias": "neutral",
+    "classic_regime": "range",
+    "merged_bias": "bullish",
+    "merged_confidence": 0.78,
+    "h4_d1_w1": "bullish_all",
+    "news_risk": false,
+    "silver_bullet": "active_pm",
+    "power_of_three": "distribution"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (market_open=false). سشن نیویورک ولی بازار تعطیل. طبق قانون شماره ۱: بازار بسته = فقط heartbeat و journal. هیچ دستور معاملاتی اجرا نمیشود. تحلیلها bullish است (SMC confidence=0.87, merged=0.78) و Silver Bullet PM فعال است اما بدون بازار باز نمیتوان وارد معامله شد. پوزیشن بازی هم نیست که مدیریت شود. وضعیت: منتظر باز شدن بازار.",
+    "risk_check": {
+      "trade_allowed": true,
+      "risk_usd": 8.97,
+      "market_open": false,
+      "news_risk": false,
+      "regime": "defensive",
+      "barriers": [
+        "market_closed"
+      ]
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

@@ -1,0 +1,43 @@
+{
+  "id": "j_20260810_091505_01",
+  "timestamp": "2026-08-10T09:15:05.539782",
+  "decision_by": "hermes",
+  "session": "london",
+  "market_snapshot": {
+    "price": 4341.64,
+    "bias": "bullish",
+    "regime": "breakout_continuation",
+    "smc_confidence": 0.862,
+    "merged_confidence": 0.74,
+    "atr": 7.2,
+    "session": "london",
+    "market_open": true,
+    "killzone": "london",
+    "defcon": "yellow",
+    "macro_dxy": "-0.009% flat",
+    "macro_spx": "+0.104% risk_on",
+    "macro_silver": "+0.994% bullish",
+    "higher_tf_alignment": "bullish_all",
+    "h1_structure": "bos_bearish",
+    "m5_smc_confidence": 0.659,
+    "m5_divergence": "bearish",
+    "ote_zone": [
+      4322.74,
+      4330.43
+    ],
+    "next_news": "Core CPI/CPI Wed Aug 12, PPI Thu Aug 13",
+    "heartbeat_mode": "hermes_active"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🔒 تصمیم WAIT — ادغام سیگنال bullish (conf=0.74) و killzone لندن فعال و alignment bullish_all، اما کیفیت ورود LONG کافی نیست و وضعیت دفاعی است. دلایل:\n1) قیمت 4341.64 بالای ناحیه OTE لانگ (4322.74-4330.43) و بالای value zone کلاسیک است؛ یعنی ورود، دنبالکردن (chase) در premium است نه رسیدن به POI/معامله با نسبت ریسکِ خوب.\n2) divergence خرسی M5 (قدرت medium، بدون همگرایی با M15/H1) علیه جهت LONG است و احتمال اصلاح/ریتریس رو به پایین را در لحظه ورود بالا میبرد.\n3) H1 structure=bos_bearish با سیگنال کلی bullish در تعارض است؛ بدون تایید ساختار TF بالا.\n4) DEFCON YELLOW با loss_streak=3 و ریسکِ نصف (بدون رانر/scale-in) — سیاست محافظهکارانه.\n5) رژیم defensive و risk_budget فقط .97.\nجمعبندی: بدون ورود در این قیمت. منتظر ریتریس قیمت به ناحیه OTE (4322-4330) / جاروی نقدینگی و تایید ساختار M5 برای Setup-Q میشویم.",
+    "risk_check": {
+      "entry_allowed": true,
+      "action": "wait",
+      "reason": "price_above_ote_low_confluence_defensive_yellow"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

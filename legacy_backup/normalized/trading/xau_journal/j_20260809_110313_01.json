@@ -1,0 +1,35 @@
+{
+  "id": "j_20260809_110313_01",
+  "timestamp": "2026-08-09T11:03:13",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "market_open": false,
+    "defcon": "yellow"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "شنبه — بازار بسته (weekend). market_open=false | session=weekend | session_risk=0.0 | volatility=none | liquidity=none. قانون اول: Market closed -> wait. پوزیشن باز نداریم. زمینه تکنیکال صعودی (SMC=0.87, merged=0.78, alignment=bullish_all) را رصد میکنیم. H4+D1 premium (pos 0.90/0.93) — قیمت نزدیک سقف رنج است، ورود long فقط با پولبک به OTE (4297-4313) یا FVGهای پرنشده. DEFCON YELLOW (loss_streak=3): ریسک نصف، رانر غیرفعال. آماده ارزیابی در بازگشایی دوشنبه.",
+    "risk_check": {
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "defcon_loss_streak": 3,
+      "trade_allowed": false,
+      "market_open": false,
+      "risk_budget_usd": 8.97,
+      "open_positions": 0,
+      "weekend_block": true
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

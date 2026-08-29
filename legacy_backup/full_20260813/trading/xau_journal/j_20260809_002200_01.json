@@ -1,0 +1,32 @@
+{
+  "id": "j_20260809_002200_01",
+  "timestamp": "2026-08-09T00:22:00",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "symbol": "XAUUSD",
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "value_zone": [4141.88, 4276.07],
+    "atr": 7.16,
+    "session_detail": "weekend_closed",
+    "market_open": false,
+    "defcon": "YELLOW"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — Weekend. session_risk=×0.0، نقدینگی=صفر. بازار تا Asian open دوشنبه باز نمیشود. هیچ پوزیشن بازی برای مدیریت وجود ندارد. تحلیل SMC bullish (conf=0.87)، alignment=bullish_all، OTE zone=4297-4313 همگی تا بازگشایی بازار غیرقابل اجرا هستند. DEFCON YELLOW (loss_streak=3) — اما تا دوشنبه هیچ اقدامی معنی ندارد. WAIT — منتظر بازگشایی بازار.",
+    "risk_check": {
+      "trade_allowed": false,
+      "risk_usd": 0.0,
+      "risk_mult": 0.0,
+      "defcon": "YELLOW",
+      "session_risk_mult": 0.0
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

@@ -1,0 +1,28 @@
+{
+  "id": "j_20260809_185300_01",
+  "timestamp": "2026-08-09T18:53:00.000000",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "session": "weekend",
+    "market_open": false,
+    "defcon": "yellow",
+    "macro_dxy": "+0.055% flat",
+    "macro_spx": "+0.214% risk_on",
+    "macro_silver": "+0.594% bullish",
+    "higher_tf_alignment": "bullish_all",
+    "next_news": "Core CPI/CPI Wed Aug 12 16:00 IRT, PPI Thu Aug 13"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (Sunday). market_open=False, session=weekend, volatility=none, liquidity=none, session_risk=0.0. قانون قطعی: Market closed → wait. هیچ پوزیشن بازی وجود ندارد. تحلیل تکنیکال (SMC bullish conf=0.87, alignment=bullish_all, PowerOf3=distribution, OTE zone=4297-4313) صرفاً مشاهدهای است. 17 تا FVG روی H1 دیده شده که چندتای آنها هنوز fill نشدهاند — در صورت باز شدن بازار، FVGهای bullish در 4258-4259 و 4270-4271 و 4277-4278 میتوانند POI برای لانگ باشند. DEFCON YELLOW (loss_streak=3) — ورود بعدی با نصف ریسک. رویدادهای مهم: CPI چهارشنبه، PPI پنجشنبه. ⏳ منتظر Monday open در Asia session."
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

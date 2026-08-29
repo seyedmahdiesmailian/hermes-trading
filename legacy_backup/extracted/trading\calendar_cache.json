@@ -1,0 +1,104 @@
+{
+  "cached_at": "2026-08-13T15:41:36.385414",
+  "events": [
+    {
+      "title": "Core CPI m/m",
+      "datetime_utc": "2026-08-12T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.2%",
+      "previous": "0.0%"
+    },
+    {
+      "title": "Core CPI y/y",
+      "datetime_utc": "2026-08-12T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "2.5%",
+      "previous": "2.6%"
+    },
+    {
+      "title": "CPI m/m",
+      "datetime_utc": "2026-08-12T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.1%",
+      "previous": "-0.4%"
+    },
+    {
+      "title": "CPI y/y",
+      "datetime_utc": "2026-08-12T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "3.4%",
+      "previous": "3.5%"
+    },
+    {
+      "title": "Core PPI m/m",
+      "datetime_utc": "2026-08-13T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.3%",
+      "previous": "0.2%"
+    },
+    {
+      "title": "PPI m/m",
+      "datetime_utc": "2026-08-13T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.2%",
+      "previous": "-0.3%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "datetime_utc": "2026-08-13T08:30:00-04:00",
+      "impact": "medium",
+      "currency": "USD",
+      "gold_impact": "usd_weakness",
+      "forecast": "202K",
+      "previous": "199K"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "datetime_utc": "2026-08-14T08:30:00-04:00",
+      "impact": "medium",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.2%",
+      "previous": "-0.2%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "datetime_utc": "2026-08-14T08:30:00-04:00",
+      "impact": "medium",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.1%",
+      "previous": "0.2%"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "datetime_utc": "2026-08-14T10:00:00-04:00",
+      "impact": "medium",
+      "currency": "USD",
+      "gold_impact": "neutral",
+      "forecast": "54.7",
+      "previous": "54.4"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "datetime_utc": "2026-08-14T10:00:00-04:00",
+      "impact": "medium",
+      "currency": "USD",
+      "gold_impact": "neutral",
+      "forecast": "",
+      "previous": "4.2%"
+    }
+  ]
+}

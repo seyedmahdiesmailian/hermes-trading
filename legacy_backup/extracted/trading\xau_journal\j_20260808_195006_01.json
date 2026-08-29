@@ -1,0 +1,63 @@
+{
+  "id": "j_20260808_195006_01",
+  "timestamp": "2026-08-08T19:50:05.280271",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "price": {
+      "bid": 4341.72,
+      "ask": 4341.9
+    },
+    "market_open": false,
+    "session": "newyork",
+    "killzone": "dead",
+    "macro": {
+      "dxy": "flat (+0.055%)",
+      "risk": "risk_on (+0.214%)",
+      "silver": "up (+0.594%) bullish_for_gold",
+      "volume": "0.53x avg"
+    },
+    "higher_tf": "bullish_all (H4 premium, D1 premium, W1 equilibrium)",
+    "smc": {
+      "bias": "bullish",
+      "confidence": 0.87,
+      "signal": "bullish",
+      "poi": "B"
+    },
+    "classic": {
+      "bias": "neutral",
+      "regime": "range",
+      "atr": 7.16
+    },
+    "merged": {
+      "bias": "bullish",
+      "confidence": 0.78,
+      "action": "long"
+    },
+    "m5": {
+      "smc_bias": "bullish",
+      "smc_confidence": 0.325
+    },
+    "power_of_3": "distribution",
+    "ote_zone": {
+      "low": 4297.96,
+      "high": 4313.86
+    }
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته است — شنبه (Saturday) و بازار فارکس تعطیل. market_open=false | quote_age > 16 ساعت. \n\n📊 تحلیل: سیگنال SMC صعودی قوی (confidence=0.87, POI=B) و alignment= bullish_all در H4/D1/W1. احتمال خرید در اولین فرصت باز شدن بازار. \n\n⚠️ وضعیت: DEFCON YELLOW به دلیل loss_streak=3 — در صورت ورود، ریسک نصف و بدون رانر. \n\n🎯 در صورت بازگشایی: OTE zone در 4297.96-4313.86 فضای خرید مناسبی است. منتظر pullback به این ناحیه + تأیید M5 برای ورود long. \n\n🔄 اقدام بعدی: منتظر باز شدن بازار آسیا (یکشنبه شب). تا آن زمان فقط wait.",
+    "risk_check": {
+      "market_open": false,
+      "news_risk": false,
+      "defcon": "yellow",
+      "trade_allowed": true,
+      "risk_usd": 8.97,
+      "regime": "defensive",
+      "reason": "market closed — weekend — no trades possible"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

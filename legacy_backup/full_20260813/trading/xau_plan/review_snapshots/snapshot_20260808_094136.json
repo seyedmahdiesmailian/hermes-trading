@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-08-08T09:41:36.703398+00:00",
+  "plan_id": "xau-d64c1e58",
+  "bias": "bullish",
+  "session": "london",
+  "zones": {
+    "value_low": 4126.9725,
+    "value_high": 4290.2375,
+    "long_entry_low": 4123.391428571428,
+    "long_entry_high": 4126.9725,
+    "short_entry_low": 4290.2375,
+    "short_entry_high": 4293.818571428572
+  },
+  "invalidation": 4121.600892857143,
+  "quality": {
+    "trend_strength": 76.75,
+    "alignment": "mixed",
+    "distance_to_value_low_atr": 29.98,
+    "distance_to_value_high_atr": 7.19,
+    "bias_votes": {
+      "m15": "neutral",
+      "h1": "neutral",
+      "h4": "bullish"
+    },
+    "regime": "range",
+    "smc_confidence": 0.6,
+    "smc_poi": "A",
+    "smc_signal": "bullish"
+  },
+  "smc": {
+    "bias": null,
+    "bias_confidence": null,
+    "signal": null,
+    "confidence": null,
+    "poi": null,
+    "poi_grade": null,
+    "killzone": null,
+    "killzone_weight": null,
+    "order_blocks": [],
+    "fvg": [],
+    "liquidity_sweep": null,
+    "market_structure": null,
+    "premium_discount": null,
+    "breaker_blocks": [],
+    "rejection_blocks": [],
+    "ote_zone": null,
+    "power_of_three": null,
+    "turtle_soup": null,
+    "silver_bullet": null,
+    "session_liquidity": null,
+    "volume_imbalance": []
+  },
+  "merged": {
+    "bias": null,
+    "confidence": null,
+    "classic_bias": null,
+    "smc_bias": null,
+    "agreement": null
+  }
+}

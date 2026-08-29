@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+from math import floor
+from uuid import uuid4
+
+from engines.plan import decide_execution_action
+
+
+def _parse_dt(value: str | None):
+    if not value:
+        return None
+    return datetime.fromisoformat(value)
+
+
+def route_runtime_step(plan: dict | None, now: datetime | None = None) -> str:
+    now = now or datetime.now(timezone.utc)
+    if not plan:
+        return "plan"
+    expires_at = _parse_dt(plan.get("expires_at"))
+    if expires_at and now >= expires_at:
+        return "plan"
+    next_reassessment = _parse_dt(plan.get("next_reassessment"))
+    if next_reassessment and now >= next_reassessment:
+        return "reassess"
+    return "monitor"
+
+
+def build_plan_from_context(ctx: dict, now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
+    session = ctx.get("session", "asia")
+    # M5 scalping: reassess every 5 minutes (fresh zones, fresh SMC)
+    next_reassessment = now + timedelta(minutes=5)
+    return {
+        "plan_id": f"xau-{uuid4().hex[:8]}",
+        "symbol": ctx["symbol"],
+        "bias": ctx["bias"],
+        "session": ctx["session"],
+        "zones": ctx["zones"],
+        "atr": ctx.get("atr"),
+        "invalidation": ctx["invalidation"],
+        "targets": ctx["targets"],
+        "execution": ctx.get("execution", {}),
+        "quality": ctx.get("quality", {}),
+        "created_at": now.isoformat(),
+        "expires_at": (now + timedelta(hours=12)).isoformat(),
+        "next_reassessment": next_reassessment.isoformat(),
+        "context": ctx.get("context", {}),
+    }
+
+
+def _passes_quality_gate(plan: dict) -> bool:
+    quality = plan.get("quality", {})
+    alignment = quality.get("alignment")
+    trend_strength = float(quality.get("trend_strength", 0.0) or 0.0)
+    smc_conf = float(quality.get("smc_confidence", 0) or 0)
+    # Allow if aligned AND trend strong (ATR units), OR if SMC is confident
+    if alignment == 'aligned' and trend_strength >= 1.0:
+        return True
+    if smc_conf >= 0.4:
+        return True
+    return False
+
+
+def compute_xau_position_size(
+    balance: float,
+    risk_pct: float,
+    stop_distance_price: float,
+    point: float,
+    point_value_per_lot: float,
+    volume_min: float,
+    volume_step: float,
+    volume_max: float,
+    min_meaningful_lot: float = 0.05,
+) -> dict:
+    if stop_distance_price <= 0 or point <= 0 or point_value_per_lot <= 0:
+        return {"lot": 0.0, "risk_usd": 0.0, "meaningful": False, "reason": "invalid_sizing_inputs", "capped": False}
+    risk_usd = round(balance * risk_pct, 2)
+    stop_points = stop_distance_price / point
+    raw_lot = risk_usd / (stop_points * point_value_per_lot)
+    if raw_lot < min_meaningful_lot:
+        return {"lot": 0.0, "risk_usd": risk_usd, "meaningful": False, "reason": "below_min_meaningful_lot", "capped": False}
+    stepped = floor(raw_lot / volume_step) * volume_step
+    lot = max(volume_min, min(volume_max, round(stepped, 2)))
+    capped = lot < raw_lot or lot == volume_max
+    return {"lot": lot, "risk_usd": risk_usd, "meaningful": True, "reason": None, "capped": capped}
+
+
+def evaluate_monitor_cycle(plan: dict, price: float, now: datetime | None = None, trigger_ok: bool | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
+    if trigger_ok is None:
+        zone = plan.get("zones", {})
+        trigger_ok = bool(
+            (zone.get("long_entry_low") is not None and zone.get("long_entry_low") <= price <= zone.get("long_entry_high")) or
+            (zone.get("short_entry_low") is not None and zone.get("short_entry_low") <= price <= zone.get("short_entry_high"))
+        )
+    decision = decide_execution_action(plan, price=price, trigger_ok=trigger_ok, now=now)
+    if decision.get("action") in {"market_order", "market_entry_now"} and not _passes_quality_gate(plan):
+        decision = {
+            "action": "wait_for_trigger",
+            "reason": "quality_filter",
+            "zone": decision.get("zone"),
+            "at": now.isoformat(),
+        }
+    decision["price"] = price
+    decision["plan_id"] = plan.get("plan_id")
+    return decision
+
+
+def execute_trade_blueprint(blueprint: dict, lot: float, point: float, command_runner, now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
+    entry = float(blueprint["entry_price"])
+    sl = float(blueprint["sl"])
+    tp = float(blueprint["tp"])
+    side = blueprint["side"].upper()
+    sl_points = int(round(abs(entry - sl) / point))
+    tp_points = int(round(abs(tp - entry) / point))
+    if sl_points <= 0:
+        return {"ok": False, "error": "invalid_stop_distance", "at": now.isoformat()}
+    if tp_points <= 0:
+        return {"ok": False, "error": "invalid_target_distance", "at": now.isoformat()}
+    argv = ["open", blueprint["symbol"], side, f"{lot:.2f}", str(sl_points), str(tp_points), "Hermes plan"]
+    result = command_runner(argv)
+    return {
+        "ok": bool(result.get("ok")),
+        "command": argv,
+        "result": result,
+        "at": now.isoformat(),
+    }

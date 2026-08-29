@@ -1,0 +1,32 @@
+{
+  "id": "j_20260808_170139_01",
+  "timestamp": "2026-08-08T17:01:39.989195",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "market_open": false,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "balance": 1338.71,
+    "equity": 1338.71,
+    "smc_bias": "bullish",
+    "smc_confidence": 0.87,
+    "classic_bias": "neutral",
+    "regime": "range",
+    "merged_bias": "bullish",
+    "merged_confidence": 0.78
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (آخر هفته - شنبه ۸ آگوست). هیچ معاملهای امکانپذیر نیست. طبق قانون شماره ۱: بازار بسته = فقط heartbeat + journal. سیگنال SMC bullish با confidence 0.87 و merged bullish با confidence 0.78 هست اما چون بازار بسته است، ورود انجام نمیشود. در صورت باز بودن بازار در دوشنبه، setup از نوع B (POI=B، regime=range) نیاز به احتیاط دارد.",
+    "risk_check": {
+      "trade_allowed": true,
+      "risk_usd": 8.97,
+      "market_open": false,
+      "decision": "wait_due_to_closed_market"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

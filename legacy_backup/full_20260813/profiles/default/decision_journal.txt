@@ -1,0 +1,195 @@
+1|1|2026-08-10 01:26 UTC | XAUUSD Decision Journal
+2|2|=====================================
+3|3|
+4|4|Decision: WAIT ⏳
+5|5|Price: $4323.43-55 (spread 12 pips)
+6|6|
+7|7|Analysis Summary:
+8|8|- Classic: bearish bias (pullback_continuation)  
+9|9|- SMC: bullish bias (confidence 0.466)
+10|10|- Merged: neutral (confidence 0.0)
+11|11|- Session: Asia - low vol, thin liquidity
+12|12|- DEFCON: YELLOW (loss_streak=3)
+13|13|
+14|14|Key Factors:
+15|15|✓ Market open, no news risk today
+16|16|✓ Account healthy, no open positions
+17|17|✗ Risk budget blocked (setup_grade_block)
+18|18|✗ Analysis conflict (Classic vs SMC)
+19|19|✗ Low quality session (Asia)
+20|20|✗ DEFCON YELLOW - half risk only
+21|21|
+22|22|Decision Logic:
+23|23|با وجود بازار باز و عدم ریسک خبری، تضاد بین تحلیل Classic (bearish) و SMC (bullish) همراه با DEFCON YELLOW و risk budget مسدود شده، انتظار برای سناریو واضحتر را توجیه میکند.
+24|24|
+25|25|Next Review: منتظر سشن London برای کیفیت بهتر و اجماع تحلیل
+26|26|Risk Status: DEFCON YELLOW - ریسک نصف، بدون runner
+27|27|
+28|28|--- NEW ENTRY ---
+29|29|2026-08-10 20:03 UTC | XAUUSD Decision Journal
+30|30|=====================================
+31|31|
+32|32|Decision: WAIT ⏳
+33|33|Price: $4353.94-4354.06 (spread 12 pips)
+34|33|
+35|34|Analysis Summary:
+36|35|- Classic: bullish bias (breakout_continuation), ATR: $10.01
+37|36|- SMC: bullish bias (confidence 0.982), POI: C, H1: choch_bearish
+38|37|- M5: Classic NEUTRAL, SMC bullish (conf 0.968), 5 bullish FVGs
+39|38|- Merged: bullish bias, confidence 0.480, action: long
+40|39|- Macro: DXY flat, SPX risk_off, Silver up 1.42% (bullish for gold)
+41|40|- Higher TF: H4/D1 bullish premium, W1 bullish equilibrium, alignment: bullish_all
+42|41|
+43|42|Key Factors:
+44|43|✓ Market open, macro alignment bullish_all
+45|44|✓ Silver up 1.42% (bullish for gold)
+46|45|✓ Classic bullish (breakout_continuation), SMC bullish (conf 0.982)
+47|46|✓ M5 SMC bullish (conf 0.968), 5 bullish FVGs on M5
+48|47|✓ Account healthy, no open positions, trade_allowed=True
+49|48|✓ Risk budget: $8.97 (defensive mode, 0.75x)
+50|49|✗ Session: CLOSED (dead killzone, weight 0.0)
+51|50|✗ Killzone: DEAD (inactive, weight 0.0)
+52|51|✗ Merged confidence LOW: 0.480 (killzone weight 0.0 drags it down)
+53|52|✗ M5 Classic bias: NEUTRAL (conflicts with SMC bullish)
+54|53|✗ H1 Structure: choch_bearish (conflicts with bullish bias)
+55|54|✗ Volume: 0.23x avg (very low)
+56|55|✗ DEFCON YELLOW: loss_streak=3, runner/scale_in disabled, half risk
+57|56|✗ Heartbeat: hermes_degraded (87.8 min since last)
+58|57|✗ OTE Zone: 4326.82-4334.98 (below current price 4353.94 = premium zone)
+59|58|✗ Divergence: none on all TFs
+60|59|✗ Killzone weight 0.0 drags merged confidence down
+61|60|
+62|61|Decision Logic:
+63|62|با وجود بایاس bullish در macro/classic/SMC، سشن بسته (dead killzone weight 0.0) باعث confidence پایین merged (0.48) شده. M5 classic neutral، H1 choch_bearish، volume پایین، DEFCON YELLOW، heartbeat degraded، و قیمت در premium zone (بالای OTE) همه مانع ورود هستند. صبر برای killzone Londres/نیویورک و سناریو با کیفیت بالا.
+64|63|
+65|64|Next Review: منتظر Killzone London/NY برای کیفیت بهتر و اجماع کامل
+66|65|Risk Status: DEFCON YELLOW - ریسک نصف، بدون runner، scale-in غیرفعال
+67|66|Heartbeat Updated: 2026-08-10 20:03 UTC
+68|67|
+69|68|--- NEW ENTRY ---
+70|69|2026-08-11 06:06 UTC | XAUUSD Decision Journal
+71|70|=====================================
+72|71|
+73|72|Decision: CLOSE ❌
+74|73|Price: $4423.12-24 (spread 12 pips)
+75|74|Open Position: BUY 0.01 lot @ 4423.97 | P/L: -$0.85
+76|75|
+76|76|Analysis Summary:
+77|77|- Classic H4/D1: bullish (breakout_continuation), ATR $10.05, trend 90.4
+78|78|- SMC: bullish bias (confidence 0.921), POI: A, H1 bos_bullish
+79|79|- M5: Classic SHORT (bearish), SMC bullish (conf 0.849), 5 FVGs active
+80|80|- Merged: bullish bias, confidence 0.460, action: long
+81|81|- Macro: DXY flat, SPX risk_on, Silver flat, Volume 0.66x, alignment bullish_all
+82|82|- Higher TF: H4/D1 premium (pos 0.94/0.97), W1 equilibrium
+83|83|- Turtle Soup: BEARISH found at 4434.66
+84|84|- DEFCON: YELLOW (loss_streak=3, runner/scale_in disabled, half risk)
+85|85|
+86|86|Key Factors:
+87|87|✓ Macro alignment bullish_all
+88|88|✓ Classic bullish (breakout_continuation), SMC bullish (conf 0.921)
+89|89|✓ H1 structure bos_bullish
+90|90|✗ Position limit reached (1/1) - trade_allowed=False
+91|91|✗ M5 Classic bias: SHORT (bearish) - divergence against long
+92|92|✗ M5 Divergence: bearish (medium) against position direction
+93|93|✗ Price in premium zone (H4 0.94, D1 0.97) - above OTE 4341-4361
+94|94|✗ Turtle Soup bearish at 4434.66 (fakeout risk)
+95|95|✗ Asia session, dead killzone, low quality
+96|96|✗ DEFCON YELLOW - close sooner, no runners
+97|97|✗ Heartbeat degraded (100.2 min since last)
+98|98|✗ Existing position already -$0.85 loss
+99|99|
+100|100|Decision Logic:
+101|101|پوزیشن باز BUY در ضرر ($0.85-) است. با وجود بایاس bullish در TFهای بالا، موانع متعددی وجود دارد: 1) M5 classic SHORT و divergence bearish در خلاف جهت پوزیشن، 2) قیمت در premium zone (بالای OTE)، 3) Turtle Soup bearish پیدا شده (ریسک فیکاوت)، 4) DEFCON YELLOW دستور close sooner میدهد، 5) حد پوزیشن پر است (افزودن پوزیشن جدید ممنوع). مدیریت ریسک دفاعی میطلبد خروج از معامله ضرردار برای حفظ سرمایه.
+102|102|
+103|103|Next Review: بعد از CPI فردا (16:00 ایران) برای سناریو تازه
+104|104|Risk Status: DEFCON YELLOW - پوزیشن بسته شد، ریسک نصف، بدون runner
+105|105|Heartbeat Updated: 2026-08-11 06:06 UTC
+106|106|
+107|107|--- NEW ENTRY ---
+108|108|2026-08-11 12:34 UTC | XAUUSD Decision Journal
+109|109|=====================================
+110|110|
+111|111|Decision: WAIT ⏳
+112|112|Price: $4370.35-47 (spread 12 pips)
+113|113|
+114|114|Analysis Summary:
+115|115|- Classic: neutral bias, range regime, ATR $8.71
+116|116|- SMC: bullish bias (confidence 0.388), POI: A+, signal: wait
+117|117|- H1 Structure: bos_bearish (confidence 1.0) - conflicts with bullish
+118|118|- M5: Classic neutral, SMC bearish (conf 0.288), 5 FVGs (all filled)
+119|119|- Merged: bullish bias, confidence 0.35, action: long
+120|120|- Macro: DXY flat, SPX neutral, Silver up 0.34% (bullish for gold)
+121|121|- Higher TF: H4/D1/W1 alignment bullish_all
+122|122|- Volume: 0.25x avg (low)
+123|123|- OTE Zone: 4373.18-4386.53 | Current price: 4370.35 (below OTE)
+124|124|- Premium/Discount: discount zone (fib 0.174) - favorable for longs
+125|125|- Power of 3: distribution phase
+126|126|- Session: London + NY killzone active (high quality)
+127|127|
+128|128|Key Factors:
+129|129|✓ Market open, London+NY killzone active (high quality)
+130|130|✓ Macro alignment bullish_all, Silver up (bullish for gold)
+131|131|✓ SMC POI: A+, premium/discount = discount zone
+132|132|✓ No open positions, trade_allowed=True
+133|133|✓ No immediate news risk (CPI tomorrow 16:00 Iran)
+134|134|✗ Classic neutral, range regime (no trend)
+135|135|✗ H1 Structure: bos_bearish (conf 1.0) - strong conflict
+136|136|✗ M5 SMC bearish (conf 0.288)
+137|137|✗ SMC confidence low (0.388), signal: wait
+138|138|✗ Merged confidence low (0.35)
+139|139|✗ Price below OTE zone low (4373.18) - not in optimal entry yet
+140|140|✗ Volume low (0.25x avg)
+141|141|✗ DEFCON YELLOW: loss_streak=3, half risk, no runners/scale-in
+142|142|✗ Heartbeat: code_fallback, 488 min since last, should defer to code
+143|143|✗ Power of 3: distribution (not accumulation)
+144|144|
+145|145|Decision Logic:
+146|146|با وجود macro bullish_all، killzone لندن/نیویورک فعال، و discount zone، موانع Heavyweight مانع ورودند: 1) H1 structure bos_bearish با confidence 1.0 در خلاف جهت long، 2) M5 SMC bearish، 3) SMC confidence پایین (0.388) و signal: wait، 4) قیمت هنوز به OTE zone (4373-4386) نرسیده، 5) DEFCON YELLOW + heartbeat degraded (code_fallback 488 دقیقه). مدیریت ریسک دفاعی میطلبد صبر برای قیمت رسیدن به OTE zone با تایید M5 bullish. CPI فردا (۱۶:۰۰ ایران) میتواند catalyst حرکت باشد.
+147|147|
+148|148|Next Review: منتظر قیمت رسیدن به OTE zone (۴۳۷۳-۴۳۸۶) با تایید M5 bullish، یا پس از CPI فردا
+149|149|Risk Status: DEFCON YELLOW - ریسک نصف، بدون runner، scale-in غیرفعال
+150|150|Heartbeat Updated: 2026-08-11 12:34 UTC
+
+--- NEW ENTRY ---
+2026-08-11 12:54 UTC | XAUUSD Decision Journal
+=====================================
+
+Decision: WAIT ⏳
+Price: $4373.05-17 (spread 12 pips)
+
+Analysis Summary:
+- Classic: neutral bias, range regime, ATR $8.36
+- SMC: bullish bias (confidence 0.379), POI: A, signal: wait
+- H1 Structure: bos_bearish (confidence 1.0) - conflicts with bullish
+- M5: Classic neutral, SMC bearish (conf 0.457), 5 FVGs (all filled)
+- Merged: bullish bias, confidence 0.340, action: long
+- Macro: DXY flat, SPX neutral, Silver up 0.55% (bullish for gold)
+- Higher TF: H4/D1/W1 alignment bullish_all
+- Volume: 0.56x avg (normal)
+- OTE Zone: 4373.18-4386.53 | Current price: 4373.05 (at OTE low)
+- Premium/Discount: discount zone (fib 0.208) - favorable for longs
+- Power of 3: distribution phase
+- Session: London + NY killzone active (high quality)
+
+Key Factors:
+✓ Market open, London+NY killzone active (high quality)
+✓ Macro alignment bullish_all, Silver up (bullish for gold)
+✓ SMC POI: A, premium/discount = discount zone
+✓ No open positions, trade_allowed=True
+✓ No immediate news risk (CPI tomorrow 16:00 Iran)
+✗ Classic neutral, range regime (no trend)
+✗ H1 Structure: bos_bearish (conf 1.0) - strong conflict
+✗ M5 SMC bearish (conf 0.457)
+✗ SMC confidence low (0.379), signal: wait
+✗ Merged confidence low (0.340)
+✗ Volume below avg (0.56x)
+✗ DEFCON YELLOW: loss_streak=3, half risk, no runners/scale-in
+✗ Power of 3: distribution (not accumulation)
+✗ CPI tomorrow (16:00 Iran) - high impact USD event
+
+Decision Logic:
+با وجود macro bullish_all، killzone لندن/نیویورک فعال، و discount zone، موانع سنگین مانع ورودند: 1) H1 structure bos_bearish با confidence 1.0 در خلاف جهت long، 2) M5 SMC bearish، 3) SMC confidence پایین (0.379) و signal: wait، 4) Merged confidence 0.34 (خیلی پایین)، 5) DEFCON YELLOW + heartbeat degraded، 6) Power of 3 در phase distribution، 7) CPI فردا catalyst ریسکبالا. مدیریت ریسک دفاعی میطلبد صبر برای تایید جهت در M5 و H1، یا پس از CPI فردا برای سناریو تازه.
+
+Next Review: منتظر تایید M5 bullish + H1 structure bullish، یا پس از CPI فردا (۱۶:۰۰ ایران)
+Risk Status: DEFCON YELLOW - ریسک نصف، بدون runner، scale-in غیرفعال
+Heartbeat Updated: 2026-08-11 12:54 UTC

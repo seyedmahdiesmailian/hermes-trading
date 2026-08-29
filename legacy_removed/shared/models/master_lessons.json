@@ -1,0 +1,23 @@
+[
+  {
+    "created_at": "2026-08-21T15:37:43.649793+00:00",
+    "by": "HERMES_MASTER",
+    "market_conditions": {
+      "price": 4607.0,
+      "trend": "ANALYZING",
+      "structure": "ANALYZING",
+      "sentiment": "ANALYZING"
+    },
+    "rules_demonstrated": [
+      "Wait for complete market picture before acting",
+      "Always check multiple timeframes",
+      "Respect risk limits above all"
+    ],
+    "pattern_to_encode": {
+      "trigger": "First cycle after initialization",
+      "action": "WATCH",
+      "reward": "Better understanding of current structure"
+    },
+    "apprentice_should_memorize": true
+  }
+]

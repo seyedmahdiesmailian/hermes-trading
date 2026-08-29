@@ -1,0 +1,39 @@
+{
+  "id": "j_20260809_071111_01",
+  "timestamp": "2026-08-09T07:11:11.600184",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "symbol": "XAUUSD",
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "value_zone": [
+      4141.88,
+      4276.07
+    ],
+    "atr": 7.16,
+    "session_detail": "weekend_closed",
+    "market_open": false,
+    "defcon": "YELLOW",
+    "open_positions": 0,
+    "macro_summary": "DXY flat, SPX risk-on, Silver bullish +0.59%, H4/D1/W1 bullish_all, OTE 4297-4313"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (weekend). market_open=false، session_risk_mult=0.0. هیچ پوزیشن بازی وجود ندارد. هر سه تایمفریم H4/D1/W1 صعودی، SMC conf=0.87، merged=0.78 bullish، Defcon YELLOW (loss_streak=3). تا بازگشایی Asia یکشنبه شب هیچ اقدامی ممکن نیست. ⏳ WAIT — در صورت بازگشایی با half risk ورود. محافظهکارانه.",
+    "risk_check": {
+      "trade_allowed": false,
+      "risk_usd": 0.0,
+      "risk_mult": 0.0,
+      "defcon": "YELLOW",
+      "session_risk_mult": 0.0,
+      "market_closed": true
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

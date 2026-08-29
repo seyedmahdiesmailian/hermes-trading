@@ -1,0 +1,31 @@
+{
+  "id": "j_20260809_161800_01",
+  "timestamp": "2026-08-09T16:18:00",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "smc_confidence": 0.871,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "session": "weekend",
+    "market_open": false,
+    "defcon": "yellow",
+    "quote_age_sec": 132467
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (Sunday). market_open=False, session=weekend, volatility=none, session_risk=0.0. قانون اول: Market closed -> wait. هیچ پوزیشنی باز نیست که مدیریت شود. تحلیل تکنیکال (SMC bullish با confidence 0.87, merged bullish 0.78) صرفاً آکادمیک و غیرقابل اجراست تا باز شدن بازار. هشدار DEFCON YELLOW (loss_streak=3, ریسک نصف) هم احتیاط مضاعف را گوشزد میکند. رویداد مهم بعدی: Core CPI در چهارشنبه 12 آگوست (16:00 تهران). تا آن زمان بازار باید باز شود و فرصت تحلیل مجدد فراهم گردد. ⏳ منتظر open بازار در دوشنبه هستیم.",
+    "risk_check": {
+      "market_open": false,
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "trade_allowed": false,
+      "reason": "بازار بسته — آخر هفته (Sunday)"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

@@ -1,0 +1,4324 @@
+[
+  {
+    "trades": 17,
+    "wins": 5,
+    "losses": 9,
+    "scratches": 3,
+    "net_pnl": 23.57,
+    "win_rate": 0.2941,
+    "win_rate_decided": 0.3571,
+    "trade_log": [
+      {
+        "entry_index": 236,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 239,
+        "exit": 4413.93,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 239,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 240,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 356,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 357,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 360,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 361,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 512,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 515,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 515,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 517,
+        "exit": 4317.87,
+        "pnl": 8.83,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 521,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 522,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 600,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 605,
+        "exit": 4390.28,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 628,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 629,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 776,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 777,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 777,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 778,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 788,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 790,
+        "exit": 4345.56,
+        "pnl": 8.91,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 876,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 877,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 936,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 939,
+        "exit": 4524.98,
+        "pnl": 14.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 977,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 978,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 1049,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 1050,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1441,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 1442,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "A: 1500 bars RR1.5 BE0.5",
+    "bars": 1500,
+    "be": 0.5,
+    "partial": 0.0,
+    "min_rr": 1.5,
+    "range_from": "2026-08-06T17:00:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 17,
+    "wins": 7,
+    "losses": 9,
+    "scratches": 1,
+    "net_pnl": 36.09,
+    "win_rate": 0.4118,
+    "win_rate_decided": 0.4375,
+    "trade_log": [
+      {
+        "entry_index": 236,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 239,
+        "exit": 4413.93,
+        "pnl": 2.26,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 239,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 240,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 356,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 357,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 360,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 361,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 512,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 515,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 515,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 517,
+        "exit": 4317.87,
+        "pnl": 10.99,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 521,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 522,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 600,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 605,
+        "exit": 4390.28,
+        "pnl": 2.05,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 628,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 629,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 776,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 777,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 777,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 778,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 788,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 790,
+        "exit": 4345.56,
+        "pnl": 11.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 876,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 877,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 936,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 939,
+        "exit": 4524.98,
+        "pnl": 17.56,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 977,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 978,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 1049,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 1050,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1441,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 1442,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "B: 1500 bars +partial50",
+    "bars": 1500,
+    "be": 0.5,
+    "partial": 0.5,
+    "min_rr": 1.5,
+    "range_from": "2026-08-06T17:00:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 28,
+    "wins": 7,
+    "losses": 13,
+    "scratches": 8,
+    "net_pnl": 25.19,
+    "win_rate": 0.25,
+    "win_rate_decided": 0.35,
+    "trade_log": [
+      {
+        "entry_index": 622,
+        "side": "SELL",
+        "entry": 4050.07,
+        "exit_index": 623,
+        "exit": 4044.46,
+        "pnl": 5.41,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 641,
+        "side": "SELL",
+        "entry": 4036.55,
+        "exit_index": 643,
+        "exit": 4036.55,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 825,
+        "side": "SELL",
+        "entry": 4047.83,
+        "exit_index": 826,
+        "exit": 4049.56,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 852,
+        "side": "SELL",
+        "entry": 4032.89,
+        "exit_index": 854,
+        "exit": 4032.89,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 898,
+        "side": "SELL",
+        "entry": 4027.62,
+        "exit_index": 900,
+        "exit": 4027.62,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1135,
+        "side": "SELL",
+        "entry": 4049.23,
+        "exit_index": 1137,
+        "exit": 4049.23,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1139,
+        "side": "SELL",
+        "entry": 4045.53,
+        "exit_index": 1141,
+        "exit": 4045.53,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1333,
+        "side": "BUY",
+        "entry": 4084.69,
+        "exit_index": 1334,
+        "exit": 4082.69,
+        "pnl": -2.2,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1433,
+        "side": "BUY",
+        "entry": 4246.28,
+        "exit_index": 1434,
+        "exit": 4245.08,
+        "pnl": -1.4,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1438,
+        "side": "BUY",
+        "entry": 4248.33,
+        "exit_index": 1440,
+        "exit": 4254.82,
+        "pnl": 6.29,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1519,
+        "side": "SELL",
+        "entry": 4243.47,
+        "exit_index": 1520,
+        "exit": 4246.82,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1736,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 1739,
+        "exit": 4413.93,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1739,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 1740,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1856,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 1857,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1860,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 1861,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2012,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 2015,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2015,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 2017,
+        "exit": 4317.87,
+        "pnl": 8.83,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2021,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 2022,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2100,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 2105,
+        "exit": 4390.28,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2128,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 2129,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2276,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 2277,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2277,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 2278,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2288,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 2290,
+        "exit": 4345.56,
+        "pnl": 8.91,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2376,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 2377,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2436,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 2439,
+        "exit": 4524.98,
+        "pnl": 14.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2477,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 2478,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2549,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 2550,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2941,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 2942,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "C: 3000 bars RR1.5 BE0.5",
+    "bars": 3000,
+    "be": 0.5,
+    "partial": 0.0,
+    "min_rr": 1.5,
+    "range_from": "2026-07-15T10:00:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 28,
+    "wins": 12,
+    "losses": 13,
+    "scratches": 3,
+    "net_pnl": 44.48,
+    "win_rate": 0.4286,
+    "win_rate_decided": 0.48,
+    "trade_log": [
+      {
+        "entry_index": 622,
+        "side": "SELL",
+        "entry": 4050.07,
+        "exit_index": 623,
+        "exit": 4044.46,
+        "pnl": 5.41,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 641,
+        "side": "SELL",
+        "entry": 4036.55,
+        "exit_index": 643,
+        "exit": 4036.55,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 825,
+        "side": "SELL",
+        "entry": 4047.83,
+        "exit_index": 826,
+        "exit": 4049.56,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 852,
+        "side": "SELL",
+        "entry": 4032.89,
+        "exit_index": 854,
+        "exit": 4032.89,
+        "pnl": 1.53,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 898,
+        "side": "SELL",
+        "entry": 4027.62,
+        "exit_index": 900,
+        "exit": 4027.62,
+        "pnl": 2.02,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1135,
+        "side": "SELL",
+        "entry": 4049.23,
+        "exit_index": 1137,
+        "exit": 4049.23,
+        "pnl": 2.62,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1139,
+        "side": "SELL",
+        "entry": 4045.53,
+        "exit_index": 1141,
+        "exit": 4045.53,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1333,
+        "side": "BUY",
+        "entry": 4084.69,
+        "exit_index": 1334,
+        "exit": 4082.69,
+        "pnl": -2.2,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1433,
+        "side": "BUY",
+        "entry": 4246.28,
+        "exit_index": 1434,
+        "exit": 4245.08,
+        "pnl": -1.4,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1438,
+        "side": "BUY",
+        "entry": 4248.33,
+        "exit_index": 1440,
+        "exit": 4254.82,
+        "pnl": 6.29,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1519,
+        "side": "SELL",
+        "entry": 4243.47,
+        "exit_index": 1520,
+        "exit": 4246.82,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1736,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 1739,
+        "exit": 4413.93,
+        "pnl": 2.26,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 1739,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 1740,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1856,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 1857,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1860,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 1861,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2012,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 2015,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2015,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 2017,
+        "exit": 4317.87,
+        "pnl": 10.99,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2021,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 2022,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2100,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 2105,
+        "exit": 4390.28,
+        "pnl": 2.05,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2128,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 2129,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2276,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 2277,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2277,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 2278,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2288,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 2290,
+        "exit": 4345.56,
+        "pnl": 11.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2376,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 2377,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2436,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 2439,
+        "exit": 4524.98,
+        "pnl": 17.56,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2477,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 2478,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2549,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 2550,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2941,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 2942,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "D: 3000 bars +partial50",
+    "bars": 3000,
+    "be": 0.5,
+    "partial": 0.5,
+    "min_rr": 1.5,
+    "range_from": "2026-07-15T10:00:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 45,
+    "wins": 10,
+    "losses": 21,
+    "scratches": 14,
+    "net_pnl": 20.78,
+    "win_rate": 0.2222,
+    "win_rate_decided": 0.3226,
+    "trade_log": [
+      {
+        "entry_index": 613,
+        "side": "SELL",
+        "entry": 4098.38,
+        "exit_index": 615,
+        "exit": 4087.31,
+        "pnl": 10.87,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1099,
+        "side": "SELL",
+        "entry": 3976.13,
+        "exit_index": 1101,
+        "exit": 3976.13,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1101,
+        "side": "SELL",
+        "entry": 3978.82,
+        "exit_index": 1105,
+        "exit": 3978.82,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1105,
+        "side": "SELL",
+        "entry": 3978.79,
+        "exit_index": 1107,
+        "exit": 3983.27,
+        "pnl": -4.68,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1110,
+        "side": "SELL",
+        "entry": 3987.34,
+        "exit_index": 1111,
+        "exit": 3990.91,
+        "pnl": -3.77,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1180,
+        "side": "BUY",
+        "entry": 4055.71,
+        "exit_index": 1182,
+        "exit": 4055.71,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1273,
+        "side": "BUY",
+        "entry": 4176.11,
+        "exit_index": 1274,
+        "exit": 4181.38,
+        "pnl": 5.07,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 1274,
+        "side": "BUY",
+        "entry": 4175.14,
+        "exit_index": 1275,
+        "exit": 4172.7,
+        "pnl": -2.64,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1275,
+        "side": "BUY",
+        "entry": 4171.21,
+        "exit_index": 1276,
+        "exit": 4169.6,
+        "pnl": -1.81,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1290,
+        "side": "BUY",
+        "entry": 4172.18,
+        "exit_index": 1292,
+        "exit": 4172.18,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1450,
+        "side": "SELL",
+        "entry": 4130.1,
+        "exit_index": 1451,
+        "exit": 4133.41,
+        "pnl": -3.51,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1461,
+        "side": "SELL",
+        "entry": 4137.39,
+        "exit_index": 1465,
+        "exit": 4137.39,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1644,
+        "side": "BUY",
+        "entry": 4105.13,
+        "exit_index": 1647,
+        "exit": 4101.57,
+        "pnl": -3.76,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1757,
+        "side": "SELL",
+        "entry": 4102.17,
+        "exit_index": 1759,
+        "exit": 4107.68,
+        "pnl": -5.71,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1839,
+        "side": "SELL",
+        "entry": 4067.39,
+        "exit_index": 1842,
+        "exit": 4056.74,
+        "pnl": 10.45,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1867,
+        "side": "SELL",
+        "entry": 4002.03,
+        "exit_index": 1868,
+        "exit": 4005.55,
+        "pnl": -3.72,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1900,
+        "side": "SELL",
+        "entry": 4023.12,
+        "exit_index": 1902,
+        "exit": 4023.12,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2622,
+        "side": "SELL",
+        "entry": 4050.07,
+        "exit_index": 2623,
+        "exit": 4044.46,
+        "pnl": 5.41,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2641,
+        "side": "SELL",
+        "entry": 4036.55,
+        "exit_index": 2643,
+        "exit": 4036.55,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2825,
+        "side": "SELL",
+        "entry": 4047.83,
+        "exit_index": 2826,
+        "exit": 4049.56,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2852,
+        "side": "SELL",
+        "entry": 4032.89,
+        "exit_index": 2854,
+        "exit": 4032.89,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2898,
+        "side": "SELL",
+        "entry": 4027.62,
+        "exit_index": 2900,
+        "exit": 4027.62,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 3135,
+        "side": "SELL",
+        "entry": 4049.23,
+        "exit_index": 3137,
+        "exit": 4049.23,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 3139,
+        "side": "SELL",
+        "entry": 4045.53,
+        "exit_index": 3141,
+        "exit": 4045.53,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 3333,
+        "side": "BUY",
+        "entry": 4084.69,
+        "exit_index": 3334,
+        "exit": 4082.69,
+        "pnl": -2.2,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3433,
+        "side": "BUY",
+        "entry": 4246.28,
+        "exit_index": 3434,
+        "exit": 4245.08,
+        "pnl": -1.4,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3438,
+        "side": "BUY",
+        "entry": 4248.33,
+        "exit_index": 3440,
+        "exit": 4254.82,
+        "pnl": 6.29,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 3519,
+        "side": "SELL",
+        "entry": 4243.47,
+        "exit_index": 3520,
+        "exit": 4246.82,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3736,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 3739,
+        "exit": 4413.93,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 3739,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 3740,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3856,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 3857,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 3860,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 3861,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4012,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 4015,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4015,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 4017,
+        "exit": 4317.87,
+        "pnl": 8.83,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4021,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 4022,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4100,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 4105,
+        "exit": 4390.28,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4128,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 4129,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4276,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 4277,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4277,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 4278,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4288,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 4290,
+        "exit": 4345.56,
+        "pnl": 8.91,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4376,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 4377,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4436,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 4439,
+        "exit": 4524.98,
+        "pnl": 14.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4477,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 4478,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4549,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 4550,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4941,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 4942,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "E: 5000 bars RR1.5 BE0.5",
+    "bars": 5000,
+    "be": 0.5,
+    "partial": 0.0,
+    "min_rr": 1.5,
+    "range_from": "2026-06-15T08:00:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 45,
+    "wins": 19,
+    "losses": 21,
+    "scratches": 5,
+    "net_pnl": 53.51,
+    "win_rate": 0.4222,
+    "win_rate_decided": 0.475,
+    "trade_log": [
+      {
+        "entry_index": 613,
+        "side": "SELL",
+        "entry": 4098.38,
+        "exit_index": 615,
+        "exit": 4087.31,
+        "pnl": 13.54,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1099,
+        "side": "SELL",
+        "entry": 3976.13,
+        "exit_index": 1101,
+        "exit": 3976.13,
+        "pnl": 1.9,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 1101,
+        "side": "SELL",
+        "entry": 3978.82,
+        "exit_index": 1105,
+        "exit": 3978.82,
+        "pnl": 1.88,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 1105,
+        "side": "SELL",
+        "entry": 3978.79,
+        "exit_index": 1107,
+        "exit": 3983.27,
+        "pnl": -4.68,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1110,
+        "side": "SELL",
+        "entry": 3987.34,
+        "exit_index": 1111,
+        "exit": 3990.91,
+        "pnl": -3.77,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1180,
+        "side": "BUY",
+        "entry": 4055.71,
+        "exit_index": 1182,
+        "exit": 4055.71,
+        "pnl": 1.47,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 1273,
+        "side": "BUY",
+        "entry": 4176.11,
+        "exit_index": 1274,
+        "exit": 4181.38,
+        "pnl": 5.07,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 1274,
+        "side": "BUY",
+        "entry": 4175.14,
+        "exit_index": 1275,
+        "exit": 4172.7,
+        "pnl": -2.64,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1275,
+        "side": "BUY",
+        "entry": 4171.21,
+        "exit_index": 1276,
+        "exit": 4169.6,
+        "pnl": -1.81,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1290,
+        "side": "BUY",
+        "entry": 4172.18,
+        "exit_index": 1292,
+        "exit": 4172.18,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1450,
+        "side": "SELL",
+        "entry": 4130.1,
+        "exit_index": 1451,
+        "exit": 4133.41,
+        "pnl": -3.51,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1461,
+        "side": "SELL",
+        "entry": 4137.39,
+        "exit_index": 1465,
+        "exit": 4137.39,
+        "pnl": 2.16,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1644,
+        "side": "BUY",
+        "entry": 4105.13,
+        "exit_index": 1647,
+        "exit": 4101.57,
+        "pnl": -3.76,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1757,
+        "side": "SELL",
+        "entry": 4102.17,
+        "exit_index": 1759,
+        "exit": 4107.68,
+        "pnl": -5.71,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1839,
+        "side": "SELL",
+        "entry": 4067.39,
+        "exit_index": 1842,
+        "exit": 4056.74,
+        "pnl": 13.01,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1867,
+        "side": "SELL",
+        "entry": 4002.03,
+        "exit_index": 1868,
+        "exit": 4005.55,
+        "pnl": -3.72,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1900,
+        "side": "SELL",
+        "entry": 4023.12,
+        "exit_index": 1902,
+        "exit": 4023.12,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2622,
+        "side": "SELL",
+        "entry": 4050.07,
+        "exit_index": 2623,
+        "exit": 4044.46,
+        "pnl": 5.41,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 2641,
+        "side": "SELL",
+        "entry": 4036.55,
+        "exit_index": 2643,
+        "exit": 4036.55,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2825,
+        "side": "SELL",
+        "entry": 4047.83,
+        "exit_index": 2826,
+        "exit": 4049.56,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2852,
+        "side": "SELL",
+        "entry": 4032.89,
+        "exit_index": 2854,
+        "exit": 4032.89,
+        "pnl": 1.53,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2898,
+        "side": "SELL",
+        "entry": 4027.62,
+        "exit_index": 2900,
+        "exit": 4027.62,
+        "pnl": 2.02,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 3135,
+        "side": "SELL",
+        "entry": 4049.23,
+        "exit_index": 3137,
+        "exit": 4049.23,
+        "pnl": 2.62,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 3139,
+        "side": "SELL",
+        "entry": 4045.53,
+        "exit_index": 3141,
+        "exit": 4045.53,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 3333,
+        "side": "BUY",
+        "entry": 4084.69,
+        "exit_index": 3334,
+        "exit": 4082.69,
+        "pnl": -2.2,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3433,
+        "side": "BUY",
+        "entry": 4246.28,
+        "exit_index": 3434,
+        "exit": 4245.08,
+        "pnl": -1.4,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3438,
+        "side": "BUY",
+        "entry": 4248.33,
+        "exit_index": 3440,
+        "exit": 4254.82,
+        "pnl": 6.29,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 3519,
+        "side": "SELL",
+        "entry": 4243.47,
+        "exit_index": 3520,
+        "exit": 4246.82,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3736,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 3739,
+        "exit": 4413.93,
+        "pnl": 2.26,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 3739,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 3740,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 3856,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 3857,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 3860,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 3861,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4012,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 4015,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4015,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 4017,
+        "exit": 4317.87,
+        "pnl": 10.99,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4021,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 4022,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4100,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 4105,
+        "exit": 4390.28,
+        "pnl": 2.05,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4128,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 4129,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4276,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 4277,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4277,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 4278,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4288,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 4290,
+        "exit": 4345.56,
+        "pnl": 11.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4376,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 4377,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4436,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 4439,
+        "exit": 4524.98,
+        "pnl": 17.56,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4477,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 4478,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4549,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 4550,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4941,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 4942,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "F: 5000 bars +partial50",
+    "bars": 5000,
+    "be": 0.5,
+    "partial": 0.5,
+    "min_rr": 1.5,
+    "range_from": "2026-06-15T08:00:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 79,
+    "wins": 18,
+    "losses": 37,
+    "scratches": 24,
+    "net_pnl": 53.48,
+    "win_rate": 0.2278,
+    "win_rate_decided": 0.3273,
+    "trade_log": [
+      {
+        "entry_index": 461,
+        "side": "BUY",
+        "entry": 4691.94,
+        "exit_index": 462,
+        "exit": 4689.9,
+        "pnl": -2.24,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 695,
+        "side": "SELL",
+        "entry": 4699.04,
+        "exit_index": 697,
+        "exit": 4684.89,
+        "pnl": 13.95,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 720,
+        "side": "SELL",
+        "entry": 4672.12,
+        "exit_index": 722,
+        "exit": 4672.12,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 722,
+        "side": "SELL",
+        "entry": 4672.03,
+        "exit_index": 723,
+        "exit": 4675.71,
+        "pnl": -3.88,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 723,
+        "side": "SELL",
+        "entry": 4671.63,
+        "exit_index": 727,
+        "exit": 4662.14,
+        "pnl": 9.29,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 956,
+        "side": "SELL",
+        "entry": 4690.71,
+        "exit_index": 958,
+        "exit": 4690.71,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 988,
+        "side": "SELL",
+        "entry": 4697.46,
+        "exit_index": 990,
+        "exit": 4687.87,
+        "pnl": 9.39,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 1053,
+        "side": "SELL",
+        "entry": 4662.4,
+        "exit_index": 1055,
+        "exit": 4662.4,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1101,
+        "side": "SELL",
+        "entry": 4566.03,
+        "exit_index": 1102,
+        "exit": 4569.06,
+        "pnl": -3.23,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1102,
+        "side": "SELL",
+        "entry": 4566.22,
+        "exit_index": 1106,
+        "exit": 4549.11,
+        "pnl": 16.91,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1118,
+        "side": "SELL",
+        "entry": 4552.47,
+        "exit_index": 1121,
+        "exit": 4534.66,
+        "pnl": 17.61,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1208,
+        "side": "BUY",
+        "entry": 4547.62,
+        "exit_index": 1209,
+        "exit": 4541.13,
+        "pnl": -6.69,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1209,
+        "side": "BUY",
+        "entry": 4546.39,
+        "exit_index": 1210,
+        "exit": 4540.6,
+        "pnl": -5.99,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1214,
+        "side": "BUY",
+        "entry": 4548.6,
+        "exit_index": 1215,
+        "exit": 4540.72,
+        "pnl": -8.08,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1216,
+        "side": "BUY",
+        "entry": 4543.46,
+        "exit_index": 1223,
+        "exit": 4543.46,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1307,
+        "side": "SELL",
+        "entry": 4508.6,
+        "exit_index": 1308,
+        "exit": 4512.07,
+        "pnl": -3.67,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1308,
+        "side": "SELL",
+        "entry": 4505.96,
+        "exit_index": 1319,
+        "exit": 4489.88,
+        "pnl": 15.88,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1357,
+        "side": "SELL",
+        "entry": 4472.8,
+        "exit_index": 1359,
+        "exit": 4472.8,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1361,
+        "side": "SELL",
+        "entry": 4474.54,
+        "exit_index": 1362,
+        "exit": 4479.52,
+        "pnl": -5.18,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1445,
+        "side": "BUY",
+        "entry": 4538.46,
+        "exit_index": 1446,
+        "exit": 4536.01,
+        "pnl": -2.65,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1544,
+        "side": "SELL",
+        "entry": 4526.68,
+        "exit_index": 1546,
+        "exit": 4526.68,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1733,
+        "side": "SELL",
+        "entry": 4533.52,
+        "exit_index": 1734,
+        "exit": 4537.31,
+        "pnl": -3.99,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1802,
+        "side": "SELL",
+        "entry": 4508.5,
+        "exit_index": 1803,
+        "exit": 4512.52,
+        "pnl": -4.22,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1908,
+        "side": "SELL",
+        "entry": 4393.46,
+        "exit_index": 1910,
+        "exit": 4393.46,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1984,
+        "side": "BUY",
+        "entry": 4502.46,
+        "exit_index": 1985,
+        "exit": 4509.86,
+        "pnl": 7.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2102,
+        "side": "SELL",
+        "entry": 4505.98,
+        "exit_index": 2103,
+        "exit": 4507.91,
+        "pnl": -2.13,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2106,
+        "side": "SELL",
+        "entry": 4507.19,
+        "exit_index": 2108,
+        "exit": 4507.19,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2284,
+        "side": "SELL",
+        "entry": 4462.94,
+        "exit_index": 2288,
+        "exit": 4462.94,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2544,
+        "side": "SELL",
+        "entry": 4303.78,
+        "exit_index": 2545,
+        "exit": 4310.25,
+        "pnl": -6.67,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2545,
+        "side": "SELL",
+        "entry": 4305.78,
+        "exit_index": 2548,
+        "exit": 4305.78,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2548,
+        "side": "SELL",
+        "entry": 4305.17,
+        "exit_index": 2549,
+        "exit": 4311.21,
+        "pnl": -6.24,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2549,
+        "side": "SELL",
+        "entry": 4306.19,
+        "exit_index": 2550,
+        "exit": 4311.3,
+        "pnl": -5.31,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2760,
+        "side": "SELL",
+        "entry": 4174.33,
+        "exit_index": 2762,
+        "exit": 4153.61,
+        "pnl": 20.52,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2888,
+        "side": "BUY",
+        "entry": 4216.97,
+        "exit_index": 2889,
+        "exit": 4211.29,
+        "pnl": -5.88,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 3613,
+        "side": "SELL",
+        "entry": 4098.38,
+        "exit_index": 3615,
+        "exit": 4087.31,
+        "pnl": 10.87,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4099,
+        "side": "SELL",
+        "entry": 3976.13,
+        "exit_index": 4101,
+        "exit": 3976.13,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4101,
+        "side": "SELL",
+        "entry": 3978.82,
+        "exit_index": 4105,
+        "exit": 3978.82,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4105,
+        "side": "SELL",
+        "entry": 3978.79,
+        "exit_index": 4107,
+        "exit": 3983.27,
+        "pnl": -4.68,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4110,
+        "side": "SELL",
+        "entry": 3987.34,
+        "exit_index": 4111,
+        "exit": 3990.91,
+        "pnl": -3.77,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4180,
+        "side": "BUY",
+        "entry": 4055.71,
+        "exit_index": 4182,
+        "exit": 4055.71,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4273,
+        "side": "BUY",
+        "entry": 4176.11,
+        "exit_index": 4274,
+        "exit": 4181.38,
+        "pnl": 5.07,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4274,
+        "side": "BUY",
+        "entry": 4175.14,
+        "exit_index": 4275,
+        "exit": 4172.7,
+        "pnl": -2.64,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4275,
+        "side": "BUY",
+        "entry": 4171.21,
+        "exit_index": 4276,
+        "exit": 4169.6,
+        "pnl": -1.81,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4290,
+        "side": "BUY",
+        "entry": 4172.18,
+        "exit_index": 4292,
+        "exit": 4172.18,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4450,
+        "side": "SELL",
+        "entry": 4130.1,
+        "exit_index": 4451,
+        "exit": 4133.41,
+        "pnl": -3.51,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4461,
+        "side": "SELL",
+        "entry": 4137.39,
+        "exit_index": 4465,
+        "exit": 4137.39,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4644,
+        "side": "BUY",
+        "entry": 4105.13,
+        "exit_index": 4647,
+        "exit": 4101.57,
+        "pnl": -3.76,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4757,
+        "side": "SELL",
+        "entry": 4102.17,
+        "exit_index": 4759,
+        "exit": 4107.68,
+        "pnl": -5.71,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4839,
+        "side": "SELL",
+        "entry": 4067.39,
+        "exit_index": 4842,
+        "exit": 4056.74,
+        "pnl": 10.45,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4867,
+        "side": "SELL",
+        "entry": 4002.03,
+        "exit_index": 4868,
+        "exit": 4005.55,
+        "pnl": -3.72,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4900,
+        "side": "SELL",
+        "entry": 4023.12,
+        "exit_index": 4902,
+        "exit": 4023.12,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 5622,
+        "side": "SELL",
+        "entry": 4050.07,
+        "exit_index": 5623,
+        "exit": 4044.46,
+        "pnl": 5.41,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 5641,
+        "side": "SELL",
+        "entry": 4036.55,
+        "exit_index": 5643,
+        "exit": 4036.55,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 5825,
+        "side": "SELL",
+        "entry": 4047.83,
+        "exit_index": 5826,
+        "exit": 4049.56,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 5852,
+        "side": "SELL",
+        "entry": 4032.89,
+        "exit_index": 5854,
+        "exit": 4032.89,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 5898,
+        "side": "SELL",
+        "entry": 4027.62,
+        "exit_index": 5900,
+        "exit": 4027.62,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 6135,
+        "side": "SELL",
+        "entry": 4049.23,
+        "exit_index": 6137,
+        "exit": 4049.23,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6139,
+        "side": "SELL",
+        "entry": 4045.53,
+        "exit_index": 6141,
+        "exit": 4045.53,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6333,
+        "side": "BUY",
+        "entry": 4084.69,
+        "exit_index": 6334,
+        "exit": 4082.69,
+        "pnl": -2.2,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6433,
+        "side": "BUY",
+        "entry": 4246.28,
+        "exit_index": 6434,
+        "exit": 4245.08,
+        "pnl": -1.4,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6438,
+        "side": "BUY",
+        "entry": 4248.33,
+        "exit_index": 6440,
+        "exit": 4254.82,
+        "pnl": 6.29,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 6519,
+        "side": "SELL",
+        "entry": 4243.47,
+        "exit_index": 6520,
+        "exit": 4246.82,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6736,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 6739,
+        "exit": 4413.93,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 6739,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 6740,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6856,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 6857,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6860,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 6861,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 7012,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 7015,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 7015,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 7017,
+        "exit": 4317.87,
+        "pnl": 8.83,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7021,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 7022,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 7100,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 7105,
+        "exit": 4390.28,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7128,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 7129,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 7276,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 7277,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7277,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 7278,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7288,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 7290,
+        "exit": 4345.56,
+        "pnl": 8.91,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7376,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 7377,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7436,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 7439,
+        "exit": 4524.98,
+        "pnl": 14.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7477,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 7478,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7549,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 7550,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7941,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 7942,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "G: 8000 bars RR1.5 BE0.5",
+    "bars": 8000,
+    "be": 0.5,
+    "partial": 0.0,
+    "min_rr": 1.5,
+    "range_from": "2026-04-29T14:30:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 79,
+    "wins": 33,
+    "losses": 37,
+    "scratches": 9,
+    "net_pnl": 127.99,
+    "win_rate": 0.4177,
+    "win_rate_decided": 0.4714,
+    "trade_log": [
+      {
+        "entry_index": 461,
+        "side": "BUY",
+        "entry": 4691.94,
+        "exit_index": 462,
+        "exit": 4689.9,
+        "pnl": -2.24,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 695,
+        "side": "SELL",
+        "entry": 4699.04,
+        "exit_index": 697,
+        "exit": 4684.89,
+        "pnl": 17.39,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 720,
+        "side": "SELL",
+        "entry": 4672.12,
+        "exit_index": 722,
+        "exit": 4672.12,
+        "pnl": 2.17,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 722,
+        "side": "SELL",
+        "entry": 4672.03,
+        "exit_index": 723,
+        "exit": 4675.71,
+        "pnl": -3.88,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 723,
+        "side": "SELL",
+        "entry": 4671.63,
+        "exit_index": 727,
+        "exit": 4662.14,
+        "pnl": 11.56,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 956,
+        "side": "SELL",
+        "entry": 4690.71,
+        "exit_index": 958,
+        "exit": 4690.71,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 988,
+        "side": "SELL",
+        "entry": 4697.46,
+        "exit_index": 990,
+        "exit": 4687.87,
+        "pnl": 11.69,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 1053,
+        "side": "SELL",
+        "entry": 4662.4,
+        "exit_index": 1055,
+        "exit": 4662.4,
+        "pnl": 1.13,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1101,
+        "side": "SELL",
+        "entry": 4566.03,
+        "exit_index": 1102,
+        "exit": 4569.06,
+        "pnl": -3.23,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1102,
+        "side": "SELL",
+        "entry": 4566.22,
+        "exit_index": 1106,
+        "exit": 4549.11,
+        "pnl": 21.09,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1118,
+        "side": "SELL",
+        "entry": 4552.47,
+        "exit_index": 1121,
+        "exit": 4534.66,
+        "pnl": 21.96,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1208,
+        "side": "BUY",
+        "entry": 4547.62,
+        "exit_index": 1209,
+        "exit": 4541.13,
+        "pnl": -6.69,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1209,
+        "side": "BUY",
+        "entry": 4546.39,
+        "exit_index": 1210,
+        "exit": 4540.6,
+        "pnl": -5.99,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1214,
+        "side": "BUY",
+        "entry": 4548.6,
+        "exit_index": 1215,
+        "exit": 4540.72,
+        "pnl": -8.08,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1216,
+        "side": "BUY",
+        "entry": 4543.46,
+        "exit_index": 1223,
+        "exit": 4543.46,
+        "pnl": 4.18,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1307,
+        "side": "SELL",
+        "entry": 4508.6,
+        "exit_index": 1308,
+        "exit": 4512.07,
+        "pnl": -3.67,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1308,
+        "side": "SELL",
+        "entry": 4505.96,
+        "exit_index": 1319,
+        "exit": 4489.88,
+        "pnl": 19.8,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1357,
+        "side": "SELL",
+        "entry": 4472.8,
+        "exit_index": 1359,
+        "exit": 4472.8,
+        "pnl": 1.92,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 1361,
+        "side": "SELL",
+        "entry": 4474.54,
+        "exit_index": 1362,
+        "exit": 4479.52,
+        "pnl": -5.18,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1445,
+        "side": "BUY",
+        "entry": 4538.46,
+        "exit_index": 1446,
+        "exit": 4536.01,
+        "pnl": -2.65,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1544,
+        "side": "SELL",
+        "entry": 4526.68,
+        "exit_index": 1546,
+        "exit": 4526.68,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1733,
+        "side": "SELL",
+        "entry": 4533.52,
+        "exit_index": 1734,
+        "exit": 4537.31,
+        "pnl": -3.99,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1802,
+        "side": "SELL",
+        "entry": 4508.5,
+        "exit_index": 1803,
+        "exit": 4512.52,
+        "pnl": -4.22,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1908,
+        "side": "SELL",
+        "entry": 4393.46,
+        "exit_index": 1910,
+        "exit": 4393.46,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1984,
+        "side": "BUY",
+        "entry": 4502.46,
+        "exit_index": 1985,
+        "exit": 4509.86,
+        "pnl": 7.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2102,
+        "side": "SELL",
+        "entry": 4505.98,
+        "exit_index": 2103,
+        "exit": 4507.91,
+        "pnl": -2.13,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2106,
+        "side": "SELL",
+        "entry": 4507.19,
+        "exit_index": 2108,
+        "exit": 4507.19,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2284,
+        "side": "SELL",
+        "entry": 4462.94,
+        "exit_index": 2288,
+        "exit": 4462.94,
+        "pnl": 2.59,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2544,
+        "side": "SELL",
+        "entry": 4303.78,
+        "exit_index": 2545,
+        "exit": 4310.25,
+        "pnl": -6.67,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2545,
+        "side": "SELL",
+        "entry": 4305.78,
+        "exit_index": 2548,
+        "exit": 4305.78,
+        "pnl": 3.05,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 2548,
+        "side": "SELL",
+        "entry": 4305.17,
+        "exit_index": 2549,
+        "exit": 4311.21,
+        "pnl": -6.24,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2549,
+        "side": "SELL",
+        "entry": 4306.19,
+        "exit_index": 2550,
+        "exit": 4311.3,
+        "pnl": -5.31,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2760,
+        "side": "SELL",
+        "entry": 4174.33,
+        "exit_index": 2762,
+        "exit": 4153.61,
+        "pnl": 25.6,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2888,
+        "side": "BUY",
+        "entry": 4216.97,
+        "exit_index": 2889,
+        "exit": 4211.29,
+        "pnl": -5.88,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 3613,
+        "side": "SELL",
+        "entry": 4098.38,
+        "exit_index": 3615,
+        "exit": 4087.31,
+        "pnl": 13.54,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4099,
+        "side": "SELL",
+        "entry": 3976.13,
+        "exit_index": 4101,
+        "exit": 3976.13,
+        "pnl": 1.9,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 4101,
+        "side": "SELL",
+        "entry": 3978.82,
+        "exit_index": 4105,
+        "exit": 3978.82,
+        "pnl": 1.88,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 4105,
+        "side": "SELL",
+        "entry": 3978.79,
+        "exit_index": 4107,
+        "exit": 3983.27,
+        "pnl": -4.68,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4110,
+        "side": "SELL",
+        "entry": 3987.34,
+        "exit_index": 4111,
+        "exit": 3990.91,
+        "pnl": -3.77,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4180,
+        "side": "BUY",
+        "entry": 4055.71,
+        "exit_index": 4182,
+        "exit": 4055.71,
+        "pnl": 1.47,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 4273,
+        "side": "BUY",
+        "entry": 4176.11,
+        "exit_index": 4274,
+        "exit": 4181.38,
+        "pnl": 5.07,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4274,
+        "side": "BUY",
+        "entry": 4175.14,
+        "exit_index": 4275,
+        "exit": 4172.7,
+        "pnl": -2.64,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4275,
+        "side": "BUY",
+        "entry": 4171.21,
+        "exit_index": 4276,
+        "exit": 4169.6,
+        "pnl": -1.81,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4290,
+        "side": "BUY",
+        "entry": 4172.18,
+        "exit_index": 4292,
+        "exit": 4172.18,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4450,
+        "side": "SELL",
+        "entry": 4130.1,
+        "exit_index": 4451,
+        "exit": 4133.41,
+        "pnl": -3.51,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4461,
+        "side": "SELL",
+        "entry": 4137.39,
+        "exit_index": 4465,
+        "exit": 4137.39,
+        "pnl": 2.16,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4644,
+        "side": "BUY",
+        "entry": 4105.13,
+        "exit_index": 4647,
+        "exit": 4101.57,
+        "pnl": -3.76,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4757,
+        "side": "SELL",
+        "entry": 4102.17,
+        "exit_index": 4759,
+        "exit": 4107.68,
+        "pnl": -5.71,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4839,
+        "side": "SELL",
+        "entry": 4067.39,
+        "exit_index": 4842,
+        "exit": 4056.74,
+        "pnl": 13.01,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4867,
+        "side": "SELL",
+        "entry": 4002.03,
+        "exit_index": 4868,
+        "exit": 4005.55,
+        "pnl": -3.72,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4900,
+        "side": "SELL",
+        "entry": 4023.12,
+        "exit_index": 4902,
+        "exit": 4023.12,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 5622,
+        "side": "SELL",
+        "entry": 4050.07,
+        "exit_index": 5623,
+        "exit": 4044.46,
+        "pnl": 5.41,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 5641,
+        "side": "SELL",
+        "entry": 4036.55,
+        "exit_index": 5643,
+        "exit": 4036.55,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 5825,
+        "side": "SELL",
+        "entry": 4047.83,
+        "exit_index": 5826,
+        "exit": 4049.56,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 5852,
+        "side": "SELL",
+        "entry": 4032.89,
+        "exit_index": 5854,
+        "exit": 4032.89,
+        "pnl": 1.53,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 5898,
+        "side": "SELL",
+        "entry": 4027.62,
+        "exit_index": 5900,
+        "exit": 4027.62,
+        "pnl": 2.02,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 6135,
+        "side": "SELL",
+        "entry": 4049.23,
+        "exit_index": 6137,
+        "exit": 4049.23,
+        "pnl": 2.62,
+        "exit_reason": "sl_part",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6139,
+        "side": "SELL",
+        "entry": 4045.53,
+        "exit_index": 6141,
+        "exit": 4045.53,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6333,
+        "side": "BUY",
+        "entry": 4084.69,
+        "exit_index": 6334,
+        "exit": 4082.69,
+        "pnl": -2.2,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6433,
+        "side": "BUY",
+        "entry": 4246.28,
+        "exit_index": 6434,
+        "exit": 4245.08,
+        "pnl": -1.4,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6438,
+        "side": "BUY",
+        "entry": 4248.33,
+        "exit_index": 6440,
+        "exit": 4254.82,
+        "pnl": 6.29,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 6519,
+        "side": "SELL",
+        "entry": 4243.47,
+        "exit_index": 6520,
+        "exit": 4246.82,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6736,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 6739,
+        "exit": 4413.93,
+        "pnl": 2.26,
+        "exit_reason": "sl_part",
+        "session": "london"
+      },
+      {
+        "entry_index": 6739,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 6740,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6856,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 6857,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6860,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 6861,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 7012,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 7015,
+        "exit": 4326.02,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 7015,
+        "side": "SELL",
+        "entry": 4326.9,
+        "exit_index": 7017,
+        "exit": 4317.87,
+        "pnl": 10.99,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7021,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 7022,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 7100,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 7105,
+        "exit": 4390.28,
+        "pnl": 2.05,
+        "exit_reason": "sl_part",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7128,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 7129,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 7276,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 7277,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7277,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 7278,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7288,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 7290,
+        "exit": 4345.56,
+        "pnl": 11.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7376,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 7377,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7436,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 7439,
+        "exit": 4524.98,
+        "pnl": 17.56,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7477,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 7478,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7549,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 7550,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7941,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 7942,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "H: 8000 bars +partial50",
+    "bars": 8000,
+    "be": 0.5,
+    "partial": 0.5,
+    "min_rr": 1.5,
+    "range_from": "2026-04-29T14:30:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  },
+  {
+    "trades": 78,
+    "wins": 18,
+    "losses": 37,
+    "scratches": 23,
+    "net_pnl": 53.43,
+    "win_rate": 0.2308,
+    "win_rate_decided": 0.3273,
+    "trade_log": [
+      {
+        "entry_index": 461,
+        "side": "BUY",
+        "entry": 4691.94,
+        "exit_index": 462,
+        "exit": 4689.9,
+        "pnl": -2.24,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 695,
+        "side": "SELL",
+        "entry": 4699.04,
+        "exit_index": 697,
+        "exit": 4684.89,
+        "pnl": 13.95,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 720,
+        "side": "SELL",
+        "entry": 4672.12,
+        "exit_index": 722,
+        "exit": 4672.12,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 722,
+        "side": "SELL",
+        "entry": 4672.03,
+        "exit_index": 723,
+        "exit": 4675.71,
+        "pnl": -3.88,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 723,
+        "side": "SELL",
+        "entry": 4671.63,
+        "exit_index": 727,
+        "exit": 4662.14,
+        "pnl": 9.29,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 956,
+        "side": "SELL",
+        "entry": 4690.71,
+        "exit_index": 958,
+        "exit": 4690.71,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 988,
+        "side": "SELL",
+        "entry": 4697.46,
+        "exit_index": 990,
+        "exit": 4687.87,
+        "pnl": 9.39,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 1053,
+        "side": "SELL",
+        "entry": 4662.4,
+        "exit_index": 1055,
+        "exit": 4662.4,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 1101,
+        "side": "SELL",
+        "entry": 4566.03,
+        "exit_index": 1102,
+        "exit": 4569.06,
+        "pnl": -3.23,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1102,
+        "side": "SELL",
+        "entry": 4566.22,
+        "exit_index": 1106,
+        "exit": 4549.11,
+        "pnl": 16.91,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1118,
+        "side": "SELL",
+        "entry": 4552.47,
+        "exit_index": 1121,
+        "exit": 4534.66,
+        "pnl": 17.61,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1208,
+        "side": "BUY",
+        "entry": 4547.62,
+        "exit_index": 1209,
+        "exit": 4541.13,
+        "pnl": -6.69,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1209,
+        "side": "BUY",
+        "entry": 4546.39,
+        "exit_index": 1210,
+        "exit": 4540.6,
+        "pnl": -5.99,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1214,
+        "side": "BUY",
+        "entry": 4548.6,
+        "exit_index": 1215,
+        "exit": 4540.72,
+        "pnl": -8.08,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1216,
+        "side": "BUY",
+        "entry": 4543.46,
+        "exit_index": 1223,
+        "exit": 4543.46,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1307,
+        "side": "SELL",
+        "entry": 4508.6,
+        "exit_index": 1308,
+        "exit": 4512.07,
+        "pnl": -3.67,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1308,
+        "side": "SELL",
+        "entry": 4505.96,
+        "exit_index": 1319,
+        "exit": 4489.88,
+        "pnl": 15.88,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1357,
+        "side": "SELL",
+        "entry": 4472.8,
+        "exit_index": 1359,
+        "exit": 4472.8,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1361,
+        "side": "SELL",
+        "entry": 4474.54,
+        "exit_index": 1362,
+        "exit": 4479.52,
+        "pnl": -5.18,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1445,
+        "side": "BUY",
+        "entry": 4538.46,
+        "exit_index": 1446,
+        "exit": 4536.01,
+        "pnl": -2.65,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1544,
+        "side": "SELL",
+        "entry": 4526.68,
+        "exit_index": 1546,
+        "exit": 4526.68,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1733,
+        "side": "SELL",
+        "entry": 4533.52,
+        "exit_index": 1734,
+        "exit": 4537.31,
+        "pnl": -3.99,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 1802,
+        "side": "SELL",
+        "entry": 4508.5,
+        "exit_index": 1803,
+        "exit": 4512.52,
+        "pnl": -4.22,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 1908,
+        "side": "SELL",
+        "entry": 4393.46,
+        "exit_index": 1910,
+        "exit": 4393.46,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 1984,
+        "side": "BUY",
+        "entry": 4502.46,
+        "exit_index": 1985,
+        "exit": 4509.86,
+        "pnl": 7.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 2102,
+        "side": "SELL",
+        "entry": 4505.98,
+        "exit_index": 2103,
+        "exit": 4507.91,
+        "pnl": -2.13,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2106,
+        "side": "SELL",
+        "entry": 4507.19,
+        "exit_index": 2108,
+        "exit": 4507.19,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2284,
+        "side": "SELL",
+        "entry": 4462.94,
+        "exit_index": 2288,
+        "exit": 4462.94,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2544,
+        "side": "SELL",
+        "entry": 4303.78,
+        "exit_index": 2545,
+        "exit": 4310.25,
+        "pnl": -6.67,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2545,
+        "side": "SELL",
+        "entry": 4305.78,
+        "exit_index": 2548,
+        "exit": 4305.78,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 2548,
+        "side": "SELL",
+        "entry": 4305.17,
+        "exit_index": 2549,
+        "exit": 4311.21,
+        "pnl": -6.24,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2549,
+        "side": "SELL",
+        "entry": 4306.19,
+        "exit_index": 2550,
+        "exit": 4311.3,
+        "pnl": -5.31,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 2760,
+        "side": "SELL",
+        "entry": 4174.33,
+        "exit_index": 2762,
+        "exit": 4153.61,
+        "pnl": 20.52,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 2888,
+        "side": "BUY",
+        "entry": 4216.97,
+        "exit_index": 2889,
+        "exit": 4211.29,
+        "pnl": -5.88,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 3613,
+        "side": "SELL",
+        "entry": 4098.38,
+        "exit_index": 3615,
+        "exit": 4087.31,
+        "pnl": 10.87,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 4099,
+        "side": "SELL",
+        "entry": 3976.13,
+        "exit_index": 4101,
+        "exit": 3976.13,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4101,
+        "side": "SELL",
+        "entry": 3978.82,
+        "exit_index": 4105,
+        "exit": 3978.82,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4105,
+        "side": "SELL",
+        "entry": 3978.79,
+        "exit_index": 4107,
+        "exit": 3983.27,
+        "pnl": -4.68,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4110,
+        "side": "SELL",
+        "entry": 3987.34,
+        "exit_index": 4111,
+        "exit": 3990.91,
+        "pnl": -3.77,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4180,
+        "side": "BUY",
+        "entry": 4055.71,
+        "exit_index": 4182,
+        "exit": 4055.71,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4273,
+        "side": "BUY",
+        "entry": 4176.11,
+        "exit_index": 4274,
+        "exit": 4181.38,
+        "pnl": 5.07,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 4274,
+        "side": "BUY",
+        "entry": 4175.14,
+        "exit_index": 4275,
+        "exit": 4172.7,
+        "pnl": -2.64,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4275,
+        "side": "BUY",
+        "entry": 4171.21,
+        "exit_index": 4276,
+        "exit": 4169.6,
+        "pnl": -1.81,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4290,
+        "side": "BUY",
+        "entry": 4172.18,
+        "exit_index": 4292,
+        "exit": 4172.18,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 4450,
+        "side": "SELL",
+        "entry": 4130.1,
+        "exit_index": 4451,
+        "exit": 4133.41,
+        "pnl": -3.51,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4461,
+        "side": "SELL",
+        "entry": 4137.39,
+        "exit_index": 4465,
+        "exit": 4137.39,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4644,
+        "side": "BUY",
+        "entry": 4105.13,
+        "exit_index": 4647,
+        "exit": 4101.57,
+        "pnl": -3.76,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4757,
+        "side": "SELL",
+        "entry": 4102.17,
+        "exit_index": 4759,
+        "exit": 4107.68,
+        "pnl": -5.71,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4839,
+        "side": "SELL",
+        "entry": 4067.39,
+        "exit_index": 4842,
+        "exit": 4056.74,
+        "pnl": 10.45,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 4867,
+        "side": "SELL",
+        "entry": 4002.03,
+        "exit_index": 4868,
+        "exit": 4005.55,
+        "pnl": -3.72,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 4900,
+        "side": "SELL",
+        "entry": 4023.12,
+        "exit_index": 4902,
+        "exit": 4023.12,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 5622,
+        "side": "SELL",
+        "entry": 4050.07,
+        "exit_index": 5623,
+        "exit": 4044.46,
+        "pnl": 5.41,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 5641,
+        "side": "SELL",
+        "entry": 4036.55,
+        "exit_index": 5643,
+        "exit": 4036.55,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 5825,
+        "side": "SELL",
+        "entry": 4047.83,
+        "exit_index": 5826,
+        "exit": 4049.56,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 5852,
+        "side": "SELL",
+        "entry": 4032.89,
+        "exit_index": 5854,
+        "exit": 4032.89,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 5898,
+        "side": "SELL",
+        "entry": 4027.62,
+        "exit_index": 5900,
+        "exit": 4027.62,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 6135,
+        "side": "SELL",
+        "entry": 4049.23,
+        "exit_index": 6137,
+        "exit": 4049.23,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6139,
+        "side": "SELL",
+        "entry": 4045.53,
+        "exit_index": 6141,
+        "exit": 4045.53,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6333,
+        "side": "BUY",
+        "entry": 4084.69,
+        "exit_index": 6334,
+        "exit": 4082.69,
+        "pnl": -2.2,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6433,
+        "side": "BUY",
+        "entry": 4246.28,
+        "exit_index": 6434,
+        "exit": 4245.08,
+        "pnl": -1.4,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6438,
+        "side": "BUY",
+        "entry": 4248.33,
+        "exit_index": 6440,
+        "exit": 4254.82,
+        "pnl": 6.29,
+        "exit_reason": "tp",
+        "session": "asia"
+      },
+      {
+        "entry_index": 6519,
+        "side": "SELL",
+        "entry": 4243.47,
+        "exit_index": 6520,
+        "exit": 4246.82,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6736,
+        "side": "BUY",
+        "entry": 4413.93,
+        "exit_index": 6739,
+        "exit": 4413.93,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "london"
+      },
+      {
+        "entry_index": 6739,
+        "side": "BUY",
+        "entry": 4408.91,
+        "exit_index": 6740,
+        "exit": 4407.31,
+        "pnl": -1.8,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 6856,
+        "side": "BUY",
+        "entry": 4407.88,
+        "exit_index": 6857,
+        "exit": 4414.65,
+        "pnl": 6.57,
+        "exit_reason": "tp",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 6860,
+        "side": "BUY",
+        "entry": 4408.63,
+        "exit_index": 6861,
+        "exit": 4406.86,
+        "pnl": -1.97,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 7012,
+        "side": "SELL",
+        "entry": 4326.02,
+        "exit_index": 7017,
+        "exit": 4317.24,
+        "pnl": 8.58,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7021,
+        "side": "SELL",
+        "entry": 4329.2,
+        "exit_index": 7022,
+        "exit": 4332.05,
+        "pnl": -3.05,
+        "exit_reason": "sl",
+        "session": "london"
+      },
+      {
+        "entry_index": 7100,
+        "side": "BUY",
+        "entry": 4390.28,
+        "exit_index": 7105,
+        "exit": 4390.28,
+        "pnl": -0.2,
+        "exit_reason": "be",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7128,
+        "side": "BUY",
+        "entry": 4395.98,
+        "exit_index": 7129,
+        "exit": 4394.46,
+        "pnl": -1.72,
+        "exit_reason": "sl",
+        "session": "newyork"
+      },
+      {
+        "entry_index": 7276,
+        "side": "SELL",
+        "entry": 4343.94,
+        "exit_index": 7277,
+        "exit": 4345.61,
+        "pnl": -1.87,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7277,
+        "side": "SELL",
+        "entry": 4342.41,
+        "exit_index": 7278,
+        "exit": 4346.23,
+        "pnl": -4.02,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7288,
+        "side": "SELL",
+        "entry": 4354.67,
+        "exit_index": 7290,
+        "exit": 4345.56,
+        "pnl": 8.91,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7376,
+        "side": "BUY",
+        "entry": 4492.68,
+        "exit_index": 7377,
+        "exit": 4490.95,
+        "pnl": -1.93,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7436,
+        "side": "BUY",
+        "entry": 4510.69,
+        "exit_index": 7439,
+        "exit": 4524.98,
+        "pnl": 14.09,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7477,
+        "side": "BUY",
+        "entry": 4530.47,
+        "exit_index": 7478,
+        "exit": 4538.87,
+        "pnl": 8.2,
+        "exit_reason": "tp",
+        "session": "london"
+      },
+      {
+        "entry_index": 7549,
+        "side": "BUY",
+        "entry": 4604.86,
+        "exit_index": 7550,
+        "exit": 4602.54,
+        "pnl": -2.52,
+        "exit_reason": "sl",
+        "session": "asia"
+      },
+      {
+        "entry_index": 7941,
+        "side": "SELL",
+        "entry": 4585.13,
+        "exit_index": 7942,
+        "exit": 4588.48,
+        "pnl": -3.55,
+        "exit_reason": "sl",
+        "session": "london"
+      }
+    ],
+    "label": "I: 8000 bars BE0.6",
+    "bars": 8000,
+    "be": 0.6,
+    "partial": 0.0,
+    "min_rr": 1.5,
+    "range_from": "2026-04-29T14:30:00+00:00",
+    "range_to": "2026-08-28T23:45:00+00:00"
+  }
+]

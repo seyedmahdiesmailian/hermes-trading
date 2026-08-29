@@ -1,0 +1,28 @@
+{
+  "id": "j_20260809_213600_01",
+  "timestamp": "2026-08-09T21:36:00.000000",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "neutral",
+    "smc_confidence": 0.0,
+    "merged_confidence": 0.0,
+    "atr": 0,
+    "session": "weekend",
+    "market_open": false,
+    "defcon": "green",
+    "macro_dxy": "N/A (بازار بسته)",
+    "macro_spx": "N/A (بازار بسته)",
+    "macro_silver": "N/A (بازار بسته)",
+    "higher_tf_alignment": "N/A (بازار بسته)",
+    "next_news": "Core CPI/CPI Wed Aug 12 16:00 IRT"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (Sunday). market_open=False, session=weekend, analysis_ok=True اما تمام بایاسها neutral با confidence=0.0. quote_age=42h5m. قانون قطعی: Market closed → wait. هیچ پوزیشن بازی وجود ندارد. تحلیل تکنیکال روی داده بسته معتبر نیست. ⏳ منتظر Monday open. DEFCON GREEN — وضعیت ریسک نرمال. رویداد مهم: CPI چهارشنبه (Aug 12)."
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

@@ -1,0 +1,37 @@
+{
+  "id": "j_20260808_183940_01",
+  "timestamp": "2026-08-08T18:39:40.227890",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "market_open": false,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "killzone": "dead",
+    "balance": 1338.71,
+    "equity": 1338.71,
+    "open_positions": 0,
+    "news_risk": false,
+    "merged_bias": "bullish",
+    "merged_confidence": 0.78,
+    "smc_bias": "bullish",
+    "smc_confidence": 0.87,
+    "classic_bias": "neutral",
+    "classic_regime": "range",
+    "alignment": "bullish_all",
+    "silver_bullet_active": true
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (market_open=false). طبق قانون شماره ۱، در بازار بسته فقط heartbeat و journal ثبت میشود و هیچ دستور معاملاتی اجرا نمیشود. تحلیل SMC bullish با confidence=0.87 و alignment=bullish_all است، اما بازار تعطیل است. منتظر باز شدن بازار در جلسه بعدی میمانیم.",
+    "risk_check": {
+      "market_open": false,
+      "news_risk": false,
+      "trade_allowed": true,
+      "rule_applied": "قانون ۱: بازار بسته = فقط journal + heartbeat"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

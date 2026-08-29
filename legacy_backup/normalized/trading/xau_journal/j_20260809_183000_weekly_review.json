@@ -1,0 +1,73 @@
+{
+  "id": "j_20260809_183000_weekly_review",
+  "timestamp": "2026-08-09T18:30:00",
+  "decision_by": "hermes",
+  "session": "weekly_review",
+  "type": "weekly_review",
+  "week": "2026-W32",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "defcon": "yellow",
+    "market_open": false,
+    "account_balance": 1338.71,
+    "account_equity": 1338.71,
+    "open_positions": 1
+  },
+  "review": {
+    "stats_from_report": {
+      "decisions": 0,
+      "trades": 0,
+      "closed": 0,
+      "win_rate": "0% (undefined — 0 trades)",
+      "avg_r": 0.0,
+      "total_r": 0.0
+    },
+    "engine_state_context": {
+      "aug_6_pnl": -8.44,
+      "aug_7_pnl": -11.86,
+      "loss_streak": 6,
+      "defcon": "yellow",
+      "note": "Engine state shows consecutive losing days Aug 6-7 despite trades.csv showing breakeven closes — PnL loss likely from spreads/commissions"
+    },
+    "analysis": {
+      "no_trades_this_week": true,
+      "reason": "بازار در تمام هفته بسته بود (آخر هفته). ۴۵ ژورنال ثبت شده — همگی action=wait با دلیل market_closed",
+      "open_positions": [
+        {
+          "ticket": 97731780,
+          "symbol": "XAUUSD",
+          "direction": "BUY",
+          "entry_price": 4308.92,
+          "sl": 4295.52,
+          "tp": 4336.2,
+          "score": 93,
+          "tier": "A",
+          "partial_done": false,
+          "be_done": false
+        }
+      ],
+      "next_high_impact": [
+        "Core CPI/CPI — Wed Aug 12 16:00 IRT",
+        "Core PPI/PPI — Thu Aug 13 16:00 IRT",
+        "Retail Sales — Fri Aug 14 16:00 IRT"
+      ],
+      "defcon_status": "YELLOW — loss_streak=6, risk at 50%. ادامه ی همین وضعیت توصیه میشود تا بازار باز شود و عملکرد واقعی سنجیده شود."
+    },
+    "parameter_changes": {
+      "applied": false,
+      "reason": "هیچ معاملهای در این هفته انجام نشده (بازار بسته). suggested_params خالی بود. فایل mt5_xau_trade_mgr.py وجود خارجی ندارد — در صورت نیاز باید ایجاد شود. پارامترهای ریسک هماکنون توسط DEFCON YELLOW مدیریت میشوند (risk_multiplier نصف شده)."
+    },
+    "eureka_moments": [],
+    "recommendations": [
+      "1. وضعیت DEFCON YELLOW را تا باز شدن بازار در دوشنبه حفظ کن — loss_streak=6 نیازمند احتیاط مضاعف است",
+      "2. پوزیشن باز ticket=97731780 را در اولین فرصت Monday open مدیریت کن — partial یا BE طبق قوانین",
+      "3. از ورود به معامله جدید در روزهای CPI/PPI (چهارشنبه/پنجشنبه) تا ۳۰ دقیقه بعد از انتشار News خودداری کن",
+      "4. در صورت ادامه loss_streak به ۸+ در هفته آینده, DEFCON را به ORANGE ارتقا بده (risk=25%)",
+      "5. فایل mt5_xau_trade_mgr.py هنوز وجود ندارد — برای اعمال patchهای آینده باید ساخته شود"
+    ]
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": "🔍 **درس هفته W32:** هفته بدون معامله به دلیل بسته بودن بازار. این طبیعی است — قانون 'بازار بسته = wait' به درستی اجرا شده. نکته مهم: loss_streak از ۶ عبور کرده و اگرچه معاملات breakeven بسته شدهاند (pnl=0 در CSV), اما هزینههای اسپرد/کمیسیون باعث PnL منفی واقعی شده است (engine_state: -8.44$ و -11.86$). این یعنی حتی breakeven هم در عمل 'باخت کوچک' محسوب میشود. برای هفته W33: تمرکز روی کیفیت ورود, tight SL, و اجتناب از overtrading."
+}

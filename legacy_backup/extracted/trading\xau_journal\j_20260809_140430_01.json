@@ -1,0 +1,30 @@
+{
+  "id": "j_20260809_140430_01",
+  "timestamp": "2026-08-09T14:04:30.431275",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "smc_confidence": 0.871,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "session": "weekend",
+    "market_open": false,
+    "defcon": "yellow",
+    "quote_age_sec": 124424
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار آخر هفته بسته است. market_open=False, session=weekend, volatility=none, liquidity=none. طبق قانون اول: Market closed -> wait. هیچ معاملهای تا باز شدن بازار دوشنبه ممکن نیست. دادهها stale هستند (بیش از ۳۴ ساعت). DEFCON YELLOW هم مزید بر علت — حتی اگر بازار باز بود باید با احتیاط عمل میکردیم.",
+    "risk_check": {
+      "market_open": false,
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "trade_allowed": false
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

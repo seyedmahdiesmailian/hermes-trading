@@ -1,0 +1,25 @@
+{
+  "date": "2026-08-11",
+  "day": "Tuesday",
+  "bias": "bullish_day",
+  "confidence": 0.6,
+  "key_points": {
+    "htf_alignment": "bullish_all (H4/D1/W1)",
+    "dxy": "neutral (flat, +0.08%)",
+    "risk_sentiment": "neutral (SPX +0.08%)",
+    "silver": "bearish_for_gold (-0.37%, divergence)",
+    "price_position": "H4/D1 premium zone (near range highs), W1 equilibrium",
+    "calendar": "no high-impact USD events"
+  },
+  "levels_warning": "SMC levels error - smc_analyse() got unexpected keyword argument 'lookback_bars'",
+  "scenarios": {
+    "bullish": "Pullback to D1/H4 OB + FVG + macro confirmed, target: previous high / W1 resistance",
+    "bearish": "Only if news/DXY reversal confirmed",
+    "neutral": "Range-bound, wait for breakout"
+  },
+  "decision_loop_guidance": {
+    "primary": "Look for long on pullback to H4/D1 OB/FVG",
+    "avoid": "Chasing breakouts at premium zone",
+    "watch": "Silver divergence, DXY reversal, news catalyst"
+  }
+}

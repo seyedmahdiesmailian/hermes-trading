@@ -1,0 +1,9 @@
+timestamp,symbol,side,volume,entry_price,sl,tp,score,state,reason,ticket,status,pnl,session
+2026-08-06T12:25:10.377998,DJIUSD,BUY,0.01,54575.1,54498.82,54702.24,91,trade,bias=3 rr=1.67 tier=A news=0 | closed,97415440,closed,0.0,london
+2026-08-06T19:47:16.660858,DAXEUR,SELL,0.01,26164.4,26241.94,26009.31,76,trade,bias=1 rr=2.0 tier=C news=0 | closed,97581406,closed,0.0,newyork
+2026-08-06T19:49:02.840373,BTCUSD,BUY,0.01,64638.3,64295.05,65324.2,84,trade,bias=1 rr=2.0 tier=B news=0 | closed,97582290,closed,0.0,newyork
+2026-08-07T08:43:53.005264,XAUUSD,BUY,0.01,4269.4,4255.74,4296.73,88,trade,"bias=3 rr=2.0 tier=B news=0 value={'risk_usd': 13.66, 'reward_usd': 27.33} | closed",97683990,closed,0.0,asia
+2026-08-07T10:30:24.148351,XAUUSD,BUY,0.01,4296.69,4284.95,4320.18,95,trade,"bias=3 rr=2.0 tier=A news=0 value={'risk_usd': 11.74, 'reward_usd': 23.49} | closed",97706912,closed,0.0,london
+2026-08-07T10:58:29.685624,XAUUSD,BUY,0.01,4286.21,4273.72,4310.93,88,trade,"bias=3 rr=2.0 tier=B news=0 value={'risk_usd': 12.4, 'reward_usd': 24.81} | closed",97712303,closed,0.0,london
+2026-08-07T12:04:40.942928,XAUUSD,BUY,0.01,4314.8,4301.39,4341.74,97,trade,"bias=3 rr=2.0 tier=A news=0 value={'risk_usd': 13.45, 'reward_usd': 26.9} | closed",97728216,closed,0.0,london
+2026-08-07T12:15:31.343623,XAUUSD,BUY,0.01,4308.92,4295.52,4336.2,93,trade,"bias=3 rr=2.0 tier=A news=0 value={'risk_usd': 13.56, 'reward_usd': 27.12}",97731780,opened,0,london

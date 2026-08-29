@@ -1,0 +1,118 @@
+[
+  {
+    "timestamp": "2026-08-10T01:35:47Z",
+    "decision": "wait",
+    "reason": "DEFCON YELLOW + سشن آسیایی ضعیف + حجم پایین - شرایط مناسب ورود نیست",
+    "price": 4338.52,
+    "bias": "bullish",
+    "confidence": 0.70,
+    "session": "asia",
+    "defcon": "yellow",
+    "risk_factors": [
+      "loss_streak_3",
+      "low_quality_session",
+      "low_volume",
+      "weak_m5_bias"
+    ],
+    "macro_context": {
+      "dxy": "neutral",
+      "spx": "risk_on",
+      "silver": "bullish_for_gold"
+    }
+  },
+  {
+    "timestamp": "2026-08-11T07:30:13Z",
+    "decision": "wait",
+    "reason": "DEFCON YELLOW (loss_streak=3) → ریسک نصف، رانر غیرفعال. SMC سیگنال 'wait' میده، قیمت در زون premium/distribution high (۴۴۱۶) قرار داره، OTE در ۴۳۴۱-۴۳۶۱ (پایینتر). خبر CPI با تأثیر بالا فردا ۱۶:۰۰. H4/D1/W1 bullish alignment اما classic neutral/range. M15 hidden bullish divergence وجود داره اما ستاپ کامل نیست. منتظر Pullback به سمت OTE/FVGهای unfilled میمونیم.",
+    "price": 4416.63,
+    "bias": "bullish",
+    "confidence": 0.84,
+    "session": "london",
+    "defcon": "yellow",
+    "risk_factors": [
+      "loss_streak_3",
+      "defcon_yellow",
+      "price_at_premium_distribution_high",
+      "smc_signal_wait",
+      "high_impact_cpi_tomorrow",
+      "classic_neutral_range"
+    ],
+    "macro_context": {
+      "dxy": "neutral",
+      "spx": "neutral",
+      "silver": "bearish_for_gold"
+    },
+    "smc_details": {
+      "h1_structure": "bos_bullish",
+      "poi": "C",
+      "ote_zone": "4341.61-4361.75",
+      "unfilled_fvgs_m5": 5,
+      "unfilled_fvgs_h1": 4,
+      "power_of_three": "distribution"
+    }
+  },
+  {
+    "timestamp": "2026-08-11T12:54:00Z",
+    "decision": "wait",
+    "reason": "DEFCON YELLOW + اعتماد پایین (0.34) + سیگنالهای متضاد: H1 bos_bearish (conf 1.0)، M5 SMC bearish، SMC signal: wait، Merged confidence 0.34. CPI فردا (۱۶:۰۰ ایران) catalyst ریسکبالا. مدیریت ریسک دفاعی - صبر برای تایید ساختار یا پس از خبر.",
+    "price": 4373.05,
+    "bias": "bullish",
+    "confidence": 0.34,
+    "session": "london",
+    "defcon": "yellow",
+    "risk_factors": [
+      "loss_streak_3",
+      "defcon_yellow",
+      "h1_bos_bearish_conflict",
+      "m5_smc_bearish",
+      "low_merged_confidence",
+      "smc_signal_wait",
+      "high_impact_cpi_tomorrow",
+      "power_of_3_distribution"
+    ],
+    "macro_context": {
+      "dxy": "flat",
+      "spx": "neutral",
+      "silver": "bullish_for_gold"
+    },
+    "smc_details": {
+      "h1_structure": "bos_bearish",
+      "poi": "A",
+      "ote_zone": "4373.18-4386.53",
+      "premium_discount": "discount (fib 0.208)",
+      "power_of_three": "distribution"
+    }
+  },
+  {
+    "timestamp": "2026-08-11T13:54:58Z",
+    "decision": "wait",
+    "reason": "DEFCON YELLOW (3 loss streak) + اعتماد پایین (0.47) + تضاد M5/H1 با بایاس بالادستی + PowerOf3 در فاز distribution + CPI بااثر بالا فردا. صبر برای وضوح پس از خبر و اصلاح بایاس.",
+    "price": 4377.41,
+    "bias": "bullish",
+    "confidence": 0.47,
+    "session": "newyork",
+    "defcon": "yellow",
+    "risk_factors": [
+      "loss_streak_3",
+      "defcon_yellow",
+      "h1_bos_bearish_conflict",
+      "m5_smc_bearish",
+      "m5_classic_neutral",
+      "low_merged_confidence",
+      "high_impact_cpi_tomorrow",
+      "power_of_3_distribution"
+    ],
+    "macro_context": {
+      "dxy": "flat",
+      "spx": "neutral",
+      "silver": "bullish_for_gold"
+    },
+    "smc_details": {
+      "h1_structure": "bos_bearish",
+      "poi": "A",
+      "ote_zone": "4373.18-4386.53",
+      "power_of_three": "distribution",
+      "divergence_m5": "hidden_bullish"
+    }
+  }
+]

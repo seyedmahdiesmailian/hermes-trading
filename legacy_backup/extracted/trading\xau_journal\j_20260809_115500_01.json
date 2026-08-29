@@ -1,0 +1,54 @@
+{
+  "id": "j_20260809_115500_01",
+  "timestamp": "2026-08-09T11:55:00.000000",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "merged_action": "long",
+    "atr": 7.16,
+    "m5_atr": 3.31,
+    "h1_structure": "range",
+    "session": "weekend",
+    "market_open": false,
+    "killzone": "dead",
+    "defcon": "yellow",
+    "macro_dxy": "flat",
+    "macro_silver": "up",
+    "macro_spx": "risk_on",
+    "higher_tf_alignment": "bullish_all",
+    "ote_zone": {
+      "low": 4297.96,
+      "high": 4313.86
+    },
+    "poi": "B",
+    "power_of_three": "distribution",
+    "divergence": "none",
+    "account_balance": 1338.71,
+    "account_equity": 1338.71,
+    "open_positions": 0
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته (آخر هفته). session=weekend, volatility=none, session_risk_multiplier=0.0. قانون قطعی: market closed -> wait. هیچ ورودی در بازار بسته مجاز نیست. سیگنال SMC bullish با confidence=0.87 و merged bullish با confidence=0.78 صرفاً اطلاعاتی هستند — تا بازار باز نشود هیچ اقدامی قابل انجام نیست. وضعیت DEFCON YELLOW با loss_streak=3 و ریسک نصف. هفته بعد با اولین کندل بازگشایی بررسی مجدد.",
+    "risk_check": {
+      "market_open": false,
+      "session_risk_multiplier": 0.0,
+      "session": "weekend",
+      "killzone_active": false,
+      "defcon": "yellow",
+      "defcon_loss_streak": 3,
+      "trade_allowed": false,
+      "reason_blocked": "market_closed_weekend"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

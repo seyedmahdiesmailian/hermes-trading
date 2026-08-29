@@ -1,0 +1,38 @@
+{
+  "id": "j_20260810_085236_01",
+  "timestamp": "2026-08-10T08:52:36.000000",
+  "decision_by": "hermes",
+  "session": "london",
+  "market_snapshot": {
+    "price": 4337.11,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.757,
+    "merged_confidence": 0.68,
+    "atr": 7.18,
+    "session": "london",
+    "market_open": true,
+    "killzone": "london HighQ",
+    "defcon": "yellow",
+    "macro_dxy": "-0.002% flat",
+    "macro_spx": "+0.080% neutral",
+    "macro_silver": "+0.578% bullish",
+    "higher_tf_alignment": "bullish_all",
+    "h1_structure": "bos_bearish",
+    "m5_smc_confidence": 0.144,
+    "next_news": "Core CPI/CPI Wed Aug 12, PPI Thu Aug 13",
+    "heartbeat_mode": "code_fallback"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🔒 تصمیم WAIT گرفتیم — با وجود سیگنال merged bullish (conf=0.68) و killzone لندن فعال HighQ، همگرایی برای ورود LONG کافی نیست و وضعیت دفاعی است. دلایل:\n1) تضاد ساختار: H1 structure=bos_bearish در حالی که سیگنال کلی bullish است؛ بدون تایید ساختار TF بالا.\n2) رژیم کلاسیک = range/neutral و قیمت در 4337 در Equilibrium (fib=0.528) است، نه در Value Zone لانگ (4178-4181) و بالاتر از OTE (4322-4330) — قیمت به POI لانگ نرسیده.\n3) اعتماد M5 بسیار ضعیف (smc_confidence=0.144)؛ divergence هیچ.\n4) Turtle Soup خرسی در 4337.51 با قیمت دقیقاً کنار آن — ریسک شکست جعلی به سمت پایین.\n5) حجم پایین (0.28x) و DEFCON YELLOW (loss_streak=3) با ریسکِ نصف؛ heartbeat در mode=code_fallback با should_defer_to_code=True و risk_mult=0.5 یعنی سیستم خواستار احتیاط بیشتر است.\nجمعبندی: بدون ورود تا رسیدن قیمت به ناحیه OTE/value و تایید ساختار M5؛ محافظهکارانه منتظر Setup-Q میمانیم.",
+    "risk_check": {
+      "entry_allowed": true,
+      "action": "wait",
+      "reason": "low_confluence_defensive"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

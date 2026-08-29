@@ -1,0 +1,35 @@
+{
+  "id": "j_20260808_200930_01",
+  "timestamp": "2026-08-08T20:09:30.144621",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "macro_alignment": "bullish_all",
+    "defcon": "yellow",
+    "value_zone": [
+      4141.88,
+      4276.07
+    ]
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (آخر هفته - weekend). session_risk=0.0. هیچ پوزیشن بازی هم وجود ندارد. تصمیم: wait تا باز شدن بازار در دوشنبه.",
+    "risk_check": {
+      "market_open": false,
+      "session": "weekend",
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "open_positions": 0,
+      "trade_allowed_via_policy": true
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

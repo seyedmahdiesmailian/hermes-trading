@@ -1,0 +1,35 @@
+{
+  "id": "j_20260809_043957_01",
+  "timestamp": "2026-08-09T04:39:57.576117",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "symbol": "XAUUSD",
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "value_zone": [4141.88, 4276.07],
+    "atr": 7.16,
+    "session_detail": "weekend_closed",
+    "market_open": false,
+    "defcon": "YELLOW",
+    "open_positions": 0
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (weekend). market_open=false, session_risk=×0.0. بدون پوزیشن باز. وضعیت نسبت به 17 دقیقه قبل تغییری نکرده. تحلیل: بایاس صعودی (SMC 0.87, merged 0.78), H4/D1/W1 همگی bullish, قیمت 4341 در premium بالای OTE zone (4297-4313). Macro سازگار: DXY flat, Silver bullish, SPX risk-on. DEFCON YELLOW (loss_streak=3) — ورود با نصف ریسک. اما همه اینها تئوری است — بازار بسته است و تا بازگشایی (یکشنبه شب/دوشنبه صبح Asia session) هیچ اقدامی ممکن نیست. ⏳ WAIT.",
+    "risk_check": {
+      "trade_allowed": false,
+      "risk_usd": 0.0,
+      "risk_mult": 0.0,
+      "defcon": "YELLOW",
+      "session_risk_mult": 0.0,
+      "market_closed": true
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

@@ -1,0 +1,319 @@
+{
+  "ok": true,
+  "snapshot": {
+    "balance": 1287.79,
+    "equity": 1287.79,
+    "margin_free": 1287.79,
+    "positions_total": 0,
+    "symbols_with_positions": []
+  },
+  "guards": {
+    "allowed": true
+  },
+  "managed": [],
+  "top": [
+    {
+      "symbol": "XAUUSD",
+      "asset_class": "gold",
+      "timeframes": {
+        "M15": {
+          "last": 4259.19,
+          "atr14": 8.64928571428579,
+          "trend": "mixed",
+          "momentum6": 26.399999999999636,
+          "compression": true,
+          "breakout": false,
+          "breakdown": false,
+          "pd_zone": "premium",
+          "liquidity_sweep": false,
+          "pullback_quality": 0.0,
+          "breakout_quality": 0.0,
+          "score": 37,
+          "hi20": 4261.68,
+          "lo20": 4229.54,
+          "hi50": 4275.34,
+          "lo50": 4223.15
+        },
+        "H1": {
+          "last": 4259.19,
+          "atr14": 19.766428571428737,
+          "trend": "bull",
+          "momentum6": 19.109999999999673,
+          "compression": true,
+          "breakout": false,
+          "breakdown": false,
+          "pd_zone": "premium",
+          "liquidity_sweep": false,
+          "pullback_quality": 0.0,
+          "breakout_quality": 0.0,
+          "score": 62,
+          "hi20": 4284.98,
+          "lo20": 4223.15,
+          "hi50": 4304.36,
+          "lo50": 4065.21
+        },
+        "H4": {
+          "last": 4259.19,
+          "atr14": 43.20142857142868,
+          "trend": "bull",
+          "momentum6": -19.100000000000364,
+          "compression": false,
+          "breakout": false,
+          "breakdown": false,
+          "pd_zone": "premium",
+          "liquidity_sweep": false,
+          "pullback_quality": 0.0,
+          "breakout_quality": 0.0,
+          "score": 58,
+          "hi20": 4304.36,
+          "lo20": 4042.57,
+          "hi50": 4304.36,
+          "lo50": 3995.92
+        }
+      },
+      "ok": true,
+      "direction": "BUY",
+      "bias_strength": 2,
+      "setup_score": 54,
+      "final_score": 77,
+      "rr_estimate": 2.0,
+      "sl_distance_price": 31.62628571428598,
+      "tp_distance_price": 63.25257142857196,
+      "spread": 0.12000000000080036,
+      "state": "trade",
+      "news_hits": [],
+      "news_freeze": null,
+      "adaptive_adj": 0,
+      "correlation_bonus": 0,
+      "execution_quality": {
+        "ok": true,
+        "blocked": false,
+        "reasons": [],
+        "tick_age_sec": 0,
+        "spread_now": 0.12000000000080036,
+        "spread_avg": 0.18175
+      },
+      "thresholds": {
+        "trade": 56,
+        "strong_watch": 50
+      },
+      "session_allowed": true
+    }
+  ],
+  "analytics": {
+    "trades": 7,
+    "win_rate": 0.0,
+    "total_pnl": -11.86,
+    "avg_win": 0.0,
+    "avg_loss": -1.98,
+    "profit_factor": 0.0
+  },
+  "session": "asia",
+  "news_count": 0,
+  "observed_best": {
+    "symbol": "XAUUSD",
+    "asset_class": "gold",
+    "timeframes": {
+      "M15": {
+        "last": 4259.19,
+        "atr14": 8.64928571428579,
+        "trend": "mixed",
+        "momentum6": 26.399999999999636,
+        "compression": true,
+        "breakout": false,
+        "breakdown": false,
+        "pd_zone": "premium",
+        "liquidity_sweep": false,
+        "pullback_quality": 0.0,
+        "breakout_quality": 0.0,
+        "score": 37,
+        "hi20": 4261.68,
+        "lo20": 4229.54,
+        "hi50": 4275.34,
+        "lo50": 4223.15
+      },
+      "H1": {
+        "last": 4259.19,
+        "atr14": 19.766428571428737,
+        "trend": "bull",
+        "momentum6": 19.109999999999673,
+        "compression": true,
+        "breakout": false,
+        "breakdown": false,
+        "pd_zone": "premium",
+        "liquidity_sweep": false,
+        "pullback_quality": 0.0,
+        "breakout_quality": 0.0,
+        "score": 62,
+        "hi20": 4284.98,
+        "lo20": 4223.15,
+        "hi50": 4304.36,
+        "lo50": 4065.21
+      },
+      "H4": {
+        "last": 4259.19,
+        "atr14": 43.20142857142868,
+        "trend": "bull",
+        "momentum6": -19.100000000000364,
+        "compression": false,
+        "breakout": false,
+        "breakdown": false,
+        "pd_zone": "premium",
+        "liquidity_sweep": false,
+        "pullback_quality": 0.0,
+        "breakout_quality": 0.0,
+        "score": 58,
+        "hi20": 4304.36,
+        "lo20": 4042.57,
+        "hi50": 4304.36,
+        "lo50": 3995.92
+      }
+    },
+    "ok": true,
+    "direction": "BUY",
+    "bias_strength": 2,
+    "setup_score": 54,
+    "final_score": 77,
+    "rr_estimate": 2.0,
+    "sl_distance_price": 31.62628571428598,
+    "tp_distance_price": 63.25257142857196,
+    "spread": 0.12000000000080036,
+    "state": "trade",
+    "news_hits": [],
+    "news_freeze": null,
+    "adaptive_adj": 0,
+    "correlation_bonus": 0,
+    "execution_quality": {
+      "ok": true,
+      "blocked": false,
+      "reasons": [],
+      "tick_age_sec": 0,
+      "spread_now": 0.12000000000080036,
+      "spread_avg": 0.18175
+    },
+    "thresholds": {
+      "trade": 56,
+      "strong_watch": 50
+    },
+    "session_allowed": true
+  },
+  "executable_candidate": {
+    "symbol": "XAUUSD",
+    "asset_class": "gold",
+    "timeframes": {
+      "M15": {
+        "last": 4259.19,
+        "atr14": 8.64928571428579,
+        "trend": "mixed",
+        "momentum6": 26.399999999999636,
+        "compression": true,
+        "breakout": false,
+        "breakdown": false,
+        "pd_zone": "premium",
+        "liquidity_sweep": false,
+        "pullback_quality": 0.0,
+        "breakout_quality": 0.0,
+        "score": 37,
+        "hi20": 4261.68,
+        "lo20": 4229.54,
+        "hi50": 4275.34,
+        "lo50": 4223.15
+      },
+      "H1": {
+        "last": 4259.19,
+        "atr14": 19.766428571428737,
+        "trend": "bull",
+        "momentum6": 19.109999999999673,
+        "compression": true,
+        "breakout": false,
+        "breakdown": false,
+        "pd_zone": "premium",
+        "liquidity_sweep": false,
+        "pullback_quality": 0.0,
+        "breakout_quality": 0.0,
+        "score": 62,
+        "hi20": 4284.98,
+        "lo20": 4223.15,
+        "hi50": 4304.36,
+        "lo50": 4065.21
+      },
+      "H4": {
+        "last": 4259.19,
+        "atr14": 43.20142857142868,
+        "trend": "bull",
+        "momentum6": -19.100000000000364,
+        "compression": false,
+        "breakout": false,
+        "breakdown": false,
+        "pd_zone": "premium",
+        "liquidity_sweep": false,
+        "pullback_quality": 0.0,
+        "breakout_quality": 0.0,
+        "score": 58,
+        "hi20": 4304.36,
+        "lo20": 4042.57,
+        "hi50": 4304.36,
+        "lo50": 3995.92
+      }
+    },
+    "ok": true,
+    "direction": "BUY",
+    "bias_strength": 2,
+    "setup_score": 54,
+    "final_score": 77,
+    "rr_estimate": 2.0,
+    "sl_distance_price": 31.62628571428598,
+    "tp_distance_price": 63.25257142857196,
+    "spread": 0.12000000000080036,
+    "state": "trade",
+    "news_hits": [],
+    "news_freeze": null,
+    "adaptive_adj": 0,
+    "correlation_bonus": 0,
+    "execution_quality": {
+      "ok": true,
+      "blocked": false,
+      "reasons": [],
+      "tick_age_sec": 0,
+      "spread_now": 0.12000000000080036,
+      "spread_avg": 0.18175
+    },
+    "thresholds": {
+      "trade": 56,
+      "strong_watch": 50
+    },
+    "session_allowed": true
+  },
+  "action": {
+    "taken": false,
+    "blocked": "lot_too_small",
+    "symbol": "XAUUSD",
+    "plan": {
+      "ok": true,
+      "symbol": "XAUUSD",
+      "direction": "BUY",
+      "lot": 0.0,
+      "risk_amount": 3.86,
+      "tier": {
+        "name": "C",
+        "risk_mult": 0.6,
+        "size_mult": 0.5,
+        "allow_pyramid": false
+      },
+      "sl_points": 3162,
+      "tp_points": 6325,
+      "entry_price": 4259.31,
+      "sl_price": 4227.69,
+      "tp_price": 4322.56,
+      "value": {
+        "risk_usd": 0.0,
+        "reward_usd": 0.0
+      },
+      "auto_allowed": true,
+      "worth_it": false,
+      "reasons": [
+        "lot_too_small"
+      ]
+    }
+  }
+}

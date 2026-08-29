@@ -1,0 +1,187 @@
+{
+  "type": "presession",
+  "created_at": "2026-08-13T15:41:57.053289",
+  "iran_time": "2026-08-13T19:11:57.053289",
+  "day_of_week": "Thursday",
+  "macro": {
+    "dxy": {
+      "dxy_value": -0.01,
+      "dxy_change_pct": -0.01,
+      "dxy_direction": "flat",
+      "dxy_strength": "neutral",
+      "pair_details": {
+        "EURUSD": {
+          "current": 1.15337,
+          "change_pct": 0.019,
+          "dxy_component": -0.019
+        },
+        "USDJPY": {
+          "current": 159.34,
+          "change_pct": -0.013,
+          "dxy_component": -0.013
+        },
+        "GBPUSD": {
+          "current": 1.34915,
+          "change_pct": 0.029,
+          "dxy_component": -0.029
+        },
+        "USDCAD": {
+          "current": 1.39492,
+          "change_pct": 0.026,
+          "dxy_component": 0.026
+        },
+        "USDCHF": {
+          "current": 0.81288,
+          "change_pct": 0.078,
+          "dxy_component": 0.078
+        },
+        "AUDUSD": {
+          "current": 0.70515,
+          "change_pct": -0.035,
+          "dxy_component": 0.035
+        }
+      }
+    },
+    "risk_sentiment": {
+      "spx_change_pct": 0.006,
+      "risk_mode": "neutral",
+      "available": true,
+      "spx_value": 7767.4
+    },
+    "silver": {
+      "xag_change_pct": 0.862,
+      "xag_direction": "up",
+      "available": true,
+      "xag_value": 65.094,
+      "bullish_for_gold": true,
+      "bearish_for_gold": false
+    },
+    "tick_volume": {
+      "current_ticks": 4105,
+      "avg_ticks": 4444.7,
+      "volume_ratio": 0.92,
+      "is_high_volume": "False",
+      "available": true
+    },
+    "higher_tf": {
+      "h4": {
+        "price": 4390.43,
+        "trend": "bearish",
+        "high_20": 4450.23,
+        "low_20": 4316.73,
+        "zone": "equilibrium",
+        "pos_in_range": 0.55,
+        "sma10": 4402.32
+      },
+      "d1": {
+        "price": 4390.43,
+        "trend": "bullish",
+        "high_20": 4450.23,
+        "low_20": 3959.67,
+        "zone": "premium",
+        "pos_in_range": 0.88,
+        "sma10": 4255.99
+      },
+      "w1": {
+        "price": 4390.43,
+        "trend": "bullish",
+        "high_20": 4890.21,
+        "low_20": 3942.37,
+        "zone": "equilibrium",
+        "pos_in_range": 0.47,
+        "sma10": 4160.4
+      },
+      "alignment": "conflicting",
+      "available": true,
+      "dxy_bearish_4_gold": false,
+      "risk_on_bearish_4_gold": false
+    },
+    "timestamp": "2026-08-13T15:41:57.199268"
+  },
+  "calendar_summary": [
+    {
+      "title": "Core PPI m/m",
+      "datetime_utc": "2026-08-13T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "iran_time": "16:00",
+      "iran_date": "08-13"
+    },
+    {
+      "title": "PPI m/m",
+      "datetime_utc": "2026-08-13T08:30:00-04:00",
+      "impact": "high",
+      "currency": "USD",
+      "gold_impact": "usd_strength",
+      "forecast": "0.2%",
+      "previous": "-0.3%",
+      "iran_time": "16:00",
+      "iran_date": "08-13"
+    },
+    {
+      "title": "Unemployment Claims",
+      "datetime_utc": "2026-08-13T08:30:00-04:00",
+      "impact": "medium",
+      "currency": "USD",
+      "gold_impact": "usd_weakness",
+      "forecast": "202K",
+      "previous": "199K",
+      "iran_time": "16:00",
+      "iran_date": "08-13"
+    }
+  ],
+  "htf_levels": {
+    "error": "smc_analyse() got an unexpected keyword argument 'lookback_bars'"
+  },
+  "scenarios": {
+    "structural_bias": "neutral",
+    "dxy_signal": "neutral",
+    "risk_sentiment": "neutral",
+    "silver_confirms": true,
+    "bullish_scenario": {
+      "trigger": "Breakout above range high",
+      "entry_zone_low": null,
+      "entry_zone_high": null,
+      "targets": [],
+      "invalidation": null,
+      "confidence": 0.45
+    },
+    "bearish_scenario": {
+      "trigger": "Breakdown below range low",
+      "entry_zone_low": null,
+      "entry_zone_high": null,
+      "targets": [],
+      "invalidation": null,
+      "confidence": 0.45
+    },
+    "neutral_scenario": {
+      "description": "range-bound, wait for breakout",
+      "range_low": null,
+      "range_high": null,
+      "confidence": 0.7
+    },
+    "news_today": [
+      {
+        "time": "16:00",
+        "title": "Core PPI m/m",
+        "impact": "high",
+        "gold_impact": "usd_strength"
+      },
+      {
+        "time": "16:00",
+        "title": "PPI m/m",
+        "impact": "high",
+        "gold_impact": "usd_strength"
+      },
+      {
+        "time": "16:00",
+        "title": "Unemployment Claims",
+        "impact": "medium",
+        "gold_impact": "usd_weakness"
+      }
+    ]
+  }
+}

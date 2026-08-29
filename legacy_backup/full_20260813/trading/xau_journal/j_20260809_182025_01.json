@@ -1,0 +1,35 @@
+{
+  "id": "j_20260809_182025_01",
+  "timestamp": "2026-08-09T18:20:25.925508",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "session": "weekend",
+    "market_open": false,
+    "defcon": "yellow",
+    "macro_dxy": "+0.055% flat",
+    "macro_spx": "+0.214% risk_on",
+    "macro_silver": "+0.594% bullish",
+    "higher_tf_alignment": "bullish_all",
+    "next_news": "Core CPI/CPI Wed Aug 12 16:00 IRT, PPI Thu Aug 13"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (Sunday Night). market_open=False, session=weekend, volatility=none, liquidity=none, session_risk=0.0. قانون قطعی: Market closed → wait. هیچ پوزیشن بازی وجود ندارد. تحلیل تکنیکال (SMC bullish conf=0.87, alignment=bullish_all, Silver Bulllet active در pm) صرفاً مشاهدهای است و تا باز شدن بازار در سشن آسیا/لندن غیرقابل اجرا. DEFCON YELLOW (loss_streak=3) — در صورت باز شدن بازار، ورود با نصف ریسک. رویدادهای مهم هفته: CPI چهارشنبه ۱۲ آگوست، PPI پنجشنبه ۱۳ آگوست — هر دو high impact برای USD. quote ۳۹ ساعت قدیمی است — منتظر ticker تازه با باز شدن بازار هستیم. ⏳ منتظر Monday open.",
+    "risk_check": {
+      "market_open": false,
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "trade_allowed": false,
+      "reason": "بازار بسته — آخر هفته (weekend)"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

@@ -1,0 +1,32 @@
+{
+  "id": "j_20260809_080207_01",
+  "timestamp": "2026-08-09T08:02:07.953614",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.871,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "market_open": false,
+    "defcon": "yellow"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "آخر هفته - بازار در حالت Weekend بسته است (market_open=false). ورود ممنوع طبق قوانین. بدون پوزیشن باز برای مدیریت.",
+    "risk_check": {
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "trade_allowed": false,
+      "market_open": false,
+      "risk_budget_usd": 8.97
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

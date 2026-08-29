@@ -1,0 +1,34 @@
+{
+  "id": "j_20260808_220300_01",
+  "timestamp": "2026-08-08T22:03:00",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "macro_alignment": "bullish_all",
+    "defcon": "yellow",
+    "value_zone": [4141.88, 4276.07],
+    "quote_age_sec": 66718
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته (آخر هفته - Saturday/Sunday). session=weekend, volatility=none, liquidity=none, market_open=false, session_risk_multiplier=0.0. هیچ پوزیشن بازی وجود ندارد. دادهها ~18.5 ساعت قدیمی هستند (quote_age=66718s). طبق قوانین: «Market closed -> wait» و «Never: Friday night/weekend entry». ورود فقط در زمان باز بودن بازار (دوشنبه opening) مجاز است. DEFCON YELLOW با loss_streak=3 نیز ریسک را نصف میکند اما الان موضوعیت ندارد چون بازار بسته است. تحلیلها bullish_all نشان میدهند ولی بدون بازار باز قابل اجرا نیستند. تصمیم: wait.",
+    "risk_check": {
+      "market_open": false,
+      "session": "weekend",
+      "session_risk_multiplier": 0.0,
+      "defcon": "yellow",
+      "open_positions": 0,
+      "trade_allowed_via_policy": true,
+      "heartbeat_mode": "hermes_degraded"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

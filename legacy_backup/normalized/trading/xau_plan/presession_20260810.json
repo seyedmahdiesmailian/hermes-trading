@@ -1,0 +1,137 @@
+{
+  "type": "presession",
+  "created_at": "2026-08-10T08:59:44.138203",
+  "iran_time": "2026-08-10T12:29:44.138203",
+  "day_of_week": "Monday",
+  "macro": {
+    "dxy": {
+      "dxy_value": 0.013,
+      "dxy_change_pct": 0.013,
+      "dxy_direction": "flat",
+      "dxy_strength": "neutral",
+      "pair_details": {
+        "EURUSD": {
+          "current": 1.15514,
+          "change_pct": -0.002,
+          "dxy_component": 0.002
+        },
+        "USDJPY": {
+          "current": 158.34,
+          "change_pct": 0.07,
+          "dxy_component": 0.07
+        },
+        "GBPUSD": {
+          "current": 1.34886,
+          "change_pct": 0.019,
+          "dxy_component": -0.019
+        },
+        "USDCAD": {
+          "current": 1.3961299999999999,
+          "change_pct": 0.034,
+          "dxy_component": 0.034
+        },
+        "USDCHF": {
+          "current": 0.80937,
+          "change_pct": 0.052,
+          "dxy_component": 0.052
+        },
+        "AUDUSD": {
+          "current": 0.7062,
+          "change_pct": 0.011,
+          "dxy_component": -0.011
+        }
+      }
+    },
+    "risk_sentiment": {
+      "spx_change_pct": 0.09,
+      "risk_mode": "neutral",
+      "available": true,
+      "spx_value": 7770.8
+    },
+    "silver": {
+      "xag_change_pct": 0.581,
+      "xag_direction": "up",
+      "available": true,
+      "xag_value": 63.733,
+      "bullish_for_gold": true,
+      "bearish_for_gold": false
+    },
+    "tick_volume": {
+      "current_ticks": 2587,
+      "avg_ticks": 4832.9,
+      "volume_ratio": 0.54,
+      "is_high_volume": "False",
+      "available": true
+    },
+    "higher_tf": {
+      "h4": {
+        "price": 4333.9,
+        "trend": "bullish",
+        "high_20": 4371.87,
+        "low_20": 4077.54,
+        "zone": "premium",
+        "pos_in_range": 0.87,
+        "sma10": 4308.19
+      },
+      "d1": {
+        "price": 4333.9,
+        "trend": "bullish",
+        "high_20": 4371.87,
+        "low_20": 3959.67,
+        "zone": "premium",
+        "pos_in_range": 0.91,
+        "sma10": 4153.65
+      },
+      "w1": {
+        "price": 4333.9,
+        "trend": "bullish",
+        "high_20": 4890.21,
+        "low_20": 3942.37,
+        "zone": "equilibrium",
+        "pos_in_range": 0.41,
+        "sma10": 4154.74
+      },
+      "alignment": "bullish_all",
+      "available": true,
+      "dxy_bearish_4_gold": false,
+      "risk_on_bearish_4_gold": false
+    },
+    "timestamp": "2026-08-10T08:59:44.308284"
+  },
+  "calendar_summary": [],
+  "htf_levels": {
+    "error": "smc_analyse() got an unexpected keyword argument 'lookback_bars'"
+  },
+  "scenarios": {
+    "structural_bias": "bullish",
+    "dxy_signal": "neutral",
+    "risk_sentiment": "neutral",
+    "silver_confirms": true,
+    "bullish_scenario": {
+      "trigger": "Pullback to D1/H4 OB + FVG + macro confirmed",
+      "entry_zone_low": null,
+      "entry_zone_high": null,
+      "targets": [
+        "previous high",
+        "W1 resistance"
+      ],
+      "invalidation": "Below D1 swing low",
+      "confidence": 0.75
+    },
+    "bearish_scenario": {
+      "trigger": "Only if news/dxy reversal confirmed",
+      "entry_zone_low": null,
+      "entry_zone_high": null,
+      "targets": [],
+      "invalidation": null,
+      "confidence": 0.3
+    },
+    "neutral_scenario": {
+      "description": "range-bound, wait for breakout",
+      "range_low": null,
+      "range_high": null,
+      "confidence": 0.5
+    },
+    "news_today": []
+  }
+}

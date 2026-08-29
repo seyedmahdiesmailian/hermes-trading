@@ -1,0 +1,35 @@
+{
+  "id": "j_20260809_003648_01",
+  "timestamp": "2026-08-09T00:36:48.000000",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "symbol": "XAUUSD",
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "value_zone": [4141.88, 4276.07],
+    "atr": 7.16,
+    "session_detail": "weekend_closed",
+    "market_open": false,
+    "defcon": "YELLOW",
+    "open_positions": 0
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — آخر هفته (weekend). market_open=false, session_risk=×0.0. بدون پوزیشن باز. تحلیل: بایاس صعودی قوی (SMC 0.87, merged 0.78), سه TF بالاتر (H4/D1/W1) همگی صعودی، DXY flat, Silver صعودی حامی طلا، PowerOf3 در فاز distribution، OTE zone: 4297-4313. اما بازار بسته است و هیچ اقدامی ممکن نیست. باید منتظر بازگشایی دوشنبه ماند. DEFCON YELLOW فعال — استراتژی محافظهکارانه با نصف ریسک. یادآوری: loss_streak=3 — در بازگشایی با احتیاط وارد شویم. ⏳ WAIT",
+    "risk_check": {
+      "trade_allowed": false,
+      "risk_usd": 0.0,
+      "risk_mult": 0.0,
+      "defcon": "YELLOW",
+      "session_risk_mult": 0.0,
+      "market_closed": true
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

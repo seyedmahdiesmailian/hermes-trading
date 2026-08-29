@@ -1,0 +1,35 @@
+{
+  "id": "j_20260808_180056_01",
+  "timestamp": "2026-08-08T18:00:56.033421",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "market_open": false,
+    "session": "newyork",
+    "killzone": "dead",
+    "balance": 1338.71,
+    "equity": 1338.71,
+    "open_positions": 0,
+    "bid": 4341.72,
+    "ask": 4341.9,
+    "smc_bias": "bullish",
+    "smc_confidence": 0.87,
+    "classic_bias": "neutral",
+    "classic_regime": "range",
+    "merged_bias": "bullish",
+    "merged_confidence": 0.78,
+    "news_risk_active": false
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (market_open=False). قیمت آخرین تیک حدود ۱۴ ساعت قدیمی است. هیچ اقدامی انجام نشد. منتظر باز شدن بازار هستیم.",
+    "risk_check": {
+      "market_open": false,
+      "trade_allowed": false,
+      "reason": "بازار بسته — صبر تا سشن بعدی"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

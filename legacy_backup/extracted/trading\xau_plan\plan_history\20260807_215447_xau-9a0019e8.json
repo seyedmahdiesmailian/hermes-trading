@@ -1,0 +1,42 @@
+{
+  "plan_id": "xau-9a0019e8",
+  "symbol": "XAUUSD",
+  "bias": "neutral",
+  "session": "newyork",
+  "zones": {
+    "value_low": 4090.415,
+    "value_high": 4233.045,
+    "long_entry_low": 4086.720714285714,
+    "long_entry_high": 4090.415,
+    "short_entry_low": 4233.045,
+    "short_entry_high": 4236.739285714286
+  },
+  "invalidation": 4084.8735714285713,
+  "targets": [],
+  "execution": {
+    "entry_mode": "mean_reversion_wait",
+    "scale_in_levels": [],
+    "tp_levels": [],
+    "tp_shares": []
+  },
+  "quality": {
+    "trend_strength": 37.63,
+    "alignment": "mixed",
+    "distance_to_value_low_atr": 20.33,
+    "distance_to_value_high_atr": 1.03,
+    "bias_votes": {
+      "m15": "neutral",
+      "h1": "neutral",
+      "h4": "bearish"
+    },
+    "regime": "range"
+  },
+  "created_at": "2026-08-07T17:46:44.466048+00:00",
+  "expires_at": "2026-08-08T05:46:44.466048+00:00",
+  "next_reassessment": "2026-08-07T21:46:44.466048+00:00",
+  "context": {
+    "m15_last": 4240.66,
+    "h1_last": 4240.66,
+    "h4_last": 4240.66
+  }
+}

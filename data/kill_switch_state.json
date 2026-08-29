@@ -1,0 +1,8 @@
+{
+  "halted": false,
+  "halt_reason": null,
+  "halted_at": null,
+  "resumes_at": null,
+  "consecutive_losses": 0,
+  "last_check": "2026-08-29T21:45:46.440737+00:00"
+}

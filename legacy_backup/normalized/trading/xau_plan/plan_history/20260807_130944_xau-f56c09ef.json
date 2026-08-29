@@ -1,0 +1,27 @@
+{
+  "plan_id": "xau-f56c09ef",
+  "symbol": "XAUUSD",
+  "bias": "bullish",
+  "session": "london",
+  "zones": {
+    "value_low": 4111.1275000000005,
+    "value_high": 4248.2425,
+    "long_entry_low": 4106.161785714286,
+    "long_entry_high": 4111.1275000000005,
+    "short_entry_low": 4248.2425,
+    "short_entry_high": 4253.208214285714
+  },
+  "invalidation": 4103.678928571429,
+  "targets": [
+    4248.2425,
+    4253.208214285714
+  ],
+  "created_at": "2026-08-07T09:05:49.331218+00:00",
+  "expires_at": "2026-08-07T21:05:49.331218+00:00",
+  "next_reassessment": "2026-08-07T13:00:00+00:00",
+  "context": {
+    "m15_last": 4305.63,
+    "h1_last": 4305.63,
+    "h4_last": 4305.63
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "plan_id": "xau-fb1a9496",
+  "symbol": "XAUUSD",
+  "bias": "bullish",
+  "session": "asia",
+  "zones": {
+    "value_low": 4126.9725,
+    "value_high": 4290.2375,
+    "long_entry_low": 4123.391428571428,
+    "long_entry_high": 4126.9725,
+    "short_entry_low": 4290.2375,
+    "short_entry_high": 4293.818571428572
+  },
+  "invalidation": 4121.600892857143,
+  "targets": [],
+  "execution": {
+    "entry_mode": "mean_reversion_wait",
+    "scale_in_levels": [],
+    "tp_levels": [],
+    "tp_shares": []
+  },
+  "quality": {
+    "trend_strength": 76.75,
+    "alignment": "mixed",
+    "distance_to_value_low_atr": 29.98,
+    "distance_to_value_high_atr": 7.19,
+    "bias_votes": {
+      "m15": "neutral",
+      "h1": "neutral",
+      "h4": "bullish"
+    },
+    "regime": "range",
+    "smc_confidence": 0.6,
+    "smc_poi": "B",
+    "smc_signal": "bullish"
+  },
+  "created_at": "2026-08-08T05:07:42.213334+00:00",
+  "expires_at": "2026-08-08T17:07:42.213334+00:00",
+  "next_reassessment": "2026-08-08T07:00:00+00:00",
+  "context": {
+    "m15_last": 4341.72,
+    "h1_last": 4341.72,
+    "h4_last": 4341.72
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "last_hermes_decision": "2026-08-11T12:54:00.000Z",
+  "decision": "wait",
+  "reason": "defcon_yellow_low_confidence_0.34_conflicting_signals_cpi_tomorrow",
+  "price_at_decision": 4373.05,
+  "session": "london",
+  "defcon_level": "yellow",
+  "minutes_since_last": 0,
+  "active": true,
+  "risk_multiplier": 0.75,
+  "next_review_trigger": "m5_bullish_confirmation_or_h1_bullish_or_cpi_news"
+}

@@ -1,0 +1,62 @@
+{
+  "id": "j_20260808_185801_01",
+  "timestamp": "2026-08-08T18:58:01.689151",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "price": {
+      "bid": 4341.72,
+      "ask": 4341.9
+    },
+    "market_open": false,
+    "session": "newyork",
+    "killzone": "dead",
+    "macro": {
+      "dxy": "flat (+0.055%)",
+      "risk": "risk_on (+0.214%)",
+      "silver": "up (+0.594%) bullish_for_gold",
+      "volume": "0.53x avg"
+    },
+    "higher_tf": "bullish_all (H4 premium, D1 premium, W1 equilibrium)",
+    "smc": {
+      "bias": "bullish",
+      "confidence": 0.87,
+      "signal": "bullish",
+      "poi": "B"
+    },
+    "classic": {
+      "bias": "neutral",
+      "regime": "range",
+      "atr": 7.16
+    },
+    "merged": {
+      "bias": "bullish",
+      "confidence": 0.78,
+      "action": "long"
+    },
+    "m5": {
+      "smc_bias": "bullish",
+      "smc_confidence": 0.325
+    },
+    "power_of_3": "distribution",
+    "ote_zone": {
+      "low": 4297.96,
+      "high": 4313.86
+    }
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "بازار بسته است (market_open=false). quote_age=15.4 ساعت از آخرین کندل گذشته. سشن نیویورک بسته شده و بازار آخر هفته است. با وجود سیگنال bullish قوی از SMC (confidence=0.87) و alignment= bullish_all در تایمفریمهای بالاتر، به دلیل بسته بودن بازار هیچ معاملهای انجام نمیشود. منتظر باز شدن بازار در جلسه بعدی میمانیم.",
+    "risk_check": {
+      "market_open": false,
+      "news_risk": false,
+      "trade_allowed": true,
+      "risk_usd": 8.97,
+      "regime": "defensive",
+      "reason": "market closed — no trades"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

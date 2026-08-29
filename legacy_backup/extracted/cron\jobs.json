@@ -1,0 +1,247 @@
+{
+  "jobs": [
+    {
+      "id": "a30c74242663",
+      "name": "Gold XAUUSD Auto Trader",
+      "prompt": "تو مدير تريد حساب دمو MT5 مهدي هستي و فقط با API مستقيم کار ميکني.\n\nابزار اصلي:\n- python \"C:\\Users\\Administrator\\AppData\\Local\\hermes\\scripts\\mt5_direct.py\" status\n- python \"C:\\Users\\Administrator\\AppData\\Local\\hermes\\scripts\\mt5_direct.py\" symbols\n- python \"C:\\Users\\Administrator\\AppData\\Local\\hermes\\scripts\\mt5_direct.py\" check SYMBOL BUY|SELL LOT SL TP\n- python \"C:\\Users\\Administrator\\AppData\\Local\\hermes\\scripts\\mt5_direct.py\" open SYMBOL BUY|SELL LOT SL TP \"Hermes direct\"\n- python \"C:\\Users\\Administrator\\AppData\\Local\\hermes\\scripts\\mt5_direct.py\" close SYMBOL\n\nممنوع:\n- HermesCommand.txt\n- HermesStatus.txt\n- هر نوع file bridge\n\nبازارهاي اصلي براي اسکن:\n- XAUUSD\n- EURUSD\n- GBPUSD\n- USDJPY\n- BTCUSD\n- ETHUSD\n- SPXUSD\n- DJIUSD\n- DAXEUR\n\nفقط اگر يک نماد واقعا نقدشوندگي خوب، ساختار تميزتر و ريسک/ريوارد بهتر داشت روي همان تمرکز کن.\n\nروش تحليل بايد عميق و چندعاملي باشد:\n- ساختار بازار HTF/LTF\n- PD arrays / premium-discount\n- liquidity pools / sweep / fake breakout\n- pullback quality\n- breakout quality\n- momentum shift\n- volatility regime / ATR context\n- reward/risk\n- correlation / cross-market context\n- وضعيت حساب و اندازه پوزيشن\n\nقوانين اجرا:\n- خروجي بسيار کوتاه باشد: حداکثر 6 بولت کوتاه\n- فقط اينها را بگو: وضعيت حساب، بهترين نماد، جهت احتمالي، دليل خيلي خلاصه، اقدام انجامشده/نشده\n- اگر ستاپ واضح نيست معامله نزن\n- قبل از هر معامله order_check بزن\n- lot کاملا دايناميک و محافظهکارانه باشد\n- فقط وقتي ستاپ واقعا قوي و تميز است معامله باز کن\n- تحليل سرسري ممنوع است؛ قبل از هر اقدام چند بازار را مقايسه کن\n- فارسي جواب بده",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": null,
+      "model_snapshot": null,
+      "base_url": null,
+      "script": "gold_monitor.sh",
+      "no_agent": true,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 15,
+        "display": "every 15m"
+      },
+      "schedule_display": "every 15m",
+      "repeat": {
+        "times": null,
+        "completed": 546
+      },
+      "enabled": false,
+      "state": "paused",
+      "paused_at": "2026-08-08T17:00:53.455483+03:30",
+      "paused_reason": null,
+      "created_at": "2026-08-05T09:56:31.420574+03:30",
+      "next_run_at": "2026-08-08T17:09:06.113944+03:30",
+      "last_run_at": "2026-08-08T16:54:06.113944+03:30",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "194015957",
+        "chat_name": "۩۩ seyed mahdi۩۩",
+        "thread_id": null,
+        "user_id": "194015957"
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "dcbb59fbf158",
+      "name": "Hermes XAUUSD Oversight",
+      "prompt": "تو ناظر سیستم معاملات خودکار طلا هستی. وظیفه:\n\n1. اجرای اسکریپت زیر برای خواندن آخرین snapshot تحلیل:\n   python \"C:\\Users\\Administrator\\AppData\\Local\\hermes\\scripts\\mt5_xau_review.py\"\n\n2. خروجی رو بخون.\n\n🚨 **قانون قطعی — قبل از هر تحلیلی بررسی کن:**\n- اگر در خروجی نوشته شده «بازار بسته» یا «market closed» یا «بازار تعطیل»:\n  → به هیچ وجه تحلیل نکن. فقط بگو: [SILENT]\n- این یعنی بازار واقعاً بستهست. تحلیل روی داده بسته = دروغ.\n- هیچ وقت روی داده بسته تحلیل نکن.\n\n3. فقط اگر بازار باز است (خروجی شامل «بازار: 🟢 باز») تحلیل کن:\n   - آیا بایاس SMC با داده های کلاسیک همخوانی داره؟\n   - Order Block ها معتبرن؟\n   - FVG و volume imbalance منطقیه؟\n   - confidence قابل قبوله؟ (بالای 0.5)\n\n4. پاسخ رو به فارسی مختصر بده.\n\nاگر بازار بسته بود، پاسخ باید دقیقاً [SILENT] باشد — نه تحلیل، نه توضیح، نه نکته.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": "custom",
+      "model_snapshot": "hermes-win",
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 120,
+        "display": "every 120m"
+      },
+      "schedule_display": "every 120m",
+      "repeat": {
+        "times": null,
+        "completed": 44
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-08T13:46:48.149527+03:30",
+      "next_run_at": "2026-08-13T18:03:45.800360+03:30",
+      "last_run_at": "2026-08-13T16:03:45.800360+03:30",
+      "last_status": "error",
+      "last_error": "RuntimeError: HTTP 503: Service temporarily unavailable: all upstream accounts are inactive",
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "194015957",
+        "chat_name": "۩۩ seyed mahdi۩۩",
+        "thread_id": null,
+        "user_id": "194015957"
+      },
+      "enabled_toolsets": [
+        "terminal",
+        "file"
+      ],
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "549e6796fd3e",
+      "name": "Hermes XAUUSD Decision Loop",
+      "prompt": "Hermes XAUUSD Decision Loop v5\n\nYou are the brain of the automated XAUUSD trading system. Code is your eyes and hands.\n\nData you receive from collector:\nM5/M15/H1/H4: SMC and classic analysis\nMacro: DXY proxy, SPX risk, silver, volume, H4/D1/W1 alignment\nCalendar: today/tomorrow events, news risk\nSession: current session, active killzones, quality\nDivergence: RSI divergence on M5/M15/H1\nDEFCON: risk level from closed trades (GREEN/YELLOW/RED)\nOpen positions, account, risk policy, heartbeat\n\nDecision rules:\n\nMarket closed -> wait\nDEFCON RED -> no new entry, manage existing only\nDEFCON YELLOW -> enter with half risk, no runners, close sooner\nNews risk active in 2h -> wait (unless managing existing position)\nLow quality session (Asia no killzone) -> half risk\n\nBest setup:\nM15 + M5 bias same direction\nMacro alignment confirms\nDivergence multi-TF confluence exists\nKillzone active + high quality session\nSpread below 3 pips\nDEFCON GREEN\n\nManage open positions: BE, trail, partial close, time exit\nDEFCON YELLOW: disable runners, close sooner\nDivergence against position direction: reduce or close\n\nOutput:\n1. Decision: enter_buy/enter_sell/modify/close/wait\n2. Short reason (Persian preferred)\n3. Record in decision journal\n4. Update heartbeat\n\nNever: Friday night/weekend entry, 15min before/30min after high-impact news, DEFCON RED entry\n\nTrade well, be conservative, learn from losses. Persian output preferred.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": "custom",
+      "model_snapshot": "hermes-win",
+      "base_url": null,
+      "script": "mt5_xau_decision_collector.py",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "interval",
+        "minutes": 15,
+        "display": "every 15m"
+      },
+      "schedule_display": "every 15m",
+      "repeat": {
+        "times": null,
+        "completed": 235
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-08T17:00:44.296832+03:30",
+      "next_run_at": "2026-08-13T17:25:36.479271+03:30",
+      "last_run_at": "2026-08-13T17:10:36.479271+03:30",
+      "last_status": "error",
+      "last_error": "RuntimeError: HTTP 429: All credentials for model moonshotai/Kimi-K2.6 are cooling down (reset after 3s)",
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "194015957",
+        "chat_name": "۩۩ seyed mahdi۩۩",
+        "thread_id": null,
+        "user_id": "194015957"
+      },
+      "enabled_toolsets": [
+        "terminal",
+        "file"
+      ],
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "6acc2e00a4d8",
+      "name": "XAUUSD Pre-Session Analysis",
+      "prompt": "## Pre-Session Analysis\n\nداده های collector (mt5_xau_presession.py) بالا رو میبینی.\n\nوظیفه:\n1. تحلیل سناریوهای روز رو مرور کن\n2. اگه سطوح کلیدی تغییر کردن (SMC levels shift), به Hermes decision loop اطلاع بده\n3. تقویم امروز رو چک کن — اگه high impact USD event هست, هشدار بده\n4. bias کلی روز رو مشخص کن: bullish_day / bearish_day / neutral_day\n5. این تحلیل رو به عنوان راهنمای امروز توی decision loop به کار ببر\n\nفارسی. مختصر. مفید.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": "custom",
+      "model_snapshot": "hermes-win",
+      "base_url": null,
+      "script": "mt5_xau_presession.py",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 6 * * 1-5",
+        "display": "30 6 * * 1-5"
+      },
+      "schedule_display": "30 6 * * 1-5",
+      "repeat": {
+        "times": null,
+        "completed": 4
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-08T18:02:24.228044+03:30",
+      "next_run_at": "2026-08-14T06:30:00+03:30",
+      "last_run_at": "2026-08-13T15:42:12.891715+03:30",
+      "last_status": "error",
+      "last_error": "RuntimeError: HTTP 503: Service temporarily unavailable: all upstream accounts are inactive",
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "194015957",
+        "chat_name": "۩۩ seyed mahdi۩۩",
+        "thread_id": null,
+        "user_id": "194015957"
+      },
+      "enabled_toolsets": [
+        "terminal",
+        "file"
+      ],
+      "workdir": null,
+      "fire_claim": null
+    },
+    {
+      "id": "d582a7fe0a68",
+      "name": "XAUUSD Weekly Learning Review",
+      "prompt": "Weekly Learning Review - Hermes مغز اصلی\n\nگزارش خروجی mt5_xau_weekly_review.py رو بخون و تصمیم بگیر:\n\n1. Win rate و avg R و مشکلات رو آنالیز کن\n2. اگر suggested_params پر بود: فایل mt5_xau_trade_mgr.py رو با patch آپدیت کن (DEFAULT_BE_RULES)\n3. اگر win rate کمتر از 30%: risk_multiplier رو نصف کن و entry confidence threshold رو ببر بالا\n4. اگر avg R بیشتر از 1.0 و win rate بیشتر از 60%: risk_multiplier رو 0.1 افزایش بده\n5. Eureka moments ثبت کن: الگوهای جدیدی که کشف کردی\n6. Journal entry به اسم weekly_review ثبت کن\n\nقوانین:\n- هیچ پارامتری رو بیشتر از 20% در هر هفته تغییر نده\n- اگر 2 هفته متوالی avg R منفی بود, risk multiplier رو نصف کن\n- تغییرات رو همیشه با دلیل مستند کن\n- فارسی فقط",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "provider_snapshot": "custom",
+      "model_snapshot": "hermes-win",
+      "base_url": null,
+      "script": "mt5_xau_weekly_review.py",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 18 * * 0",
+        "display": "30 18 * * 0"
+      },
+      "schedule_display": "30 18 * * 0",
+      "repeat": {
+        "times": null,
+        "completed": 1
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-08-08T18:02:51.162740+03:30",
+      "next_run_at": "2026-08-16T18:30:00+03:30",
+      "last_run_at": "2026-08-09T18:33:52.688727+03:30",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "194015957",
+        "chat_name": "۩۩ seyed mahdi۩۩",
+        "thread_id": null,
+        "user_id": "194015957"
+      },
+      "enabled_toolsets": [
+        "terminal",
+        "file"
+      ],
+      "workdir": null,
+      "fire_claim": null
+    }
+  ],
+  "updated_at": "2026-08-13T17:10:36.479814+03:30"
+}

@@ -1,0 +1,34 @@
+{
+  "id": "j_20260809_003900_01",
+  "timestamp": "2026-08-09T00:39:00",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "symbol": "XAUUSD",
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "value_zone": [4141.88, 4276.07],
+    "atr": 7.16,
+    "session_detail": "weekend_closed",
+    "market_open": false,
+    "defcon": "YELLOW",
+    "open_positions": 0
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته — Weekend. session_risk=×0.0. بدون تغییر نسبت به تصمیم 00:22. بازار تا Asian open دوشنبه بسته است. پوزیشن باز: ۰. هیچ اقدامی تا بازگشایی بازار لازم نیست. WAIT.",
+    "risk_check": {
+      "trade_allowed": false,
+      "risk_usd": 0.0,
+      "risk_mult": 0.0,
+      "defcon": "YELLOW",
+      "session_risk_mult": 0.0,
+      "market_closed": true
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

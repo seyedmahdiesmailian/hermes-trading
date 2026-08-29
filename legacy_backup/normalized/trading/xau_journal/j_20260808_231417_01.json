@@ -1,0 +1,35 @@
+{
+  "id": "j_20260808_231417_01",
+  "timestamp": "2026-08-08T23:14:17",
+  "decision_by": "hermes",
+  "session": "weekend",
+  "market_snapshot": {
+    "symbol": "XAUUSD",
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "value_zone": [
+      4141.88,
+      4276.07
+    ],
+    "atr": 7.16,
+    "session_detail": "weekend_closed",
+    "market_open": false,
+    "defcon": "YELLOW"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "🚫 بازار بسته است (آخر هفته — Weekend). اسپرد واقعی در دسترس نیست، نقدینگی صفر، ریسک سشن ×0.0. هیچ پوزیشن بازی هم وجود ندارد که مدیریت شود. DEFCON در وضعیت زرد است (۳ loss پشت سر هم) ولی تا باز شدن بازار در دوشنبه، هیچ اقدامی لازم نیست. تصمیم: wait — صبر تا بازگشایی بازار.",
+    "risk_check": {
+      "trade_allowed": false,
+      "risk_usd": 0.0,
+      "risk_mult": 0.0,
+      "defcon": "YELLOW",
+      "session_risk_mult": 0.0
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

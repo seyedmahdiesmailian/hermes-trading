@@ -1,0 +1,35 @@
+{
+  "id": "j_20260808_174311_01",
+  "timestamp": "2026-08-08T17:43:11.560260",
+  "decision_by": "hermes",
+  "session": "newyork",
+  "market_snapshot": {
+    "price": 4341.72,
+    "bias": "bullish",
+    "regime": "range",
+    "smc_confidence": 0.87,
+    "merged_confidence": 0.78,
+    "atr": 7.16,
+    "h4_zone": "premium (0.9)",
+    "d1_zone": "premium (0.93)",
+    "killzone": "dead",
+    "volume_ratio": 0.53,
+    "power_of_three": "distribution",
+    "ote_zone": "4297.96-4313.86",
+    "h1_structure": "range"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "⛔ WAIT — عدم همراستایی و موقعیت نامناسب ورود: SMC bullish (0.87) ولی Classic regime=range و bias=neutral. قیمت در پریمیوم H4 (0.9) و D1 (0.93) قرار دارد — خرید در سقف رِنج ریسک بالایی دارد. Killzone غیرفعال است. قیمت 4341 بسیار بالاتر از OTE zone (4297-4313) است. PowerOf3 در فاز distribution. حجم پایین (0.53x). کیفیت setup: C. طبق Rule 2: احترام به range guard — منتظر اصلاح قیمت به محدوده value zone یا OTE می‌مانیم.",
+    "risk_check": {
+      "trade_allowed": true,
+      "risk_usd": 8.97,
+      "blocked_by_range_guard": true,
+      "blocked_by_premium": true,
+      "setup_quality": "C"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}

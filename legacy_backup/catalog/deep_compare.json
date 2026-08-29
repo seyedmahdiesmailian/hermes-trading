@@ -1,0 +1,372 @@
+[
+  {
+    "file": "mt5_xau_runtime.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_runtime.py",
+    "lines": 938,
+    "imports_mt5": true,
+    "mt5_calls": [
+      "account_info",
+      "copy_rates_from_pos",
+      "history_deals_get",
+      "initialize",
+      "positions_get",
+      "symbol_info_tick"
+    ],
+    "functions": [
+      "_rows",
+      "_detect_session",
+      "_build_live_plan",
+      "build_monitor_report_key",
+      "should_emit_monitor_report",
+      "should_rebuild_plan",
+      "determine_runtime_step",
+      "_save_plan_and_state",
+      "_infer_setup_grade",
+      "_select_execution_decision",
+      "_load_closed_trade_snapshots",
+      "_classify_closed_trade",
+      "_build_exit_analysis",
+      "_build_trading_insights",
+      "_filter_management_by_insights",
+      "_filter_entry_by_insights",
+      "_extract_ticket",
+      "_load_setup_profiles",
+      "_save_setup_profile",
+      "_build_setup_ledger"
+    ],
+    "classes": [
+      "_Deal"
+    ],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_orchestrator.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_orchestrator.py",
+    "lines": 131,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "_parse_dt",
+      "route_runtime_step",
+      "build_plan_from_context",
+      "_passes_quality_gate",
+      "compute_xau_position_size",
+      "evaluate_monitor_cycle",
+      "execute_trade_blueprint"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_context.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_context.py",
+    "lines": 222,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "compute_value_zone",
+      "classify_bias",
+      "estimate_atr",
+      "derive_trade_zones",
+      "_alignment_label",
+      "_distance_in_atr",
+      "_detect_regime",
+      "_build_execution_plan",
+      "build_plan_context"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_plan.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_plan.py",
+    "lines": 226,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "select_reassessment_mode",
+      "build_plan_payload",
+      "validate_plan",
+      "plan_expired",
+      "pending_order_allowed",
+      "classify_price_location",
+      "build_trade_blueprint",
+      "_buy_logic",
+      "_sell_logic",
+      "decide_execution_action"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_smc.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_smc.py",
+    "lines": 874,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "detect_order_blocks",
+      "detect_fair_value_gaps",
+      "detect_liquidity_sweep",
+      "market_structure_phase",
+      "premium_discount_zone",
+      "active_killzone_session",
+      "grade_poi",
+      "smc_analyse",
+      "_empty_smc_result",
+      "_derive_smc_bias",
+      "_compute_smc_signal",
+      "merge_smc_with_classic",
+      "detect_breaker_blocks",
+      "detect_rejection_blocks",
+      "compute_ote_zone",
+      "detect_power_of_three",
+      "detect_turtle_soup",
+      "evaluate_silver_bullet_setup",
+      "compute_session_liquidity",
+      "detect_volume_imbalance"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_trade_management.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_trade_management.py",
+    "lines": 176,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "_is_buy",
+      "_next_unfilled_target",
+      "_next_scale_level",
+      "_grade_value",
+      "_partial_close_fraction",
+      "_breakeven_stop",
+      "_runner_should_die",
+      "_trail_params",
+      "_scale_in_allowed",
+      "evaluate_trade_management"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_defcon.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_defcon.py",
+    "lines": 301,
+    "imports_mt5": true,
+    "mt5_calls": [
+      "history_deals_get",
+      "initialize"
+    ],
+    "functions": [
+      "_now",
+      "snapshot_closed_deals",
+      "classify_exits",
+      "analyze_exits",
+      "compute_trading_insights",
+      "filter_management_by_insights",
+      "filter_entry_by_insights"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_account_risk.py",
+    "path": "legacy_backup/normalized/scripts/mt5_account_risk.py",
+    "lines": 122,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "_base_risk_pct",
+      "compute_performance_state",
+      "assess_account_policy",
+      "recommend_risk_budget"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_storage.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_storage.py",
+    "lines": 102,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "ensure_xau_plan_dirs",
+      "load_current_plan",
+      "save_current_plan",
+      "_append_csv_row",
+      "append_execution_log",
+      "append_reassessment_log",
+      "load_runtime_state",
+      "save_runtime_state",
+      "load_performance_state",
+      "save_performance_state"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_xau_report.py",
+    "path": "legacy_backup/normalized/scripts/mt5_xau_report.py",
+    "lines": 220,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "_bias_fa",
+      "_zone_fa",
+      "_action_fa",
+      "_side_fa",
+      "_symbol_fa",
+      "_coerce_dt",
+      "_fmt_price",
+      "_fmt_range",
+      "format_reassessment_time",
+      "_plan_scenario_fa",
+      "_monitor_explanation_fa",
+      "render_plan_brief",
+      "render_reassess_brief",
+      "render_monitor_brief",
+      "render_execution_brief",
+      "render_management_brief"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_direct.py",
+    "path": "legacy_backup/normalized/scripts/mt5_direct.py",
+    "lines": 505,
+    "imports_mt5": true,
+    "mt5_calls": [
+      "account_info",
+      "initialize",
+      "order_send",
+      "positions_get",
+      "symbol_info_tick"
+    ],
+    "functions": [
+      "to_jsonable",
+      "fail",
+      "ensure_init",
+      "shutdown",
+      "symbol_info",
+      "normalize_volume",
+      "get_tick",
+      "account_status",
+      "calc_levels",
+      "build_request",
+      "validate_with_fallbacks",
+      "send_validated",
+      "modify_position_sltp",
+      "build_partial_close_request",
+      "build_modify_position_price_request",
+      "execute_partial_close",
+      "execute_modify_position_prices",
+      "execute_market_open",
+      "open_trade",
+      "close_symbol"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "mt5_engine.py",
+    "path": "legacy_backup/normalized/scripts/mt5_engine.py",
+    "lines": 1012,
+    "imports_mt5": true,
+    "mt5_calls": [
+      "account_info",
+      "copy_rates_from_pos",
+      "history_deals_get",
+      "initialize",
+      "order_send",
+      "positions_get",
+      "symbol_info_tick"
+    ],
+    "functions": [
+      "ensure_dirs",
+      "to_jsonable",
+      "fail",
+      "ensure_init",
+      "shutdown",
+      "symbol_info",
+      "normalize_volume",
+      "get_tick",
+      "get_asset_class",
+      "rates",
+      "sma",
+      "atr",
+      "timeframe_seconds",
+      "session_name",
+      "fetch_news",
+      "symbol_news_risk",
+      "news_freeze_level",
+      "adaptive_score_adjustment",
+      "stronger_correlation_bonus",
+      "dynamic_thresholds"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  },
+  {
+    "file": "hermes_master.py",
+    "path": "hermes_master.py",
+    "lines": 176,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "log",
+      "read_command",
+      "write_command",
+      "execute_trade",
+      "main"
+    ],
+    "classes": [],
+    "direct_order_like": true
+  },
+  {
+    "file": "hermes_brain.py",
+    "path": "hermes_brain.py",
+    "lines": 85,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "fetch_yf_ohlc",
+      "__init__",
+      "_get",
+      "_post",
+      "connect",
+      "get_account",
+      "get_tick",
+      "get_positions",
+      "get_ohlc",
+      "send_order",
+      "close_position",
+      "modify_sl"
+    ],
+    "classes": [
+      "HermesMT5Bridge"
+    ],
+    "direct_order_like": false
+  },
+  {
+    "file": "hermes_analyzer.py",
+    "path": "hermes_analyzer.py",
+    "lines": 168,
+    "imports_mt5": false,
+    "mt5_calls": [],
+    "functions": [
+      "log",
+      "calc_atr",
+      "classify_trend",
+      "detect_fvg",
+      "find_nearest_fvg",
+      "defcon_level",
+      "analyze"
+    ],
+    "classes": [],
+    "direct_order_like": false
+  }
+]

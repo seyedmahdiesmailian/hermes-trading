@@ -1,0 +1,325 @@
+{
+  "trades": 35,
+  "wins": 12,
+  "losses": 7,
+  "scratches": 16,
+  "net_pnl": 145.06,
+  "win_rate": 0.3429,
+  "trade_log": [
+    {
+      "entry_index": 68,
+      "side": "SELL",
+      "entry": 4563.95,
+      "exit_index": 72,
+      "exit": 4573.57,
+      "pnl": -9.62,
+      "exit_reason": "sl"
+    },
+    {
+      "entry_index": 112,
+      "side": "SELL",
+      "entry": 4609.04,
+      "exit_index": 116,
+      "exit": 4620.82,
+      "pnl": -11.78,
+      "exit_reason": "sl"
+    },
+    {
+      "entry_index": 146,
+      "side": "SELL",
+      "entry": 4630.96,
+      "exit_index": 149,
+      "exit": 4617.35,
+      "pnl": 13.61,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 213,
+      "side": "SELL",
+      "entry": 4624.33,
+      "exit_index": 222,
+      "exit": 4624.33,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 889,
+      "side": "SELL",
+      "entry": 4696.02,
+      "exit_index": 894,
+      "exit": 4707.15,
+      "pnl": -11.13,
+      "exit_reason": "sl"
+    },
+    {
+      "entry_index": 983,
+      "side": "SELL",
+      "entry": 4702.27,
+      "exit_index": 984,
+      "exit": 4712.5,
+      "pnl": -10.23,
+      "exit_reason": "sl"
+    },
+    {
+      "entry_index": 985,
+      "side": "SELL",
+      "entry": 4702.46,
+      "exit_index": 989,
+      "exit": 4702.46,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 1520,
+      "side": "SELL",
+      "entry": 4538.09,
+      "exit_index": 1528,
+      "exit": 4519.41,
+      "pnl": 18.68,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 2328,
+      "side": "BUY",
+      "entry": 4431.84,
+      "exit_index": 2331,
+      "exit": 4450.16,
+      "pnl": 18.32,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 2365,
+      "side": "SELL",
+      "entry": 4465.26,
+      "exit_index": 2368,
+      "exit": 4465.26,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 2607,
+      "side": "SELL",
+      "entry": 4327.91,
+      "exit_index": 2616,
+      "exit": 4327.91,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 2936,
+      "side": "SELL",
+      "entry": 4214.3,
+      "exit_index": 2938,
+      "exit": 4193.44,
+      "pnl": 20.86,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 3277,
+      "side": "SELL",
+      "entry": 4323.17,
+      "exit_index": 3287,
+      "exit": 4292.64,
+      "pnl": 30.53,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 3585,
+      "side": "SELL",
+      "entry": 4131.09,
+      "exit_index": 3591,
+      "exit": 4112.91,
+      "pnl": 18.18,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 3784,
+      "side": "SELL",
+      "entry": 4022.88,
+      "exit_index": 3786,
+      "exit": 4034.93,
+      "pnl": -12.05,
+      "exit_reason": "sl"
+    },
+    {
+      "entry_index": 3788,
+      "side": "SELL",
+      "entry": 4023.56,
+      "exit_index": 3795,
+      "exit": 4023.56,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 4145,
+      "side": "SELL",
+      "entry": 4058.92,
+      "exit_index": 4147,
+      "exit": 4036.39,
+      "pnl": 22.53,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 4419,
+      "side": "SELL",
+      "entry": 4157.34,
+      "exit_index": 4421,
+      "exit": 4157.34,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 4460,
+      "side": "BUY",
+      "entry": 4132.5,
+      "exit_index": 4464,
+      "exit": 4132.5,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 4523,
+      "side": "BUY",
+      "entry": 4114.63,
+      "exit_index": 4532,
+      "exit": 4132.81,
+      "pnl": 18.18,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 4560,
+      "side": "BUY",
+      "entry": 4071.98,
+      "exit_index": 4563,
+      "exit": 4071.98,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 4563,
+      "side": "BUY",
+      "entry": 4072.37,
+      "exit_index": 4565,
+      "exit": 4072.37,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 4567,
+      "side": "BUY",
+      "entry": 4070.84,
+      "exit_index": 4568,
+      "exit": 4059.06,
+      "pnl": -11.78,
+      "exit_reason": "sl"
+    },
+    {
+      "entry_index": 4614,
+      "side": "SELL",
+      "entry": 4070.87,
+      "exit_index": 4624,
+      "exit": 4070.87,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 5469,
+      "side": "SELL",
+      "entry": 4118.74,
+      "exit_index": 5472,
+      "exit": 4118.74,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 5745,
+      "side": "BUY",
+      "entry": 4091.56,
+      "exit_index": 5748,
+      "exit": 4091.56,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 5748,
+      "side": "BUY",
+      "entry": 4090.89,
+      "exit_index": 5752,
+      "exit": 4103.06,
+      "pnl": 12.17,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 6763,
+      "side": "BUY",
+      "entry": 4382.41,
+      "exit_index": 6772,
+      "exit": 4400.63,
+      "pnl": 18.22,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 7160,
+      "side": "SELL",
+      "entry": 4413.84,
+      "exit_index": 7162,
+      "exit": 4399.25,
+      "pnl": 14.59,
+      "exit_reason": "tp"
+    },
+    {
+      "entry_index": 7165,
+      "side": "SELL",
+      "entry": 4414.43,
+      "exit_index": 7177,
+      "exit": 4414.43,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 7368,
+      "side": "SELL",
+      "entry": 4493.26,
+      "exit_index": 7372,
+      "exit": 4493.26,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 7537,
+      "side": "SELL",
+      "entry": 4610.82,
+      "exit_index": 7540,
+      "exit": 4610.82,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 7684,
+      "side": "BUY",
+      "entry": 4642.87,
+      "exit_index": 7689,
+      "exit": 4632.29,
+      "pnl": -10.58,
+      "exit_reason": "sl"
+    },
+    {
+      "entry_index": 7690,
+      "side": "BUY",
+      "entry": 4638.48,
+      "exit_index": 7692,
+      "exit": 4638.48,
+      "pnl": 0.0,
+      "exit_reason": "be"
+    },
+    {
+      "entry_index": 7905,
+      "side": "SELL",
+      "entry": 4603.65,
+      "exit_index": 7919,
+      "exit": 4587.29,
+      "pnl": 16.36,
+      "exit_reason": "tp"
+    }
+  ]
+}

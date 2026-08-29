@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-08-13T13:21:37.289867Z",
+  "iran_time": "2026-08-13T16:51:37.289867+00:00",
+  "hermes_active": true,
+  "decision": "wait",
+  "reason": "\u062e\u0628\u0631 \u0645\u0647\u0645 Core PPI \u062f\u0642\u0627\u06cc\u0642\u06cc \u067e\u06cc\u0634 \u0645\u0646\u062a\u0634\u0631 \u0634\u062f\u0647\u060c DEFCON \u0632\u0631\u062f\u060c loss_streak=3\u060c SMC neutral/confidence=0\u060c macro conflicting\u060c \u0647\u06cc\u0686 \u0633\u06cc\u06af\u0646\u0627\u0644 \u0642\u0627\u0637\u0639 \u0648 killzone \u063a\u06cc\u0631\u0641\u0639\u0627\u0644 => wait",
+  "market_price": 4390.92,
+  "session": "newyork",
+  "defcon": "yellow",
+  "risk_multiplier": 0.375,
+  "next_check": "2026-08-13T13:21:37.289867Z",
+  "last_heartbeat": "2026-08-13T17:08:46.130993",
+  "updated_at": "2026-08-13T17:08:46.130993",
+  "last_hermes_decision": "2026-08-13T16:52:32.589332",
+  "mode": "hermes_active"
+}

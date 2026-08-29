@@ -1,0 +1,16 @@
+{
+  "trades": 0,
+  "wins": 0,
+  "losses": 0,
+  "net_pnl": 0.0,
+  "win_rate": 0.0,
+  "trade_log": [],
+  "ok": true,
+  "symbol": "XAUUSD",
+  "timeframe": "M15",
+  "bars_tested": 200,
+  "data_range": {
+    "from": 1787751000,
+    "to": 1787937300
+  }
+}

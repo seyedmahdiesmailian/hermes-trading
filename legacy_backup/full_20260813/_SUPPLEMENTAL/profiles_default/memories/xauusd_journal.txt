@@ -1,0 +1,27 @@
+XAUUSD Decision Journal
+======================
+
+2026-08-09 21:01 UTC
+Decision: WAIT
+Reason: بازار بسته - تعطیلات آخر هفته
+Market: CLOSED (45h ago)
+DEFCON: GREEN
+Balance: $1,338.71
+Position: None
+Next Action: Wait for Monday market open
+
+Status: Market closed for weekend - no trading possible
+
+---
+
+2026-08-09 21:50 UTC
+Decision: WAIT
+Reason: بازار هنوز بسته - انتظار برای دوشنبه
+Market: CLOSED (45h50m ago)
+DEFCON: GREEN
+Balance: $1,338.71
+Position: None
+Analysis: All indicators neutral due to market closure
+Next Check: Monday market open
+
+Status: Weekend continues - no action possible

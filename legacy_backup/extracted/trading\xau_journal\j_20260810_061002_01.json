@@ -1,0 +1,24 @@
+{
+  "id": "j_20260810_061002_01",
+  "timestamp": "2026-08-10T06:10:02.067876",
+  "decision_by": "hermes",
+  "session": "unknown",
+  "market_snapshot": {
+    "price": null,
+    "bias": "unknown",
+    "regime": "unknown",
+    "smc_confidence": 0.0,
+    "data_error": "collector_failed_openblas_memory"
+  },
+  "decision": {
+    "action": "wait",
+    "reasoning": "اسکریپت جمعآوری داده به دلیل خطای حافظه OpenBLAS (Memory allocation failed) اجرا نشد. داده معتبری برای تحلیل در دسترس نیست؛ طبق قانون «عدم داده = عدم ورود»، تصمیم WAIT گرفته شد و معاملهای باز نمیشود.",
+    "risk_check": {
+      "entry_allowed": false,
+      "reason": "no_data"
+    }
+  },
+  "execution": null,
+  "outcome": null,
+  "lessons": null
+}
