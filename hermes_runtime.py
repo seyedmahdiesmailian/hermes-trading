@@ -421,6 +421,14 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                 will_execute = execution_result.get('executed', False)
                 proposal['auto_execution'] = eval_result
                 proposal['execution_result'] = execution_result
+                # Alert hygiene: broker rejected an approved order → surface it
+                # in the brief (master sends Telegram on skip_reason). Without
+                # this, a rejection after passing ALL gates was silent — the
+                # worst kind of failure (we thought we were in a trade).
+                if not will_execute and not dry_run:
+                    proposal['skip_reason'] = 'broker_rejected: ' + str(
+                        (execution_result.get('result') or {}).get('error')
+                        or execution_result.get('error') or 'unknown')[:120]
 
                 # Log the execution
                 append_execution_log(PLAN_DIR, {
