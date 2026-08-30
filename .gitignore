@@ -6,3 +6,5 @@ __pycache__/
 data/xau_plan/watchdog_heartbeat
 data/xau_plan/watchdog_state.json
 data/signals/listener_state.json
+.git_token
+backups/

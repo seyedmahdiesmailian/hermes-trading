@@ -1,0 +1,18 @@
+[Unit]
+Description=Hermes Instant Signal Daemon (Telegram long-poll)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai/hermes-trading
+EnvironmentFile=/home/ai/hermes-trading/.env
+Environment="PYTHONPATH=/home/ai/hermes-trading"
+ExecStart=/usr/bin/python3 /home/ai/hermes-trading/signal_daemon.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

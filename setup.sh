@@ -1,99 +1,56 @@
 #!/bin/bash
-# Hermes Trading — Setup Script
-# Run once after cloning/installing the project
+# Hermes Trading — one-shot setup on a fresh Linux server.
+# Idempotent: safe to re-run. Full architecture: docs/DEPLOY.md
 set -e
-
-BASE_DIR="/home/ai/hermes-trading"
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$BASE_DIR"
 
-echo "═══════════════════════════════════════════"
-echo "  HERMES TRADING SETUP"
-echo "═══════════════════════════════════════════"
+echo "═══ HERMES TRADING SETUP ($BASE_DIR) ═══"
 
-# 1. Create .env if missing
+# 1. Secrets: .env must come from the off-box backup (never from git)
 if [ ! -f .env ]; then
-  echo "Creating .env from template..."
   cp .env.example .env
-  echo "⚠️  Edit .env and set TELEGRAM_BOT_TOKEN"
+  echo "⚠️  .env created from template — restore real values from backup:"
+  echo "   tar -xzf hermes_backup_*.tar.gz -C /tmp '*/.env' && cp /tmp/.../.env .env"
+  echo "   (see docs/DEPLOY.md step 3). Continuing with DRY_RUN=true is safe."
 fi
 
-# 2. Create directories
+# 2. Python deps
+echo "── python deps"
+pip3 install -q requests python-dotenv pywinrm requests_ntlm pandas numpy python-telegram-bot 2>/dev/null || \
+  echo "⚠️  pip install failed — install deps manually (docs/DEPLOY.md step 2)"
+
+# 3. Directories + exec bits
 mkdir -p logs data/commands data/xau_plan data/trading
+chmod +x scripts/*.sh scripts/hermes_cron.sh scripts/bridge_health_monitor.py 2>/dev/null || true
 
-# 3. Make scripts executable
-chmod +x scripts/hermes_cron.sh
-chmod +x scripts/bridge_health_monitor.py
+# 4. systemd user services (position + signal daemons)
+echo "── systemd user services"
+mkdir -p ~/.config/systemd/user
+cp ops/systemd/hermes-position.service ops/systemd/hermes-signal.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now hermes-position hermes-signal || echo "⚠️  services failed to start — check journalctl --user"
+loginctl enable-linger "$(id -un)" 2>/dev/null || true
 
-# 4. Install cron jobs if not present
+# 5. crontab (master cycle, health monitor, backup, git sync, autopilot)
 if ! crontab -l 2>/dev/null | grep -q "hermes_cron.sh"; then
-  echo "Installing cron jobs..."
-  (crontab -l 2>/dev/null; cat <<'CRON'
-# Hermes Trading — Every 15 minutes
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-*/15 * * * * cd /home/ai/hermes-trading && bash scripts/hermes_cron.sh >> /home/ai/hermes-trading/logs/cron.log 2>&1
-*/5 * * * * cd /home/ai/hermes-trading && python3 scripts/bridge_health_monitor.py >> /home/ai/hermes-trading/logs/bridge_health.log 2>&1
-CRON
-  ) | crontab -
-  echo "✅ Cron jobs installed"
+  echo "── installing crontab from ops/cron/crontab.backup.txt"
+  crontab ops/cron/crontab.backup.txt
 else
-  echo "✅ Cron jobs already installed"
+  echo "── crontab already installed"
 fi
 
-# 5. Test bridge connectivity
-echo ""
-echo "Testing bridge connectivity..."
+# 6. Tests
+echo "── running test suite"
+python3 -m unittest discover -s tests 2>&1 | tail -1
+
+# 7. Connectivity checks (non-fatal)
+echo "── bridge"
 python3 -c "
 from bridge_client import BridgeClient
-b = BridgeClient()
-h = b.health()
-if h.get('ok'):
-    print('✅ Bridge connected')
-    a = b.get_account()
-    if isinstance(a, dict) and a.get('ok'):
-        print(f'   Account: \${a.get(\"balance\", 0):.2f}')
-    t = b.get_tick('XAUUSD')
-    if isinstance(t, dict) and t.get('ok'):
-        print(f'   XAUUSD: {t.get(\"bid\", 0):.2f}')
-else:
-    print('❌ Bridge unreachable — check Windows VM at 192.168.10.51:5050')
-"
-
-# 6. Test Telegram (if configured)
-if grep -q "YOUR_BOT_TOKEN_HERE" .env 2>/dev/null; then
-  echo ""
-  echo "⚠️  Telegram not configured yet"
-  echo "   1. Open Telegram, search @BotFather"
-  echo "   2. Send /newbot and follow instructions"
-  echo "   3. Copy the token to .env → TELEGRAM_BOT_TOKEN"
-  echo "   4. Send a message to your bot, then visit:"
-  echo "      https://api.telegram.org/bot<TOKEN>/getUpdates"
-  echo "   5. Copy chat.id to .env → TELEGRAM_CHAT_ID"
-else
-  echo ""
-  echo "Testing Telegram..."
-  python3 -c "
-import os, requests
-token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-chat_id = os.getenv('TELEGRAM_CHAT_ID', '')
-if token and chat_id and token != 'YOUR_BOT_TOKEN_HERE':
-    r = requests.post(f'https://api.telegram.org/bot{token}/sendMessage',
-                      data={'chat_id': chat_id, 'text': '🤖 Hermes Trading setup complete'}, timeout=10)
-    if r.status_code == 200:
-        print('✅ Telegram connected')
-    else:
-        print(f'❌ Telegram error: {r.status_code}')
-else:
-    print('⚠️  Telegram not configured')
-"
-fi
+h = BridgeClient().health()
+print('✅ bridge ok' if h.get('ok') else '❌ bridge unreachable — Windows VM :5050 (docs/DEPLOY.md step 5)')" 2>/dev/null || echo "❌ bridge unreachable"
 
 echo ""
-echo "═══════════════════════════════════════════"
-echo "Setup complete!"
-echo ""
-echo "Quick commands:"
-echo "  python3 cli.py status    — Show trading status"
-echo "  python3 cli.py report    — Show last report"
-echo "  python3 cli.py run       — Run a cycle now"
-echo "═══════════════════════════════════════════"
+echo "Setup done. Next: verify with 'python3 scripts/verify_chain.py'"
+echo "and one manual cycle: 'bash scripts/hermes_cron.sh'"
