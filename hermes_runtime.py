@@ -12,6 +12,7 @@ NO human approval required. The system:
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -32,6 +33,10 @@ DATA_DIR = BASE_DIR / 'data'
 PLAN_DIR = DATA_DIR / 'xau_plan'
 SYMBOL = 'XAUUSD'
 TIMEFRAME = 'M5'
+# Max ask-bid (in $) to allow a NEW entry. Normal XAUUSD spread here is ~0.18;
+# news/rollover spikes can blow past 2.0. Backtests charge a flat 0.20 cost,
+# so live must not enter when the real cost is multiples of that.
+MAX_ENTRY_SPREAD = float(os.getenv('HERMES_MAX_SPREAD', '0.60'))
 
 
 def _now() -> datetime:
@@ -332,6 +337,20 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         plan['next_reassessment'] = now.isoformat()
         save_current_plan(PLAN_DIR, plan)
     proposal = _build_proposal(plan, monitor, policy, price)
+
+    # ── Spread gate: news/rollover spikes blow XAUUSD past 2.0$ (normal 0.18).
+    # Cost is linear in trades; entering into a wide spread hands the edge to
+    # the broker. Read-only tick check — blocks the PROPOSAL, never management.
+    if proposal is not None:
+        try:
+            _tk = tick if isinstance(tick, dict) else {}
+            _td = _tk.get('data', _tk)
+            _spr = float(_td.get('ask') or 0) - float(_td.get('bid') or 0)
+            if _spr > MAX_ENTRY_SPREAD:
+                proposal = None
+                monitor['spread_blocked'] = round(_spr, 2)
+        except (TypeError, ValueError):
+            pass
 
     if proposal is not None:
         # News blackout on the entry path. hermes_master never passed
