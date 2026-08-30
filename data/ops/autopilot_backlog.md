@@ -19,7 +19,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       test 8/12/20-bar lookbacks in the parity funnel, pick best by PnL+trades.
 - [x] Alert hygiene (done 2026-08-30: audit of 4 execute=True events — 2 real fills DID alert, 2 broker rejections were SILENT; b10 now sets skip_reason=broker_rejected so master brief + Telegram surface every rejection)
       within 60s of every live execution (check report path in hermes_master.py).
-- [ ] Reusable A/B template: scripts/ab_aggressive_entry.py pattern (one cached
+- [x] Reusable A/B template (done 2026-08-30: scripts/ab.py — cached M5 dataset + run_backtest(data=) + const-patch or kwarg specs, restores state after; first use: BE-at-R curve 0.4→848/0.5→949/0.6→990/0.7→1030/0.9→966/noBE→966 → peak at 0.7R but KEEP live 0.5R: later BE = looser protection, +6$/wk not worth tail risk, tighten-only rule)
       dataset + run_backtest(data=...) + exclude_styles prefixes in backtest_ohlc)
       — reuse for future branch A/Bs: SMC range-kill rule on/off, macro blackout
       on/off, BE-at-R 0.4 vs 0.5.

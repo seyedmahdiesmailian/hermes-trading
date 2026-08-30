@@ -85,7 +85,8 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
 def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: int = 500,
                  exclude_styles: list[str] | None = None, data: dict | None = None,
                  range_kill_conf: float = 0.35,
-                 spread_override: float | None = None) -> dict:
+                 spread_override: float | None = None,
+                 breakeven_at_r: float = 0.5) -> dict:
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
@@ -129,7 +130,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         signal_fn,
         min_rr=1.5,           # live gate 6: backtested MIN_RR
         min_grade="B",        # live gate 7: MIN_SETUP_GRADE="B" (parity)
-        breakeven_at_r=0.5,   # live trade management: BE move at +0.5R
+        breakeven_at_r=breakeven_at_r,   # live trade management: BE move at +0.5R (A/B-able)
         partial_tp1_share=0.5,  # live TP ladder: 50% at first target
         spread=spread_override if spread_override is not None else 0.20,  # XAUUSD demo round-trip cost
         exclude_styles=exclude_styles,
