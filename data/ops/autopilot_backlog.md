@@ -9,7 +9,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] Management-path broker rejection is SILENT + corrupts state (todo, picked 2026-08-30):
+- [x] Management-path broker rejection is SILENT + corrupts state (CLOSED 2026-08-30: b7b fixed executed-flag; b10b-era daemon retries rejected moves every 5s and only commits state on broker acceptance; b17 adds instant Telegram alert on rejected breakeven/trail — trade on original stop is no longer silent):
       `evaluate_management_action` hardcodes `executed=True` on every bridge call — the exact
       b7 bug class, but on the exit side. `/api/modify` returns HTTP 400 + `ok:false` on
       retcode != DONE (invalid stops / trade disabled / off quotes), so a FAILED breakeven or

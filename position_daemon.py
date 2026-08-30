@@ -282,6 +282,13 @@ def main():
                             if tag not in tracked[tkt_s].setdefault('_rejected', []):
                                 tracked[tkt_s]['_rejected'] = tracked[tkt_s].get('_rejected', []) + [tag]
                                 evs.append(f"⚠️ مدیریت رد شد: {mgmt.get('action')} ({str(res['error'])[:60]})")
+                                # A rejected breakeven/trail move means the trade
+                                # is still running on its ORIGINAL stop — the
+                                # retry loop keeps trying every 5s, but the
+                                # operator must know NOW, not at close report.
+                                send_telegram(f'⚠️ مدیریت رد شد #{tkt}: {mgmt.get("action")}\n'
+                                              f'{str(res["error"])[:120]}\n'
+                                              f'اتصال/SL اصلی هنوز فعال — تلاش مجدد خودکار')
 
             save_state(state)
             (BASE / 'data' / 'xau_plan' / 'watchdog_heartbeat').write_text(
