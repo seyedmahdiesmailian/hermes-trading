@@ -20,10 +20,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = Path('/home/ai/hermes-trading')
+sys.path.insert(0, str(BASE))
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
+load_dotenv(BASE / '.env')
+# WIN_HOST/WIN_USER/WIN_PASS now come from .env (the repo-wide dotenv-fallback
+# test caught this script reading os.getenv with no loader at all — it could
+# never have run: WIN_PASS was always '').
 WIN_HOST = os.getenv('WIN_HOST', '192.168.10.51')
 WIN_USER = os.getenv('WIN_USER', 'Administrator')
 WIN_PASS = os.getenv('WIN_PASS', '')
-REMOTE_DIR = 'D:\\HermesBackups'
+REMOTE_DIR = os.getenv('WIN_BACKUP_DIR', 'C:\\HermesBackups')  # D: is FULL (0 bytes free, b31)
 KEEP = 14
 
 
@@ -48,9 +57,26 @@ def build_archive():
     return out, bundle
 
 
-def push(remote_path: str, data: bytes, chunk: int = 2000000) -> str:
-    """WinRM file push via base64 chunks (same pattern as _deploy_bridge)."""
+def push(remote_path: str, data: bytes, port: int = 0) -> str:
+    """b31: Windows PULLS the file over LAN HTTP from a throwaway server here.
+    WinRM push is unusable for MB-sized files: envelope limit (413) and the
+    32KB PowerShell command-line limit (both hit in testing)."""
     import winrm
+    import threading
+    from http.server import SimpleHTTPRequestHandler, HTTPServer
+    import functools
+
+    fname = remote_path.rsplit('\\', 1)[-1]
+    serve_dir = tempfile.mkdtemp(prefix='hermes_bk_')
+    (Path(serve_dir) / fname).write_bytes(data)
+
+    handler = functools.partial(SimpleHTTPRequestHandler, directory=serve_dir)
+    srv = HTTPServer(('0.0.0.0', 0), handler)  # ephemeral port
+    t = threading.Thread(target=srv.serve_forever, daemon=True)
+    t.start()
+    port = srv.server_address[1]
+    local_ip = os.getenv('HERMES_LAN_IP', '192.168.10.18')
+
     s = winrm.Session(WIN_HOST, auth=(WIN_USER, WIN_PASS), transport='ntlm',
                       server_cert_validation='ignore', read_timeout_sec=180)
 
@@ -62,18 +88,19 @@ def push(remote_path: str, data: bytes, chunk: int = 2000000) -> str:
                             if 'CLIXML' not in l and not l.startswith('<'))
         return out.strip()
 
-    run_ps(f"New-Item -ItemType Directory -Force -Path '{REMOTE_DIR}' | Out-Null; 'ok'")
-    b64 = base64.b64encode(data).decode()
-    tmp_b64 = remote_path + '.b64'
-    run_ps(f"Remove-Item '{tmp_b64}' -EA SilentlyContinue; 'ok'")
-    for i in range(0, len(b64), chunk):
-        part = b64[i:i + chunk]
-        # write raw base64 text pieces to a temp file, join at the end
-        run_ps(f"[IO.File]::AppendAllText('{tmp_b64}','{part}')")
-    return run_ps(
-        "$b=[Convert]::FromBase64String((Get-Content '%s' -Raw));"
-        "[IO.File]::WriteAllBytes('%s',$b); Remove-Item '%s';"
-        "'written ' + (Get-Item '%s').Length + ' bytes'" % (tmp_b64, remote_path, tmp_b64, remote_path))
+    try:
+        run_ps(f"New-Item -ItemType Directory -Force -Path '{REMOTE_DIR}' | Out-Null; 'ok'")
+        out = run_ps(
+            f"Invoke-WebRequest -UseBasicParsing -Uri 'http://{local_ip}:{port}/{fname}' "
+            f"-OutFile '{remote_path}' -TimeoutSec 120; "
+            f"'written ' + (Get-Item '{remote_path}').Length + ' bytes'")
+        if 'written' not in out:
+            raise RuntimeError(f'pull failed: {out[:200]}')
+        return out
+    finally:
+        srv.shutdown()
+        import shutil
+        shutil.rmtree(serve_dir, ignore_errors=True)
 
 
 def prune(s: 'winrm.Session') -> None:
@@ -92,12 +119,16 @@ def main() -> int:
     if size > 60_000_000:
         log(f'archive too big ({size} bytes) — refusing to push over WinRM')
         return 3
-    ts = archive.stem.replace('hermes_backup_', '')
+    ts = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
     try:
         out = push(f'{REMOTE_DIR}\\hermes_backup_{ts}.tar.gz', archive.read_bytes())
         log(f'tar: {out}')
+        if f'{archive.stat().st_size} bytes' not in out:
+            raise RuntimeError(f'tar size mismatch: {out[:120]}')
         out2 = push(f'{REMOTE_DIR}\\hermes_repo_{ts}.bundle', bundle.read_bytes())
         log(f'bundle: {out2}')
+        if f'{bundle.stat().st_size} bytes' not in out2:
+            raise RuntimeError(f'bundle size mismatch: {out2[:120]}')
         import winrm
         s = winrm.Session(WIN_HOST, auth=(WIN_USER, WIN_PASS), transport='ntlm',
                           server_cert_validation='ignore', read_timeout_sec=120)
@@ -109,8 +140,8 @@ def main() -> int:
         # alert via notifier (best effort)
         try:
             sys.path.insert(0, str(BASE))
-            from notifier.telegram import send_message
-            send_message(f'🔴 بک‌آپ آفشور ناموفق: {str(e)[:150]}')
+            from notifier.telegram import send_telegram
+            send_telegram(f'🔴 بک‌آپ آفشور ناموفق: {str(e)[:150]}')
         except Exception:
             pass
         return 1
