@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""b39: Telegram dashboards — managerial redesign.
+"""b40: Telegram dashboards — nested menus, deeper data, operator controls.
 
-Two dashboards, one engine:
-  OPS   (3rd bot)  -> system status, autopilot narrative, backup/health, trades
-  TRADE (2nd bot)  -> balance, plan, positions, PnL, safety gates vs limits
+Research-backed layout (prop-firm dashboards + Telegram multi-level UX):
+  - verdict-first home, drill-down sub-panels, ⬅️ بازگشت + 🏠 خانه everywhere
+  - pro stats: profit factor, expectancy, avg win/loss, max drawdown,
+    streaks, equity sparkline, day-by-day P&L
+  - 🎛 کنترل: pause autopilot, halt/resume trading, restart daemons —
+    every destructive action goes through a ✅/❌ confirmation step and is
+    written to logs/control_audit.log. Owner-chat only (enforced upstream).
 
-Design rules (user feedback b38: "مدیریتی‌تر، کاربردی‌تر"):
-  - one verdict line at the top: is everything OK or what is wrong
-  - grouped sections (مالی / ایمنی / سیستم) instead of a flat dump
-  - every risk number shown against its LIMIT (0/4 not just 0)
-  - countdowns: when the market reopens, when the plan expires
-  - plain Persian, no raw JSON keys, no code identifiers
-Every section is independently guarded: a missing file or dead bridge
-degrades to 'نامعلوم' instead of raising.
+Callback grammar:  ops:<path...>   tr:<path...>
+                   ask:<action> -> confirm panel ; cfm:<action> -> execute
 """
 from __future__ import annotations
 
 import csv
 import json
 import subprocess
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -26,6 +25,11 @@ ROOT = Path('/home/ai/hermes-trading')
 DATA = ROOT / 'data'
 TEHRAN = timezone(timedelta(hours=3, minutes=30))
 WEEK_FA = ['دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه', 'یکشنبه']
+PAUSE_FLAG = DATA / 'ops/autopilot_paused'
+AUDIT_LOG = ROOT / 'logs/control_audit.log'
+
+RESTARTABLE = {'hermes-signal': 'سرویس سیگنال', 'hermes-position': 'سرویس پوزیشن',
+               'hermes-dashboard': 'سرویس داشبورد'}
 
 
 def _j(path: Path, default=None):
@@ -48,7 +52,7 @@ def _ago(iso: str | None) -> str:
         if t.tzinfo is None:
             t = t.replace(tzinfo=timezone.utc)
         m = (datetime.now(timezone.utc) - t).total_seconds() / 60
-        if m < 0:                      # future timestamp -> countdown
+        if m < 0:
             m = -m
             if m < 60:
                 return f'{m:.0f} دقیقه دیگر'
@@ -83,6 +87,17 @@ def _bar(pct: float, width: int = 8) -> str:
     return '█' * f + '░' * (width - f)
 
 
+def _spark(vals) -> str:
+    blocks = '▁▂▃▄▅▆▇█'
+    vals = [float(v) for v in vals]
+    if not vals:
+        return '—'
+    lo, hi = min(vals), max(vals)
+    if hi == lo:
+        return blocks[4] * len(vals)
+    return ''.join(blocks[int((v - lo) / (hi - lo) * 7)] for v in vals)
+
+
 def _sec(title: str) -> str:
     return f'\n<b>{title}</b>\n'
 
@@ -91,8 +106,21 @@ def _row(label: str, value: str) -> str:
     return f'{label}: {value}'
 
 
-def _market_state() -> tuple[bool, str, str]:
-    """(open?, reason-if-closed, human countdown to the next change)."""
+def _btn(text: str, data: str) -> dict:
+    return {'text': text, 'callback_data': data}
+
+
+def _nav(prefix: str, back: str | None, home: str = 'home') -> list:
+    row = []
+    if back is not None:
+        row.append(_btn('⬅️ بازگشت', f'{prefix}:{back}'))
+    row.append(_btn('🏠 خانه', f'{prefix}:{home}'))
+    return row
+
+
+# ─────────────────────────── shared sources ───────────────────────────
+
+def _market_state():
     try:
         import sys
         if str(ROOT) not in sys.path:
@@ -100,8 +128,7 @@ def _market_state() -> tuple[bool, str, str]:
         from engines.market_hours import is_market_open, closed_reason
         now = datetime.now(timezone.utc)
         open_now = bool(is_market_open(now))
-        # coarse scan (15-min steps, max 4 days), then refine to the minute
-        flip, flip_open = '—', None
+        flip, flip_open = None, None
         for i in range(1, 385):
             t = now + timedelta(minutes=15 * i)
             if bool(is_market_open(t)) != open_now:
@@ -118,7 +145,7 @@ def _market_state() -> tuple[bool, str, str]:
             reason = 'تعطیلی آخر هفته'
         return open_now, reason, (flip, flip_open)
     except Exception:
-        return False, '', ('—', None)
+        return False, '', (None, None)
 
 
 def _services() -> dict:
@@ -134,8 +161,47 @@ def _services() -> dict:
     return dict(zip(names, vals + ['?'] * max(0, len(names) - len(vals))))
 
 
-_SVC_LABEL = {'hermes-signal': 'سیگنال', 'hermes-position': 'پوزیشن',
-              'hermes-gateway': 'گیت‌وی', 'hermes-dashboard': 'داشبورد'}
+_SVC_LABEL = {'hermes-signal': '📡 سیگنال', 'hermes-position': '📌 پوزیشن',
+              'hermes-gateway': '🖥 گیت‌وی', 'hermes-dashboard': '🛰 داشبورد'}
+
+
+def _svc_uptime(name: str) -> str:
+    try:
+        r = subprocess.run(['systemctl', '--user', 'show', name,
+                            '-p', 'ActiveEnterTimestamp'],
+                           capture_output=True, text=True, timeout=10)
+        raw = r.stdout.strip().split('=', 1)[-1].strip()
+        if not raw:
+            return '—'
+        # systemd prints e.g. "Sun 2026-08-30 20:27:27 +0330" — drop the
+        # weekday token and normalise the offset before parsing.
+        parts = raw.split()
+        if len(parts) == 4 and parts[0][:3].isalpha() and parts[1][:2].isdigit():
+            parts = parts[1:]
+        if len(parts) == 3 and parts[2].startswith(('+', '-')) and ':' not in parts[2]:
+            parts[2] = parts[2][:3] + ':' + parts[2][3:]
+        t = datetime.fromisoformat(' '.join(parts).replace(' ', 'T', 1))
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+        d = datetime.now(timezone.utc) - t
+        mins = int(d.total_seconds() // 60)
+        if mins < 60:
+            return f'{mins}m'
+        if d.days:
+            return f'{d.days}d {d.seconds // 3600}h'
+        return f'{mins // 60}h {mins % 60}m'
+    except Exception:
+        return '—'
+
+
+def _svc_log(name: str, n: int = 5) -> str:
+    try:
+        r = subprocess.run(['journalctl', '--user', '-u', name, '-n', str(n),
+                            '--no-pager', '-o', 'cat'],
+                           capture_output=True, text=True, timeout=15)
+        return '\n'.join(l[:110] for l in r.stdout.splitlines()[-n:]) or '—'
+    except Exception:
+        return '—'
 
 
 def _bridge():
@@ -152,15 +218,68 @@ def _bridge():
         return None, {}, {}
 
 
-def _journal() -> dict:
-    """Today + last-10 stats from the trade journal."""
-    out = {'trades': 0, 'pnl': 0.0, 'wins': 0, 'recent': [],
-           'l10_trades': 0, 'l10_wins': 0, 'l10_pnl': 0.0}
+def _journal_rows() -> list:
     try:
         with (DATA / 'xau_plan/trade_journal.csv').open(encoding='utf-8-sig') as f:
-            rows = list(csv.DictReader(f))
+            return list(csv.DictReader(f))
     except Exception:
+        return []
+
+
+def _stats() -> dict:
+    """Professional stats from the full journal + today slice."""
+    rows = _journal_rows()
+    out = {'n': len(rows), 'today': {'n': 0, 'pnl': 0.0, 'wins': 0},
+           'recent': [], 'days': [], 'curve': ''}
+    if not rows:
         return out
+    pnls, wins = [], 0
+    for r in rows:
+        try:
+            pnls.append(float(r.get('profit') or 0))
+        except Exception:
+            pnls.append(0.0)
+    out['n'] = len(pnls)
+    out['wins'] = sum(1 for p in pnls if p > 0)
+    out['losses'] = sum(1 for p in pnls if p < 0)
+    gross_w = sum(p for p in pnls if p > 0)
+    gross_l = -sum(p for p in pnls if p < 0)
+    out['pf'] = (gross_w / gross_l) if gross_l > 0 else float('inf') if gross_w > 0 else 0.0
+    out['net'] = sum(pnls)
+    out['exp'] = out['net'] / len(pnls) if pnls else 0.0
+    ws = [p for p in pnls if p > 0]
+    ls = [p for p in pnls if p < 0]
+    out['avg_win'] = sum(ws) / len(ws) if ws else 0.0
+    out['avg_loss'] = sum(ls) / len(ls) if ls else 0.0
+    out['best'] = max(pnls)
+    out['worst'] = min(pnls)
+    # max drawdown on the cumulative curve
+    cum = peak = 0.0
+    mdd = 0.0
+    curve = []
+    for p in pnls:
+        cum += p
+        curve.append(cum)
+        peak = max(peak, cum)
+        mdd = min(mdd, cum - peak)
+    out['mdd'] = mdd
+    out['curve'] = _spark(curve)
+    # current streak
+    streak, kind = 0, ''
+    for p in reversed(pnls):
+        k = 'win' if p > 0 else ('loss' if p < 0 else '')
+        if not k or (kind and k != kind):
+            break
+        kind = k
+        streak += 1
+    out['streak'] = (streak, kind)
+    # by side
+    for side in ('BUY', 'SELL'):
+        sp = [float(r.get('profit') or 0) for r in rows if str(r.get('side', '')).upper() == side]
+        out[f'{side.lower()}_n'] = len(sp)
+        out[f'{side.lower()}_pnl'] = sum(sp)
+        out[f'{side.lower()}_wr'] = (sum(1 for p in sp if p > 0) / len(sp) * 100) if sp else 0.0
+    # today
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     for r in rows:
         if str(r.get('journaled_at', '')).startswith(today):
@@ -168,28 +287,29 @@ def _journal() -> dict:
                 p = float(r.get('profit') or 0)
             except Exception:
                 p = 0.0
-            out['trades'] += 1
-            out['pnl'] += p
-            out['wins'] += 1 if p > 0 else 0
-    for r in rows[-10:]:
+            out['today']['n'] += 1
+            out['today']['pnl'] += p
+            out['today']['wins'] += 1 if p > 0 else 0
+    # last 7 days
+    by_day: dict[str, float] = {}
+    for r in rows:
+        d = str(r.get('journaled_at', ''))[:10]
         try:
-            p = float(r.get('profit') or 0)
+            by_day[d] = by_day.get(d, 0.0) + float(r.get('profit') or 0)
         except Exception:
-            p = 0.0
-        out['l10_trades'] += 1
-        out['l10_pnl'] += p
-        out['l10_wins'] += 1 if p > 0 else 0
-    for r in rows[-5:]:
+            continue
+    out['days'] = sorted(by_day.items())[-7:]
+    # recent list
+    for r in rows[-10:][::-1]:
+        ct = str(r.get('close_time', '')).strip()
+        if ct.isdigit():
+            when = datetime.fromtimestamp(int(ct), timezone.utc).astimezone(TEHRAN).strftime('%m/%d %H:%M')
+        else:
+            when = ct[5:16] or '—'
         try:
-            ct = str(r.get('close_time', '')).strip()
-            if ct.isdigit():           # broker epoch seconds
-                ts = datetime.fromtimestamp(int(ct), timezone.utc).astimezone(TEHRAN)
-                when = ts.strftime('%H:%M')
-            elif len(ct) > 16:
-                when = ct[11:16]
-            else:
-                when = '—'
-            out['recent'].append((when, r.get('side', '?'), float(r.get('profit') or 0)))
+            out['recent'].append((when, str(r.get('side', '?')).upper(),
+                                  float(r.get('volume') or 0), float(r.get('profit') or 0),
+                                  str(r.get('comment') or '')))
         except Exception:
             continue
     return out
@@ -209,8 +329,6 @@ def _backlog() -> dict:
 
 
 def _autopilot_narrative(max_chars: int = 700) -> str:
-    """The agent's own final summary of its last completed run, in Persian
-    (the prompt requires it). Text between the last two run markers."""
     try:
         txt = (ROOT / 'logs/autopilot.log').read_text(errors='ignore')
     except Exception:
@@ -218,45 +336,33 @@ def _autopilot_narrative(max_chars: int = 700) -> str:
     parts = txt.split('=== autopilot run end')
     if len(parts) < 2:
         return ''
-    block = parts[-2].split('=== autopilot run start ===')
-    body = block[-1]
+    body = parts[-2].split('=== autopilot run start ===')[-1]
     lines = [l.strip() for l in body.splitlines() if l.strip()]
-    # drop timestamps / report noise, keep the prose
     keep = [l for l in lines
             if not l.startswith('2026-') and 'report sent' not in l
             and 'nothing to report' not in l and 'autopilot run' not in l]
     text = ' '.join(keep)
-    # an API-failure run has no narrative — say so plainly in Persian
     if 'API call failed' in text and len(keep) <= 2:
         why = '503' if '503' in text else ('429' if '429' in text else 'خطا')
         return (f'این اجرا به نتیجه نرسید: سرویس مدل پاسخ نداد (HTTP {why}). '
                 'هیچ تغییری در کد ساخته نشد؛ آیتم بک‌لاگ برای اجرای بعدی دست‌نخورده ماند.')
-    text = re_sub(text)
+    import re
+    text = re.sub(r'`([^`]*)`', r'\1', text)
+    text = re.sub(r'\*\*([^*]*)\*\*', r'\1', text)
+    text = re.sub(r'\s+', ' ', text).strip()
     return text[:max_chars] + ('…' if len(text) > max_chars else '')
 
 
-def re_sub(text: str) -> str:
-    import re
-    text = re.sub(r'`([^`]*)`', r'\1', text)          # strip code ticks
-    text = re.sub(r'\*\*([^*]*)\*\*', r'\1', text)    # strip bold markers
-    return re.sub(r'\s+', ' ', text).strip()
-
-
-# ══════════════════════ OPS BOT (3rd) ══════════════════════
-
-OPS_PANELS = {
-    'home': '🏠 وضعیت کلی', 'sys': '🖥 سیستم', 'auto': '🤖 اتوپایلوت',
-    'ops': '💾 بکاپ', 'trade': '💹 ترید',
-}
-OPS_KEYBOARD = [[{'text': OPS_PANELS['home'], 'callback_data': 'ops:home'},
-                 {'text': OPS_PANELS['sys'], 'callback_data': 'ops:sys'}],
-                [{'text': OPS_PANELS['auto'], 'callback_data': 'ops:auto'},
-                 {'text': OPS_PANELS['ops'], 'callback_data': 'ops:ops'}],
-                [{'text': OPS_PANELS['trade'], 'callback_data': 'ops:trade'}]]
+def _autopilot_paused() -> str | None:
+    try:
+        if PAUSE_FLAG.exists():
+            return PAUSE_FLAG.read_text().strip()[:80] or 'بله'
+    except Exception:
+        pass
+    return None
 
 
 def _verdict() -> tuple[bool, list[str]]:
-    """One-line health verdict + the list of whatever is wrong."""
     svcs = _services()
     _, acct, _ = _bridge()
     ks = _j(DATA / 'kill_switch_state.json')
@@ -264,7 +370,7 @@ def _verdict() -> tuple[bool, list[str]]:
     problems = []
     dead = [k for k, v in svcs.items() if v != 'active']
     if dead:
-        problems.append('سرویس خاموش: ' + '، '.join(_SVC_LABEL.get(k, k) for k in dead))
+        problems.append('سرویس خاموش: ' + '، '.join(_SVC_LABEL.get(k, k).split(' ', 1)[-1] for k in dead))
     if not acct.get('ok'):
         problems.append('بریج ویندوز در دسترس نیست')
     if ks.get('halted'):
@@ -274,15 +380,18 @@ def _verdict() -> tuple[bool, list[str]]:
     return (not problems), problems
 
 
+# ══════════════════════ OPS BOT (3rd) ══════════════════════
+
 def ops_home() -> tuple[str, list]:
     ok, problems = _verdict()
     svcs = _services()
     _, acct, pos = _bridge()
     ap = _j(DATA / 'ops/autopilot_state.json')
     bl = _backlog()
-    jt = _journal()
+    st = _stats()
     open_now, _, flip = _market_state()
     done_n, all_n = len(bl['done']), len(bl['done']) + len(bl['todo'])
+    paused = _autopilot_paused()
     lines = ['🛰 <b>داشبورد عملیات هرمس</b>', _fa_date(), '']
     if ok:
         lines.append('🟢 <b>همه‌چیز روال است</b>')
@@ -291,85 +400,161 @@ def ops_home() -> tuple[str, list]:
         lines += [f'· ⚠️ {p}' for p in problems]
     lines.append(_sec('💹 مالی'))
     if acct.get('ok'):
-        lines.append(_row('بالانس', f"<b>{_num(acct.get('balance'))} $</b> · دارایی {_num(acct.get('equity'))} $"))
+        lines.append(_row('Balance', f"<b>{_num(acct.get('balance'))} $</b> · دارایی {_num(acct.get('equity'))} $"))
     else:
-        lines.append(_row('بالانس', 'نامعلوم — بریج قطع'))
-    lines.append(_row('امروز', f"{jt['trades']} ترید · {jt['pnl']:+,.2f} $"))
-    lines.append(_row('بازار طلا', '🟢 باز' if open_now else '🔴 بسته'))
-    if flip and flip[1] is not None:
-        verb = 'باز می‌شود' if flip[1] else 'بسته می‌شود'
-        lines.append(_row('تغییر بعدی', f'ساعت {flip[0]} — {verb}'))
+        lines.append(_row('Balance', 'نامعلوم — بریج قطع'))
+    lines.append(_row('Today', f"{st['today']['n']} ترید · {st['today']['pnl']:+,.2f} $"))
+    lines.append(_row('Gold Market', '🟢 باز' if open_now else '🔴 بسته'))
+    if flip and flip[1]:
+        lines.append(_row('Reopens', f'ساعت {flip[0]} تهران'))
     lines.append(_sec('🤖 اتوپایلوت'))
-    lines.append(_row('آخرین اجرا', _ago(ap.get('last_run_utc'))))
-    lines.append(_row('بک‌لاگ', f'{_bar(done_n / all_n if all_n else 0)} {done_n}/{all_n} انجام شده'))
+    if paused:
+        lines.append(f'⏸ <b>متوقف است</b> — {paused}')
+    else:
+        lines.append(_row('Last Run', _ago(ap.get('last_run_utc'))))
+    lines.append(_row('Backlog', f'{_bar(done_n / all_n if all_n else 0)} {done_n}/{all_n}'))
     lines.append(_sec('🖥 سرویس‌ها'))
     lines.append(' · '.join(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k)}'
                             for k, v in svcs.items()))
-    lines.append('\nبرای جزئیات پنل را انتخاب کن 👇')
-    return '\n'.join(lines), OPS_KEYBOARD
+    kb = [[_btn('🖥 سیستم', 'ops:sys'), _btn('🤖 اتوپایلوت', 'ops:auto')],
+          [_btn('💾 بکاپ/سلامت', 'ops:ops'), _btn('💹 ترید', 'ops:trade')],
+          [_btn('🎛 کنترل', 'ops:control')]]
+    return '\n'.join(lines), kb
 
 
-def ops_system() -> tuple[str, list]:
+def ops_sys() -> tuple[str, list]:
     svcs = _services()
-    ok, problems = _verdict()
-    hb = ''
-    try:
-        hb = (DATA / 'xau_plan/watchdog_heartbeat').read_text().strip()
-    except Exception:
-        pass
     try:
         disk = subprocess.run(['df', '-h', '--output=pcent,avail', '/'],
                               capture_output=True, text=True, timeout=10).stdout.splitlines()[-1].split()
         disk_pct = disk[0]
     except Exception:
-        disk_pct = 'نامعلوم'
+        disk_pct = '؟'
     try:
         mem = subprocess.run(['free', '-m'], capture_output=True, text=True, timeout=10).stdout.splitlines()[1].split()
         mem_pct = int(int(mem[2]) / int(mem[1]) * 100)
     except Exception:
         mem_pct = 0
-    lines = ['🖥 <b>سلامت سرور</b>', _fa_date(), '']
-    lines.append('🟢 <b>سالم</b>' if ok else '🔴 <b>مشکل دارد</b>')
-    if problems:
-        lines += [f'· ⚠️ {p}' for p in problems]
-    lines.append(_sec('🧩 سرویس‌ها'))
-    for k, v in svcs.items():
-        lines.append(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k)} — '
-                     + ('بالا' if v == 'active' else v))
-    lines.append(_sec('📊 منابع'))
-    lines.append(_row('رمز', f'{_bar(mem_pct / 100)} {mem_pct}٪'))
-    lines.append(_row('دیسک', f'{_bar(float(disk_pct.strip("%")) / 100 if disk_pct.strip("%").isdigit() else 0)} {disk_pct}'))
-    lines.append(_row('ضربان واتچ‌داگ', _ago(hb) if hb else 'بی‌خبر'))
-    return '\n'.join(lines), OPS_KEYBOARD
+    try:
+        load = subprocess.run(['cat', '/proc/loadavg'], capture_output=True, text=True, timeout=5).stdout.split()[:3]
+        load_s = ' · '.join(load)
+    except Exception:
+        load_s = '—'
+    # b40: CPU % from /proc/stat delta over a short sample window
+    # fields: user nice system idle iowait irq softirq steal → idle=t[3]
+    def _cpu_times():
+        t = [int(x) for x in open('/proc/stat').readline().split()[1:9]]
+        return sum(t) - t[3] - t[4], sum(t)   # busy (excl idle+iowait), total
+    cpu_pct = 0
+    try:
+        b1, t1 = _cpu_times()
+        time.sleep(0.35)
+        b2, t2 = _cpu_times()
+        cpu_pct = int((b2 - b1) / max(1, t2 - t1) * 100)
+    except Exception:
+        pass
+    hb = ''
+    try:
+        hb = (DATA / 'xau_plan/watchdog_heartbeat').read_text().strip()
+    except Exception:
+        pass
+    lines = ['🖥 <b>زیرساخت</b>', _fa_date(), '', _sec('🧩 سرویس‌ها (برای جزئیات بزن)')]
+    kb = []
+    items = list(svcs.items())
+    for i in range(0, len(items), 2):
+        row = []
+        for k, v in items[i:i + 2]:
+            lines.append(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k)} — '
+                         + ('بالا' if v == 'active' else v))
+            row.append(_btn(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k).split(" ", 1)[-1]}',
+                            f'ops:svc:{k}'))
+        kb.append(row)
+    lines.append(_sec('📊 Resources'))
+    lines.append(_row('CPU', f'{_bar(cpu_pct / 100)} {cpu_pct}٪'))
+    lines.append(_row('RAM', f'{_bar(mem_pct / 100)} {mem_pct}٪'))
+    lines.append(_row('Disk', f'{_bar(float(disk_pct.rstrip("%")) / 100 if disk_pct != "؟" else 0)} '
+                              f'{disk_pct.replace("%", "٪")} · {disk[1] if disk_pct != "؟" else "?"} free'))
+    lines.append(_row('Load', load_s))
+    lines.append(_row('Watchdog', _ago(hb) if hb else 'بی‌خبر'))
+    kb.append(_nav('ops', 'home'))
+    return '\n'.join(lines), kb
 
 
-def ops_autopilot() -> tuple[str, list]:
+def ops_svc_detail(name: str) -> tuple[str, list]:
+    svcs = _services()
+    st = svcs.get(name, '?')
+    lines = [f'{_SVC_LABEL.get(name, name)} <b>جزئیات سرویس</b>', '',
+             _row('Name', f'<code>{name}</code>'),
+             _row('Status', ('🟢 بالا' if st == 'active' else f'🔴 {st}')),
+             _row('Uptime', _svc_uptime(name)),
+             _sec('📜 آخرین خط‌ها')]
+    lines.append(f'<code>{_svc_log(name)}</code>')
+    kb = []
+    if name in RESTARTABLE:
+        kb.append([_btn('🔁 ریستارت این سرویس', f'ops:ask:restart:{name}')])
+    kb.append(_nav('ops', 'sys'))
+    return '\n'.join(lines), kb
+
+
+def ops_auto() -> tuple[str, list]:
     ap = _j(DATA / 'ops/autopilot_state.json')
     bl = _backlog()
     done_n, all_n = len(bl['done']), len(bl['done']) + len(bl['todo'])
-    lines = ['🤖 <b>اتوپایلوت</b>', _fa_date(), '',
-             _row('آخرین اجرا', _ago(ap.get('last_run_utc'))),
-             _row('پیشرفت', f'{_bar(done_n / all_n if all_n else 0)} {done_n} از {all_n}')]
+    paused = _autopilot_paused()
+    lines = ['🤖 <b>اتوپایلوت</b>', _fa_date(), '']
+    if paused:
+        lines.append(f'⏸ <b>متوقف است</b> — از: {paused}')
+        lines.append('اجراهای ساعتی فعلاً رد می‌شوند؛ هر لحظه می‌توانی ادامه بدهی.')
+    else:
+        lines.append('🟢 <b>فعال</b> — هر ساعت یک آیتم از بک‌لاگ')
+        lines.append(_row('Last Run', _ago(ap.get('last_run_utc'))))
+    lines.append(_row('Progress', f'{_bar(done_n / all_n if all_n else 0)} {done_n} از {all_n}'))
     nar = _autopilot_narrative()
     if nar:
         lines.append(_sec('📝 آخرین اجرا چه کرد'))
         lines.append(nar)
     if bl['todo']:
-        lines.append(_sec('🔜 کاری که در نوبت است'))
-        lines.append('· ' + bl['todo'][0][:160])
-    rc = ap.get('recent_commits') or []
-    if rc:
-        lines.append(_sec('🔨 آخرین تغییرات کد'))
-        lines += [f'· {c[:90]}' for c in rc[:3]]
-    return '\n'.join(lines), OPS_KEYBOARD
+        lines.append(_sec('🔜 در نوبت'))
+        lines.append('· ' + bl['todo'][0][:150])
+    kb = [[_btn('📜 بک‌لاگ کامل', 'ops:auto:backlog'), _btn('🔨 تغییرات کد', 'ops:auto:commits')]]
+    if paused:
+        kb.append([_btn('▶️ ازسرگیری اتوپایلوت', 'ops:ask:auto:resume')])
+    else:
+        kb.append([_btn('⏸ توقف موقت اتوپایلوت', 'ops:ask:auto:pause')])
+    kb.append(_nav('ops', 'home'))
+    return '\n'.join(lines), kb
+
+
+def ops_auto_backlog() -> tuple[str, list]:
+    bl = _backlog()
+    lines = ['📜 <b>بک‌لاگ اتوپایلوت</b>', '',
+             _row('Queue', str(len(bl['todo']))), _row('Done', str(len(bl['done'])))]
+    lines.append(_sec('🔜 صف (۶ مورد بعدی)'))
+    for i, t in enumerate(bl['todo'][:6], 1):
+        lines.append(f'<b>{i}.</b> {t[:130]}')
+    lines.append(_sec('✅ تازه انجام‌شده'))
+    for d in bl['done'][-4:]:
+        lines.append(f'· {d[:110]}')
+    return '\n'.join(lines), [_nav('ops', 'auto')]
+
+
+def ops_auto_commits() -> tuple[str, list]:
+    try:
+        r = subprocess.run(['git', '-C', str(ROOT), 'log', '--oneline', '-12'],
+                           capture_output=True, text=True, timeout=15)
+        commits = r.stdout.splitlines()
+    except Exception:
+        commits = []
+    lines = ['🔨 <b>۱۲ تغییر اخیر کد</b>', '']
+    lines += [f'<code>{c[:95]}</code>' for c in commits] or ['—']
+    return '\n'.join(lines), [_nav('ops', 'auto')]
 
 
 def ops_backup() -> tuple[str, list]:
     bh = _j(DATA / 'bridge_health_state.json')
     last, last_ts = '', None
     try:
-        log = ROOT / 'logs/offsite_backup.log'
-        for ln in log.read_text(errors='ignore').splitlines()[::-1]:
+        for ln in (ROOT / 'logs/offsite_backup.log').read_text(errors='ignore').splitlines()[::-1]:
             if ln.strip():
                 last = ln.strip()[:120]
                 if ln[:4].isdigit():
@@ -383,149 +568,270 @@ def ops_backup() -> tuple[str, list]:
         synced = 'ahead' not in r and 'behind' not in r
     except Exception:
         synced = False
-    lines = ['💾 <b>نسخه پشتیبان و اتصال‌ها</b>', _fa_date(), '']
-    lines.append(_row('گیت‌هاب', _dot(synced) + (' کاملاً همگام' if synced else ' همگام نیست!')))
-    lines.append(_row('بریج ویندوز', _dot((bh.get('fails') or 0) == 0)
-                      + (f' {bh.get("fails", 0)} شکست متوالی' if bh.get('fails') else ' سالم')))
-    lines.append(_sec('🌙 بکاپ شبانه'))
-    lines.append('هر شب ۰۳:۱۵ تهران → ویندوز C:\\HermesBackups')
+    lines = ['💾 <b>پشتیبان و اتصال‌ها</b>', _fa_date(), '',
+             _row('GitHub', _dot(synced) + (' کاملاً همگام' if synced else ' همگام نیست!')),
+             _row('Windows Bridge', _dot((bh.get('fails') or 0) == 0)
+                  + (f' — {bh.get("fails", 0)} شکست متوالی' if bh.get('fails') else ' سالم')),
+             _sec('🌙 بکاپ شبانه (۰۳:۱۵ تهران → ویندوز)')]
     if last_ts:
-        lines.append(_row('آخرین اجرا', _ago(last_ts)))
+        lines.append(_row('Last Run', _ago(last_ts)))
     if last:
         lines.append(f'<code>{last}</code>')
-    lines.append(_sec('🆘 اگر همه‌چیز از دست برود'))
-    lines.append('راهنمای بازیابی: docs/DEPLOY.md (۶ قدم کپی‌پیست)')
-    return '\n'.join(lines), OPS_KEYBOARD
+    lines.append(_sec('🆘 بازیابی فاجعه'))
+    lines.append('docs/DEPLOY.md — ۶ قدم کپی‌پیست از صفر')
+    return '\n'.join(lines), [_nav('ops', 'home')]
 
 
-def ops_trades() -> tuple[str, list]:
-    jt = _journal()
+def ops_trade() -> tuple[str, list]:
+    st = _stats()
     perf = _j(DATA / 'xau_plan/performance_state.json')
     lines = ['💹 <b>تریدها از دید سیستم</b>', _fa_date(), '',
-             _row('امروز', f"{jt['trades']} ترید · برد {jt['wins']} · {jt['pnl']:+,.2f} $")]
-    if jt['l10_trades']:
-        wr = jt['l10_wins'] / jt['l10_trades']
-        lines.append(_row('۱۰ ترید اخیر', f'نرخ برد {_bar(wr)} {wr*100:.0f}٪ · {jt["l10_pnl"]:+,.2f} $'))
-    lines.append(_row('ضرر متوالی', f"{perf.get('loss_streak', 0)} از ۴ (سقف توقف)"))
-    if jt['recent']:
-        lines.append(_sec('🕯 آخرین خروج‌ها'))
-        for t, side, p in reversed(jt['recent']):
-            d = '🟢' if p > 0 else ('⚪' if p == 0 else '🔴')
-            lines.append(f'{d} {t} · {side} · {p:+,.2f} $')
-    return '\n'.join(lines), OPS_KEYBOARD
+             _row('Today', f"{st['today']['n']} ترید · برد {st['today']['wins']} · {st['today']['pnl']:+,.2f} $"),
+             _row('Loss Streak', f"{perf.get('loss_streak', 0)} از ۴ (سقف توقف)")]
+    if st['n']:
+        pf = '∞' if st['pf'] == float('inf') else _num(st['pf'], 2)
+        lines.append(_sec('📊 کارنامه کل'))
+        lines.append(_row('Net P&L', f'{st["net"]:+,.2f} $'))
+        lines.append(_row('Profit Factor', f'{pf} (بالای ۱ = سودده)'))
+        lines.append(_row('Equity Curve', st['curve']))
+    kb = [[_btn('📊 آمار کامل', 'ops:trade:stats')], _nav('ops', 'home')]
+    return '\n'.join(lines), kb
 
 
-OPS_RENDER = {'home': ops_home, 'sys': ops_system, 'auto': ops_autopilot,
-              'ops': ops_backup, 'trade': ops_trades}
+def _stats_panel_lines(st: dict) -> list:
+    lines = []
+    if not st['n']:
+        return ['ژورنال خالی است — هنوز ترید بسته‌شده‌ای ثبت نشده.']
+    wr = st['wins'] / st['n'] * 100
+    pf = '∞' if st['pf'] == float('inf') else _num(st['pf'], 2)
+    lines.append(_row('Trades', f"{st['n']} · برد {st['wins']} · باخت {st['losses']} · نرخ برد {wr:.0f}٪ {_bar(wr/100)}"))
+    lines.append(_row('Net P&L', f"<b>{st['net']:+,.2f} $</b> · ضریب سود {pf}"))
+    lines.append(_row('Avg Win', f'{st["avg_win"]:+,.2f} $ · میانگین باخت {st["avg_loss"]:+,.2f} $'))
+    lines.append(_row('Expectancy', f'{st["exp"]:+,.2f} $ در هر ترید'))
+    lines.append(_row('Best / Worst', f'{st["best"]:+,.2f} $ · {st["worst"]:+,.2f} $'))
+    lines.append(_row('Max Drawdown', f'{st["mdd"]:,.2f} $'))
+    sk, kind = st['streak']
+    if sk:
+        lines.append(_row('Streak', f'{sk} {"برد 🟢" if kind == "win" else "باخت 🔴"}'))
+    lines.append(_row('Equity Curve', st['curve']))
+    lines.append(_sec('⚖️ خرید در برابر فروش'))
+    for side, fa in (('buy', 'خرید'), ('sell', 'فروش')):
+        if st.get(f'{side}_n'):
+            lines.append(_row(fa, f"{st[f'{side}_n']} ترید · {st[f'{side}_pnl']:+,.2f} $ · برد {st[f'{side}_wr']:.0f}٪"))
+    if st['days']:
+        lines.append(_sec('🗓 روز به روز'))
+        for d, p in st['days']:
+            dd = '🟢' if p > 0 else ('⚪' if p == 0 else '🔴')
+            lines.append(f'{dd} {d[5:]} · {p:+,.2f} $')
+    return lines
+
+
+def ops_trade_stats() -> tuple[str, list]:
+    st = _stats()
+    lines = ['📊 <b>کارنامه کامل</b>', _fa_date(), ''] + _stats_panel_lines(st)
+    return '\n'.join(lines), [_nav('ops', 'trade')]
+
+
+def ops_control() -> tuple[str, list]:
+    ks = _j(DATA / 'kill_switch_state.json')
+    paused = _autopilot_paused()
+    svcs = _services()
+    lines = ['🎛 <b>کنترل اپراتور</b>', _fa_date(), '',
+             'هر دکمه قبل از اجرا تأیید می‌خواهد و در لاگ کنترل ثبت می‌شود.', '']
+    lines.append(_sec('🤖 اتوپایلوت'))
+    lines.append('⏸ متوقف — ' + str(paused) if paused else '🟢 فعال (هر ساعت اجرا می‌شود)')
+    lines.append(_sec('💹 موتور ترید'))
+    if ks.get('halted'):
+        lines.append(f'⛔ متوقف — {ks.get("halt_reason", "")} {_row("", "(از " + _ago(ks.get("halted_at")) + ")") if ks.get("halted_at") else ""}')
+    else:
+        lines.append('🟢 مجاز — گیت‌ها باز هستند')
+    lines.append(_sec('🖥 سرویس‌ها'))
+    lines.append(' · '.join(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k).split(" ", 1)[-1]}'
+                            for k, v in svcs.items()))
+    kb = []
+    if paused:
+        kb.append([_btn('▶️ ازسرگیری اتوپایلوت', 'ops:ask:auto:resume')])
+    else:
+        kb.append([_btn('⏸ توقف موقت اتوپایلوت', 'ops:ask:auto:pause')])
+    if ks.get('halted'):
+        kb.append([_btn('▶️ ازسرگیری ترید', 'ops:ask:trade:resume')])
+    else:
+        kb.append([_btn('⛔ توقف فوری ترید', 'ops:ask:trade:halt')])
+    kb.append([_btn('🔁 ریستارت سرویس‌ها', 'ops:control:restart')])
+    kb.append(_nav('ops', 'home'))
+    return '\n'.join(lines), kb
+
+
+def ops_control_restart() -> tuple[str, list]:
+    svcs = _services()
+    lines = ['🔁 <b>ریستارت سرویس‌ها</b>', '', 'با تأیید دومرحله‌ای اجرا می‌شود.']
+    kb = []
+    row = []
+    for k, label in RESTARTABLE.items():
+        row.append(_btn(f'{_dot(svcs.get(k) == "active")} {label.split(" ", 1)[-1]}',
+                        f'ops:ask:restart:{k}'))
+        if len(row) == 2:
+            kb.append(row)
+            row = []
+    if row:
+        kb.append(row)
+    kb.append(_nav('ops', 'control'))
+    return '\n'.join(lines), kb
+
+
+def ops_confirm(action: str) -> tuple[str, list]:
+    desc = _ACTION_DESC.get(action, action)
+    lines = ['⚠️ <b>تأیید عملیات</b>', '', f'{desc}', '', 'مطمئنی؟']
+    kb = [[_btn('✅ بله، انجام بده', f'ops:cfm:{action}'),
+           _btn('❌ انصراف', 'ops:control')]]
+    return '\n'.join(lines), kb
+
+
+OPS_RENDER = {
+    'home': ops_home, 'sys': ops_sys, 'auto': ops_auto, 'auto:backlog': ops_auto_backlog,
+    'auto:commits': ops_auto_commits, 'ops': ops_backup, 'trade': ops_trade,
+    'trade:stats': ops_trade_stats, 'control': ops_control, 'control:restart': ops_control_restart,
+}
 
 
 def ops_render(panel: str) -> tuple[str, list]:
-    fn = OPS_RENDER.get(panel, ops_home)
     try:
+        if panel.startswith('svc:'):
+            return ops_svc_detail(panel[4:])
+        if panel.startswith('ask:'):
+            return ops_confirm(panel[4:])
+        fn = OPS_RENDER.get(panel, ops_home)
         return fn()
     except Exception as e:
-        return f'🔴 پنل {panel} خطا داد: {str(e)[:120]}', OPS_KEYBOARD
+        return f'🔴 پنل {panel} خطا داد: {str(e)[:120]}', [[_btn('🏠 خانه', 'ops:home')]]
 
 
 # ══════════════════════ TRADE BOT (2nd) ══════════════════════
-
-TRADE_PANELS = {
-    'home': '🏠 خلاصه', 'plan': '🎯 پلن', 'pos': '📌 پوزیشن',
-    'pnl': '💰 سود/ضرر', 'risk': '🛡 ریسک',
-}
-TRADE_KEYBOARD = [[{'text': TRADE_PANELS['home'], 'callback_data': 'tr:home'},
-                   {'text': TRADE_PANELS['plan'], 'callback_data': 'tr:plan'}],
-                  [{'text': TRADE_PANELS['pos'], 'callback_data': 'tr:pos'},
-                   {'text': TRADE_PANELS['pnl'], 'callback_data': 'tr:pnl'}],
-                  [{'text': TRADE_PANELS['risk'], 'callback_data': 'tr:risk'}]]
-
 
 def trade_home() -> tuple[str, list]:
     plan = _j(DATA / 'xau_plan/current_plan.json')
     _, acct, pos = _bridge()
     ks = _j(DATA / 'kill_switch_state.json')
-    jt = _journal()
+    st = _stats()
     open_now, _, flip = _market_state()
     bias = str(plan.get('bias') or '—')
-    bias_s = {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(bias, f'⚪ {bias}')
     lines = ['💹 <b>هرمس تریدر</b>', _fa_date(), '']
     if ks.get('halted'):
         lines.append(f'⛔ <b>ترید متوقف است</b> — {ks.get("halt_reason", "دلیل نامعلوم")}')
     elif not open_now:
         lines.append('🌙 <b>بازار بسته است</b> — سیستم آماده و در انتظار')
         if flip and flip[1]:
-            lines.append(_row('بازگشایی', f'ساعت {flip[0]} تهران'))
+            lines.append(_row('Reopens', f'ساعت {flip[0]} تهران'))
     else:
         lines.append('🟢 <b>ترید فعال</b> — بازار باز، گیت‌ها سبز')
     lines.append(_sec('💰 حساب'))
     if acct.get('ok'):
-        lines.append(_row('بالانس', f"<b>{_num(acct.get('balance'))} $</b>"))
-        lines.append(_row('دارایی (equity)', _num(acct.get('equity')) + ' $'))
+        lines.append(_row('Balance', f"<b>{_num(acct.get('balance'))} $</b> · دارایی {_num(acct.get('equity'))} $"))
     else:
-        lines.append(_row('حساب', 'نامعلوم — بریج قطع'))
+        lines.append(_row('Account', 'نامعلوم — بریج قطع'))
     fl = sum(float(p.get('profit') or 0) for p in (pos.get('data') or [])
-             if str(p.get('profit') or '').replace('.', '').replace('-', '').isdigit())
-    lines.append(_row('پوزیشن باز', f"{pos.get('count', 0)} · سود شناور {fl:+,.2f} $"))
-    lines.append(_sec('🎯 پلن فعلی'))
-    lines.append(_row('جهت', bias_s))
-    q = plan.get('quality') or {}
-    if q.get('alignment'):
-        al = {'aligned': 'هم‌راستا ✓', 'mixed': 'مخلوط', 'conflicting': 'متناقض ✗'}.get(
-            str(q['alignment']), str(q['alignment']))
-        lines.append(_row('کیفیت', al))
-    lines.append(_row('امروز', f"{jt['trades']} ترید · {jt['pnl']:+,.2f} $"))
-    return '\n'.join(lines), TRADE_KEYBOARD
+             if str(p.get('profit') or '').replace('.', '').replace('-', '').replace(',', '').isdigit())
+    lines.append(_row('Open Positions', f"{pos.get('count', 0)} · سود شناور {fl:+,.2f} $"))
+    lines.append(_sec('🎯 پلن'))
+    lines.append(_row('Bias', {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(bias, f'⚪ {bias}'))
+                 + f" · اعتبار {_ago(plan.get('expires_at'))}")
+    lines.append(_row('Today', f"{st['today']['n']} ترید · {st['today']['pnl']:+,.2f} $"))
+    if st['n']:
+        pf = '∞' if st['pf'] == float('inf') else _num(st['pf'], 2)
+        lines.append(_row('Record', f"نرخ برد {st['wins']}/{st['n']} · ضریب سود {pf} · {st['net']:+,.2f} $"))
+    kb = [[_btn('🎯 پلن', 'tr:plan'), _btn('📌 پوزیشن', 'tr:pos')],
+          [_btn('💰 سود/ضرر', 'tr:pnl'), _btn('📊 آمار', 'tr:stats')],
+          [_btn('📡 سیگنال‌ها', 'tr:sig'), _btn('🛡 ریسک', 'tr:risk')],
+          [_btn('🎛 کنترل', 'tr:control')]]
+    return '\n'.join(lines), kb
 
 
 def trade_plan() -> tuple[str, list]:
     plan = _j(DATA / 'xau_plan/current_plan.json')
-    ex = plan.get('execution') or {}
     q = plan.get('quality') or {}
     votes = q.get('bias_votes') or {}
-    tgts = plan.get('targets') or []
     bias = str(plan.get('bias') or '—')
-    lines = [f'🎯 <b>پلن معاملاتی</b>', _fa_date(), '',
-             f'جهت: ' + {'bullish': '🟢 <b>صعودی</b>', 'bearish': '🔴 <b>نزولی</b>'}.get(bias, f'⚪ {bias}'),
-             _row('سشن', str(plan.get('session', '—'))),
-             _row('نوسان (ATR)', _num(plan.get('atr'), 1))]
+    lines = ['🎯 <b>پلن معاملاتی</b>', _fa_date(), '',
+             'جهت: ' + {'bullish': '🟢 <b>صعودی</b>', 'bearish': '🔴 <b>نزولی</b>'}.get(bias, f'⚪ {bias}'),
+             _row('Session', str(plan.get('session', '—'))),
+             _row('ATR', _num(plan.get('atr'), 1))]
     lines.append(_sec('🗩 رأی تایم‌فریم‌ها'))
-    if votes:
-        for tf, v in votes.items():
-            d = {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(v, '⚪ بی‌طرف')
-            lines.append(_row(tf.upper(), d))
-    else:
-        lines.append('—')
-    lines.append(_sec('⚡ نقطه ورود'))
-    lines.append(_row('حالت', str(ex.get('entry_mode', '—'))))
-    if ex.get('breakout_trigger'):
-        lines.append(_row('شکست', ex['breakout_trigger']))
-    if ex.get('pullback_trigger'):
-        lines.append(_row('پول‌بک', ex['pullback_trigger']))
-    if ex.get('scale_in_levels'):
-        lines.append(_row('پله‌ها', ', '.join(str(x) for x in ex['scale_in_levels'])))
-    if tgts:
-        lines.append(_row('هدف‌ها', ', '.join(str(x) for x in tgts)))
+    for tf, v in (votes or {}).items():
+        d = {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(v, '⚪ بی‌طرف')
+        lines.append(_row(tf.upper(), d))
+    al = {'aligned': 'هم‌راستا ✓', 'mixed': 'مخلوط', 'conflicting': 'متناقض ✗'}.get(
+        str(q.get('alignment')), str(q.get('alignment', '—')))
+    lines.append(_row('Quality', al))
     lines.append(_sec('⏳ اعتبار'))
-    lines.append(_row('انقضا', _ago(plan.get('expires_at'))))
-    lines.append(_row('بازبینی بعدی', _ago(plan.get('next_reassessment'))))
-    return '\n'.join(lines), TRADE_KEYBOARD
+    lines.append(_row('Expires', _ago(plan.get('expires_at'))))
+    lines.append(_row('Reassess', _ago(plan.get('next_reassessment'))))
+    kb = [[_btn('🧩 جزئیات ورود', 'tr:plan:detail'), _btn('📜 تاریخچه', 'tr:plan:hist')],
+          _nav('tr', 'home')]
+    return '\n'.join(lines), kb
+
+
+def trade_plan_detail() -> tuple[str, list]:
+    plan = _j(DATA / 'xau_plan/current_plan.json')
+    ex = plan.get('execution') or {}
+    tgts = plan.get('targets') or []
+    macro = _j(DATA / 'xau_plan/macro_snapshot.json')
+    lines = ['🧩 <b>جزئیات اجرای پلن</b>', '',
+             _row('Entry Mode', str(ex.get('entry_mode', '—')))]
+    if ex.get('breakout_trigger'):
+        lines.append(_row('Breakout Trigger', _num(ex['breakout_trigger'])))
+    if ex.get('pullback_trigger'):
+        lines.append(_row('Pullback Trigger', _num(ex['pullback_trigger'])))
+    if ex.get('scale_in_levels'):
+        lines.append(_row('Scale-In', ', '.join(_num(x) for x in ex['scale_in_levels'])))
+    if tgts:
+        lines.append(_row('Targets', ' · '.join(_num(x) for x in tgts)))
+    if ex.get('stop_loss'):
+        lines.append(_row('Plan SL', _num(ex['stop_loss'])))
+    if macro:
+        lines.append(_sec('🌍 ماکرو'))
+        news = macro.get('high_impact_today') or macro.get('events') or []
+        if isinstance(news, list) and news:
+            for ev in news[:3]:
+                if isinstance(ev, dict):
+                    lines.append(f"· {ev.get('currency', '')} {str(ev.get('name', ev.get('event', '')))[:40]}")
+        risk = macro.get('risk_bias') or macro.get('bias')
+        if risk:
+            lines.append(_row('DXY / Risk', str(risk)))
+    return '\n'.join(lines), [_nav('tr', 'plan')]
+
+
+def trade_plan_hist() -> tuple[str, list]:
+    lines = ['📜 <b>تاریخچه بازبینی پلن</b>', '']
+    try:
+        with (DATA / 'xau_plan/reassessment_log.csv').open(encoding='utf-8-sig') as f:
+            rows = list(csv.DictReader(f))
+    except Exception:
+        rows = []
+    for r in rows[-8:][::-1]:
+        ob, nb = str(r.get('old_bias', '')), str(r.get('new_bias', ''))
+        arrow = '🔄' if ob != nb else '➡️'
+        at = str(r.get('at', ''))[5:16].replace('T', ' ')
+        lines.append(f'{arrow} {at} · {ob} ← {nb}')
+    if not rows:
+        lines.append('—')
+    return '\n'.join(lines), [_nav('tr', 'plan')]
 
 
 def trade_positions() -> tuple[str, list]:
     _, acct, pos = _bridge()
     rows = pos.get('data') or []
     if not acct.get('ok'):
-        return ('📌 <b>پوزیشن‌ها</b>\n\n🔴 بریج ویندوز در دسترس نیست — اطلاعات حساب نامعلوم.',
-                TRADE_KEYBOARD)
+        return ('📌 <b>پوزیشن‌ها</b>\n\n🔴 بریج ویندوز در دسترس نیست.',
+                [_nav('tr', 'home')])
     if not rows:
         open_now, _, flip = _market_state()
-        lines = ['📌 <b>پوزیشن‌ها</b>', _fa_date(), '',
-                 'هیچ پوزیشن بازی نیست.',
-                 _row('بالانس', f"{_num(acct.get('balance'))} $ · دارایی {_num(acct.get('equity'))} $")]
+        lines = ['📌 <b>پوزیشن‌ها</b>', _fa_date(), '', 'هیچ پوزیشن بازی نیست.',
+                 _row('Balance', f"{_num(acct.get('balance'))} $ · دارایی {_num(acct.get('equity'))} $")]
         if not open_now and flip and flip[1]:
-            lines.append(_row('بازگشایی بازار', f'ساعت {flip[0]} تهران'))
-        return '\n'.join(lines), TRADE_KEYBOARD
+            lines.append(_row('Reopens', f'ساعت {flip[0]} تهران'))
+        return '\n'.join(lines), [_nav('tr', 'home')]
     lines = ['📌 <b>پوزیشن‌های باز</b>', _fa_date(), '']
+    kb = []
     tot = 0.0
     for p in rows:
         try:
@@ -534,43 +840,105 @@ def trade_positions() -> tuple[str, list]:
             d = '🟢' if profit > 0 else ('⚪' if profit == 0 else '🔴')
             side = 'خرید' if str(p.get('type')).upper() in ('BUY', '0') else 'فروش'
             lines.append(f'{d} <b>{side}</b> {_num(p.get("volume"), 2)} لات از {_num(p.get("open_price"))}')
-            lines.append(f'   SL {_num(p.get("sl"))} · TP {_num(p.get("tp"))} · قیمت {_num(p.get("current_price"))} → <b>{profit:+,.2f} $</b>')
+            lines.append(f'   SL {_num(p.get("sl"))} · TP {_num(p.get("tp"))} · فعلی {_num(p.get("current_price"))} → <b>{profit:+,.2f} $</b>')
+            tk = str(p.get('ticket', ''))
+            if tk:
+                kb.append([_btn(f'🔍 جزئیات پوزیشن {tk}', f'tr:pos:{tk}')])
         except Exception:
             continue
-    lines += ['', _row('جمع شناور', f'<b>{tot:+,.2f} $</b>'),
-              _row('دارایی', f"{_num(acct.get('equity'))} $")]
-    return '\n'.join(lines), TRADE_KEYBOARD
+    lines += ['', _row('Floating P&L', f'<b>{tot:+,.2f} $</b>')]
+    kb.append(_nav('tr', 'home'))
+    return '\n'.join(lines), kb
+
+
+def trade_pos_detail(ticket: str) -> tuple[str, list]:
+    _, acct, pos = _bridge()
+    p = next((x for x in (pos.get('data') or []) if str(x.get('ticket')) == ticket), None)
+    if not p:
+        return ('🔴 این پوزیشن دیگر باز نیست (بسته شده).', [_nav('tr', 'pos')])
+    rt = _j(DATA / 'xau_plan/runtime_state.json')
+    mg = (rt.get('management') or {}).get(str(p.get('position_id') or ticket)) or {}
+    side = 'خرید' if str(p.get('type')).upper() in ('BUY', '0') else 'فروش'
+    try:
+        profit = float(p.get('profit') or 0)
+        op = float(p.get('open_price') or 0)
+        cur = float(p.get('current_price') or 0)
+        pts = (cur - op) if side == 'خرید' else (op - cur)
+    except Exception:
+        profit, pts = 0.0, 0.0
+    lines = [f'🔍 <b>پوزیشن {ticket}</b>', '',
+             _row('Bias', f'{side} · {_num(p.get("volume"), 2)} لات'),
+             _row('Entry', _num(p.get('open_price'))),
+             _row('Price', _num(p.get('current_price'))),
+             _row('SL / TP', f'{_num(p.get("sl"))} / {_num(p.get("tp"))}'),
+             _row('Move', f'{pts:+,.2f} دلار · سود {profit:+,.2f} $')]
+    if mg:
+        lines.append(_sec('🧠 مدیریت سیستم'))
+        for k in ('action', 'reason', 'sl_new', 'updated_at'):
+            if mg.get(k):
+                lines.append(_row({'action': 'اقدام', 'reason': 'دلیل',
+                                   'sl_new': 'حد ضرر جدید', 'updated_at': 'آخرین به‌روزرسانی'}[k],
+                                  str(mg[k])[:60]))
+    return '\n'.join(lines), [_nav('tr', 'pos')]
 
 
 def trade_pnl() -> tuple[str, list]:
     perf = _j(DATA / 'xau_plan/performance_state.json')
-    jt = _journal()
-    bal = perf.get('starting_balance') or 0
+    st = _stats()
     dp = perf.get('daily_pnl') or 0
-    lines = ['💰 <b>سود و ضرر</b>', _fa_date(), '']
     d = '🟢' if dp > 0 else ('⚪' if dp == 0 else '🔴')
-    lines.append(f'{d} امروز: <b>{dp:+,.2f} $</b>')
-    if bal:
-        pct = dp / bal * 100
-        lines.append(_row('نسبت به بالانس', f'{pct:+.2f}٪'))
-    lines.append(_sec('🗂 ژورنال'))
-    lines.append(_row('تریدهای امروز', f"{jt['trades']} · برد {jt['wins']}"))
-    if jt['l10_trades']:
-        wr = jt['l10_wins'] / jt['l10_trades']
-        lines.append(_row('۱۰ ترید اخیر', f'نرخ برد {_bar(wr)} {wr*100:.0f}٪ · {jt["l10_pnl"]:+,.2f} $'))
-    if bal:
-        lines.append(_row('بالانس شروع روز', f'{_num(bal)} $'))
-    if jt['recent']:
+    lines = ['💰 <b>سود و ضرر</b>', _fa_date(), '',
+             f'{d} امروز: <b>{dp:+,.2f} $</b>',
+             _row('Trades Today', f"{st['today']['n']} · برد {st['today']['wins']}"),
+             _row('Day Start Balance', f'{_num(perf.get("starting_balance"))} $')]
+    if st['recent']:
         lines.append(_sec('🕯 آخرین خروج‌ها'))
-        for t, side, p in reversed(jt['recent']):
+        for when, side, vol, p, cm in st['recent'][:5]:
             dd = '🟢' if p > 0 else ('⚪' if p == 0 else '🔴')
-            lines.append(f'{dd} {t} · {side} · {p:+,.2f} $')
-    return '\n'.join(lines), TRADE_KEYBOARD
+            lines.append(f'{dd} {when} · {side} {_num(vol)} · {p:+,.2f} $')
+    kb = [[_btn('📊 آمار پیشرفته', 'tr:stats'), _btn('📜 لیست تریدها', 'tr:pnl:list')],
+          _nav('tr', 'home')]
+    return '\n'.join(lines), kb
+
+
+def trade_stats() -> tuple[str, list]:
+    st = _stats()
+    lines = ['📊 <b>کارنامه (KPI حرفه‌ای)</b>', _fa_date(), ''] + _stats_panel_lines(st)
+    return '\n'.join(lines), [_nav('tr', 'home')]
+
+
+def trade_pnl_list() -> tuple[str, list]:
+    st = _stats()
+    lines = ['📜 <b>۱۰ ترید اخیر</b>', '']
+    for when, side, vol, p, cm in st['recent']:
+        dd = '🟢' if p > 0 else ('⚪' if p == 0 else '🔴')
+        tag = f' <i>{cm[:18]}</i>' if cm else ''
+        lines.append(f'{dd} {when} · {side} {_num(vol)} لات · {p:+,.2f} ${tag}')
+    if not st['recent']:
+        lines.append('—')
+    return '\n'.join(lines), [_nav('tr', 'pnl')]
+
+
+def trade_sig() -> tuple[str, list]:
+    sigs = _j(DATA / 'signals/signals_log.json', [])
+    lines = ['📡 <b>سیگنال‌های کانال (پروژه ۲)</b>', _fa_date(), '']
+    if not sigs:
+        lines.append('هنوز سیگنالی ثبت نشده.')
+    for s in (sigs or [])[-5:][::-1]:
+        dec = s.get('decision') or {}
+        p = s.get('parsed') or {}
+        v = str(dec.get('verdict', '?'))
+        d = {'EXECUTED': '✅ اجرا شد', 'TRADED': '✅ اجرا شد', 'REJECTED': '🚫 رد شد',
+             'SKIPPED': '⏭ رد شد', 'FAILED': '🔴 خطا'}.get(v.upper(), f'❓ {v}')
+        when = str(s.get('timestamp', ''))[5:16].replace('T', ' ')
+        lines.append(f'<b>{when}</b> · {p.get("side", "?")} {_num(p.get("entry"))} → {d}')
+        if dec.get('score') is not None:
+            lines.append(f'   امتیاز {dec.get("score")}/{dec.get("max_score", 10)} · {str((dec.get("reasons") or [""])[0])[:70]}')
+    return '\n'.join(lines), [_nav('tr', 'home')]
 
 
 def trade_risk() -> tuple[str, list]:
     ks = _j(DATA / 'kill_switch_state.json')
-    cd = _j(DATA / 'cooldown_state.json')
     perf = _j(DATA / 'xau_plan/performance_state.json')
     open_now, reason, flip = _market_state()
     try:
@@ -584,40 +952,37 @@ def trade_risk() -> tuple[str, list]:
     bal = perf.get('starting_balance') or 0
     dp = perf.get('daily_pnl') or 0
     daily_pct = max(0.0, -dp / bal * 100) if bal else 0.0
-    lines = ['🛡 <b>گیت‌های ایمنی</b>', _fa_date(), '']
-    lines.append(_dot(not ks.get('halted')) + (' <b>ترید مجاز</b>' if not ks.get('halted')
-                 else f' <b>متوقف</b> — {ks.get("halt_reason", "")}'))
+    lines = ['🛡 <b>گیت‌های ایمنی</b>', _fa_date(), '',
+             _dot(not ks.get('halted')) + (' <b>ترید مجاز</b>' if not ks.get('halted')
+              else f' <b>متوقف</b> — {ks.get("halt_reason", "")}')]
     lines.append(_sec('📉 فاصله تا توقف'))
-    lines.append(_row('ضرر روزانه', f'{_bar(daily_pct / (DAILY_LOSS_LIMIT_PCT*100))} '
-                      f'{daily_pct:.1f}٪ از {DAILY_LOSS_LIMIT_PCT*100:.0f}٪ سقف'))
+    lines.append(_row('Daily Loss', f'{_bar(daily_pct / (DAILY_LOSS_LIMIT_PCT * 100))} '
+                      f'{daily_pct:.1f}٪ از {DAILY_LOSS_LIMIT_PCT * 100:.0f}٪'))
     cl = ks.get('consecutive_losses', 0)
-    lines.append(_row('ضرر متوالی', f'{_bar(cl / CONSECUTIVE_LOSSES_LIMIT)} '
+    lines.append(_row('Loss Streak', f'{_bar(cl / CONSECUTIVE_LOSSES_LIMIT)} '
                       f'{cl} از {CONSECUTIVE_LOSSES_LIMIT}'))
-    lines.append(_row('ترید امروز', f"{perf.get('trades_today', 0)}"))
+    lines.append(_row('Trades Today', str(perf.get('trades_today', 0))))
     lines.append(_sec('🕐 بازار'))
     if open_now:
         mk = '🟢 باز'
         if flip and not flip[1]:
-            mk += f' — بسته می‌شود ساعت {flip[0]}'
+            mk += f' — بسته می‌شود {flip[0]}'
     else:
         mk = f'🔴 بسته ({reason})' if reason else '🔴 بسته'
         if flip and flip[1]:
-            mk += f' — باز می‌شود ساعت {flip[0]}'
-    lines.append(_row('طلا XAUUSD', mk))
-    act = []
-    rs = (cd.get('restart') or {}).get('until')
+            mk += f' — باز می‌شود {flip[0]}'
+    lines.append(_row('XAUUSD', mk))
+    kb = [[_btn('⏸ کول‌داون‌ها', 'tr:risk:cooldown')], _nav('tr', 'home')]
+    return '\n'.join(lines), kb
+
+
+def trade_risk_cooldown() -> tuple[str, list]:
+    cd = _j(DATA / 'cooldown_state.json')
     now = datetime.now(timezone.utc)
-    if rs:
-        try:
-            t = datetime.fromisoformat(str(rs).replace('Z', '+00:00'))
-            if t.tzinfo is None:
-                t = t.replace(tzinfo=timezone.utc)
-            if t > now:
-                act.append(f'کول‌داون ریستارت تا {t.astimezone(TEHRAN).strftime("%H:%M")}')
-        except Exception:
-            pass
+    lines = ['⏸ <b>کول‌داون‌ها و محدودیت‌های زمانی</b>', '']
+    act = []
     for k, v in cd.items():
-        if k.startswith('_') or k == 'restart':
+        if k.startswith('_'):
             continue
         until = (v or {}).get('until') if isinstance(v, dict) else None
         if until:
@@ -626,21 +991,127 @@ def trade_risk() -> tuple[str, list]:
                 if t.tzinfo is None:
                     t = t.replace(tzinfo=timezone.utc)
                 if t > now:
-                    act.append(f'{k} تا {t.astimezone(TEHRAN).strftime("%H:%M")}')
+                    act.append(f'· <b>{k}</b> تا {t.astimezone(TEHRAN).strftime("%H:%M")} ({_ago(until)})')
             except Exception:
-                act.append(f'{k} تا {until}')
-    lines.append(_sec('⏸ محدودیت فعال'))
-    lines += [f'· {a}' for a in act] if act else ['هیچ — همه گیت‌ها باز هستند']
-    return '\n'.join(lines), TRADE_KEYBOARD
+                act.append(f'· {k} تا {until}')
+    lm = cd.get('_last_master_run') or {}
+    if lm.get('at'):
+        lines.append(_row('Last Cycle', _ago(lm['at'])))
+    lines += act if act else ['هیچ محدودیت فعالی نیست — همه گیت‌ها باز هستند']
+    return '\n'.join(lines), [_nav('tr', 'risk')]
 
 
-TRADE_RENDER = {'home': trade_home, 'plan': trade_plan, 'pos': trade_positions,
-                'pnl': trade_pnl, 'risk': trade_risk}
+def trade_control() -> tuple[str, list]:
+    ks = _j(DATA / 'kill_switch_state.json')
+    lines = ['🎛 <b>کنترل تریدر</b>', _fa_date(), '',
+             'عملیات خطرناک با تأیید دومرحله‌ای و ثبت در لاگ.', '']
+    if ks.get('halted'):
+        lines.append(f'⛔ ترید <b>متوقف</b> — {ks.get("halt_reason", "")} (از {_ago(ks.get("halted_at"))})')
+    else:
+        lines.append('🟢 ترید فعال — ورود خودکار روشن است')
+    kb = []
+    if ks.get('halted'):
+        kb.append([_btn('▶️ ازسرگیری ترید', 'tr:ask:trade:resume')])
+    else:
+        kb.append([_btn('⛔ توقف فوری ترید', 'tr:ask:trade:halt')])
+    kb.append([_btn('🔁 ریستارت سرویس سیگنال', 'tr:ask:restart:hermes-signal'),
+               _btn('🔁 ریستارت سرویس پوزیشن', 'tr:ask:restart:hermes-position')])
+    kb.append(_nav('tr', 'home'))
+    return '\n'.join(lines), kb
+
+
+def trade_confirm(action: str) -> tuple[str, list]:
+    desc = _ACTION_DESC.get(action, action)
+    lines = ['⚠️ <b>تأیید عملیات</b>', '', desc, '', 'مطمئنی؟']
+    kb = [[_btn('✅ بله، انجام بده', f'tr:cfm:{action}'),
+           _btn('❌ انصراف', 'tr:control')]]
+    return '\n'.join(lines), kb
+
+
+TRADE_RENDER = {
+    'home': trade_home, 'plan': trade_plan, 'plan:detail': trade_plan_detail,
+    'plan:hist': trade_plan_hist, 'pos': trade_positions, 'pnl': trade_pnl,
+    'pnl:list': trade_pnl_list, 'stats': trade_stats, 'sig': trade_sig,
+    'risk': trade_risk, 'risk:cooldown': trade_risk_cooldown, 'control': trade_control,
+}
 
 
 def trade_render(panel: str) -> tuple[str, list]:
-    fn = TRADE_RENDER.get(panel, trade_home)
     try:
+        if panel.startswith('pos:'):
+            return trade_pos_detail(panel[4:])
+        if panel.startswith('ask:'):
+            return trade_confirm(panel[4:])
+        fn = TRADE_RENDER.get(panel, trade_home)
         return fn()
     except Exception as e:
-        return f'🔴 پنل {panel} خطا داد: {str(e)[:120]}', TRADE_KEYBOARD
+        return f'🔴 پنل {panel} خطا داد: {str(e)[:120]}', [[_btn('🏠 خانه', 'tr:home')]]
+
+
+# ══════════════════════ OPERATOR CONTROLS ══════════════════════
+
+_ACTION_DESC = {
+    'auto:pause': '⏸ اتوپایلوت موقتاً متوقف می‌شود — اجرای ساعتی تا ازسرگیری دستی رد می‌شود. روی ترید زنده اثری ندارد.',
+    'auto:resume': '▶️ اتوپایلوت از اجرای ساعتی بعدی ادامه می‌دهد.',
+    'trade:halt': '⛔ <b>kill switch فعال می‌شود</b> — ورود جدید بسته، پوزیشن باز فقط مدیریت می‌شود (بسته نمی‌شود).',
+    'trade:resume': '▶️ ترید ازسرگیری می‌شود — گیت‌های خودکار دوباره حاکم‌اند.',
+}
+for _s, _l in RESTARTABLE.items():
+    _ACTION_DESC[f'restart:{_s}'] = f'🔁 سرویس {_l} ریستارت می‌شود (۲-۳ ثانیه قطعی کوتاه).'
+
+
+def _audit(action: str, result: str):
+    try:
+        AUDIT_LOG.parent.mkdir(exist_ok=True)
+        with AUDIT_LOG.open('a', encoding='utf-8') as f:
+            f.write(f'{datetime.now(timezone.utc).isoformat()} | {action} | {result}\n')
+    except Exception:
+        pass
+
+
+def handle_control(action: str) -> tuple[bool, str]:
+    """Execute an operator action (already confirmed + owner-gated).
+    Returns (ok, persian_result_line)."""
+    ok, msg = False, 'نامعلوم'
+    try:
+        if action == 'auto:pause':
+            PAUSE_FLAG.parent.mkdir(parents=True, exist_ok=True)
+            PAUSE_FLAG.write_text(datetime.now(TEHRAN).strftime('%Y-%m-%d %H:%M تهران'))
+            ok, msg = True, '⏸ اتوپایلوت متوقف شد — اجرای ساعتی بعدی رد می‌شود.'
+        elif action == 'auto:resume':
+            try:
+                PAUSE_FLAG.unlink()
+            except FileNotFoundError:
+                pass
+            ok, msg = True, '▶️ اتوپایلوت ازسرگیری شد — اجرای ساعتی بعدی فعال است.'
+        elif action == 'trade:halt':
+            import sys
+            if str(ROOT) not in sys.path:
+                sys.path.insert(0, str(ROOT))
+            from engines.kill_switch import force_halt
+            force_halt('operator_halt_dashboard')
+            ok, msg = True, '⛔ ترید متوقف شد (kill switch) — ورود جدید بسته است.'
+        elif action == 'trade:resume':
+            import sys
+            if str(ROOT) not in sys.path:
+                sys.path.insert(0, str(ROOT))
+            from engines.kill_switch import force_resume
+            force_resume()
+            ok, msg = True, '▶️ ترید ازسرگیری شد — گیت‌های خودکار دوباره حاکم‌اند.'
+        elif action.startswith('restart:'):
+            svc = action.split(':', 1)[1]
+            if svc not in RESTARTABLE:
+                ok, msg = False, '🔴 سرویس ناشناخته — ریستارت نشد.'
+            else:
+                r = subprocess.run(['systemctl', '--user', 'restart', svc],
+                                   capture_output=True, text=True, timeout=30)
+                if r.returncode == 0:
+                    ok, msg = True, f'🔁 {RESTARTABLE[svc]} ریستارت شد و بالاست.'
+                else:
+                    ok, msg = False, f'🔴 ریستارت {RESTARTABLE[svc]} شکست خورد: {r.stderr[:80]}'
+        else:
+            ok, msg = False, '🔴 عملیات ناشناخته انجام نشد.'
+    except Exception as e:
+        ok, msg = False, f'🔴 خطا در اجرای عملیات: {str(e)[:100]}'
+    _audit(action, 'OK' if ok else msg)
+    return ok, msg

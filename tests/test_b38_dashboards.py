@@ -44,7 +44,7 @@ class TradeCallbackTests(unittest.TestCase):
         self.assertEqual(len(edit), 1, calls)
         self.assertIn('گیت‌های ایمنی', edit[0][1]['text'])
         kb = json.loads(edit[0][1]['reply_markup'])['inline_keyboard']
-        self.assertTrue(any('پلن' in b['text'] for row in kb for b in row))
+        self.assertTrue(any('خانه' in b['text'] for row in kb for b in row))
         self.assertTrue(any(c[0] == 'answerCallbackQuery' for c in calls))
 
     def test_stranger_is_denied_without_data(self):
@@ -67,13 +67,62 @@ class TradeCallbackTests(unittest.TestCase):
             sent.append((method, params or {}))
             return {'ok': True}
         for cmd, needle in (('/plan', 'پلن معاملاتی'), ('/positions', 'پوزیشن'),
-                            ('/pnl', 'سود و ضرر'), ('/risk', 'گیت‌های ایمنی')):
+                            ('/pnl', 'سود و ضرر'), ('/risk', 'گیت‌های ایمنی'),
+                            ('/stats', 'کارنامه'), ('/control', 'کنترل تریدر')):
             sent.clear()
             with patch.object(sl, '_telegram_api', side_effect=fake_api):
                 sl._serve_trade_command('194015957', cmd)
             msg = [c for c in sent if c[0] == 'sendMessage']
             self.assertEqual(len(msg), 1, cmd)
             self.assertIn(needle, msg[0][1]['text'], cmd)
+
+
+class NestedMenuTests(unittest.TestCase):
+    """b40: menu-in-menu navigation and two-step operator controls."""
+
+    def _calls(self, cb):
+        seen = []
+        def fake_api(method, params=None):
+            seen.append((method, params or {}))
+            return {'ok': True}
+        with patch.object(sl, '_telegram_api', side_effect=fake_api):
+            sl._serve_trade_callback(cb)
+        return seen
+
+    def test_nested_panel_renders_with_back_button(self):
+        calls = self._calls(_cb('194015957', 'tr:risk:cooldown'))
+        edit = [c for c in calls if c[0] == 'editMessageText']
+        self.assertEqual(len(edit), 1)
+        self.assertIn('کول‌داون', edit[0][1]['text'])
+        kb = json.loads(edit[0][1]['reply_markup'])['inline_keyboard']
+        self.assertTrue(any('بازگشت' in b['text'] for row in kb for b in row),
+                        'nested panels must offer a way back')
+
+    def test_ask_shows_confirmation_not_execution(self):
+        calls = self._calls(_cb('194015957', 'tr:ask:trade:halt'))
+        edit = [c for c in calls if c[0] == 'editMessageText']
+        self.assertEqual(len(edit), 1)
+        self.assertIn('تأیید عملیات', edit[0][1]['text'])
+        kb = json.loads(edit[0][1]['reply_markup'])['inline_keyboard']
+        data = [b['callback_data'] for row in kb for b in row]
+        self.assertIn('tr:cfm:trade:halt', data)
+        self.assertIn('tr:control', data)   # cancel path
+
+    def test_confirm_executes_via_handle_control(self):
+        from notifier import dashboards
+        with patch.object(dashboards, 'handle_control',
+                          return_value=(True, '✅ انجام شد')) as hc:
+            calls = self._calls(_cb('194015957', 'tr:cfm:auto:pause'))
+        hc.assert_called_once_with('auto:pause')
+        edit = [c for c in calls if c[0] == 'editMessageText']
+        self.assertIn('انجام شد', edit[0][1]['text'])
+
+    def test_stranger_cannot_trigger_control(self):
+        from notifier import dashboards
+        with patch.object(dashboards, 'handle_control') as hc:
+            calls = self._calls(_cb('-100999', 'tr:cfm:trade:halt'))
+        hc.assert_not_called()
+        self.assertFalse([c for c in calls if c[0] == 'editMessageText'])
 
 
 class DashboardRendererTests(unittest.TestCase):
@@ -91,12 +140,16 @@ class DashboardRendererTests(unittest.TestCase):
             (d.DATA / 'ops').mkdir(parents=True)
             (d.DATA / 'xau_plan/current_plan.json').write_text('{ not json')
             try:
-                for name in ('home', 'sys', 'auto', 'ops', 'trade'):
+                for name in ('home', 'sys', 'auto', 'auto:backlog', 'ops', 'trade',
+                             'trade:stats', 'control', 'control:restart',
+                             'svc:hermes-signal', 'ask:auto:pause'):
                     text, kb = d.ops_render(name)
                     self.assertIsInstance(text, str)
                     self.assertTrue(text, name)
                     self.assertTrue(kb, name)
-                for name in ('home', 'plan', 'pos', 'pnl', 'risk'):
+                for name in ('home', 'plan', 'plan:detail', 'plan:hist', 'pos',
+                             'pnl', 'pnl:list', 'stats', 'sig', 'risk',
+                             'risk:cooldown', 'control', 'ask:trade:halt'):
                     text, kb = d.trade_render(name)
                     self.assertTrue(text, name)
                     self.assertTrue(kb, name)

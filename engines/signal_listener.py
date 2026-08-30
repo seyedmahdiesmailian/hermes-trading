@@ -95,11 +95,12 @@ def _serve_trade_command(chat_id: str, text: str):
     cmd = text.split()[0].lstrip('/').split('@')[0].lower()
     panel = {'panel': 'home', 'status': 'home', 'start': 'home', 'help': 'home',
              'plan': 'plan', 'positions': 'pos', 'pos': 'pos',
-             'pnl': 'pnl', 'risk': 'risk'}.get(cmd, 'home')
+             'pnl': 'pnl', 'risk': 'risk', 'stats': 'stats',
+             'signals': 'sig', 'sig': 'sig', 'control': 'control'}.get(cmd, 'home')
     try:
         body, kb = dashboards.trade_render(panel)
         if panel == 'home' and cmd in ('help', 'start'):
-            body += ('\n\nدستورات: /plan /positions /pnl /risk\n'
+            body += ('\n\nدستورات: /plan /positions /pnl /stats /signals /risk /control\n'
                      'یا از دکمه‌های زیر استفاده کن.')
         _telegram_api("sendMessage", {
             "chat_id": chat_id, "text": body, "parse_mode": "HTML",
@@ -109,8 +110,10 @@ def _serve_trade_command(chat_id: str, text: str):
 
 
 def _serve_trade_callback(cb: dict):
-    """b38: trader dashboard buttons. SECURITY: only the owner chat is served;
-    anyone else gets a bare 'no access' answer and no data."""
+    """b38/b40: trader dashboard buttons. SECURITY: only the owner chat is
+    served; anyone else gets a bare 'no access' answer and no data.
+    b40 adds nested panels (tr:<panel>, tr:pos:<id>, tr:ask:<action>) and
+    two-step-confirmed operator actions (tr:cfm:<action>)."""
     from notifier import dashboards
     qid = cb.get("id", "")
     data = ((cb.get("data") or "") + "")
@@ -120,17 +123,29 @@ def _serve_trade_callback(cb: dict):
         _telegram_api("answerCallbackQuery", {"callback_query_id": qid,
                                               "text": "دسترسی نیست", "show_alert": True})
         return
-    panel = data.split(":", 1)[1] if data.startswith("tr:") else "home"
-    try:
-        text, kb = dashboards.trade_render(panel)
+    msg_id = (cb.get("message") or {}).get("message_id")
+    panel = data[3:] if data.startswith("tr:") else "home"
+
+    def _show(text, kb, alert=False):
         _telegram_api("editMessageText", {
-            "chat_id": chat,
-            "message_id": (cb.get("message") or {}).get("message_id"),
+            "chat_id": chat, "message_id": msg_id,
             "text": text, "parse_mode": "HTML",
             "reply_markup": json.dumps({"inline_keyboard": kb}, ensure_ascii=False)})
+        _telegram_api("answerCallbackQuery", {"callback_query_id": qid,
+                                              "text": "", "show_alert": alert})
+
+    try:
+        if panel.startswith("cfm:"):
+            # confirmed operator action — execute, then show fresh control panel
+            ok, msg = dashboards.handle_control(panel[4:])
+            body, kb = dashboards.trade_render("control")
+            _show(f"{msg}\n\n{body}", kb, alert=True)
+            return
+        text, kb = dashboards.trade_render(panel)
+        _show(text, kb)
     except Exception:
-        pass
-    _telegram_api("answerCallbackQuery", {"callback_query_id": qid})
+        _telegram_api("answerCallbackQuery", {"callback_query_id": qid,
+                                              "text": "خطا در نمایش پنل", "show_alert": True})
 
 
 def fetch_new_messages() -> list[dict]:

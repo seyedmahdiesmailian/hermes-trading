@@ -113,7 +113,19 @@ def main():
                             {'callback_query_id': qid, 'text': 'دسترسی نیست', 'show_alert': True})
                         continue
                     data = cb.get('data') or ''
-                    panel = data.split(':', 1)[1] if data.startswith('ops:') else 'home'
+                    panel = data[4:] if data.startswith('ops:') else 'home'
+                    if panel.startswith('cfm:'):
+                        # b40: confirmed operator action — execute, show result
+                        ok, msg = dashboards.handle_control(panel[4:])
+                        body, kb = dashboards.ops_render('control')
+                        api('editMessageText', token, {
+                            'chat_id': chat, 'message_id': mid,
+                            'text': f'{msg}\n\n{body}', 'parse_mode': 'HTML',
+                            'reply_markup': json.dumps({'inline_keyboard': kb},
+                                                       ensure_ascii=False)})
+                        api('answerCallbackQuery', token,
+                            {'callback_query_id': qid, 'text': '', 'show_alert': True})
+                        continue
                     send_panel(token, chat, panel, msg_id=mid)
                     api('answerCallbackQuery', token, {'callback_query_id': qid})
                     continue
@@ -127,7 +139,9 @@ def main():
                     panel = {'home': 'home', 'start': 'home', 'help': 'home',
                              'system': 'sys', 'sys': 'sys', 'autopilot': 'auto',
                              'auto': 'auto', 'backup': 'ops', 'health': 'ops',
-                             'ops': 'ops', 'trades': 'trade', 'trade': 'trade'}.get(cmd, 'home')
+                             'ops': 'ops', 'trades': 'trade', 'trade': 'trade',
+                             'stats': 'trade:stats', 'control': 'control',
+                             'backlog': 'auto:backlog'}.get(cmd, 'home')
                     send_panel(token, chat, panel)
                 else:
                     send_panel(token, chat, 'home')

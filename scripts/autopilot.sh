@@ -11,6 +11,14 @@ exec 9>"$LOCK"
 flock -n 9 || { echo "$(date -u +%FT%TZ) already running, skip"; exit 0; }
 
 LOG=logs/autopilot.log
+
+# b40: operator pause — dashboard control panel writes this flag; the hourly
+# run skips itself while it exists. Resume = delete the flag from the panel.
+if [ -f data/ops/autopilot_paused ]; then
+  echo "$(date -u +%FT%TZ) autopilot paused by operator ($(cat data/ops/autopilot_paused)) — skipping run" >> "$LOG"
+  exit 0
+fi
+
 echo "$(date -u +%FT%TZ) === autopilot run start ===" >> "$LOG"
 
 PROMPT='You are the Hermes trading-system autopilot. Work autonomously, no questions.
