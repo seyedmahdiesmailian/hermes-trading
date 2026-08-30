@@ -38,6 +38,23 @@ def load_current_plan(base_dir: str | Path | None = None):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+PLAN_HISTORY_KEEP = 1500   # ≈ 3 weeks at ~7 archives/day; learning only joins 48h back
+
+
+def _prune_plan_history(history_dir: Path):
+    """Keep plan_history bounded — it grows every save (~7/day) and learning
+    only needs the last 48h of plans. Delete oldest beyond PLAN_HISTORY_KEEP,
+    but only when comfortably over the cap (amortized, no per-save scan)."""
+    try:
+        files = sorted(history_dir.glob("*.json"))
+        if len(files) <= PLAN_HISTORY_KEEP * 1.1:
+            return
+        for f in files[:len(files) - PLAN_HISTORY_KEEP]:
+            f.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 def save_current_plan(base_dir: str | Path | None, plan: dict) -> Path:
     paths = ensure_xau_plan_dirs(base_dir)
     current_path = paths["current_plan_path"]
@@ -46,6 +63,7 @@ def save_current_plan(base_dir: str | Path | None, plan: dict) -> Path:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         archive_path = paths["plan_history_dir"] / f"{stamp}_{existing.get('plan_id', 'plan')}.json"
         archive_path.write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+        _prune_plan_history(paths["plan_history_dir"])
     current_path.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     return current_path
 

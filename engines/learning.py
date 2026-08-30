@@ -125,15 +125,19 @@ def session_of(ts: datetime) -> str:
 def _regime_for_plan(plan_id: str) -> str:
     """Join execution_log.plan_id → plan_history/<ts>_<plan_id>.json.
 
-    Any ambiguity/failure → '' (bucket simply skipped, never guessed).
+    BUG FIX 2026-08-30: globbed PLAN_DIR instead of PLAN_DIR/plan_history —
+    matched nothing, so EVERY regime bucket was 'unknown' and the whole
+    session×regime learning breakdown was dead. Also: one plan_id can be
+    archived multiple times (reassess churn) — use the NEWEST archive
+    instead of bailing on ambiguity.
     """
     if not plan_id:
         return ''
-    matches = list(PLAN_DIR.glob(f'*_{plan_id}.json'))
-    if len(matches) != 1:
+    matches = sorted((PLAN_DIR / 'plan_history').glob(f'*_{plan_id}.json'))
+    if not matches:
         return ''
     try:
-        data = json.loads(matches[0].read_text(encoding='utf-8'))
+        data = json.loads(matches[-1].read_text(encoding='utf-8'))
     except Exception:
         return ''
     return str((data.get('quality') or {}).get('regime') or '')

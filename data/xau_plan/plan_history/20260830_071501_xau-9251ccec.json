@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-5c31c79c",
+  "plan_id": "xau-9251ccec",
   "symbol": "XAUUSD",
   "bias": "bearish",
   "session": "london",
@@ -52,9 +52,9 @@
     "smc_poi": "A+",
     "smc_signal": "wait"
   },
-  "created_at": "2026-08-30T07:15:01.314179+00:00",
-  "expires_at": "2026-08-30T19:15:01.314179+00:00",
-  "next_reassessment": "2026-08-30T07:20:01.314179+00:00",
+  "created_at": "2026-08-30T07:00:01.439119+00:00",
+  "expires_at": "2026-08-30T19:00:01.439119+00:00",
+  "next_reassessment": "2026-08-30T07:05:01.439119+00:00",
   "context": {
     "m15_last": 4454.75,
     "h1_last": 4454.75,
