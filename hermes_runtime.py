@@ -88,11 +88,31 @@ def _tick_obj(tick: dict):
     return SimpleNamespace(ask=ask, bid=bid)
 
 
+def _pos_type(p: dict) -> int:
+    """Normalize position direction to MT5 int (0=BUY, 1=SELL).
+
+    b34 CRITICAL FIX: bridge v2 (/api/positions) sends type as the STRING
+    'BUY'/'SELL' (scripts/mt5_http_server_v2.py), but this did int(...) →
+    ValueError → cycle() crashed → hermes_master crashed (no try/except in
+    either) → EVERY 15-min tick died while a position was open and the
+    watchdog was dead — i.e. exactly when the fallback manager is the only
+    thing protecting the trade. position_daemon._pos_obj already handled
+    both shapes; the two consumers must not disagree on the wire format.
+    """
+    t = p.get('type', 0)
+    if isinstance(t, str):
+        return 0 if t.strip().upper() == 'BUY' else 1
+    try:
+        return int(t or 0)
+    except (TypeError, ValueError):
+        return 1  # unknown non-buy → treat as SELL (never silently BUY)
+
+
 def _pos_obj(p: dict):
     return SimpleNamespace(
         symbol=p.get('symbol', SYMBOL),
         ticket=int(p.get('ticket', p.get('position_ticket', 0)) or 0),
-        type=int(p.get('type', 0) or 0),
+        type=_pos_type(p),
         volume=float(p.get('volume', 0) or 0),
         price_open=float(p.get('price_open', p.get('open_price', 0)) or 0),
         sl=float(p.get('sl', 0) or 0),

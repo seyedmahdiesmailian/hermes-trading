@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T10:37:19.431492+00:00",
+ "last_run_utc": "2026-08-30T13:11:46.692959+00:00",
  "recent_commits": [
-  "7550884 b24: CRITICAL \u2014 tests were writing into LIVE production state",
-  "3701677 b23: CRITICAL \u2014 signal path now runs the full gate gauntlet + live daily trade cap",
-  "1560558 b22: weekly performance report \u2192 Telegram (Fri 22:30 UTC cron); remove stale journal backup",
-  "49134ea b21: REMOVE ALL MANUAL APPROVAL PATHS (user's explicit standing order) \u2014 verdict 'review' deleted (mid-score signals now skip, never escalate); approval_gate.py + cli send + dead master signal block removed; no /trade exists anywhere in the system",
-  "6571011 b20: cron log cap \u2014 any logs/*.log over 5MB trimmed to last 2MB (master.log grew every tick forever)"
+  "e2b93e1 b31: news_lock was mathematically DEAD \u2014 evaluate_news_lock read calendar['events'] but production writes {'high_impact':[...]}, so it returned None on every call ever; now reads impact buckets (tightening-only, 3 protective tests red-verified against old code); staleness audit: calendar median age 0min, perf day-rollover rebases correctly, management state empty because daemon owns mgmt (b32 filed)",
+  "039b6b3 b30: news/spread gates FAIL CLOSED on both entry paths \u2014 dead calendar no longer means 'no news' (staleness budget + no cache poisoning), signal news blackout is a hard block not a -2.0 penalty, tick/staleness/spread gate errors skip instead of trading unchecked; 14 regression tests (7 red against old code), 117 green, live cycle OK",
+  "8f57eb5 b29: safety gates FAIL CLOSED \u2014 grade/DEFCON/cooldown/account-policy gate errors now block entry instead of silently bypassing (tests/test_failclosed_gates.py, verified red against old code); b30 todo filed for remaining fail-open macro/spread gates",
+  "28c661e b28: M15 added as 4th analytical vote (never decides entry)",
+  "e4b8dce b27: TF naming truth + M15 A/B evidence"
  ]
 }
