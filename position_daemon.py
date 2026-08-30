@@ -222,6 +222,25 @@ def _min_offset() -> float:
     return min(samples) if samples else 0.0
 
 
+def publish_calibration(now: datetime | None = None) -> bool:
+    """b35: share the watchdog's broker-clock calibration with the runtime.
+
+    hermes_runtime's fallback time_exit (the ONLY manager when this watchdog
+    is dead) cannot re-estimate the offset itself — a 15-min cycle has no
+    consecutive polls to prove the tick stream is live, which is the
+    precondition broker_utc_offset_sec demands. So it reads ours.
+
+    Published only when at least one sample was actually accepted: 0.0 from
+    _min_offset() means 'unmeasured', and writing that as a measurement would
+    tell the runtime the broker clock IS UTC — the exact bug class b32 killed.
+    """
+    if not _guard_cache['offsets']:
+        return False
+    from engines import broker_clock
+    return broker_clock.save_offset(_min_offset(), source='position_daemon',
+                                    now=now)
+
+
 def _guard_calendar(now: datetime) -> dict | None:
     """Calendar for the guards: plan context first, then a fresh fetch.
 
@@ -419,6 +438,9 @@ def main():
             ask = float(tick.get('ask') or price)
             # b32: broker-server clock minus UTC (see broker_utc_offset_sec)
             broker_offset = broker_utc_offset_sec(tick, datetime.now(timezone.utc))
+            # b35: share the calibration with hermes_runtime's fallback
+            # time_exit (throttled inside; only writes real measurements).
+            publish_calibration()
             live = {int(p['ticket']): p for p in resp.get('data', [])}
             # Normalize bridge field name: server sends 'price_open'; legacy code
             # below reads 'open_price'. Without this, every tracking iteration

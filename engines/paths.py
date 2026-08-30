@@ -78,6 +78,12 @@ def watchdog_state() -> Path:
     return plan_dir() / "watchdog_state.json"
 
 
+def broker_clock_state() -> Path:
+    # b35: watchdog-published broker-clock calibration, read by the runtime
+    # fallback time_exit (see engines/broker_clock.py).
+    return plan_dir() / "broker_clock.json"
+
+
 def current_plan() -> Path:
     return plan_dir() / "current_plan.json"
 

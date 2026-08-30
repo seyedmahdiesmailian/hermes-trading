@@ -177,15 +177,46 @@ def _infer_setup_grade(plan: dict) -> str:
     return 'C'
 
 
-def _epoch_to_iso(ts) -> str | None:
-    """Bridge position time is broker epoch seconds; legacy_guards wants ISO."""
+def _epoch_to_iso(ts, broker_offset: float = 0.0) -> str | None:
+    """Bridge position time is broker epoch seconds; legacy_guards wants ISO.
+
+    b35: `ts` is on the BROKER SERVER clock (~UTC+3), not UTC. Feeding it
+    raw made every position look ~3h YOUNGER on the fallback path, so the
+    36h time_exit fired ~3h LATE. Callers pass the watchdog's published
+    calibration (engines/broker_clock); 0.0 = uncalibrated, same behaviour
+    as before but only when there is genuinely no measurement to trust.
+    """
     try:
         v = float(ts)
         if v > 0:
-            return datetime.fromtimestamp(v, tz=timezone.utc).isoformat()
+            return datetime.fromtimestamp(v - float(broker_offset or 0.0),
+                                          tz=timezone.utc).isoformat()
     except (TypeError, ValueError):
         pass
     return None
+
+
+def _fallback_opened_at(broker_time, wd_entry,
+                        broker_offset: float | None) -> str | None:
+    """Best available 'when did this position open, in UTC' for time_exit.
+
+    Priority (b35), mirroring position_daemon._position_opened_at:
+      1. broker epoch de-rotated by the watchdog's PUBLISHED calibration —
+         accurate even when the watchdog was down mid-trade;
+      2. the watchdog's own detection time (watchdog_state.json), which is
+         within seconds of the true open while the daemon is healthy;
+      3. raw broker epoch (UTC-misread → looks ~3h young) — the pre-b35
+         behaviour, only when neither 1 nor 2 exists. Never invent an age.
+    """
+    if broker_offset is not None:
+        iso = _epoch_to_iso(broker_time, broker_offset)
+        if iso:
+            return iso
+    if isinstance(wd_entry, dict):
+        detected = wd_entry.get('opened_at')
+        if detected:
+            return str(detected)
+    return _epoch_to_iso(broker_time)
 
 
 def _load_closed_trades(bridge, days=7) -> list[dict]:
@@ -296,6 +327,21 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     if positions and not watchdog_alive:
         tick_obj = _tick_obj(tick if isinstance(tick, dict) else {})
         runtime_state = runtime
+        # b35: the bridge stamps position times on the BROKER SERVER clock
+        # (~UTC+3). The watchdog measures that offset from its live 5s tick
+        # stream and publishes it (engines/broker_clock); a 15-min cycle
+        # cannot re-measure it, so we read theirs. None = no trustworthy
+        # calibration → fall back to the watchdog's own detection time.
+        try:
+            from engines.broker_clock import load_offset
+            broker_offset = load_offset(now=now)
+        except Exception:
+            broker_offset = None
+        wd_positions = _paths.read_json_safe(
+            _paths.watchdog_state(), {}, label='watchdog_state') or {}
+        if not isinstance(wd_positions, dict):
+            wd_positions = {}
+        wd_positions = wd_positions.get('positions') or {}
         for raw in positions:
             p = _pos_obj(raw)
             trade = {
@@ -321,7 +367,11 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             try:
                 from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock
                 _cal = plan.get('context', {}).get('macro', {}).get('calendar') if plan.get('context') else None
-                _tx = evaluate_time_exit({'opened_at': _epoch_to_iso(getattr(p, 'time', None)), 'side': trade['side']}, now)
+                _tx = evaluate_time_exit(
+                    {'opened_at': _fallback_opened_at(
+                        getattr(p, 'time', None),
+                        wd_positions.get(str(p.ticket)), broker_offset),
+                     'side': trade['side']}, now)
                 _nl = evaluate_news_lock({**trade, 'side': trade['side'], 'entry_price': getattr(p, 'price_open', market_price), 'sl': getattr(p, 'sl', 0), 'atr': plan.get('atr') or plan.get('quality', {}).get('atr') or 5}, market_price, _cal, now)
                 for _guard in (_nl, _tx):
                     if _guard and int(_guard.get('priority', 9)) < int(management.get('priority', 3)):
