@@ -1,0 +1,265 @@
+{
+  "spreads": [
+    0.0,
+    0.2,
+    0.35,
+    0.5
+  ],
+  "window_bars": 500,
+  "n_windows": 13,
+  "results": [
+    {
+      "spread": 0.0,
+      "trades": 196,
+      "win_rate": 0.6316,
+      "net_pnl": 1112.95,
+      "pnl_per_trade": 5.678,
+      "scratches": 44,
+      "profitable_windows": "12/13",
+      "per_window": [
+        {
+          "trades": 15,
+          "net_pnl": -39.21
+        },
+        {
+          "trades": 14,
+          "net_pnl": 134.05
+        },
+        {
+          "trades": 19,
+          "net_pnl": 390.77
+        },
+        {
+          "trades": 13,
+          "net_pnl": 34.45
+        },
+        {
+          "trades": 14,
+          "net_pnl": 10.77
+        },
+        {
+          "trades": 17,
+          "net_pnl": 28.58
+        },
+        {
+          "trades": 8,
+          "net_pnl": 32.38
+        },
+        {
+          "trades": 19,
+          "net_pnl": 77.83
+        },
+        {
+          "trades": 16,
+          "net_pnl": 57.56
+        },
+        {
+          "trades": 19,
+          "net_pnl": 163.91
+        },
+        {
+          "trades": 17,
+          "net_pnl": 26.05
+        },
+        {
+          "trades": 12,
+          "net_pnl": 109.98
+        },
+        {
+          "trades": 13,
+          "net_pnl": 85.83
+        }
+      ]
+    },
+    {
+      "spread": 0.2,
+      "trades": 196,
+      "win_rate": 0.6316,
+      "net_pnl": 1065.64,
+      "pnl_per_trade": 5.437,
+      "scratches": 44,
+      "profitable_windows": "12/13",
+      "per_window": [
+        {
+          "trades": 15,
+          "net_pnl": -42.41
+        },
+        {
+          "trades": 14,
+          "net_pnl": 130.55
+        },
+        {
+          "trades": 19,
+          "net_pnl": 385.87
+        },
+        {
+          "trades": 13,
+          "net_pnl": 31.35
+        },
+        {
+          "trades": 14,
+          "net_pnl": 7.37
+        },
+        {
+          "trades": 17,
+          "net_pnl": 24.78
+        },
+        {
+          "trades": 8,
+          "net_pnl": 30.48
+        },
+        {
+          "trades": 19,
+          "net_pnl": 73.13
+        },
+        {
+          "trades": 16,
+          "net_pnl": 53.66
+        },
+        {
+          "trades": 19,
+          "net_pnl": 159.21
+        },
+        {
+          "trades": 17,
+          "net_pnl": 21.84
+        },
+        {
+          "trades": 12,
+          "net_pnl": 107.08
+        },
+        {
+          "trades": 13,
+          "net_pnl": 82.73
+        }
+      ]
+    },
+    {
+      "spread": 0.35,
+      "trades": 196,
+      "win_rate": 0.6316,
+      "net_pnl": 1030.19,
+      "pnl_per_trade": 5.256,
+      "scratches": 44,
+      "profitable_windows": "12/13",
+      "per_window": [
+        {
+          "trades": 15,
+          "net_pnl": -44.81
+        },
+        {
+          "trades": 14,
+          "net_pnl": 127.93
+        },
+        {
+          "trades": 19,
+          "net_pnl": 382.19
+        },
+        {
+          "trades": 13,
+          "net_pnl": 29.02
+        },
+        {
+          "trades": 14,
+          "net_pnl": 4.82
+        },
+        {
+          "trades": 17,
+          "net_pnl": 21.93
+        },
+        {
+          "trades": 8,
+          "net_pnl": 29.06
+        },
+        {
+          "trades": 19,
+          "net_pnl": 69.61
+        },
+        {
+          "trades": 16,
+          "net_pnl": 50.74
+        },
+        {
+          "trades": 19,
+          "net_pnl": 155.68
+        },
+        {
+          "trades": 17,
+          "net_pnl": 18.7
+        },
+        {
+          "trades": 12,
+          "net_pnl": 104.91
+        },
+        {
+          "trades": 13,
+          "net_pnl": 80.41
+        }
+      ]
+    },
+    {
+      "spread": 0.5,
+      "trades": 196,
+      "win_rate": 0.6316,
+      "net_pnl": 994.7,
+      "pnl_per_trade": 5.075,
+      "scratches": 44,
+      "profitable_windows": "12/13",
+      "per_window": [
+        {
+          "trades": 15,
+          "net_pnl": -47.21
+        },
+        {
+          "trades": 14,
+          "net_pnl": 125.3
+        },
+        {
+          "trades": 19,
+          "net_pnl": 378.52
+        },
+        {
+          "trades": 13,
+          "net_pnl": 26.7
+        },
+        {
+          "trades": 14,
+          "net_pnl": 2.27
+        },
+        {
+          "trades": 17,
+          "net_pnl": 19.08
+        },
+        {
+          "trades": 8,
+          "net_pnl": 27.64
+        },
+        {
+          "trades": 19,
+          "net_pnl": 66.08
+        },
+        {
+          "trades": 16,
+          "net_pnl": 47.81
+        },
+        {
+          "trades": 19,
+          "net_pnl": 152.16
+        },
+        {
+          "trades": 17,
+          "net_pnl": 15.54
+        },
+        {
+          "trades": 12,
+          "net_pnl": 102.73
+        },
+        {
+          "trades": 13,
+          "net_pnl": 78.08
+        }
+      ]
+    }
+  ],
+  "break_even_spread": null
+}

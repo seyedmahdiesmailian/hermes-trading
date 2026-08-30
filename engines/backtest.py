@@ -35,10 +35,6 @@ def backtest_ohlc(
     wins = losses = scratches = 0
     open_trade = None  # one position at a time, like live gate 5
 
-    def _exit_price(t: dict, price: float) -> float:
-        # crossing the spread: BUY exits at bid (price), SELL exits at bid (price - spread)
-        return price - spread if t["side"] == "BUY" else price - spread
-
     def _close(t: dict, exit_price: float, index: int, reason: str):
         nonlocal equity, wins, losses, scratches
         side = t["side"]

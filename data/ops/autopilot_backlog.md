@@ -9,8 +9,12 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] Spread/slippage sensitivity: rerun backtest with spread 0.35 and 0.50 — does
-      edge survive realistic costs?
+- [ ] Spread gate for live entries: the parity funnel never looks at real-time
+      spread (cost is linear in trades, verified 2026-08-30), so news/rollover
+      spikes (XAUUSD can blow past 2.0) are unguarded in live. Evaluate a
+      max-spread pre-entry gate in hermes_runtime (read-only tick check, e.g.
+      skip if ask-bid > 0.60) — propose threshold from tick history, do NOT
+      weaken existing gates.
 - [ ] Zone-width sanity: long/short entry zones are 0.5 ATR wide from a 12-bar window —
       test 8/12/20-bar lookbacks in the parity funnel, pick best by PnL+trades.
 - [ ] Alert hygiene: master.log 'execute=True' events — verify a Telegram report fires
@@ -26,6 +30,15 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Done
+- [x] 2026-08-30 Spread/slippage sensitivity: edge is cost-INSENSITIVE — spread is a
+      linear per-trade tax (entry/exit geometry unchanged), measured on the 13 cached
+      robustness windows via run_backtest(spread_override=...): gross 0.00 → +1112.95,
+      0.20 (live) → +1065.64, 0.35 → +1030.19, 0.50 → +994.70; identical 196 trades,
+      63.2% WR, 12/13 profitable windows at EVERY level; break-even spread ≈ 2.86
+      (16x the 0.18 live demo tick spread). Live assumption (0.20) is conservative.
+      Tool: scripts/spread_sensitivity.py; results data/backtest/spread_sensitivity_results.json.
+      Also removed dead _exit_price() in engines/backtest.py and locked the symmetric
+      one-spread cost model with test_spread_symmetric_buy_and_sell. 73 tests green, live cycle OK.
 - [x] 2026-08-30 env_loader fallback everywhere: 5 scripts (_check_bridge,
       autopilot_digest, backtest_sweep, ab_aggressive_entry, verify_chain) imported
       dotenv bare → crashed on this box (python-dotenv absent); backtest_robustness

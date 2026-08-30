@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T03:06:33.356751+00:00",
+ "last_run_utc": "2026-08-30T03:40:45.763078+00:00",
  "recent_commits": [
+  "0b34712 autopilot: env_loader fallback for all dotenv consumers (5 scripts + 2 daemons) + repo-wide regression test",
+  "488f8eb a2: verify_chain.py \u2014 10-point live-chain math verification ALL PASS; ATR window fix",
   "e832d4a autopilot: backtest robustness \u2014 13 weekly windows (12/13 profitable, +1724 total); fix missing python-dotenv silently disabling .env loading in 4 entrypoints",
   "3ff1ff6 autopilot: hourly cadence (flock prevents overlap), digest 02:00 UTC",
-  "766c2f2 autopilot: journal by session+regime (learning.analyze breakdown + tests)",
-  "3542ed3 autopilot: absolute hermes path for cron PATH",
-  "7f465b9 autopilot: A/B aggressive premium/discount entry paths \u2014 they add ~80% of PnL, keep live behaviour; style tag + exclude_styles in parity funnel, ab_aggressive_entry.py script"
+  "766c2f2 autopilot: journal by session+regime (learning.analyze breakdown + tests)"
  ]
 }

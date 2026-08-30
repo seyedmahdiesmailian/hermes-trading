@@ -116,6 +116,28 @@ class BacktestEngineTests(unittest.TestCase):
         self.assertEqual(excl["trades"], 1)
         self.assertEqual(excl["trade_log"][0]["style"], "pullback_continuation")
 
+    def test_spread_symmetric_buy_and_sell(self):
+        # cost model locked by the spread-sensitivity run: a losing trade pays
+        # EXACTLY one round-trip spread on both sides (BUY pays at entry, SELL
+        # at exit — MT5 candles are bid-based). Guards against a future edit
+        # double-charging or zero-charging one side.
+        sell_rows = [
+            {"time": 1, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"time": 2, "open": 100, "high": 106, "low": 99, "close": 105},
+        ]
+        sell = backtest_ohlc(sell_rows,
+                             lambda r: {"side": "SELL", "entry": 100, "sl": 105, "tp": 90}
+                             if r["time"] == 1 else None, spread=0.50)
+        self.assertEqual(sell["trade_log"][0]["pnl"], -5.5)
+        buy_rows = [
+            {"time": 1, "open": 100, "high": 101, "low": 99, "close": 100},
+            {"time": 2, "open": 100, "high": 101, "low": 94, "close": 95},
+        ]
+        buy = backtest_ohlc(buy_rows,
+                            lambda r: {"side": "BUY", "entry": 100, "sl": 95, "tp": 110}
+                            if r["time"] == 1 else None, spread=0.50)
+        self.assertEqual(buy["trade_log"][0]["pnl"], -5.5)
+
     def test_breakeven_move_converts_full_loss_to_scratch(self):
         # +0.6R move then reversal to entry: BE move saves the trade
         rows = [

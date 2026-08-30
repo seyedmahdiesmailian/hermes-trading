@@ -82,13 +82,16 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
 
 def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: int = 500,
                  exclude_styles: list[str] | None = None, data: dict | None = None,
-                 range_kill_conf: float = 0.35) -> dict:
+                 range_kill_conf: float = 0.35,
+                 spread_override: float | None = None) -> dict:
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
     these prefixes (e.g. ["aggressive"] disables every aggressive entry path).
     data: optional pre-fetched {"M15": [...], "H1": [...], "H4": [...]} so
     A/B comparisons run on byte-identical datasets instead of re-fetching.
+    spread_override: replace the live-parity 0.20 round-trip cost (cost-model
+    sensitivity analysis only — never used by the live path).
     """
     # Fetch data
     if data:
@@ -120,7 +123,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         min_grade="B",        # live gate 7: MIN_SETUP_GRADE="B" (parity)
         breakeven_at_r=0.5,   # live trade management: BE move at +0.5R
         partial_tp1_share=0.5,  # live TP ladder: 50% at first target
-        spread=0.20,          # XAUUSD demo round-trip cost
+        spread=spread_override if spread_override is not None else 0.20,  # XAUUSD demo round-trip cost
         exclude_styles=exclude_styles,
     )
     result["ok"] = True
