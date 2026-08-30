@@ -162,6 +162,11 @@ def check_signals(bridge=None) -> list[dict]:
         # Only accept signals from the configured signal group(s)
         if allowed_chats and msg.get("chat_id") not in allowed_chats:
             continue
+        # Freshness gate: getUpdates replays the 24h buffer after downtime —
+        # a 5h-old signal executed at today's price is a guaranteed loss.
+        _age = datetime.now(timezone.utc).timestamp() - float(msg.get("date") or 0)
+        if _age > 600:
+            continue
         if not is_likely_signal(msg["text"]):
             continue
 

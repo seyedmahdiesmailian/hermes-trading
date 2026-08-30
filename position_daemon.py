@@ -158,10 +158,21 @@ def main():
         try:
             plan = load_plan()
             tick = bridge.get_tick('XAUUSD') or {}
+            resp = bridge.get_positions('XAUUSD') or {}
+            # ── Bridge-failure guard: a transient MT5 blip must NOT be read as
+            # "all positions closed". Without this, live={} → every tracked
+            # ticket gets a bogus CLOSED report at price 0, tracking is lost,
+            # and on recovery the same ticket re-opens as a duplicate. ──
             price = float(tick.get('ask') or tick.get('bid') or 0)
+            if price <= 0 or not resp.get('ok', 'data' in resp):
+                errors += 1
+                log(f'bridge unavailable (tick_ok={price > 0}, pos_ok={resp.get("error", "ok")}) — cycle skipped')
+                if errors == 3:
+                    send_telegram('⚠️ واتچ‌داگ: بریج ۳ بار متوالی پاسخ نداد — مدیریت پوزیشن موقتاً متوقف')
+                time.sleep(10 if errors < 10 else 30)
+                continue
             bid = float(tick.get('bid') or price)
             ask = float(tick.get('ask') or price)
-            resp = bridge.get_positions('XAUUSD') or {}
             live = {int(p['ticket']): p for p in resp.get('data', [])}
             # Normalize bridge field name: server sends 'price_open'; legacy code
             # below reads 'open_price'. Without this, every tracking iteration

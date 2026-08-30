@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-1990b414",
+  "plan_id": "xau-54b589a7",
   "symbol": "XAUUSD",
   "bias": "bearish",
   "session": "asia",
@@ -52,9 +52,9 @@
     "smc_poi": "A",
     "smc_signal": "bearish"
   },
-  "created_at": "2026-08-30T06:00:02.255102+00:00",
-  "expires_at": "2026-08-30T18:00:02.255102+00:00",
-  "next_reassessment": "2026-08-30T06:05:02.255102+00:00",
+  "created_at": "2026-08-30T05:45:01.371826+00:00",
+  "expires_at": "2026-08-30T17:45:01.371826+00:00",
+  "next_reassessment": "2026-08-30T05:50:01.371826+00:00",
   "context": {
     "m15_last": 4454.75,
     "h1_last": 4454.75,
@@ -791,44 +791,59 @@
       }
     },
     "macro": {
-      "timestamp": "2026-08-30T06:04:27.824505+00:00",
+      "timestamp": "2026-08-30T05:38:30.896027+00:00",
       "dxy": {
-        "value": 4599.5,
+        "change_pct": 0.004,
+        "direction": "flat",
         "available": true,
-        "source": "broker"
+        "source": "synthetic"
       },
       "silver": {
-        "value": 4599.5,
-        "change_pct": -0.492,
-        "direction": "down",
-        "bullish_for_gold": false,
-        "available": true
+        "available": false
       },
       "risk_sentiment": {
-        "symbol": "US500",
-        "change_pct": -0.492,
-        "risk_mode": "risk_off",
-        "available": true
+        "available": false
       },
       "tick_volume": {
-        "available": false
+        "volume_ratio": 0.37,
+        "is_high_volume": false,
+        "is_low_volume": true,
+        "available": true
       },
       "higher_tf": {
         "h4": {
-          "price": 4649.17,
-          "high_20": 4761.67,
-          "low_20": 4623.71,
-          "pos_in_range": 0.18,
+          "price": 4454.75,
+          "high_20": 4673.74,
+          "low_20": 4445.47,
+          "pos_in_range": 0.04,
           "zone": "discount",
-          "sma10": 4683.74,
+          "sma10": 4571.31,
+          "trend": "bearish"
+        },
+        "d1": {
+          "price": 4454.75,
+          "high_20": 4697.2,
+          "low_20": 4019.1,
+          "pos_in_range": 0.64,
+          "zone": "equilibrium",
+          "sma10": 4535.49,
+          "trend": "bearish"
+        },
+        "w1": {
+          "price": 4454.75,
+          "high_20": 4529.55,
+          "low_20": 4445.47,
+          "pos_in_range": 0.11,
+          "zone": "discount",
+          "sma10": 4457.83,
           "trend": "bearish"
         }
       },
       "verdict": {
         "verdict": "none",
-        "score_long": 1,
-        "score_short": 1,
-        "macro_conflicting": true
+        "score_long": 0,
+        "score_short": 0,
+        "macro_conflicting": false
       },
       "calendar": {
         "source": "forexfactory",
@@ -1017,9 +1032,9 @@
           }
         ],
         "total_events": 72,
-        "fetched_at": "2026-08-30T06:04:27.856300+00:00"
+        "fetched_at": "2026-08-30T05:38:31.043012+00:00"
       },
-      "_fetched_at": 1788069867.8564668
+      "_fetched_at": 1788068311.0431864
     }
   }
 }
