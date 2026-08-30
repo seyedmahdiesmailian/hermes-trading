@@ -19,6 +19,13 @@ def _cache_file() -> Path:
 
 
 CACHE_MAX_AGE_HOURS = 6
+# b30 STALENESS BUDGET: a fetch failure must not blind us instantly, but it
+# must not disable the news blackout forever either. ForexFactory is flaky on
+# this box (measured 2026-08-30: 2 of 4 direct fetches failed), so an expired
+# cache up to HARD_STALE_HOURS is still usable (marked stale=True). Beyond
+# that — or with no cache at all — the calendar is 'unavailable' and the entry
+# paths FAIL CLOSED (no new entries while we cannot see the news).
+HARD_STALE_HOURS = 24
 
 # High-impact currencies for XAUUSD (Gold moves on USD, EUR, JPY)
 HIGH_IMPACT_CURRENCIES = {"USD", "EUR", "JPY", "GBP"}
@@ -43,21 +50,51 @@ def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _load_cache() -> dict | None:
+def _load_cache(max_age_hours: float | None = None) -> dict | None:
+    """Return the cached calendar, or None if missing/unreadable/too old.
+
+    b30: `max_age_hours=None` uses the HARD_STALE budget (not the 6h refresh
+    window) and stamps the result `stale=True` past 6h, so callers can tell
+    'recent' from 'last thing we managed to fetch'.
+    """
     cache_file = _cache_file()
     if not cache_file.exists():
         return None
     try:
         data = json.loads(cache_file.read_text(encoding='utf-8'))
-        cached_at = datetime.fromisoformat(data.get("cached_at", ""))
-        if (_now_utc() - cached_at) > timedelta(hours=CACHE_MAX_AGE_HOURS):
-            return None
-        return data
     except Exception:
         return None
+    # An empty/untrustworthy payload is not a cache worth serving.
+    if not _has_events(data):
+        return None
+    try:
+        cached_at = datetime.fromisoformat(data.get("cached_at", ""))
+    except Exception:
+        return None
+    if cached_at.tzinfo is None:
+        cached_at = cached_at.replace(tzinfo=timezone.utc)
+    age_h = (_now_utc() - cached_at).total_seconds() / 3600.0
+    limit = HARD_STALE_HOURS if max_age_hours is None else max_age_hours
+    if age_h > limit:
+        return None
+    data["stale"] = age_h > CACHE_MAX_AGE_HOURS
+    return data
+
+
+def _has_events(data: dict | None) -> bool:
+    """A payload only counts as a real calendar if it carries events.
+
+    b30: the old code cached {'source':'unavailable','events':[]} after a
+    failed fetch and then served THAT as 'no news scheduled' for 6 hours —
+    a dead calendar silently meant an empty news blackout.
+    """
+    return bool(isinstance(data, dict) and data.get("events"))
 
 
 def _save_cache(data: dict):
+    if not _has_events(data):
+        # Never overwrite a good cache with an empty one (b30).
+        return
     data["cached_at"] = _now_utc().isoformat()
     paths.write_json_atomic(_cache_file(), data, indent=2)
 
@@ -121,20 +158,35 @@ def _fetch_investing_com() -> dict | None:
 
 
 def fetch_economic_calendar(force: bool = False) -> dict:
-    """Fetch economic calendar. Uses cache if fresh."""
+    """Fetch economic calendar. Uses cache if fresh.
+
+    b30 ordering matters: try the FRESH cache → refetch → only if the refetch
+    failed fall back to a STALE cache (within HARD_STALE_HOURS) → otherwise
+    return an explicitly 'unavailable' payload with NO events. Callers treat
+    source='unavailable' as fail-closed, never as 'no news'.
+    """
     if not force:
-        cached = _load_cache()
+        cached = _load_cache(max_age_hours=CACHE_MAX_AGE_HOURS)
         if cached:
+            cached.setdefault("stale", False)
             return cached
 
     result = _fetch_forexfactory()
     if not result or not result.get("events"):
         result = _fetch_investing_com()
-    if not result:
-        result = {"source": "unavailable", "events": []}
+    if result and result.get("events"):
+        _save_cache(result)
+        result["stale"] = False
+        return result
 
-    _save_cache(result)
-    return result
+    # Both sources failed: serve the last known-good calendar if it is inside
+    # the staleness budget, flagged so reports can show it.
+    stale = _load_cache()
+    if stale:
+        stale["degraded"] = True
+        return stale
+    return {"source": "unavailable", "events": [], "stale": True,
+            "unavailable": True}
 
 
 def _is_high_impact(event: dict) -> bool:

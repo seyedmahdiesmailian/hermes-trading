@@ -139,9 +139,20 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
         score -= 0.5
 
     # ── Check 7: Macro / news filter ──
+    # b30 HARD BLOCK: this used to be a -2.0 score penalty, and a
+    # high-confidence aligned signal (7.5) still executed straight through a
+    # FOMC blackout. The plan path (apply_macro_guard) blocks outright — the
+    # signal path now matches. An unavailable calendar also lands here
+    # (evaluate_macro_filter fails closed), so no news visibility = no trade.
     if macro_filter and not macro_filter.get("allowed", True):
-        reasons.append("news_blackout")
-        score -= 2.0
+        reasons.append(macro_filter.get("reason") or "news_blackout")
+        return {
+            "verdict": "skip",
+            "reason": macro_filter.get("reason", "news_blackout"),
+            "score": round(min(max_score, max(0, score)), 2),
+            "max_score": max_score,
+            "trade_allowed": False,
+        }
 
     # ── Check 8: Warnings from parser ──
     for w in warnings:

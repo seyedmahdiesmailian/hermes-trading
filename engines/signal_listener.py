@@ -236,13 +236,17 @@ def check_signals(bridge=None) -> list[dict]:
 
         # News blackout for the signal path too — evaluate_signal has the
         # gate (Check 7) but nobody ever passed macro_filter, so it was dead.
+        # b30 FAIL CLOSED: an exception here used to leave _macro_filter=None,
+        # which the decision engine reads as 'no gate' → trade allowed with no
+        # news visibility. A broken calendar now blocks the signal.
         _macro_filter = None
         try:
             from engines.economic_calendar import fetch_economic_calendar
             from engines.macro_filter import evaluate_macro_filter
             _macro_filter = evaluate_macro_filter(fetch_economic_calendar(), _now)
-        except Exception:
-            pass
+        except Exception as e:
+            _macro_filter = {"allowed": False, "reason": "macro_gate_error",
+                             "events": [], "error": str(e)[:200]}
 
         decision = evaluate_signal(parsed_dict, hermes_analysis, account_policy,
                                    macro_filter=_macro_filter)
@@ -292,13 +296,25 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
         parsed = sig_record["parsed"]
 
         # Staleness guard: if price moved far from signal entry, skip
+        # b30 FAIL CLOSED: the whole block used to end in `except Exception:
+        # pass`, so a failed tick read skipped BOTH the staleness guard and
+        # the spread gate and the order went out unchecked. No tick = no
+        # entry (the plan path refuses the same way — an entry without a
+        # spread check is exactly the news-spike hole the gate exists for).
         try:
             tick = bridge.get_tick(parsed["symbol"]) or {}
             cur = float(tick.get("ask") or tick.get("bid") or 0)
             entry = float(parsed.get("entry") or 0)
             sl = float(parsed.get("sl") or 0)
             risk_dist = abs(entry - sl) if sl > 0 else 10.0
-            if cur > 0 and entry > 0 and abs(cur - entry) > max(risk_dist * 0.5, 5.0):
+            if cur <= 0:
+                executions.append({
+                    "signal": parsed, "verdict": "skip",
+                    "reasons": ["tick_unavailable_fail_closed"],
+                    "executed": False,
+                })
+                continue
+            if entry > 0 and abs(cur - entry) > max(risk_dist * 0.5, 5.0):
                 executions.append({
                     "signal": parsed, "verdict": "skip",
                     "reasons": [f"stale_entry_price_moved_{abs(cur-entry):.1f}pts (current {cur})"],
@@ -309,7 +325,16 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             # news/rollover spikes blow XAUUSD past 2.0$ (normal 0.18). Signals used
             # to enter straight into them — the plan path refuses, the signal path didn't.
             from hermes_runtime import MAX_ENTRY_SPREAD
-            _spr = float(tick.get("ask") or 0) - float(tick.get("bid") or 0)
+            _bid = float(tick.get("bid") or 0)
+            _ask = float(tick.get("ask") or 0)
+            if _bid <= 0 or _ask <= 0:
+                executions.append({
+                    "signal": parsed, "verdict": "skip",
+                    "reasons": ["tick_incomplete_fail_closed"],
+                    "executed": False,
+                })
+                continue
+            _spr = _ask - _bid
             if _spr > MAX_ENTRY_SPREAD:
                 executions.append({
                     "signal": parsed, "verdict": "skip",
@@ -317,8 +342,13 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                     "executed": False,
                 })
                 continue
-        except Exception:
-            pass
+        except Exception as e:
+            executions.append({
+                "signal": parsed, "verdict": "skip",
+                "reasons": [f"tick_gate_error_fail_closed:{str(e)[:120]}"],
+                "executed": False,
+            })
+            continue
 
         # ── Final safety gates BEFORE any order ──
         # CRITICAL FIX 2026-08-30: the signal path called execute_trade()

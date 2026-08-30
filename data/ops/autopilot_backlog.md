@@ -9,7 +9,29 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] b30 Signal path: fail-OPEN news/spread gates (from b29 audit, deliberately NOT fixed as one-liners): `signal_listener.check_signals` sets `_macro_filter=None` when the economic-calendar fetch throws, and swallows tick-read errors around the MAX_ENTRY_SPREAD check — in both cases a BROKEN data source lets a signal trade through with the gate disabled. The plan path is stricter (blocked_by_macro is computed upstream). Fix needs a staleness budget: fail-closed (skip signal) when calendar is missing/stale beyond N hours, but tolerate a fresh cached snapshot; same for spread (skip if tick unavailable — an entry without a spread check is exactly the news-spike hole b-spread-gate closed for the plan path). Add regression tests proving a dead calendar + dead tick both SKIP, and a fresh cache still EXECUTES.
+- [ ] b31 Audit the STALENESS of every input the gates read (found while fixing b30): the calendar now has an explicit budget, but other gate inputs are silently age-unbounded — `plan.context.macro` (news_lock in legacy_guards reads it; a 3-day-old snapshot still gates today), `runtime_state['management']` per-ticket state (never expires → a ticket reused after close inherits old breakeven flags), and `performance_state.day` (daily loss cap re-bases on a stale day — b24 noted the write side, the READ side still trusts any day stamp). For each: measure how old the live value actually gets (read-only, from data/ + logs/), decide a budget, fail closed past it, and add a regression test. Tighten-only; never loosen a gate.
+- [x] b30 Signal path: fail-OPEN news/spread gates (done 2026-08-30 — audit found the reality was WORSE than the todo assumed, 4 distinct holes, all fixed + 14 tests in tests/test_failclosed_news_spread.py, 7 of which go RED against the old code):
+      (1) `fetch_economic_calendar()` NEVER raised — both sources failing returned
+      `{'source':'unavailable','events':[]}`, which `evaluate_macro_filter` scored
+      allowed=True, AND cached that empty payload as 'no news' for 6h. Measured on
+      this box: ForexFactory failed 2 of 4 direct fetches (tradingview fallback: 4/4
+      dead), so this was live-reachable, not theoretical. Now: fresh cache → refetch →
+      stale cache within HARD_STALE_HOURS=24 (flagged stale/degraded) → explicit
+      `unavailable`, and `_save_cache` refuses to overwrite a good cache with events=[].
+      (2) `evaluate_macro_filter` maps unavailable → allowed=False ('calendar_unavailable'):
+      no news visibility is no longer the same fact as no news.
+      (3) The signal path's news gate was a -2.0 SCORE PENALTY, not a block: a
+      high-confidence aligned signal scored 7.5 and executed straight through FOMC
+      (verified: 8.0-capable signals stayed above the 6.0 threshold even penalised).
+      Now a hard skip, matching apply_macro_guard on the plan path.
+      (4) run_signal_check's staleness+spread block ended in `except Exception: pass`,
+      so a failed tick read skipped BOTH guards and the order went out unchecked; a
+      tick with ask but no bid also computed spread as 0.00 (passed any gate). Now
+      no-tick / incomplete-tick / gate-error all skip with *_fail_closed reasons.
+      Also fail-closed the plan path's own `except Exception: pass` around the macro
+      guard. Net: gates can now only block on error, never green-light on error.
+      117 tests green, live cycle OK (reassess, execute=False), real calendar verified
+      fresh (forexfactory, 110 events, 4 USD high-impact, allowed=True).
 - [x] b29 Safety gates FAIL CLOSED (done 2026-08-30: evaluate_proposal's learned-grade/DEFCON/cooldown gates did `except Exception: pass` = a corrupted state file silently BYPASSED the gate and let the trade through; signal_listener's account-policy/kill-switch block fell back to trade_allowed=True on error. All four now return execute=False with *_gate_error; tests/test_failclosed_gates.py locks it — verified the 3 new tests go RED against the old code. 103 green, live cycle OK)
 - [x] Management-path broker rejection is SILENT + corrupts state (CLOSED 2026-08-30: b7b fixed executed-flag; b10b-era daemon retries rejected moves every 5s and only commits state on broker acceptance; b17 adds instant Telegram alert on rejected breakeven/trail — trade on original stop is no longer silent):
       `evaluate_management_action` hardcodes `executed=True` on every bridge call — the exact

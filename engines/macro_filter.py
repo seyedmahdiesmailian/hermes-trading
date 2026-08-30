@@ -10,7 +10,14 @@ def _parse(value: str) -> datetime:
 
 def evaluate_macro_filter(calendar: dict | None, now: str | datetime, blackout_minutes: int = 30) -> dict:
     current = _parse(now) if isinstance(now, str) else now
-    events = (calendar or {}).get("events", [])
+    cal = calendar or {}
+    # b30 FAIL CLOSED: 'unavailable' means we CANNOT SEE the news, not that
+    # there is none. The old shape ({'source':'unavailable','events':[]})
+    # scored allowed=True — a dead calendar disabled the blackout gate on
+    # both entry paths for as long as the failure lasted.
+    if cal.get("unavailable") or str(cal.get("source", "")).lower() == "unavailable":
+        return {"allowed": False, "reason": "calendar_unavailable", "events": []}
+    events = cal.get("events", [])
     relevant = []
     for event in events:
         if str(event.get("impact", "")).lower() != "high":

@@ -383,14 +383,22 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         # macro_calendar, so this guard was dead in production — fetch the
         # cached calendar here so EVERY caller is protected (the calendar
         # module caches to disk; this is cheap).
+        # b30 FAIL CLOSED: `except Exception: pass` left the proposal
+        # UNguarded whenever the calendar module itself broke — no news
+        # visibility used to mean 'no blackout'. Now a gate error blocks the
+        # entry, same as a real blackout.
         try:
             from engines.economic_calendar import fetch_economic_calendar
             from engines.macro_filter import evaluate_macro_filter
             cal = (macro_calendar or {}).get('calendar') or fetch_economic_calendar()
             filt = (macro_calendar or {}).get('filter_result') or evaluate_macro_filter(cal, now)
             proposal = apply_macro_guard(proposal, filt)
-        except Exception:
-            pass
+            if filt.get('reason') == 'calendar_unavailable':
+                monitor['calendar_unavailable'] = True
+        except Exception as e:
+            proposal = apply_macro_guard(
+                proposal, {'allowed': False, 'reason': 'macro_gate_error',
+                           'error': str(e)[:200]})
 
     # ── Legacy migration: macro snapshot into plan context + report ──
     # analyze_macro costs ~22 bridge calls (6 FX ticks + 6 H1 rates + silver/
