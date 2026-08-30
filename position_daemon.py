@@ -36,16 +36,24 @@ from bridge_client import BridgeClient
 from engines import paths
 from engines.trade_management import evaluate_trade_management
 from engines.auto_executor import evaluate_management_action
+from engines.legacy_guards import evaluate_news_lock, evaluate_time_exit
 
 LOG_FILE = paths.logs_dir() / 'position_daemon.log'
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 POLL_SEC = 5
 
 
+def _log_file() -> Path:
+    """Resolved per call: tests redirect HERMES_DATA_ROOT after import, and a
+    module-level constant would keep appending to the production log."""
+    return paths.logs_dir() / 'position_daemon.log'
+
+
 def log(msg: str):
-    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    path = _log_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-    with LOG_FILE.open('a', encoding='utf-8') as f:
+    with path.open('a', encoding='utf-8') as f:
         f.write(f"[{ts}] {msg}\n")
 
 
@@ -88,6 +96,10 @@ def _pos_obj(raw: dict):
     p.price_open = raw.get('price_open') or raw.get('open_price') or 0.0
     p.sl = raw.get('sl') or 0.0
     p.tp = raw.get('tp') or 0.0; p.profit = raw.get('profit', 0.0)
+    # b32: broker open time (epoch, broker-server clock). Needed by
+    # time_exit — without it the watchdog only ever knew when IT noticed
+    # the position, so a daemon restart reset the 36h clock.
+    p.time = raw.get('time')
     return p
 
 
@@ -107,6 +119,8 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
         'symbol': 'XAUUSD',
         'side': p.type if p.type in ('BUY', 'SELL') else ('BUY' if p.type == 0 else 'SELL'),
         'entry_price': p.price_open,
+        # b32: broker open time, consumed by _position_opened_at → time_exit.
+        'time': getattr(p, 'time', None),
         'sl': p.sl or plan.get('invalidation') or p.price_open,
         'tp_levels': execution.get('tp_levels') or plan.get('targets') or [],
         'tp_shares': execution.get('tp_shares') or [0.5, 0.3, 0.2],
@@ -127,6 +141,246 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
         'thesis_valid': alignment != 'counter',
         'exposure_fraction': 0.5,
     }
+
+
+# ── b32: legacy guards (news_lock / time_exit) in the watchdog ──
+# hermes_runtime.cycle has had these since the legacy merge, but in
+# production the runtime management block is SKIPPED whenever this
+# watchdog is alive (heartbeat < 60s) — and the watchdog never called
+# the guards at all. Result: news_lock and time_exit had no live
+# executor anywhere. b31 made news_lock readable; b32 wires it here and
+# b33 made the calendar PRODUCER actually deliver actionable events.
+#
+# The watchdog loop runs every 5s, so both inputs are throttled:
+#   - calendar: rebuilt at most once per GUARD_CAL_TTL_SEC
+#   - guard evaluation: at most once per GUARD_EVAL_TTL_SEC per ticket
+# A news lock is a 30-minute window; a 60s decision latency is irrelevant,
+# and re-modifying the SL every 5s would hammer the broker.
+GUARD_CAL_TTL_SEC = 300
+GUARD_EVAL_TTL_SEC = 60
+# Broker-clock calibration: a sample is only plausible if the implied offset
+# is within ±14h of UTC (every FX broker server timezone fits). Outside that
+# the tick is stale (weekend gap, bridge stall) and must not be trusted —
+# falling back to the watchdog's own detection time can only make time_exit
+# fire EARLY, never late, which is the safe direction.
+BROKER_OFFSET_SANITY_SEC = 14 * 3600
+BROKER_OFFSET_WINDOW = 120          # ~10 min of 5s ticks
+# Polls must arrive within this of each other for the tick stream to prove
+# itself live; a longer gap means we cannot bound the tick's age.
+BROKER_OFFSET_MAX_GAP_SEC = 60
+_guard_cache = {"cal": None, "cal_at": 0.0, "last_eval": {}, "applied": {},
+                "offsets": [], "prev_tick": (0.0, 0.0)}
+
+
+def broker_utc_offset_sec(tick: dict, now: datetime) -> float:
+    """Broker-server clock minus UTC, estimated from a LIVE tick stream.
+
+    The bridge reports position open times as `int(p.time)` — epoch seconds
+    in the BROKER'S server timezone, not UTC. hermes_runtime._epoch_to_iso
+    has treated them as UTC since the legacy merge, which makes every
+    position look ~3h YOUNGER than it is (measured 2026-08-30 against the
+    two real fills in execution_log.csv: broker clock is UTC+3:05/+3:28).
+    On the 36h time_exit that is a LATE exit; correcting it is the
+    conservative direction.
+
+    A single sample cannot separate offset from tick age:
+    (tick.time - utc_now) = offset + age. So a sample is only accepted when
+    the stream is provably live — tick time advancing in step with the wall
+    clock between consecutive polls — which bounds `age` near zero. The
+    estimate is then the MINIMUM accepted sample: residual error can only
+    make a position look younger than it is (a late exit), never older, so
+    this can never fire time_exit early. (NTP's minimum-delay argument.)
+
+    Anything implausible — a weekend gap, a stalled bridge, a daemon
+    restart onto an old tick — is rejected and the caller falls back to the
+    watchdog's own detection time, which is later than the true open and so
+    also errs toward an early-not-late exit.
+    """
+    data = tick.get('data', tick) if isinstance(tick, dict) else {}
+    try:
+        t = float(data.get('time') or 0)
+    except (TypeError, ValueError):
+        return _min_offset()
+    if t <= 0:
+        return _min_offset()
+    wall = now.timestamp()
+    diff = t - wall
+    prev_t, prev_w = _guard_cache['prev_tick']
+    live_stream = (prev_w > 0 and 0 < (wall - prev_w) <= BROKER_OFFSET_MAX_GAP_SEC
+                   and (t - prev_t) >= 0.8 * (wall - prev_w))
+    if live_stream and abs(diff) <= BROKER_OFFSET_SANITY_SEC:
+        samples = _guard_cache['offsets']
+        samples.append(diff)
+        del samples[:-BROKER_OFFSET_WINDOW]
+    _guard_cache['prev_tick'] = (t, wall)
+    return _min_offset()
+
+
+def _min_offset() -> float:
+    """Best offset estimate so far, 0.0 (= trust nothing) when unmeasured."""
+    samples = _guard_cache['offsets']
+    return min(samples) if samples else 0.0
+
+
+def _guard_calendar(now: datetime) -> dict | None:
+    """Calendar for the guards: plan context first, then a fresh fetch.
+
+    hours_ahead=24 comfortably covers the 30-minute lock window; the bucket
+    is rebuilt at most once per GUARD_CAL_TTL_SEC so the 5s loop does not
+    hammer the calendar feed.
+    """
+    plan = load_plan()
+    cal = ((plan.get('context') or {}).get('macro') or {}).get('calendar')
+    if cal:
+        return cal
+    if now.timestamp() - _guard_cache['cal_at'] >= GUARD_CAL_TTL_SEC:
+        _guard_cache['cal_at'] = now.timestamp()
+        try:
+            from engines.economic_calendar import get_upcoming_events
+            _guard_cache['cal'] = get_upcoming_events(hours_ahead=24)
+        except Exception as e:
+            # fail-closed for the guard means "no lock this cycle", NOT a
+            # trade block — news_lock only tightens stops, and the entry
+            # paths have their own (b30 fail-closed) blackout gates.
+            log(f'guard calendar failed: {e}')
+            _guard_cache['cal'] = None
+    return _guard_cache['cal']
+
+
+def guard_fingerprint(guard: dict) -> tuple:
+    """Identity of a guard action, for once-per-ticket application."""
+    return (guard.get('action'), guard.get('new_sl'), guard.get('reason'))
+
+
+def apply_legacy_guards(management: dict, trade: dict, wstate: dict,
+                        market_price: float, ticket: int, now: datetime,
+                        broker_offset: float = 0.0) -> dict:
+    """Priority merge, mirroring hermes_runtime: news_lock(1) >
+    time_exit(2) > core management(3+). Returns the winning action dict.
+
+    A guard action is returned at most once per identical fingerprint:
+    the caller records it in _guard_cache['applied'] ONLY after the broker
+    accepts, so a rejected modify is retried on the next eval window while
+    an accepted one never re-hammers the same SL change every 60s.
+    """
+    if now.timestamp() - _guard_cache['last_eval'].get(ticket, 0.0) < GUARD_EVAL_TTL_SEC:
+        return management
+    _guard_cache['last_eval'][ticket] = now.timestamp()
+    try:
+        cal = _guard_calendar(now)
+        plan = load_plan()
+        nl_trade = {**trade,
+                    'entry_price': trade.get('entry_price') or market_price,
+                    'sl': trade.get('sl') or 0,
+                    'atr': plan.get('atr') or 5}
+        guards = (evaluate_news_lock(nl_trade, market_price, cal, now),
+                  evaluate_time_exit({'opened_at': _position_opened_at(
+                      trade, wstate, now, broker_offset)}, now))
+        for g in guards:
+            if g and int(g.get('priority', 9)) < int(management.get('priority', 3)):
+                if guard_fingerprint(g) in _guard_cache['applied'].get(str(ticket), []):
+                    return management  # already applied & broker-accepted
+                return g
+    except Exception as e:
+        log(f'guard eval error #{ticket}: {e}')
+    return management
+
+
+def _position_opened_at(trade: dict, wstate: dict, now: datetime,
+                        broker_offset: float = 0.0) -> str | None:
+    """When this position really opened, in UTC ISO.
+
+    Prefers the broker's own open time (correct even if the watchdog was
+    down or restarted mid-trade), de-rotated to UTC by `broker_offset`.
+    Falls back to the watchdog's detection time — which is LATER than the
+    true open, so it can only make a position look older, i.e. fire
+    time_exit early rather than late. Never invent an age.
+    """
+    raw = trade.get('time') or trade.get('broker_time')
+    try:
+        v = float(raw) if raw is not None else 0.0
+    except (TypeError, ValueError):
+        v = 0.0
+    if v > 0:
+        return datetime.fromtimestamp(v - broker_offset, tz=timezone.utc).isoformat()
+    return wstate.get('opened_at')
+
+
+def prune_guard_state(live_tickets: set) -> None:
+    """Drop per-ticket guard memory for positions that no longer exist.
+
+    Tickets are broker-unique so a leak is harmless for correctness, but the
+    watchdog runs for weeks — without this the dicts grow forever.
+    """
+    keep = {int(t) for t in live_tickets}
+    for key in ('last_eval', 'applied'):
+        store = _guard_cache[key]
+        for t in [t for t in store if str(t).lstrip('#') not in {str(k) for k in keep}
+                  and t not in keep]:
+            store.pop(t, None)
+
+
+def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
+                    price: float, now: datetime | None = None,
+                    broker_offset: float = 0.0) -> None:
+    """One watchdog management pass over a single live position (b32).
+
+    Extracted from main() so the guard chain can be replayed against a fake
+    bridge in tests — the live loop is not unit-testable, and an exit-path
+    change that only runs in production is an untested exit policy.
+
+    Mutates `tracked[str(tkt)]` (events / breakeven_active / filled TPs) and
+    the guard cache; state is committed ONLY on broker acceptance (b7b/b10b).
+    """
+    now = now or datetime.now(timezone.utc)
+    tkt_s = str(tkt)
+    trade = build_trade(p, plan, tracked[tkt_s])
+    mgmt = evaluate_trade_management(trade, price, now)
+    mgmt_core = mgmt
+    mgmt = apply_legacy_guards(mgmt, trade, tracked[tkt_s], price, int(tkt),
+                              now, broker_offset)
+    is_guard = mgmt is not mgmt_core
+    if mgmt.get('action') in (None, 'hold'):
+        return
+    # DEFCON insights deliberately NOT passed — see the note
+    # in hermes_runtime.cycle (runner-disabled maps to a
+    # full market close; untested exit policy).
+    res = evaluate_management_action(mgmt, bridge, int(tkt), dry_run=DRY_RUN)
+    if res.get('executed'):
+        tracked[tkt_s]['events'].append(f"مدیریت: {mgmt['action']} ({mgmt.get('reason','')})")
+        log(f'MGMT #{tkt} {mgmt["action"]} -> ok')
+        if is_guard:
+            # b32: remember accepted guard actions so the
+            # 60s re-eval never re-sends the same modify.
+            fp = guard_fingerprint(mgmt)
+            applied = _guard_cache['applied'].setdefault(str(tkt), [])
+            if fp not in applied:
+                _guard_cache['applied'][str(tkt)] = applied + [fp]
+        if mgmt['action'] == 'move_stop_to_breakeven':
+            # news_lock REUSES this action name to move SL to 0.5*ATR — it is
+            # NOT the post-TP breakeven, and marking breakeven_active for it
+            # would suppress the real BE move later.
+            if not str(mgmt.get('reason', '')).startswith('news_lock'):
+                tracked[tkt_s]['breakeven_active'] = True
+        elif mgmt['action'] == 'partial_take_profit':
+            filled = list(tracked[tkt_s].get('filled_tp_levels', []))
+            filled.append(mgmt.get('target_hit'))
+            tracked[tkt_s]['filled_tp_levels'] = filled
+    elif res.get('error'):
+        log(f'MGMT #{tkt} {mgmt.get("action")} REJECTED -> {res["error"][:120]}')
+        evs = tracked[tkt_s].setdefault('events', [])
+        # one line per action per ticket — the 5s loop would
+        # otherwise spam the lifecycle report with retries
+        tag = f'reject:{mgmt.get("action")}'
+        if tag not in tracked[tkt_s].setdefault('_rejected', []):
+            tracked[tkt_s]['_rejected'] = tracked[tkt_s].get('_rejected', []) + [tag]
+            evs.append(f"⚠️ مدیریت رد شد: {mgmt.get('action')} ({str(res['error'])[:60]})")
+            # A rejected breakeven/trail move means the trade is still running
+            # on its ORIGINAL stop — the retry loop keeps trying, but the
+            # operator must know NOW, not at close report.
+            send_telegram(f'⚠️ مدیریت رد شد #{tkt}: {mgmt.get("action")}\n'
+                          f'{str(res["error"])[:120]}\n'
+                          f'اتصال/SL اصلی هنوز فعال — تلاش مجدد خودکار')
 
 
 def close_reason(final_sl: float, final_tp: float, exit_price: float, side: str) -> str:
@@ -163,6 +417,8 @@ def main():
                 continue
             bid = float(tick.get('bid') or price)
             ask = float(tick.get('ask') or price)
+            # b32: broker-server clock minus UTC (see broker_utc_offset_sec)
+            broker_offset = broker_utc_offset_sec(tick, datetime.now(timezone.utc))
             live = {int(p['ticket']): p for p in resp.get('data', [])}
             # Normalize bridge field name: server sends 'price_open'; legacy code
             # below reads 'open_price'. Without this, every tracking iteration
@@ -240,46 +496,18 @@ def main():
                         w['volume'] = p['volume']
 
                 # ── High-frequency management (every 5s) ──
+                # b32: the whole chain (core management + news_lock/time_exit
+                # guards + commit-on-broker-acceptance) lives in
+                # manage_position() so it is unit-testable against a fake
+                # bridge. The live loop used to inline it, which is why an
+                # exit-path change could only ever be verified in production.
                 if not DRY_RUN and plan:
-                    trade = build_trade(p, plan, tracked[tkt_s])
-                    mgmt = evaluate_trade_management(trade, bid if side == 'SELL' else ask,
-                                                     datetime.now(timezone.utc))
-                    if mgmt.get('action') not in (None, 'hold'):
-                        # DEFCON insights deliberately NOT passed — see the note
-                        # in hermes_runtime.cycle (runner-disabled maps to a
-                        # full market close; untested exit policy).
-                        res = evaluate_management_action(mgmt, bridge, int(tkt),
-                                                         dry_run=DRY_RUN)
-                        # Commit our view ONLY if the broker accepted. A rejected
-                        # modify/partial used to set executed=True → the watchdog
-                        # marked breakeven/TP as done while MT5 was untouched, and
-                        # never retried the move that protects the trade.
-                        if res.get('executed'):
-                            tracked[tkt_s]['events'].append(f"مدیریت: {mgmt['action']} ({mgmt.get('reason','')})")
-                            log(f'MGMT #{tkt} {mgmt["action"]} -> ok')
-                            if mgmt['action'] == 'move_stop_to_breakeven':
-                                tracked[tkt_s]['breakeven_active'] = True
-                            elif mgmt['action'] == 'partial_take_profit':
-                                filled = list(tracked[tkt_s].get('filled_tp_levels', []))
-                                filled.append(mgmt.get('target_hit'))
-                                tracked[tkt_s]['filled_tp_levels'] = filled
-                        elif res.get('error'):
-                            log(f'MGMT #{tkt} {mgmt.get("action")} REJECTED -> {res["error"][:120]}')
-                            evs = tracked[tkt_s].setdefault('events', [])
-                            # one line per action per ticket — the 5s loop would
-                            # otherwise spam the lifecycle report with retries
-                            tag = f'reject:{mgmt.get("action")}'
-                            if tag not in tracked[tkt_s].setdefault('_rejected', []):
-                                tracked[tkt_s]['_rejected'] = tracked[tkt_s].get('_rejected', []) + [tag]
-                                evs.append(f"⚠️ مدیریت رد شد: {mgmt.get('action')} ({str(res['error'])[:60]})")
-                                # A rejected breakeven/trail move means the trade
-                                # is still running on its ORIGINAL stop — the
-                                # retry loop keeps trying every 5s, but the
-                                # operator must know NOW, not at close report.
-                                send_telegram(f'⚠️ مدیریت رد شد #{tkt}: {mgmt.get("action")}\n'
-                                              f'{str(res["error"])[:120]}\n'
-                                              f'اتصال/SL اصلی هنوز فعال — تلاش مجدد خودکار')
+                    manage_position(int(tkt), p, plan, tracked, bridge,
+                                    bid if side == 'SELL' else ask,
+                                    datetime.now(timezone.utc), broker_offset)
 
+            # Guard memory must not grow forever on a daemon that runs weeks.
+            prune_guard_state(set(live.keys()))
             save_state(state)
             (paths.plan_dir() / 'watchdog_heartbeat').write_text(
                 datetime.now(timezone.utc).isoformat())

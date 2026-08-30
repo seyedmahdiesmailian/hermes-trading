@@ -45,6 +45,17 @@ IMPACT_KEYWORDS_FA = {
     "فروش خرده فروشی", "شاخص", "جلسه", "تصمیم",
 }
 
+# Currencies that actually move XAUUSD. Must stay in sync with the currency
+# filter in engines/legacy_guards.evaluate_news_lock (USD/XAU/GOLD/empty) —
+# an event outside this set can never fire the news lock, so it must never
+# occupy a slot ahead of one that can.
+GOLD_IMPACT_CURRENCIES = {"USD", "XAU", "GOLD", ""}
+
+
+def _is_gold_relevant(event: dict) -> bool:
+    return str(event.get("currency", event.get("country", ""))).upper() \
+        in GOLD_IMPACT_CURRENCIES
+
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
@@ -203,28 +214,88 @@ def _is_high_impact(event: dict) -> bool:
     return False
 
 
+def _event_time(event: dict) -> datetime | None:
+    """Parse an event's scheduled time to an aware datetime, or None.
+
+    economic_calendar emits 'date' as full ISO *with the exchange offset*
+    (ForexFactory: '2026-09-04T08:30:00-04:00'); older feeds used
+    'timestamp'/'datetime_utc'. Naive values are assumed UTC.
+    """
+    raw = (event.get("timestamp") or event.get("datetime_utc")
+           or event.get("date") or event.get("time"))
+    if not raw:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(raw))
+    except (TypeError, ValueError):
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
 def get_upcoming_events(hours_ahead: int = 24) -> dict:
-    """Get upcoming high-impact events within the next N hours."""
+    """Get upcoming high-impact events within the next N hours.
+
+    b33 FIX — two defects made the guard that consumes this bucket blind to
+    exactly the news it exists for:
+
+    1. `cutoff` was computed and NEVER used, so `hours_ahead` did nothing:
+       hours_ahead=1 returned the whole week.
+    2. The bucket was `_is_high_impact(e) for e in feed[:10]` in FEED ORDER.
+       `_is_high_impact` is a broad keyword net (any USD/EUR/JPY/GBP event
+       whose title contains 'pmi', 'retail sales', 'consumer confidence',
+       'gdp', ...) — it flagged 55 of the 110 events in this week's real
+       feed, only 15 of which carry impact=='high'. The 10-slot cap therefore
+       filled up with low/medium-impact EUR-JPY filler and the real
+       high-impact USD events (ISM, NFP, Average Hourly Earnings, Unemployment
+       Rate) never appeared. Measured 2026-08-30: 0 of 4 strict-high USD
+       events were present in the bucket.
+
+    news_lock (legacy_guards.evaluate_news_lock) reads this 'high_impact'
+    list and only acts on impact=='high' — so b31's fix to the READER was
+    necessary but not sufficient: the PRODUCER never delivered a single
+    actionable event. Ordering strict-high first makes the cap unable to
+    drop one.
+    """
     calendar = fetch_economic_calendar()
     now = _now_utc()
     cutoff = now + timedelta(hours=hours_ahead)
 
-    high_impact = []
-    medium_impact = []
-
+    upcoming = []
     for event in calendar.get("events", []):
-        if _is_high_impact(event):
-            high_impact.append(event)
-        else:
-            medium_impact.append(event)
+        when = _event_time(event)
+        if when is None:
+            continue
+        if when < now or when > cutoff:
+            continue
+        upcoming.append(event)
+    upcoming.sort(key=_event_time)
+
+    strict_high, watchlist = [], []
+    for event in upcoming:
+        if str(event.get("impact", "")).lower() == "high":
+            strict_high.append(event)
+        elif _is_high_impact(event):
+            watchlist.append(event)
+
+    # Within strict-high, gold-relevant currencies first. news_lock only acts
+    # on USD/XAU/GOLD (legacy_guards.evaluate_news_lock); an RBNZ/BOC rate
+    # decision earlier in the window must not push a later FOMC/NFP out of the
+    # 10-slot cap. Stable sort keeps time order inside each tier.
+    strict_high.sort(key=lambda e: 0 if _is_gold_relevant(e) else 1)
 
     return {
         "source": calendar.get("source", "unknown"),
-        "high_impact": high_impact[:10],
-        "medium_impact": medium_impact[:10],
+        # strict impact=='high' FIRST — the [:10] cap can no longer evict a
+        # real high-impact event in favour of keyword-matched filler.
+        "high_impact": (strict_high + watchlist)[:10],
+        "medium_impact": watchlist[:10],
         "total_events": len(calendar.get("events", [])),
+        "upcoming_events": len(upcoming),
+        "strict_high_count": len(strict_high),
+        "window_hours": hours_ahead,
         "fetched_at": now.isoformat(),
     }
+
 
 
 def get_news_blackout_check(now: datetime | None = None, blackout_minutes: int = 30) -> dict:
