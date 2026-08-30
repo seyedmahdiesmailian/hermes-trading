@@ -4,11 +4,16 @@ import json
 import os
 import re
 import subprocess
+import sys
 import urllib.request
 from pathlib import Path
 
-import dotenv
-dotenv.load_dotenv('/home/ai/hermes-trading/.env')
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
 ROOT = Path('/home/ai/hermes-trading')
 BACKLOG = ROOT / 'data/ops/autopilot_backlog.md'

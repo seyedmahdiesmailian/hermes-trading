@@ -6,7 +6,11 @@ import json
 from datetime import datetime, timezone
 
 sys.path.insert(0, '/home/ai/hermes-trading')
-from dotenv import load_dotenv; load_dotenv('/home/ai/hermes-trading/.env')
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
+load_dotenv('/home/ai/hermes-trading/.env')
 from bridge_client import BridgeClient
 from engines.backtest_real import strategy_signal, fetch_all_ohlc
 from engines.backtest import backtest_ohlc

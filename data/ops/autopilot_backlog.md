@@ -9,10 +9,6 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] env_loader fallback for remaining scripts: _check_bridge.py, autopilot_digest.py,
-      backtest_sweep.py still import dotenv bare (crash without python-dotenv); and
-      ab_aggressive_entry.py + scripts/backtest_robustness.py hand-parse .env —
-      switch all to the shared env_loader.load_dotenv() pattern.
 - [ ] Spread/slippage sensitivity: rerun backtest with spread 0.35 and 0.50 — does
       edge survive realistic costs?
 - [ ] Zone-width sanity: long/short entry zones are 0.5 ATR wide from a 12-bar window —
@@ -30,6 +26,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Done
+- [x] 2026-08-30 env_loader fallback everywhere: 5 scripts (_check_bridge,
+      autopilot_digest, backtest_sweep, ab_aggressive_entry, verify_chain) imported
+      dotenv bare → crashed on this box (python-dotenv absent); backtest_robustness
+      hand-parsed only HERMES_BRIDGE_TOKEN. ALL now use the shared
+      try-dotenv-except-env_loader pattern. Sweep also caught 2 LIVE DAEMONS
+      (position_daemon.py, signal_daemon.py) hand-parsing .env with a weaker parser
+      (no quote stripping → quoted tokens passed to bridge verbatim); switched too.
+      Locked in by tests/test_env_loader.py::test_every_dotenv_user_has_fallback —
+      repo-wide scan that fails if any non-test .py touches .env without the
+      fallback. 72 tests green, live cycle OK (reassess, execute=False).
 - [x] 2026-08-30 Backtest robustness: parity funnel on 13 NON-OVERLAPPING 500-bar
       windows (separate weeks, May 21→Aug 28, broker history allowed, one cached
       dataset; H1/H4 context time-padded before each window). Variance: PnL mean

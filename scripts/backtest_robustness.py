@@ -21,12 +21,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, '/home/ai/hermes-trading')
-# .env is parsed READ-ONLY (token never printed, file never modified)
-for _line in Path('/home/ai/hermes-trading/.env').read_text().splitlines():
-    _line = _line.strip()
-    if _line.startswith('HERMES_BRIDGE_TOKEN='):
-        import os
-        os.environ.setdefault('HERMES_BRIDGE_TOKEN', _line.split('=', 1)[1].strip().strip('"').strip("'"))
+# Shared loader: .env parsed READ-ONLY (token never printed, file never modified)
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
+load_dotenv('/home/ai/hermes-trading/.env')
 
 from bridge_client import BridgeClient
 from engines.backtest_real import run_backtest

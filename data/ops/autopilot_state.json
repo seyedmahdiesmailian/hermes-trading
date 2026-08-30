@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T02:34:16.290999+00:00",
+ "last_run_utc": "2026-08-30T03:06:33.356751+00:00",
  "recent_commits": [
+  "e832d4a autopilot: backtest robustness \u2014 13 weekly windows (12/13 profitable, +1724 total); fix missing python-dotenv silently disabling .env loading in 4 entrypoints",
+  "3ff1ff6 autopilot: hourly cadence (flock prevents overlap), digest 02:00 UTC",
   "766c2f2 autopilot: journal by session+regime (learning.analyze breakdown + tests)",
   "3542ed3 autopilot: absolute hermes path for cron PATH",
-  "7f465b9 autopilot: A/B aggressive premium/discount entry paths \u2014 they add ~80% of PnL, keep live behaviour; style tag + exclude_styles in parity funnel, ab_aggressive_entry.py script",
-  "52a705f autopilot: self-driving backlog runner (3h) + daily Telegram digest",
-  "6b76ce5 baseline after analysis-chain audit round 2 (2026-08-29)"
+  "7f465b9 autopilot: A/B aggressive premium/discount entry paths \u2014 they add ~80% of PnL, keep live behaviour; style tag + exclude_styles in parity funnel, ab_aggressive_entry.py script"
  ]
 }

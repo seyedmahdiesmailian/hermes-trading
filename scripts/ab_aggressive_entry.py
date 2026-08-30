@@ -16,7 +16,10 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, '/home/ai/hermes-trading')
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
 load_dotenv('/home/ai/hermes-trading/.env')
 
 from bridge_client import BridgeClient

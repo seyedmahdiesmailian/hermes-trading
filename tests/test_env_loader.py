@@ -69,6 +69,35 @@ class TestEnvLoader(unittest.TestCase):
                              f"{rel} still silently no-ops .env loading")
             self.assertIn("env_loader", src, f"{rel} missing env_loader fallback")
 
+    def test_every_dotenv_user_has_fallback(self):
+        """Any repo .py that imports dotenv must guard it with the env_loader
+        fallback (python-dotenv is NOT installed on this box — a bare import
+        crashes the script; a silent no-op starves it of the bridge token).
+        Also bans hand-parsed .env reads outside env_loader itself."""
+        root = Path("/home/ai/hermes-trading")
+        checked = 0
+        for py in sorted(root.rglob("*.py")):
+            if "__pycache__" in py.parts or ".git" in py.parts:
+                continue
+            if py.parent == root / "tests":  # this file quotes the banned patterns
+                continue
+            if py == root / "env_loader.py":
+                continue
+            src = py.read_text(encoding="utf-8", errors="replace")
+            uses_dotenv = "from dotenv import" in src or "import dotenv" in src
+            hand_parses = (".env'" in src or '.env"' in src) and "load_dotenv" not in src
+            if uses_dotenv or hand_parses:
+                checked += 1
+                self.assertIn("env_loader", src,
+                              f"{py.relative_to(root)} loads .env without the "
+                              "env_loader fallback (bare dotenv import or "
+                              "hand-parsed .env)")
+                self.assertNotIn("load_dotenv = lambda", src,
+                                 f"{py.relative_to(root)} silently no-ops .env loading")
+        # sanity: the scan actually finds the known consumers
+        self.assertGreaterEqual(checked, 8,
+                                "dotenv-consumer scan found too few files — glob broken?")
+
 
 if __name__ == "__main__":
     unittest.main()

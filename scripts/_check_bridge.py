@@ -1,5 +1,11 @@
-import os, urllib.request, json
-from dotenv import load_dotenv; load_dotenv('/home/ai/hermes-trading/.env')
+import os, sys, urllib.request, json
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
+load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 H = {"Authorization": f"Bearer {os.getenv('HERMES_BRIDGE_TOKEN', '')}"}
 def get(ep):
     req = urllib.request.Request(f"http://192.168.10.51:5050{ep}", headers=H)

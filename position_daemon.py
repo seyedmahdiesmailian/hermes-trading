@@ -26,11 +26,11 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE))
 
-for line in (BASE / '.env').read_text().splitlines():
-    line = line.strip()
-    if line and not line.startswith('#') and '=' in line:
-        k, v = line.split('=', 1)
-        os.environ.setdefault(k, v)
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
+load_dotenv(BASE / '.env')
 
 from bridge_client import BridgeClient
 from engines.trade_management import evaluate_trade_management
