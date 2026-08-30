@@ -58,8 +58,17 @@ def log(msg: str):
 
 
 def send_telegram(text: str):
-    token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-    chat = os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    _tg(text, os.getenv('TELEGRAM_BOT_TOKEN', ''))
+
+
+def send_ops(text: str):
+    """b37: system-status alerts -> 3rd ops bot."""
+    _tg(text, os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', ''),
+        chat=os.getenv('AUTOPILOT_REPORT_CHAT_ID', '194015957'))
+
+
+def _tg(text: str, token: str, chat: str | None = None):
+    chat = chat or os.getenv('TELEGRAM_CHAT_ID', '194015957')
     if not token:
         return
     try:
@@ -431,7 +440,7 @@ def main():
                 errors += 1
                 log(f'bridge unavailable (tick_ok={price > 0}, pos_ok={resp.get("error", "ok")}) — cycle skipped')
                 if errors == 3:
-                    send_telegram('⚠️ واتچ‌داگ: بریج ۳ بار متوالی پاسخ نداد — مدیریت پوزیشن موقتاً متوقف')
+                    send_ops('⚠️ واتچ‌داگ: بریج ۳ بار متوالی پاسخ نداد — مدیریت پوزیشن موقتاً متوقف')
                 time.sleep(10 if errors < 10 else 30)
                 continue
             bid = float(tick.get('bid') or price)
@@ -542,7 +551,7 @@ def main():
             err = traceback.format_exc().strip().splitlines()[-1]
             log(f'ERROR ({errors}): {err}')
             if errors == 10:
-                send_telegram(f'⚠️ Watchdog: ۱۰ خطای متوالی\n{err[:150]}')
+                send_ops(f'⚠️ Watchdog: ۱۰ خطای متوالی\n{err[:150]}')
             time.sleep(10 if errors < 5 else 30)
 
 

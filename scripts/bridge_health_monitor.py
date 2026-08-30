@@ -49,8 +49,8 @@ def fetch(url: str, timeout=5) -> tuple[bool, str]:
 
 
 def send_telegram(text: str):
-    token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-    chat = os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', '')
+    chat = os.getenv('AUTOPILOT_REPORT_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID', '194015957'))
     if not token:
         return
     try:

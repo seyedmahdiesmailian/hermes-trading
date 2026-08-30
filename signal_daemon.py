@@ -41,8 +41,17 @@ def log(msg: str):
 
 
 def send_telegram(text: str):
-    token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-    chat = os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    _tg(text, os.getenv('TELEGRAM_BOT_TOKEN', ''))
+
+
+def send_ops(text: str):
+    """b37: system-status alerts -> 3rd ops bot."""
+    _tg(text, os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', ''),
+        chat=os.getenv('AUTOPILOT_REPORT_CHAT_ID', '194015957'))
+
+
+def _tg(text: str, token: str, chat=None):
+    chat = chat or os.getenv('TELEGRAM_CHAT_ID', '194015957')
     if not token:
         return
     import urllib.request, urllib.parse
@@ -99,7 +108,7 @@ def main():
             err = traceback.format_exc().strip().splitlines()[-1]
             log(f'ERROR ({consecutive_errors}): {err}')
             if consecutive_errors >= 5:
-                send_telegram(f'⚠️ Signal daemon: {consecutive_errors} خطای متوالی\n{err[:150]}')
+                send_ops(f'⚠️ Signal daemon: {consecutive_errors} خطای متوالی\n{err[:150]}')
                 time.sleep(60)
             else:
                 time.sleep(5)

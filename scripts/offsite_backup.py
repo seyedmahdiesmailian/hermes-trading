@@ -143,8 +143,8 @@ def main() -> int:
         # alert via notifier (best effort)
         try:
             sys.path.insert(0, str(BASE))
-            from notifier.telegram import send_telegram
-            send_telegram(f'🔴 بک‌آپ آفشور ناموفق: {str(e)[:150]}')
+            from notifier.telegram import send_ops
+            send_ops(f'🔴 بک‌آپ آفشور ناموفق: {str(e)[:150]}')
         except Exception:
             pass
         return 1

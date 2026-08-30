@@ -20,7 +20,7 @@ load_dotenv(Path(__file__).parent / '.env')
 from bridge_client import BridgeClient
 from hermes_runtime import cycle
 from engines.signal_listener import run_signal_check
-from notifier.telegram import send_telegram
+from notifier.telegram import send_telegram, send_ops
 
 BASE_DIR = Path('/home/ai/hermes-trading')
 # logs go through paths so a test/staging run (HERMES_DATA_ROOT) can never
@@ -101,7 +101,7 @@ def main():
 
     if not bridge_health.get('ok'):
         log(f"Bridge unreachable: {bridge_health}")
-        send_telegram(f"🛑 Hermes | Bridge unreachable\n{bridge.url}")
+        send_ops(f"🛑 Hermes | Bridge unreachable\n{bridge.url}")
         return
 
     # ── Run the autonomous trading cycle ──
@@ -110,7 +110,7 @@ def main():
 
     if not payload.get('ok'):
         log(f"Cycle failed: {payload.get('error', 'unknown')}")
-        send_telegram(f"🛑 Hermes | Cycle Failed\n{payload.get('error', 'unknown')}")
+        send_ops(f"🛑 Hermes | Cycle Failed\n{payload.get('error', 'unknown')}")
         return
 
     step = payload.get('step', '?')
@@ -145,7 +145,7 @@ def main():
     if step in {'plan'}:
         send_telegram(report)
     elif step == 'halted':
-        send_telegram(payload.get('brief', '\U0001f6d1 Kill Switch'))
+        send_ops(payload.get('brief', '\U0001f6d1 Kill Switch'))
     elif will_execute:
         send_telegram(report)
     elif step == 'manage':

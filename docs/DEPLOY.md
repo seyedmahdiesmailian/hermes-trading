@@ -74,9 +74,15 @@ cp /tmp/restored/.env .env
 cp -a /tmp/restored/data/* data/
 printf '%s' '<توکن گیت‌هاب>' > .git_token && chmod 600 .git_token
 ```
-کلیدهای `.env`: `TELEGRAM_BOT_TOKEN` (ربات ترید)، `TELEGRAM_CHAT_ID`،
-`TELEGRAM_SIGNAL_GROUP`، `HERMES_BRIDGE_TOKEN`، `WIN_USER`/`WIN_PASS`،
+کلیدهای `.env`: `TELEGRAM_BOT_TOKEN` (ربات ترید/سیگنال)، `TELEGRAM_CHAT_ID`،
+`TELEGRAM_SIGNAL_GROUP`، `AUTOPILOT_REPORT_BOT_TOKEN` + `AUTOPILOT_REPORT_CHAT_ID`
+(ربات سوم = گزارش‌های سیستم: autopilot، سلامت، بکاپ، واتچ‌داگ — b37)،
+`HERMES_BRIDGE_TOKEN`، `WIN_USER`/`WIN_PASS`،
 `HERMES_DRY_RUN` (برای شروع `true` بگذار، بعد از تأیید `false`).
+
+**قاعدهٔ مسیریابی تلگرام (b37):** رویداد ترید (باز/بسته/سیگنال/بایز) → ربات ترید؛
+وضعیت سیستم (خطای دایمون، بریج، kill-switch، بکاپ، گزارش autopilot) → ربات سوم.
+`send_ops()` در `notifier/telegram.py` تنها نقطهٔ این تفکیک است.
 
 ### ۴. سرویس‌ها و کرون
 ```bash

@@ -74,8 +74,8 @@ except Exception:
     pass
 
 text = '\n'.join(lines)
-token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-chat = os.getenv('TELEGRAM_CHAT_ID', '194015957')
+token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', '')
+chat = os.getenv('AUTOPILOT_REPORT_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID', '194015957'))
 if token:
     req = urllib.request.Request(
         f'https://api.telegram.org/bot{token}/sendMessage',
