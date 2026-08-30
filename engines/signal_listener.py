@@ -85,6 +85,50 @@ def _log_signal(signal_text: str, parsed: dict, decision: dict):
     paths.write_json_atomic(log_file, log, indent=2)
 
 
+def _serve_trade_command(chat_id: str, text: str):
+    """b38: /panel /status /plan /positions /pnl /risk on the trade bot."""
+    from notifier import dashboards
+    cmd = text.split()[0].lstrip('/').split('@')[0].lower()
+    panel = {'panel': 'home', 'status': 'home', 'start': 'home', 'help': 'home',
+             'plan': 'plan', 'positions': 'pos', 'pos': 'pos',
+             'pnl': 'pnl', 'risk': 'risk'}.get(cmd, 'home')
+    try:
+        body, kb = dashboards.trade_render(panel)
+        if panel == 'home' and cmd in ('help', 'start'):
+            body += ('\n\nدستورات: /plan /positions /pnl /risk\n'
+                     'یا از دکمه‌های زیر استفاده کن.')
+        _telegram_api("sendMessage", {
+            "chat_id": chat_id, "text": body, "parse_mode": "HTML",
+            "reply_markup": json.dumps({"inline_keyboard": kb}, ensure_ascii=False)})
+    except Exception:
+        pass
+
+
+def _serve_trade_callback(cb: dict):
+    """b38: trader dashboard buttons. SECURITY: only the owner chat is served;
+    anyone else gets a bare 'no access' answer and no data."""
+    from notifier import dashboards
+    qid = cb.get("id", "")
+    data = ((cb.get("data") or "") + "")
+    chat = str(((cb.get("message") or {}).get("chat") or {}).get("id", ""))
+    owner = str(os.getenv('TELEGRAM_CHAT_ID', '194015957'))
+    if chat != owner:
+        _telegram_api("answerCallbackQuery", {"callback_query_id": qid,
+                                              "text": "دسترسی نیست", "show_alert": True})
+        return
+    panel = data.split(":", 1)[1] if data.startswith("tr:") else "home"
+    try:
+        text, kb = dashboards.trade_render(panel)
+        _telegram_api("editMessageText", {
+            "chat_id": chat,
+            "message_id": (cb.get("message") or {}).get("message_id"),
+            "text": text, "parse_mode": "HTML",
+            "reply_markup": json.dumps({"inline_keyboard": kb}, ensure_ascii=False)})
+    except Exception:
+        pass
+    _telegram_api("answerCallbackQuery", {"callback_query_id": qid})
+
+
 def fetch_new_messages() -> list[dict]:
     """Fetch new messages since last update."""
     state = _load_state()
@@ -101,9 +145,25 @@ def fetch_new_messages() -> list[dict]:
         uid = update.get("update_id", 0)
         if uid > max_update_id:
             max_update_id = uid
+        # b38: inline-keyboard callbacks for the trader dashboard are served in
+        # THIS loop on purpose — a second getUpdates poller on the same bot
+        # token would 409 and silently drop signals.
+        cb = update.get("callback_query")
+        if cb:
+            _serve_trade_callback(cb)
+            continue
         # Support regular messages, channel posts, and edited variants
         msg = (update.get("message") or update.get("channel_post")
                or update.get("edited_message") or update.get("edited_channel_post") or {})
+        # b38: '/' commands from the owner chat open/refresh the dashboard
+        # instead of falling through to the signal parser. Age-gated like
+        # signals: getUpdates replays a 24h buffer after a restart.
+        _txt = ((msg.get("text") or "") or "").strip()
+        _cid = str(((msg.get("chat") or {}).get("id", "")))
+        if _txt.startswith('/') and _cid == str(os.getenv('TELEGRAM_CHAT_ID', '194015957')):
+            if datetime.now(timezone.utc).timestamp() - float(msg.get("date") or 0) <= 600:
+                _serve_trade_command(_cid, _txt)
+            continue
         text = msg.get("text", "") or msg.get("caption", "")
         if not text:
             continue

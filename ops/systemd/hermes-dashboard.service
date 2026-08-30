@@ -1,0 +1,17 @@
+[Unit]
+Description=Hermes Ops Dashboard Bot (read-only Telegram panels)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai/hermes-trading
+ExecStart=/usr/bin/python3 /home/ai/hermes-trading/scripts/dashboard_bot.py
+Restart=always
+RestartSec=10
+Nice=10
+StandardOutput=append:/home/ai/hermes-trading/logs/dashboard.log
+StandardError=append:/home/ai/hermes-trading/logs/dashboard.log
+
+[Install]
+WantedBy=default.target
