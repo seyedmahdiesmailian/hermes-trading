@@ -3,3 +3,5 @@ data/xau_plan/*.bak_*
 __pycache__/
 *.pyc
 .env
+data/xau_plan/watchdog_heartbeat
+data/xau_plan/watchdog_state.json
