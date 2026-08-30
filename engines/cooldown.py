@@ -55,10 +55,31 @@ def set_cooldown(reason: str, minutes: int, now: datetime | None = None) -> dict
 
 
 def ensure_startup_cooldown(now: datetime | None = None) -> dict:
-    """Called once by daemons/master on startup: registers restart guard."""
+    """Called by master on startup: arm the restart guard ONLY on a REAL restart.
+
+    BUG FIX 2026-08-30: master runs as a fresh process from cron every 15
+    minutes, so 'once per process' still re-armed a 5-min guard on EVERY
+    tick — and each cycle finishes inside its own guard window, so
+    restart_cooldown killed 100% of entries (replay: 27/184 candidates).
+    Now: if the previous master run was < 30 min ago this is a normal cron
+    tick → no guard. A gap ≥ 30 min (crash, reboot, manual stop) → arm 5 min.
+    """
+    now = now or datetime.now(timezone.utc)
     state = _load()
-    if "restart" not in state or _is_expired(state.get("restart", {}).get("until"), now):
-        return set_cooldown("restart", RESTART_COOLDOWN_MIN, now)
+    last = (state.get('_last_master_run') or {}).get('at')
+    real_restart = True
+    if last:
+        try:
+            dt = datetime.fromisoformat(last)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            real_restart = (now - dt) >= timedelta(minutes=30)
+        except Exception:
+            real_restart = True
+    state['_last_master_run'] = {'at': now.isoformat()}
+    if real_restart:
+        state['restart'] = {'until': (now + timedelta(minutes=RESTART_COOLDOWN_MIN)).isoformat()}
+    _save(state)
     return state
 
 

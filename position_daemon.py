@@ -255,7 +255,15 @@ def main():
                     mgmt = evaluate_trade_management(trade, bid if side == 'SELL' else ask,
                                                      datetime.now(timezone.utc))
                     if mgmt.get('action') not in (None, 'hold'):
-                        res = evaluate_management_action(mgmt, bridge, int(tkt), dry_run=DRY_RUN)
+                        # DEFCON insights deliberately NOT passed — see the note
+                        # in hermes_runtime.cycle (runner-disabled maps to a
+                        # full market close; untested exit policy).
+                        res = evaluate_management_action(mgmt, bridge, int(tkt),
+                                                         dry_run=DRY_RUN)
+                        # Commit our view ONLY if the broker accepted. A rejected
+                        # modify/partial used to set executed=True → the watchdog
+                        # marked breakeven/TP as done while MT5 was untouched, and
+                        # never retried the move that protects the trade.
                         if res.get('executed'):
                             tracked[tkt_s]['events'].append(f"مدیریت: {mgmt['action']} ({mgmt.get('reason','')})")
                             log(f'MGMT #{tkt} {mgmt["action"]} -> ok')
@@ -265,6 +273,15 @@ def main():
                                 filled = list(tracked[tkt_s].get('filled_tp_levels', []))
                                 filled.append(mgmt.get('target_hit'))
                                 tracked[tkt_s]['filled_tp_levels'] = filled
+                        elif res.get('error'):
+                            log(f'MGMT #{tkt} {mgmt.get("action")} REJECTED -> {res["error"][:120]}')
+                            evs = tracked[tkt_s].setdefault('events', [])
+                            # one line per action per ticket — the 5s loop would
+                            # otherwise spam the lifecycle report with retries
+                            tag = f'reject:{mgmt.get("action")}'
+                            if tag not in tracked[tkt_s].setdefault('_rejected', []):
+                                tracked[tkt_s]['_rejected'] = tracked[tkt_s].get('_rejected', []) + [tag]
+                                evs.append(f"⚠️ مدیریت رد شد: {mgmt.get('action')} ({str(res['error'])[:60]})")
 
             save_state(state)
             (BASE / 'data' / 'xau_plan' / 'watchdog_heartbeat').write_text(

@@ -13,6 +13,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from engines.orchestrator import compute_xau_position_size
 from engines.market_hours import is_market_open
+from engines.defcon import filter_management_by_insights
 
 
 # ─── Risk Parameters (professional trader defaults) ───
@@ -321,45 +322,76 @@ def evaluate_management_action(
     bridge,
     ticket: int,
     dry_run: bool = False,
+    insights: dict | None = None,
 ) -> dict:
-    """Execute a trade management action (TP, SL, breakeven, etc.)"""
+    """Execute a trade management action (TP, SL, breakeven, etc.)
+
+    insights: optional DEFCON insights (engines.defcon.compute_insights).
+    When given, filter_management_by_insights() is applied HERE — the single
+    choke point both management callers (hermes_runtime, position_daemon)
+    funnel through. NO live caller passes it yet: the filter escalates a
+    blocked runner to a full close (untested exit policy) — see engines/defcon.py
+    module docstring. Passing None = today's behaviour.
+
+    `executed` mirrors the BROKER's acceptance, not our intent: the bridge
+    returns {ok:false} (HTTP 400 retcode_*/404/500) when modify/partial/close
+    fails. Hardcoding True (the old behaviour, same bug class as b7 on the
+    entry side) made callers set breakeven_active/filled_tp_levels after a
+    REJECTED SL move — a winning trade left on its original stop while the
+    system believed it was protected.
+    """
     action = management.get("action", "hold")
+    if insights is not None and action != "hold":
+        management = filter_management_by_insights(management, insights)
+        action = management.get("action", "hold")
     if action == "hold":
-        return {"ok": True, "action": "hold", "executed": False}
+        return {"ok": True, "action": "hold", "executed": False, "management": management}
 
     if dry_run:
-        return {"ok": True, "action": action, "dry_run": True, "executed": False}
+        return {"ok": True, "action": action, "dry_run": True, "executed": False,
+                "management": management}
+
+    def _wrap(result, extra=None):
+        """Mirror broker acceptance; never claim executed on ok:false."""
+        ok = isinstance(result, dict) and result.get("ok", False)
+        out = {"ok": ok, "action": action, "result": result, "executed": bool(ok),
+               "management": management}
+        if not ok:
+            out["error"] = str((result or {}).get("error") if isinstance(result, dict)
+                               else result) or "bridge_no_response"
+        if extra:
+            out.update(extra)
+        return out
 
     try:
         if action == "partial_take_profit":
             fraction = float(management.get("close_fraction", 0.5))
             percent = int(round(fraction * 100))
-            result = bridge.partial_close(ticket, percent)
-            return {"ok": True, "action": action, "result": result, "executed": True}
+            return _wrap(bridge.partial_close(ticket, percent))
 
         elif action == "move_stop_to_breakeven":
             new_sl = management.get("new_sl")
-            result = bridge.modify_position(ticket, sl=new_sl)
-            return {"ok": True, "action": action, "result": result, "executed": True}
+            return _wrap(bridge.modify_position(ticket, sl=new_sl))
 
         elif action == "trail_stop":
             new_sl = management.get("new_sl")
-            result = bridge.modify_position(ticket, sl=new_sl)
-            return {"ok": True, "action": action, "result": result, "executed": True}
+            return _wrap(bridge.modify_position(ticket, sl=new_sl))
 
         elif action in {"close_runner", "close_trade_early"}:
-            result = bridge.close_position(ticket)
-            return {"ok": True, "action": action, "result": result, "executed": True}
+            return _wrap(bridge.close_position(ticket))
 
         elif action == "scale_in_existing_idea":
             # Scale-in requires new order — skip for safety
-            return {"ok": True, "action": "scale_in_skipped", "reason": "scale_in_disabled", "executed": False}
+            return {"ok": True, "action": "scale_in_skipped", "reason": "scale_in_disabled",
+                    "executed": False, "management": management}
 
         else:
-            return {"ok": True, "action": action, "executed": False, "reason": "unknown_action"}
+            return {"ok": True, "action": action, "executed": False,
+                    "reason": "unknown_action", "management": management}
 
     except Exception as e:
-        return {"ok": False, "action": action, "error": str(e), "executed": False}
+        return {"ok": False, "action": action, "error": str(e), "executed": False,
+                "management": management}
 
 
 def execute_trade(command: dict, bridge, dry_run: bool = False) -> dict:

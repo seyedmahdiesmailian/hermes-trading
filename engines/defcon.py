@@ -6,8 +6,15 @@ Legacy source: Hermes_Full_Backup_20260813 skills/trading/autonomous-trading-age
 Pipeline:
     snapshot_closed_deals(days) → classify_exits(deals) → analyze_exits(...)
         → compute_insights(performance, classified) → DEFCON level
-        → filter_entry_by_insights()  (wired in auto_executor)
-        → filter_management_by_insights()  (wired in trade_management)
+        → filter_entry_by_insights()  (entry gates mirrored in auto_executor.evaluate_proposal)
+        → filter_management_by_insights()  (optional hook: auto_executor.evaluate_management_action
+            accepts insights=..., but NO caller passes it live — see next note)
+
+NOT WIRED (deliberate, 2026-08-30): filter_management_by_insights turns a
+`trail_stop` into `close_runner` (a FULL market close) whenever the runner is
+disabled — which YELLOW (loss_streak>=2) always is. Enabling it live would add
+an exit policy the parity funnel never models (it simulates entries only), so
+it stays off until an A/B measures it. Tracked in data/ops/autopilot_backlog.md.
 
 DEFCON levels (legacy rules, kept identical):
     GREEN  — default; all actions allowed, full risk
@@ -145,7 +152,13 @@ def filter_entry_by_insights(allowed: bool, reason: Optional[str], insights: Opt
 
 
 def filter_management_by_insights(management: dict, insights: Optional[dict]) -> dict:
-    """Legacy management filter: safety valves pass; runners/scale-ins obey DEFCON."""
+    """Legacy management filter: safety/profit actions pass; runners/scale-ins obey DEFCON.
+
+    WARNING: 'runner_blocked' ESCALATES trail_stop → close_runner (close_fraction
+    1.0 = full market close). That is a legacy design choice, not a tightening —
+    wiring it live without measuring the exit-policy change can cut winners that
+    are merely sitting behind a 2-loss day. Currently NOT wired (see module doc).
+    """
     if insights is None:
         return management
     action = management.get("action", "hold")

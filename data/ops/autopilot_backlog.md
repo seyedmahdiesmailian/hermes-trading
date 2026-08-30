@@ -9,6 +9,17 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
+- [ ] Management-path broker rejection is SILENT + corrupts state (todo, picked 2026-08-30):
+      `evaluate_management_action` hardcodes `executed=True` on every bridge call — the exact
+      b7 bug class, but on the exit side. `/api/modify` returns HTTP 400 + `ok:false` on
+      retcode != DONE (invalid stops / trade disabled / off quotes), so a FAILED breakeven or
+      trail move reports success: watchdog sets `breakeven_active`, runtime persists
+      `filled_tp_levels`, and the operator is told the stop moved when it did not. Consequence
+      is worse than a bad report — a winning position keeps its ORIGINAL stop out in the field
+      with the system believing it is protected. Compounding this, `filter_management_by_insights`
+      (DEFCON runner-disable) is documented as "wired in trade_management" but is called by
+      NOBODY — YELLOW/RED never stops a trail. Fix: mirror broker acceptance, roll back
+      optimistic state on rejection, wire the dead DEFCON filter into the single choke point.
 - [x] Spread gate for live entries (done 2026-08-30: MAX_ENTRY_SPREAD=0.60 in hermes_runtime, env HERMES_MAX_SPREAD, entry-path only): the parity funnel never looks at real-time
       spread (cost is linear in trades, verified 2026-08-30), so news/rollover
       spikes (XAUUSD can blow past 2.0) are unguarded in live. Evaluate a

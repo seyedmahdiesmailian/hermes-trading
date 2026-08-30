@@ -303,9 +303,22 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
 
             if management.get('action') != 'hold':
                 # AUTO-EXECUTE management action
-                mgmt_result = evaluate_management_action(management, bridge, p.ticket, dry_run=dry_run)
+                # NOTE: DEFCON insights are deliberately NOT passed here.
+                # filter_management_by_insights() maps runner-disabled (YELLOW,
+                # i.e. loss_streak>=2) to `close_runner` = a FULL market close,
+                # so wiring it live would introduce an untested exit policy on a
+                # real account. The parity funnel models entries only, never
+                # management, so there is no evidence for it. Tracked as a todo.
+                mgmt_result = evaluate_management_action(
+                    management, bridge, p.ticket, dry_run=dry_run)
                 management['position_ticket'] = p.ticket
                 management['execution_result'] = mgmt_result
+
+                # Only a broker-accepted action (or a dry-run simulation step)
+                # may move our view of the trade. A rejected modify used to be
+                # recorded as success → breakeven_active=True while MT5 still
+                # held the original stop.
+                _committed = bool(mgmt_result.get('executed')) or bool(mgmt_result.get('dry_run'))
 
                 # Update runtime management state
                 if management.get('action') == 'partial_take_profit':
@@ -318,15 +331,19 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                     management['runner_active'] = False
 
                 brief = render_management_brief(plan, management)
+                if not _committed and mgmt_result.get('error'):
+                    brief += (f"\n\n⚠️ اقدام مدیریت انجام نشد (بروکر رد کرد): "
+                              f"{mgmt_result['error'][:120]} — وضعیت قبلی دست‌نخورده")
                 # Persist management state (breakeven/filled TPs) — was a bug: not saved
                 mgmt_state = runtime.setdefault('management', {})
                 tstate = mgmt_state.setdefault(str(p.ticket), {})
-                if management.get('action') == 'partial_take_profit':
-                    tstate['filled_tp_levels'] = management.get('filled_tp_levels', tstate.get('filled_tp_levels', []))
-                elif management.get('action') == 'move_stop_to_breakeven':
-                    tstate['breakeven_active'] = True
-                elif management.get('action') in {'close_runner', 'close_trade_early'}:
-                    tstate['runner_active'] = False
+                if _committed:
+                    if management.get('action') == 'partial_take_profit':
+                        tstate['filled_tp_levels'] = management.get('filled_tp_levels', tstate.get('filled_tp_levels', []))
+                    elif management.get('action') == 'move_stop_to_breakeven':
+                        tstate['breakeven_active'] = True
+                    elif management.get('action') in {'close_runner', 'close_trade_early'}:
+                        tstate['runner_active'] = False
                 save_runtime_state(PLAN_DIR, runtime)
                 return {'ok': True, 'step': 'manage', 'plan_id': plan.get('plan_id'), 'management': management, 'brief': brief, 'will_execute_now': mgmt_result.get('executed', False), 'account_policy': policy, 'performance_state': performance}
 

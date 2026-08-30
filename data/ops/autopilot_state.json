@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T06:47:08.656762+00:00",
+ "last_run_utc": "2026-08-30T07:45:43.113394+00:00",
  "recent_commits": [
-  "87cc0f0 b11: reusable A/B harness scripts/ab.py (const-patch + run_backtest kwarg modes, auto-restore) + BE-at-R curve finding: peak +1030 at 0.7R vs 949 at live 0.5R \u2014 keep 0.5R (tighten-only rule, later BE = looser per-trade protection)",
-  "2c08a9b b10b: alert-hygiene audit closed \u2014 fills alert, rejections were silent, now fixed",
-  "85377be b10: alert hygiene \u2014 broker rejection after passing all gates now surfaces skip_reason=broker_rejected (was silent: will_execute=False + no skip_reason meant Telegram never told us we're NOT in the trade we thought we placed)",
-  "3ca7092 b9b: zone-width A/B (8/12/20 bars, cached M5 data) \u2014 keep 12: 13/13 windows profitable, +949/206 trades; 8 marginally higher PnL but one losing window + 9% more trades (cost-sensitive); ZONE_LOOKBACK constant + ab_zone_width.py",
-  "daf9962 b9: backlog checked"
+  "2a03cb0 b14: grade-gate efficacy audit \u2014 grade ranks PnL correctly (C avg 1/3 of B, WR 45.9 vs 52.9); gate B stays justified under single-position constraint; run_backtest min_grade now parameterizable + grade in trade_log",
+  "6ef121a b13c: untrack watchdog heartbeat/state \u2014 pure mtime churn, 22 noise commits in 2 days, zero forensic value",
+  "c689e2e b13b: learning test fixtures moved to real plan_history/ layout + newest-wins duplicate test (76 green)",
+  "d72e7cb b13: learning._regime_for_plan globbed wrong dir (PLAN_DIR vs PLAN_DIR/plan_history) \u2014 regime join was ALWAYS empty; + plan_history retention cap 1500 files",
+  "d6d39cc b12: ICT concepts edge audit \u2014 no usable edge in any of the 8 (report-only decision locked); fixed dead swept_high/low detector in compute_session_liquidity + 2 regression tests"
  ]
 }
