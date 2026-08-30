@@ -11,12 +11,12 @@ def estimate_atr(rows: list[dict]) -> float:
     on XAUUSD the Sunday-open and CPI gaps are exactly where stops die.
     """
     trs = []
-    for i, r in enumerate(rows[-15:]):
-        hl = r["high"] - r["low"]
+    window = rows[-15:]
+    for i, r in enumerate(window):
         if i == 0:
-            trs.append(hl)
-            continue
-        prev_close = rows[-15 + i - 1]["close"]
+            continue  # need a previous close for the gap component
+        hl = r["high"] - r["low"]
+        prev_close = window[i - 1]["close"]
         trs.append(max(hl, abs(r["high"] - prev_close), abs(r["low"] - prev_close)))
     return mean(trs) if trs else 0.0
 
