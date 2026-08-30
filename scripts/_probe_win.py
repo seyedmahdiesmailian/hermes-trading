@@ -1,7 +1,12 @@
+import os
+import sys
 import time
 import winrm
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from env_loader import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
-s = winrm.Session('192.168.10.51', auth=('Administrator', 'REDACTED_WIN_PASS'),
+s = winrm.Session('192.168.10.51', auth=('Administrator', os.environ['WIN_PASS']),
                   transport='ntlm', server_cert_validation='ignore', read_timeout_sec=120)
 
 def run(c):
