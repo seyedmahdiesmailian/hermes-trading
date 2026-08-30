@@ -1,9 +1,66 @@
 {
-  "day": "2026-08-28",
-  "starting_balance": 5000.0,
+  "day": "2026-08-30",
+  "starting_balance": 5070.41,
   "daily_pnl": 0.0,
   "loss_streak": 0,
   "trades_today": 0,
   "last_closed_ticket": 98084590,
-  "recent_closed": []
+  "recent_closed": [
+    {
+      "comment": "Hermes",
+      "commission": -0.06,
+      "entry": 0,
+      "order": 103191931,
+      "price": 4479.43,
+      "profit": 0.0,
+      "swap": 0.0,
+      "symbol": "XAUUSD",
+      "ticket": 98071925,
+      "time": 1787947690,
+      "type": "SELL",
+      "volume": 0.02
+    },
+    {
+      "comment": "[tp 4473.24]",
+      "commission": -0.06,
+      "entry": 1,
+      "order": 103192971,
+      "price": 4472.41,
+      "profit": 14.04,
+      "swap": 0.0,
+      "symbol": "XAUUSD",
+      "ticket": 98072921,
+      "time": 1787947867,
+      "type": "BUY",
+      "volume": 0.02
+    },
+    {
+      "comment": "Hermes",
+      "commission": -0.09,
+      "entry": 0,
+      "order": 103194694,
+      "price": 4481.48,
+      "profit": 0.0,
+      "swap": 0.0,
+      "symbol": "XAUUSD",
+      "ticket": 98074573,
+      "time": 1787948102,
+      "type": "SELL",
+      "volume": 0.03
+    },
+    {
+      "comment": "[tp 4466.84]",
+      "commission": -0.09,
+      "entry": 1,
+      "order": 103204888,
+      "price": 4467.04,
+      "profit": 43.32,
+      "swap": 0.0,
+      "symbol": "XAUUSD",
+      "ticket": 98084590,
+      "time": 1787949728,
+      "type": "BUY",
+      "volume": 0.03
+    }
+  ]
 }

@@ -8,6 +8,15 @@
 import unittest
 from datetime import datetime, timezone
 
+# IMPORTANT: force the real module bindings BEFORE any monkeypatching.
+# hermes_runtime does `from engines.storage import load_current_plan` at import
+# time; if its FIRST import happens inside TestSignalSpreadGate's patch window
+# (signal_listener lazily imports hermes_runtime there), it permanently binds
+# the patched 2-key stub and every later test that runs a real cycle dies with
+# KeyError: 'zones'. Importing it up front makes the leak impossible.
+import hermes_runtime  # noqa: F401,E402
+import engines.storage  # noqa: F401,E402
+
 
 class TestTradesToday(unittest.TestCase):
     def test_counts_entry_deals_today(self):
@@ -46,7 +55,8 @@ class TestSignalGateParity(unittest.TestCase):
         return {'trade_allowed': True, 'regime': 'normal',
                 'open_positions': 0, 'balance': 5000.0}
 
-    def _prop(self, sl=4460, tp=4435):
+    @staticmethod
+    def _prop(sl=4460, tp=4435):
         return {'blueprint': {'side': 'SELL', 'entry_price': 4450,
                               'sl': sl, 'tp': tp, 'symbol': 'XAUUSD'},
                 'grade': 'B'}
@@ -97,6 +107,108 @@ class TestSignalGateParity(unittest.TestCase):
         r = evaluate_proposal(self._prop(), pol, perf, {}, None)
         self.assertFalse(r['execute'])
         self.assertEqual(r['reason'], 'position_limit')
+
+
+class TestPositionCapParity(unittest.TestCase):
+    """2026-08-30 audit: live allowed 2 simultaneous positions while
+    risk.assess_account_policy said max_positions_allowed=1 and the parity
+    backtest models ONE trade at a time — every backtest number (incl. the
+    grade-B justification) was computed under a constraint live ignored."""
+
+    def test_live_cap_matches_policy_and_backtest(self):
+        from engines.auto_executor import MAX_OPEN_POSITIONS
+        from engines.risk import assess_account_policy
+        pol = assess_account_policy(5000, 5000, 5000, 0, 0, 0, 0)
+        self.assertEqual(MAX_OPEN_POSITIONS, pol['max_positions_allowed'])
+        self.assertEqual(MAX_OPEN_POSITIONS, 1)
+
+    def test_second_position_blocked(self):
+        from engines.auto_executor import evaluate_proposal
+        # NOTE: TestPositionCapParity has no _prop of its own — it must reuse
+        # the sibling class's builder (was self._prop() → AttributeError).
+        pol = {'trade_allowed': True, 'regime': 'normal',
+               'open_positions': 1, 'balance': 5000.0}
+        perf = {'day': 'x', 'daily_pnl': 0, 'trades_today': 0, 'loss_streak': 0}
+        r = evaluate_proposal(TestSignalGateParity._prop(), pol, perf, {}, None)
+        self.assertFalse(r['execute'])
+        self.assertEqual(r['reason'], 'position_limit')
+
+
+class TestSignalSpreadGate(unittest.TestCase):
+    """The plan path refuses entries when ask-bid > MAX_ENTRY_SPREAD; the
+    signal path must too (news/rollover spikes blow past 2.0$)."""
+
+    def _run(self, ask, bid):
+        import os
+        from datetime import datetime, timezone
+        from engines import signal_listener as sl
+        import engines.storage as st
+        import engines.economic_calendar as ec
+        now = int(datetime.now(timezone.utc).timestamp())
+        msgs = [{"update_id": 1, "chat_id": "-100test", "chat_title": "t",
+                 "from": "x", "text": "SELL XAUUSD 4450 SL 4440 TP 4420",
+                 "date": now - 30}]
+        calls = {"sent": 0}
+
+        class FakeBridge:
+            def get_tick(self, symbol="XAUUSD"):
+                # real bridge shape is FLAT: {"ok":true,"ask":...,"bid":...}
+                return {"ok": True, "ask": ask, "bid": bid}
+            def get_account(self):
+                return {"data": {"balance": 5000.0, "equity": 5000.0,
+                                 "margin": 0.0, "margin_free": 5000.0,
+                                 "positions": 0}}
+            def get_positions(self, symbol="XAUUSD"):
+                return {"data": []}
+            def get_history_deals(self, symbol="XAUUSD", days=7):
+                return {"ok": True, "data": []}
+            def send_order(self, **kw):
+                calls["sent"] += 1
+                return {"ok": True}
+
+        orig = {"fetch": sl.fetch_new_messages, "log": sl._log_signal,
+                "plan": st.load_current_plan, "cal": ec.fetch_economic_calendar}
+        sl.fetch_new_messages = lambda: msgs
+        sl._log_signal = lambda *a, **k: None
+        st.load_current_plan = lambda p: {"bias": "bearish", "quality": {}}
+        ec.fetch_economic_calendar = lambda *a, **k: {"events": []}
+        # hermetic: stub the account-policy helper (the real one WRITES
+        # performance_state.json in the production plan dir) and the
+        # execution-log appender (would pollute the production journal)
+        import hermes_runtime
+        orig_pp = hermes_runtime._performance_and_policy
+        hermes_runtime._performance_and_policy = lambda b, a, n: {
+            'performance_state': {'day': n.date().isoformat(), 'daily_pnl': 0.0,
+                                  'trades_today': 0, 'loss_streak': 0,
+                                  'recent_closed': []},
+            'account_policy': {'trade_allowed': True, 'regime': 'normal',
+                               'open_positions': 0, 'balance': 5000.0,
+                               'max_positions_allowed': 1}}
+        orig_exec_log = st.append_execution_log
+        st.append_execution_log = lambda *a, **k: None
+        os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100test"
+        try:
+            res = sl.run_signal_check(FakeBridge(), dry_run=False)
+        finally:
+            sl.fetch_new_messages, sl._log_signal = orig["fetch"], orig["log"]
+            st.load_current_plan, ec.fetch_economic_calendar = orig["plan"], orig["cal"]
+            hermes_runtime._performance_and_policy = orig_pp
+            st.append_execution_log = orig_exec_log
+        return res, calls
+
+    def test_wide_spisk_rejected_before_order(self):
+        res, calls = self._run(4451.50, 4450.00)   # 1.50$ spread > 0.60
+        ex = res["executions"][0]
+        self.assertEqual(ex["verdict"], "skip")
+        self.assertTrue(any("spread_too_wide" in r for r in ex["reasons"]),
+                        f"expected spread_too_wide, got {ex['reasons']}")
+        self.assertEqual(calls["sent"], 0, "no order may reach the bridge")
+
+    def test_normal_spread_not_blocked_by_gate(self):
+        res, calls = self._run(4450.10, 4450.00)   # 0.10$ — normal
+        ex = res["executions"][0]
+        self.assertFalse(any("spread_too_wide" in r for r in ex.get("reasons", [])),
+                         f"normal spread must not trip the gate: {ex['reasons']}")
 
 
 if __name__ == '__main__':

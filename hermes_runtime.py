@@ -28,9 +28,17 @@ from engines.macro_filter import apply_macro_guard
 from engines.auto_executor import evaluate_proposal, execute_trade, evaluate_management_action
 from engines.kill_switch import check_kill_switch
 
-BASE_DIR = Path('/home/ai/hermes-trading')
+from engines import paths as _paths  # state paths resolved at CALL time (test-safe)
+
+BASE_DIR = _paths.get_data_root()
 DATA_DIR = BASE_DIR / 'data'
-PLAN_DIR = DATA_DIR / 'xau_plan'
+PLAN_DIR = DATA_DIR / 'xau_plan'   # legacy alias; live code uses _plan_dir()
+
+
+def _plan_dir():
+    """Resolve the plan dir at CALL time so tests can redirect the tree."""
+    return _paths.plan_dir()
+
 SYMBOL = 'XAUUSD'
 TIMEFRAME = 'M5'
 # Max ask-bid (in $) to allow a NEW entry. Normal XAUUSD spread here is ~0.18;
@@ -171,8 +179,8 @@ def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
     account = _account_obj(account_resp)
     today = now.date().isoformat()
     closed = _load_closed_trades(bridge, 7)
-    perf = compute_performance_state(load_performance_state(PLAN_DIR), today, account.balance, closed)
-    save_performance_state(PLAN_DIR, perf)
+    perf = compute_performance_state(load_performance_state(_plan_dir()), today, account.balance, closed)
+    save_performance_state(_plan_dir(), perf)
     policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
     return {'performance_state': perf, 'account_policy': policy}
 
@@ -201,8 +209,8 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     There is no human approval path anywhere in the system.
     """
     now = now or _now()
-    runtime = load_runtime_state(PLAN_DIR)
-    old_plan = load_current_plan(PLAN_DIR)
+    runtime = load_runtime_state(_plan_dir())
+    old_plan = load_current_plan(_plan_dir())
     step = route_runtime_step(old_plan, now=now)
 
     account = bridge.get_account()
@@ -238,13 +246,13 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         plan, err = build_live_plan(bridge, now)
         if err:
             return {'ok': False, 'step': step, 'error': err, 'will_execute_now': False}
-        save_current_plan(PLAN_DIR, plan)
+        save_current_plan(_plan_dir(), plan)
         runtime['active_plan_id'] = plan['plan_id']
         runtime['last_step'] = step
         runtime['last_report_key'] = f"{step}:{plan['plan_id']}"
-        save_runtime_state(PLAN_DIR, runtime)
+        save_runtime_state(_plan_dir(), runtime)
         if step == 'reassess' and old_plan:
-            append_reassessment_log(PLAN_DIR, {'at': now.isoformat(), 'plan_id': plan['plan_id'], 'event': 'reassess', 'old_bias': old_plan.get('bias'), 'new_bias': plan.get('bias')})
+            append_reassessment_log(_plan_dir(), {'at': now.isoformat(), 'plan_id': plan['plan_id'], 'event': 'reassess', 'old_bias': old_plan.get('bias'), 'new_bias': plan.get('bias')})
             brief = render_reassess_brief(old_plan, plan)
         else:
             brief = render_plan_brief(plan)
@@ -256,7 +264,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
 
     # ── Manage Existing Positions ──
     # Skip if position watchdog daemon is alive (manages every 5s)
-    hb = PLAN_DIR / 'watchdog_heartbeat'
+    hb = _plan_dir() / 'watchdog_heartbeat'
     watchdog_alive = False
     if hb.exists():
         try:
@@ -344,7 +352,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                         tstate['breakeven_active'] = True
                     elif management.get('action') in {'close_runner', 'close_trade_early'}:
                         tstate['runner_active'] = False
-                save_runtime_state(PLAN_DIR, runtime)
+                save_runtime_state(_plan_dir(), runtime)
                 return {'ok': True, 'step': 'manage', 'plan_id': plan.get('plan_id'), 'management': management, 'brief': brief, 'will_execute_now': mgmt_result.get('executed', False), 'account_policy': policy, 'performance_state': performance}
 
     # ── Monitor for New Entry ──
@@ -352,7 +360,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # Stale plan (price ran far from zones) → force reassess next cycle
     if 'plan_stale' in str(monitor.get('reason', '')):
         plan['next_reassessment'] = now.isoformat()
-        save_current_plan(PLAN_DIR, plan)
+        save_current_plan(_plan_dir(), plan)
     proposal = _build_proposal(plan, monitor, policy, price)
 
     # ── Spread gate: news/rollover spikes blow XAUUSD past 2.0$ (normal 0.18).
@@ -392,7 +400,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     try:
         import time as _time
         from pathlib import Path as _P
-        snap_file = _P(str(PLAN_DIR)) / 'macro_snapshot.json'
+        snap_file = _P(str(_plan_dir())) / 'macro_snapshot.json'
         snap_ttl = 900
         cached = None
         try:
@@ -421,7 +429,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             except Exception:
                 pass
         plan.setdefault('context', {})['macro'] = macro_snap
-        save_current_plan(PLAN_DIR, plan)   # persist for reports + management
+        save_current_plan(_plan_dir(), plan)   # persist for reports + management
     except Exception:
         macro_snap = None
 
@@ -448,7 +456,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                         or execution_result.get('error') or 'unknown')[:120]
 
                 # Log the execution
-                append_execution_log(PLAN_DIR, {
+                append_execution_log(_plan_dir(), {
                     'at': now.isoformat(),
                     'plan_id': plan.get('plan_id'),
                     'side': cmd.get('side'),
@@ -496,7 +504,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     runtime['active_plan_id'] = plan.get('plan_id')
     runtime['last_step'] = 'monitor'
     runtime['last_monitor_action'] = monitor.get('action')
-    save_runtime_state(PLAN_DIR, runtime)
+    save_runtime_state(_plan_dir(), runtime)
     return payload
 
 

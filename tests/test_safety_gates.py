@@ -156,27 +156,32 @@ class CooldownReArmTests(unittest.TestCase):
 
     def test_cron_tick_no_rearm_real_restart_arms(self):
         from datetime import datetime, timedelta, timezone
-        import tempfile
-        from pathlib import Path
+        import os, tempfile
         from engines import cooldown as cd
-        tmp = Path(tempfile.mkdtemp()) / 'cd.json'
-        orig = cd.STATE_FILE
-        try:
-            cd.STATE_FILE = tmp
-            t0 = datetime(2026, 8, 30, 8, 0, tzinfo=timezone.utc)
-            s1 = cd.ensure_startup_cooldown(t0)
-            s2 = cd.ensure_startup_cooldown(t0 + timedelta(minutes=15))
-            self.assertEqual(s1['restart']['until'], s2['restart']['until'])
-            self.assertTrue(cd.check_entry_cooldown(
-                t0 + timedelta(minutes=16))['allowed'])
-            s3 = cd.ensure_startup_cooldown(t0 + timedelta(minutes=90))
-            self.assertNotEqual(s1['restart']['until'], s3['restart']['until'])
-            self.assertFalse(cd.check_entry_cooldown(
-                t0 + timedelta(minutes=91))['allowed'])
-            self.assertTrue(cd.check_entry_cooldown(
-                t0 + timedelta(minutes=96))['allowed'])
-        finally:
-            cd.STATE_FILE = orig
+        # cooldown resolves its state file through engines.paths at CALL time,
+        # so HERMES_DATA_ROOT is the isolation switch (was: cd.STATE_FILE,
+        # which no longer exists — the module-level constant was the bug).
+        env = os.environ.get('HERMES_DATA_ROOT')
+        with tempfile.TemporaryDirectory() as tmp:
+            os.environ['HERMES_DATA_ROOT'] = tmp
+            try:
+                t0 = datetime(2026, 8, 30, 8, 0, tzinfo=timezone.utc)
+                s1 = cd.ensure_startup_cooldown(t0)
+                s2 = cd.ensure_startup_cooldown(t0 + timedelta(minutes=15))
+                self.assertEqual(s1['restart']['until'], s2['restart']['until'])
+                self.assertTrue(cd.check_entry_cooldown(
+                    t0 + timedelta(minutes=16))['allowed'])
+                s3 = cd.ensure_startup_cooldown(t0 + timedelta(minutes=90))
+                self.assertNotEqual(s1['restart']['until'], s3['restart']['until'])
+                self.assertFalse(cd.check_entry_cooldown(
+                    t0 + timedelta(minutes=91))['allowed'])
+                self.assertTrue(cd.check_entry_cooldown(
+                    t0 + timedelta(minutes=96))['allowed'])
+            finally:
+                if env is None:
+                    os.environ.pop('HERMES_DATA_ROOT', None)
+                else:
+                    os.environ['HERMES_DATA_ROOT'] = env
 
 
 class ManagementExecutionTests(unittest.TestCase):

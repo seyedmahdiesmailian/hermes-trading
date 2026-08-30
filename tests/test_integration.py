@@ -51,13 +51,35 @@ def _make_ohlc_rows(n=80, base_price=4600.0, atr=5.0, bias="neutral"):
 
 
 class TestRuntimeCycle(unittest.TestCase):
+    """Runs the REAL cycle() — must be fully hermetic.
+
+    2026-08-30 audit: these tests used to run against the PRODUCTION
+    data/xau_plan dir. Two consequences: (1) random synthetic plans at price
+    4600 were archived into plan_history/ where learning.analyze joins them
+    against real trades (journal pollution), and (2) the live cron/daemons
+    rewrite the same files concurrently → KeyError:'zones' flakes when a
+    test read a half-written plan. All module-level state paths are now
+    redirected to a temp dir.
+    """
+
+    def setUp(self):
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent))
+        import hermetic
+        hermetic.use_temp_data_root()
+
+    def tearDown(self):
+        import hermetic
+        hermetic.release()
+
     def test_cycle_produces_valid_output(self):
         """Cycle should always produce valid output with ok=True."""
         from hermes_runtime import cycle
-        m15 = _make_ohlc_rows(80, 4600, 5, "bullish")
+        m5 = _make_ohlc_rows(120, 4600, 5, "bullish")
         h1 = _make_ohlc_rows(80, 4600, 15, "bullish")
         h4 = _make_ohlc_rows(80, 4600, 40, "bullish")
-        bridge = MockBridge(rates={"M15": {"ok": True, "data": m15}, "H1": {"ok": True, "data": h1}, "H4": {"ok": True, "data": h4}})
+        bridge = MockBridge(rates={"M5": {"ok": True, "data": m5}, "H1": {"ok": True, "data": h1}, "H4": {"ok": True, "data": h4}})
         now = datetime(2026, 8, 28, 10, 0, tzinfo=timezone.utc)
 
         result = cycle(bridge, now=now)
@@ -76,10 +98,10 @@ class TestRuntimeCycle(unittest.TestCase):
         from hermes_runtime import cycle
         from engines.storage import save_current_plan, save_runtime_state
 
-        m15 = _make_ohlc_rows(80, 4600, 5, "neutral")
+        m5 = _make_ohlc_rows(120, 4600, 5, "neutral")
         h1 = _make_ohlc_rows(80, 4600, 15, "neutral")
         h4 = _make_ohlc_rows(80, 4600, 40, "neutral")
-        bridge = MockBridge(rates={"M15": {"ok": True, "data": m15}, "H1": {"ok": True, "data": h1}, "H4": {"ok": True, "data": h4}})
+        bridge = MockBridge(rates={"M5": {"ok": True, "data": m5}, "H1": {"ok": True, "data": h1}, "H4": {"ok": True, "data": h4}})
         now = datetime(2026, 8, 28, 10, 0, tzinfo=timezone.utc)
 
         # First create a plan
@@ -105,10 +127,10 @@ class TestRuntimeCycle(unittest.TestCase):
         """Plan step only defers execution to the trigger; manage/enter steps
         execute autonomously (checked in test_cycle.py)."""
         from hermes_runtime import cycle
-        m15 = _make_ohlc_rows(80, 4600, 5, "bullish")
+        m5 = _make_ohlc_rows(120, 4600, 5, "bullish")
         h1 = _make_ohlc_rows(80, 4600, 15, "bullish")
         h4 = _make_ohlc_rows(80, 4600, 40, "bullish")
-        bridge = MockBridge(rates={"M15": {"ok": True, "data": m15}, "H1": {"ok": True, "data": h1}, "H4": {"ok": True, "data": h4}})
+        bridge = MockBridge(rates={"M5": {"ok": True, "data": m5}, "H1": {"ok": True, "data": h1}, "H4": {"ok": True, "data": h4}})
         now = datetime(2026, 8, 28, 10, 0, tzinfo=timezone.utc)
 
         result = cycle(bridge, now=now)
@@ -118,10 +140,10 @@ class TestRuntimeCycle(unittest.TestCase):
 class TestPlanContext(unittest.TestCase):
     def test_context_produces_valid_structure(self):
         from engines.context import build_plan_context
-        m15 = _make_ohlc_rows(80, 4600, 5, "bullish")
+        m5 = _make_ohlc_rows(120, 4600, 5, "bullish")
         h1 = _make_ohlc_rows(80, 4600, 15, "bullish")
         h4 = _make_ohlc_rows(80, 4600, 40, "bullish")
-        ctx = build_plan_context(m15, h1, h4, "london")
+        ctx = build_plan_context(m5, h1, h4, "london")
         self.assertIn(ctx["bias"], {"bullish", "bearish", "neutral"})
         self.assertIn("zones", ctx)
         self.assertIn("execution", ctx)
@@ -131,10 +153,10 @@ class TestPlanContext(unittest.TestCase):
 
     def test_neutral_context_structure(self):
         from engines.context import build_plan_context
-        m15 = _make_ohlc_rows(80, 4600, 5, "neutral")
+        m5 = _make_ohlc_rows(120, 4600, 5, "neutral")
         h1 = _make_ohlc_rows(80, 4600, 15, "neutral")
         h4 = _make_ohlc_rows(80, 4600, 40, "neutral")
-        ctx = build_plan_context(m15, h1, h4, "asia")
+        ctx = build_plan_context(m5, h1, h4, "asia")
         self.assertIn(ctx["bias"], {"bullish", "bearish", "neutral"})
         self.assertEqual(ctx["session"], "asia")
 
@@ -142,8 +164,8 @@ class TestPlanContext(unittest.TestCase):
 class TestSMC(unittest.TestCase):
     def test_smc_detects_order_blocks(self):
         from engines.smc import smc_analyse
-        m15 = _make_ohlc_rows(80, 4600, 5, "bullish")
-        result = smc_analyse(m15, now=datetime(2026, 8, 28, 10, 0, tzinfo=timezone.utc))
+        m5 = _make_ohlc_rows(120, 4600, 5, "bullish")
+        result = smc_analyse(m5, now=datetime(2026, 8, 28, 10, 0, tzinfo=timezone.utc))
         self.assertIn("order_blocks", result)
         self.assertIn("fvgs", result)
 

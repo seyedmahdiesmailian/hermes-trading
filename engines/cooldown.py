@@ -14,24 +14,26 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-STATE_FILE = Path("/home/ai/hermes-trading/data/cooldown_state.json")
+from engines import paths  # state paths resolved at CALL time (test-safe)
 
 POST_OPEN_COOLDOWN_MIN = 15      # after weekly market open
 RESTART_COOLDOWN_MIN = 5         # after engine restart mid-session
 
 
 def _load() -> dict:
-    if STATE_FILE.exists():
+    state_file = paths.cooldown_state()
+    if state_file.exists():
         try:
-            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+            return json.loads(state_file.read_text(encoding="utf-8"))
         except Exception:
             pass
     return {}
 
 
 def _save(state: dict):
-    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, indent=1), encoding="utf-8")
+    state_file = paths.cooldown_state()
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state_file.write_text(json.dumps(state, indent=1), encoding="utf-8")
 
 
 def _market_open_utc(now: datetime) -> datetime:

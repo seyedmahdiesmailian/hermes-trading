@@ -25,10 +25,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 __all__ = ["check_signals", "run_signal_check"]
 
-DATA_DIR = Path('/home/ai/hermes-trading/data/signals')
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-STATE_FILE = DATA_DIR / 'listener_state.json'
-SIGNAL_LOG = DATA_DIR / 'signals_log.json'
+from engines import paths  # resolved at CALL time so tests can redirect the tree
 
 
 def _get_env():
@@ -56,16 +53,19 @@ def _telegram_api(method: str, params: dict = None) -> dict | None:
 
 
 def _load_state() -> dict:
-    if STATE_FILE.exists():
+    state_file = paths.listener_state()
+    if state_file.exists():
         try:
-            return json.loads(STATE_FILE.read_text(encoding='utf-8'))
+            return json.loads(state_file.read_text(encoding='utf-8'))
         except Exception:
             pass
     return {"last_update_id": 0}
 
 
 def _save_state(state: dict):
-    STATE_FILE.write_text(json.dumps(state), encoding='utf-8')
+    state_file = paths.listener_state()
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state_file.write_text(json.dumps(state), encoding='utf-8')
 
 
 def _log_signal(signal_text: str, parsed: dict, decision: dict):
@@ -77,16 +77,18 @@ def _log_signal(signal_text: str, parsed: dict, decision: dict):
         "decision": decision,
     }
     log = []
-    if SIGNAL_LOG.exists():
+    log_file = paths.signals_log()
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    if log_file.exists():
         try:
-            log = json.loads(SIGNAL_LOG.read_text(encoding='utf-8'))
+            log = json.loads(log_file.read_text(encoding='utf-8'))
         except Exception:
             log = []
     log.append(entry)
     # Keep last 200 entries
     if len(log) > 200:
         log = log[-200:]
-    SIGNAL_LOG.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding='utf-8')
+    log_file.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding='utf-8')
 
 
 def fetch_new_messages() -> list[dict]:
@@ -190,7 +192,7 @@ def check_signals(bridge=None) -> list[dict]:
         account_policy = {"trade_allowed": True, "regime": "normal", "open_positions": 0}
         try:
             from engines.storage import load_current_plan
-            plan = load_current_plan(Path('/home/ai/hermes-trading/data/xau_plan'))
+            plan = load_current_plan(paths.plan_dir())
             if plan:
                 hermes_analysis = {
                     "bias": plan.get("bias", "neutral"),
@@ -206,7 +208,7 @@ def check_signals(bridge=None) -> list[dict]:
             acct = account.get("data", account) if isinstance(account, dict) else {}
             _now = datetime.now(timezone.utc)
             from engines.storage import load_performance_state
-            _perf = load_performance_state(Path('/home/ai/hermes-trading/data/xau_plan'))
+            _perf = load_performance_state(paths.plan_dir())
             _kill = check_kill_switch(
                 balance=float(acct.get("balance", 0) or 0),
                 equity=float(acct.get("equity", 0) or 0),
@@ -265,7 +267,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
     Checks for new signals, evaluates them, executes approved ones,
     and returns execution results for reporting.
     """
-    PLAN_DIR = Path("/home/ai/hermes-trading/data/xau_plan")
+    PLAN_DIR = paths.plan_dir()
 
     signals = check_signals(bridge=bridge)
     if not signals:
@@ -301,6 +303,18 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 executions.append({
                     "signal": parsed, "verdict": "skip",
                     "reasons": [f"stale_entry_price_moved_{abs(cur-entry):.1f}pts (current {cur})"],
+                    "executed": False,
+                })
+                continue
+            # Spread gate (parity with the plan path, hermes_runtime MAX_ENTRY_SPREAD):
+            # news/rollover spikes blow XAUUSD past 2.0$ (normal 0.18). Signals used
+            # to enter straight into them — the plan path refuses, the signal path didn't.
+            from hermes_runtime import MAX_ENTRY_SPREAD
+            _spr = float(tick.get("ask") or 0) - float(tick.get("bid") or 0)
+            if _spr > MAX_ENTRY_SPREAD:
+                executions.append({
+                    "signal": parsed, "verdict": "skip",
+                    "reasons": [f"spread_too_wide_{_spr:.2f}>{MAX_ENTRY_SPREAD:.2f}"],
                     "executed": False,
                 })
                 continue
@@ -368,16 +382,31 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
         command = eval_result.get("command")
         # never exceed the lot the signal channel itself specified
         if parsed.get("lot") and command:
-            command["lot"] = min(command["lot"], float(parsed["lot"]))
+            _capped = min(command["lot"], float(parsed["lot"]))
+            if _capped < command["lot"]:
+                # scale the logged risk to the lot we actually send
+                eval_result["risk_usd"] = round(
+                    float(eval_result.get("risk_usd", 0) or 0)
+                    * _capped / command["lot"], 2)
+            command["lot"] = _capped
 
         result = execute_trade(command, bridge, dry_run=dry_run)
 
+        # Alert hygiene (b10 bug class, signal side): a broker rejection after
+        # passing every gate must NOT report verdict='execute' + executed=False —
+        # signal_daemon only alerts on executed or verdict=='skip', so the
+        # rejection was silent. Surface it as a skip with a reason.
+        # (dry_run keeps verdict='execute': executed=False there is BY DESIGN.)
+        _accepted = result.get("executed", False) or (dry_run and result.get("dry_run"))
         executions.append({
             "signal": parsed,
-            "verdict": "execute",
-            "reasons": decision.get("reasons", []),
+            "verdict": "execute" if _accepted else "skip",
+            "reasons": (decision.get("reasons", []) if _accepted else
+                        ["broker_rejected: " + str((result.get("result") or {}).get("error")
+                         or result.get("error") or "unknown")[:120]]),
             "executed": result.get("executed", False),
             "result": result,
+            "lot": command["lot"],
         })
 
         # Log execution
@@ -391,8 +420,10 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             "entry": command["entry"],
             "sl": command["sl"],
             "tp": command["tp"],
-            "grade": "signal",
-            "risk_usd": 0,
+            "grade": eval_result.get("grade", "signal"),
+            # real risk from the sizing model (was hardcoded 0 → the journal
+            # could never reconcile signal trades against risk taken)
+            "risk_usd": eval_result.get("risk_usd", 0),
             "dry_run": dry_run,
             "result_ok": result.get("ok", False),
             "ticket": (result.get("result") or {}).get("ticket"),

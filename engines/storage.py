@@ -5,11 +5,13 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-DEFAULT_BASE_DIR = Path("/home/ai/hermes-trading/data/xau_plan")
+from engines import paths  # resolved at CALL time so tests can redirect the tree
+
+DEFAULT_BASE_DIR = None  # None → paths.plan_dir() (production default)
 
 
 def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
-    root = Path(base_dir) if base_dir else DEFAULT_BASE_DIR
+    root = Path(base_dir) if base_dir else paths.plan_dir()
     plan_history_dir = root / "plan_history"
     current_plan_path = root / "current_plan.json"
     runtime_state_path = root / "runtime_state.json"

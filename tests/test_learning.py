@@ -1,6 +1,7 @@
 """Tests for engines/learning.py - session x regime journal breakdown."""
 import csv
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -65,7 +66,14 @@ class SessionOfTest(unittest.TestCase):
 class AnalyzeTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix='learning_test_')
-        self.plan_dir = Path(self.tmp)
+        # learning resolves its files through engines.paths at CALL time, so
+        # pointing HERMES_DATA_ROOT at a temp tree is the only isolation needed
+        # (was: patch.multiple(learning, PLAN_DIR=..., JOURNAL_CSV=...) which
+        # silently missed every path the module had already bound).
+        self._env = os.environ.get('HERMES_DATA_ROOT')
+        os.environ['HERMES_DATA_ROOT'] = self.tmp
+        self.plan_dir = Path(self.tmp) / 'data' / 'xau_plan'
+        self.plan_dir.mkdir(parents=True, exist_ok=True)
         self.journal = self.plan_dir / 'trade_journal.csv'
         self.exec_log = self.plan_dir / 'execution_log.csv'
         plan = {'plan_id': 'xau-test01',
@@ -75,10 +83,16 @@ class AnalyzeTest(unittest.TestCase):
         (hist / '20260830_010000_xau-test01.json').write_text(
             json.dumps(plan), encoding='utf-8')
 
+    def tearDown(self):
+        if self._env is None:
+            os.environ.pop('HERMES_DATA_ROOT', None)
+        else:
+            os.environ['HERMES_DATA_ROOT'] = self._env
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
     def patched(self):
-        return patch.multiple(
-            learning, PLAN_DIR=self.plan_dir, JOURNAL_CSV=self.journal,
-            LEARNING_JSON=self.plan_dir / 'learning_state.json')
+        return patch.dict(os.environ, {'HERMES_DATA_ROOT': self.tmp})
 
     def test_analyze_empty_journal(self):
         with self.patched():
@@ -187,16 +201,22 @@ class AnalyzeTest(unittest.TestCase):
 class AdjustmentsRegressionTest(unittest.TestCase):
     def test_insufficient_sample_unchanged(self):
         with tempfile.TemporaryDirectory() as tmp:
-            plan_dir = Path(tmp)
-            journal = plan_dir / 'trade_journal.csv'
-            rows = [jrow(str(9000 + i), '2026-08-29T09:00:00+00:00',
-                         'BUY' if i % 2 else 'SELL', str(-5 - i))
-                    for i in range(10)]
-            write_csv(journal, JH, rows)
-            with patch.multiple(learning, PLAN_DIR=plan_dir,
-                                JOURNAL_CSV=journal,
-                                LEARNING_JSON=plan_dir / 'learning_state.json'):
+            env = os.environ.get('HERMES_DATA_ROOT')
+            os.environ['HERMES_DATA_ROOT'] = tmp
+            try:
+                plan_dir = Path(tmp) / 'data' / 'xau_plan'
+                plan_dir.mkdir(parents=True, exist_ok=True)
+                journal = plan_dir / 'trade_journal.csv'
+                rows = [jrow(str(9000 + i), '2026-08-29T09:00:00+00:00',
+                             'BUY' if i % 2 else 'SELL', str(-5 - i))
+                        for i in range(10)]
+                write_csv(journal, JH, rows)
                 out = learning.adjustments()
+            finally:
+                if env is None:
+                    os.environ.pop('HERMES_DATA_ROOT', None)
+                else:
+                    os.environ['HERMES_DATA_ROOT'] = env
             self.assertEqual(out.get('reason'), 'insufficient_sample_10')
             self.assertEqual(out['changes'], {})
 

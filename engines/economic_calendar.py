@@ -11,8 +11,13 @@ import urllib.error
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-CACHE_DIR = Path('/home/ai/hermes-trading/data/calendar')
-CACHE_FILE = CACHE_DIR / 'economic_calendar.json'
+from engines import paths  # resolved at CALL time so tests can redirect the tree
+
+
+def _cache_file() -> Path:
+    return paths.calendar_cache()
+
+
 CACHE_MAX_AGE_HOURS = 6
 
 # High-impact currencies for XAUUSD (Gold moves on USD, EUR, JPY)
@@ -39,10 +44,11 @@ def _now_utc() -> datetime:
 
 
 def _load_cache() -> dict | None:
-    if not CACHE_FILE.exists():
+    cache_file = _cache_file()
+    if not cache_file.exists():
         return None
     try:
-        data = json.loads(CACHE_FILE.read_text(encoding='utf-8'))
+        data = json.loads(cache_file.read_text(encoding='utf-8'))
         cached_at = datetime.fromisoformat(data.get("cached_at", ""))
         if (_now_utc() - cached_at) > timedelta(hours=CACHE_MAX_AGE_HOURS):
             return None
@@ -52,9 +58,10 @@ def _load_cache() -> dict | None:
 
 
 def _save_cache(data: dict):
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = _cache_file()
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
     data["cached_at"] = _now_utc().isoformat()
-    CACHE_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
+    cache_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
 
 
 def _fetch_forexfactory() -> dict | None:

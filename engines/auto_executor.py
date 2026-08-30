@@ -21,7 +21,13 @@ MAX_RISK_PER_TRADE_PCT = 0.02       # 2% of balance per trade
 MIN_RISK_REWARD = 1.5             # skip trades with RR below this (backtest 2026-08-29: RR2 vs RR3 identical on 500 bars → 1.5 floor keeps entries healthy without inflating targets)
 MAX_DAILY_LOSS_PCT = 0.05           # 5% daily loss → stop trading
 MAX_DAILY_TRADES = 5                # max trades per day
-MAX_OPEN_POSITIONS = 2              # max simultaneous positions
+MAX_OPEN_POSITIONS = 1              # max simultaneous positions. Was 2 — a
+                                    # silent divergence: risk.assess_account_policy
+                                    # says max_positions_allowed=1, the parity
+                                    # backtest models ONE position at a time, and
+                                    # the grade-B audit (b14) justified MIN_SETUP_GRADE
+                                    # on the single-slot constraint. Live now matches
+                                    # both (tightening only, never loosening).
 MIN_SETUP_GRADE = "B"               # backtest 2026-08-29: C-grade (weak trend) entries drag win-rate; B keeps 13-trade sample with 61.5% WR
 STOP_TRADING_REGIMES = {"locked"}   # regimes that block new trades
 TIGHT_REGIMES = {"defensive"}       # reduced sizing regimes

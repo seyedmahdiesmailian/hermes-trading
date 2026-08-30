@@ -25,10 +25,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE_DIR = Path('/home/ai/hermes-trading')
-PLAN_DIR = BASE_DIR / 'data' / 'xau_plan'
-JOURNAL_CSV = PLAN_DIR / 'trade_journal.csv'
-LEARNING_JSON = PLAN_DIR / 'learning_state.json'
+from engines import paths  # resolved at CALL time so tests can redirect the tree
 
 # Static ceilings — learning may never exceed these
 RISK_PCT_CEILING = 0.02          # same as auto_executor.MAX_RISK_PER_TRADE_PCT
@@ -45,9 +42,10 @@ GRADES = ["C", "B", "A"]         # ordered worst → best
 # ── 1. Journal ────────────────────────────────────────────────────────────
 
 def _load_journal() -> list[dict]:
-    if not JOURNAL_CSV.exists():
+    journal_csv = paths.trade_journal()
+    if not journal_csv.exists():
         return []
-    with JOURNAL_CSV.open(newline='', encoding='utf-8') as f:
+    with journal_csv.open(newline='', encoding='utf-8') as f:
         return list(csv.DictReader(f))
 
 
@@ -93,9 +91,10 @@ def journal(bridge, days: int = 30) -> int:
         })
     if not rows:
         return 0
-    new_file = not JOURNAL_CSV.exists()
-    JOURNAL_CSV.parent.mkdir(parents=True, exist_ok=True)
-    with JOURNAL_CSV.open('a', newline='', encoding='utf-8') as f:
+    journal_csv = paths.trade_journal()
+    new_file = not journal_csv.exists()
+    journal_csv.parent.mkdir(parents=True, exist_ok=True)
+    with journal_csv.open('a', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         if new_file:
             w.writeheader()
@@ -133,7 +132,7 @@ def _regime_for_plan(plan_id: str) -> str:
     """
     if not plan_id:
         return ''
-    matches = sorted((PLAN_DIR / 'plan_history').glob(f'*_{plan_id}.json'))
+    matches = sorted((paths.plan_dir() / 'plan_history').glob(f'*_{plan_id}.json'))
     if not matches:
         return ''
     try:
@@ -194,7 +193,7 @@ def analyze() -> dict:
 
     exec_events: list[tuple[datetime, str]] = []   # (at, plan_id)
     exec_by_ticket: dict[str, str] = {}            # ticket → plan_id (exact join)
-    exec_log = PLAN_DIR / 'execution_log.csv'
+    exec_log = paths.plan_dir() / 'execution_log.csv'
     try:
         with exec_log.open(newline='', encoding='utf-8') as f:
             for r in csv.DictReader(f):
@@ -298,9 +297,10 @@ def adjustments() -> dict:
 
 def load_learning_state() -> dict:
     """Effective adaptive parameters (defaults = current static config)."""
-    if LEARNING_JSON.exists():
+    learning_json = paths.learning_state()
+    if learning_json.exists():
         try:
-            return json.loads(LEARNING_JSON.read_text(encoding='utf-8'))
+            return json.loads(learning_json.read_text(encoding='utf-8'))
         except Exception:
             pass
     return {'min_rr': 1.5, 'min_grade': 'B', 'risk_mult': 1.0,
@@ -322,8 +322,9 @@ def apply(deltas: dict) -> dict:
         proposed = float(deltas['risk_mult'])
         cur['risk_mult'] = _clamp(min(proposed, cur.get('risk_mult', 1.0)), 0.5, 1.0)
     cur['updated_at'] = datetime.now(timezone.utc).isoformat()
-    PLAN_DIR.mkdir(parents=True, exist_ok=True)
-    LEARNING_JSON.write_text(json.dumps(cur, indent=1), encoding='utf-8')
+    learning_json = paths.learning_state()
+    learning_json.parent.mkdir(parents=True, exist_ok=True)
+    learning_json.write_text(json.dumps(cur, indent=1), encoding='utf-8')
     return cur
 
 

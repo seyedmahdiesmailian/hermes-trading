@@ -14,7 +14,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-STATE_FILE = Path("/home/ai/hermes-trading/data/kill_switch_state.json")
+from engines import paths  # state paths resolved at CALL time (test-safe)
 
 # ─── Kill Switch Thresholds ───
 DAILY_LOSS_LIMIT_PCT = 0.05       # 5% daily loss → HALT
@@ -29,9 +29,10 @@ def _now() -> datetime:
 
 
 def _load_state() -> dict:
-    if STATE_FILE.exists():
+    state_file = paths.kill_switch_state()
+    if state_file.exists():
         try:
-            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+            return json.loads(state_file.read_text(encoding="utf-8"))
         except Exception:
             pass
     return {
@@ -45,8 +46,9 @@ def _load_state() -> dict:
 
 
 def _save_state(state: dict):
-    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    state_file = paths.kill_switch_state()
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def check_kill_switch(
