@@ -41,6 +41,15 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+- 2026-08-30 neutral_bias gate audit (scripts/measure_neutral_forgone.py, 5883
+  replay bars): the 3163 neutral bars look like +8183$ forgone (60.3% WR), but
+  the NON-neutral baseline is +3.47$/bar at 59.3% WR — the raw number is
+  dataset drift, not edge. Neutral bars are 0.49$/bar WORSE than bars the
+  system trades. Gate is earning its keep; unchanged. (1326 of the neutrals
+  are forced by range-kill.)
+- 2026-08-30 b15 verified LIVE: 08:00 cron tick stamped _last_master_run but
+  did NOT re-arm cooldown (until stayed 07:50). First time in this system's
+  life that a new entry is not auto-killed at tick start.
 - 2026-08-30 grade-gate efficacy audit (scripts/measure_grade_edge.py, 348 trades
   across 13 M5 windows, min_grade=None so C setups traded too): grade DOES rank
   quality — A 55.2% WR/$3.54 avg, B 52.9%/$4.33, C 45.9%/$1.32. C is still net
