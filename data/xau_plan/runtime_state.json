@@ -2,5 +2,5 @@
   "active_plan_id": "xau-9b68b9d0",
   "last_step": "monitor",
   "last_report_key": "reassess:xau-9b68b9d0",
-  "last_monitor_action": "place_sell_limit"
+  "last_monitor_action": "market_entry_now"
 }

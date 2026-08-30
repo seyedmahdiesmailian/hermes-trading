@@ -1,8 +1,7 @@
 {
-  "day": "2026-08-28",
-  "starting_balance": 5000.0,
+  "day": "2026-08-30",
+  "starting_balance": 5070.41,
   "daily_pnl": 0.0,
   "loss_streak": 0,
-  "last_closed_ticket": 98084590,
-  "recent_closed": []
+  "last_closed_ticket": 98084590
 }
