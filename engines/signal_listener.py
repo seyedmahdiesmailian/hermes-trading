@@ -42,7 +42,11 @@ def _telegram_api(method: str, params: dict = None) -> dict | None:
     try:
         url = f"https://api.telegram.org/bot{token}/{method}"
         if params:
-            data = urllib.parse.urlencode(params).encode('utf-8')
+            # Telegram Bot API expects list/dict params as JSON strings;
+            # urlencode would mangle a Python list into str(list).
+            flat = {k: (json.dumps(v) if isinstance(v, (list, dict)) else str(v))
+                    for k, v in params.items()}
+            data = urllib.parse.urlencode(flat).encode('utf-8')
             req = urllib.request.Request(url, data=data, method='POST')
         else:
             req = urllib.request.Request(url)
@@ -132,7 +136,13 @@ def _serve_trade_callback(cb: dict):
 def fetch_new_messages() -> list[dict]:
     """Fetch new messages since last update."""
     state = _load_state()
-    params = {"offset": str(state.get("last_update_id", 0) + 1), "timeout": "1"}
+    # b38fix: this bot token is shared with the Hermes gateway, which set
+    # allowed_updates=[message, channel_post] server-side — Telegram then
+    # NEVER delivers callback_query, so dashboard buttons looked dead.
+    # Declaring the types per-request overrides the server-side filter.
+    params = {"offset": str(state.get("last_update_id", 0) + 1), "timeout": "1",
+              "allowed_updates": ["message", "channel_post", "edited_message",
+                                  "edited_channel_post", "callback_query"]}
     result = _telegram_api("getUpdates", params)
     if not result or not result.get("ok"):
         return []
