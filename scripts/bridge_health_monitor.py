@@ -80,6 +80,32 @@ def _save_state(s: dict):
         pass
 
 
+def _daemon_check() -> str | None:
+    """b31: who watches the watchdog? Returns alert text if a critical daemon
+    is dead or its heartbeat is stale (>120s) while the market is open."""
+    import subprocess
+    try:
+        r = subprocess.run(['systemctl', '--user', 'is-active',
+                            'hermes-position', 'hermes-signal'],
+                           capture_output=True, text=True, timeout=10)
+        states = r.stdout.split()
+        if states != ['active', 'active']:
+            return f'دمون‌ها: position={states[0] if states else "?"} signal={states[1] if len(states) > 1 else "?"}'
+    except Exception as e:
+        return f'بررسی systemctl ناموفق: {e}'
+    # heartbeat freshness (position daemon writes every ~5s when alive)
+    try:
+        from datetime import datetime, timezone
+        hb = BASE / 'data' / 'xau_plan' / 'watchdog_heartbeat'
+        if hb.exists():
+            age = (datetime.now(timezone.utc) - datetime.fromisoformat(hb.read_text().strip())).total_seconds()
+            if age > 120:
+                return f'heartbeat دایمون موقعیت {int(age)}s قدیمی است'
+    except Exception:
+        pass  # unreadable heartbeat file: systemctl already passed, don't false-alarm
+    return None
+
+
 def main():
     _env()
     ok, text = fetch(HEALTH_URL)
@@ -93,16 +119,35 @@ def main():
         log('Bridge health OK')
         if st.get('alerted'):
             send_telegram('✅ بریج MT5 برگشت (health OK)')
-        _save_state({'fails': 0, 'alerted': False})
-        return 0
+        # keep daemon_alerted_at (b31) — dedup window must survive healthy ticks
+        _save_state({'fails': 0, 'alerted': False,
+                     'daemon_alerted_at': st.get('daemon_alerted_at', 0)})
+    else:
+        st['fails'] = int(st.get('fails', 0)) + 1
+        log(f'Bridge BAD ({st["fails"]}x consecutive) health={text[:150]}')
+        if st['fails'] >= FAIL_THRESHOLD and not st.get('alerted'):
+            send_telegram(f'⚠️ بریج MT5 قطع است ({st["fails"]} بررسی متوالی ناموفق)\n{datetime.now(timezone.utc).strftime("%H:%M UTC")}\nبررسی: ترمینال MT5 روی ویندوز / C:\\Temp\\bridge.py')
+            st['alerted'] = True
+        _save_state(st)
 
-    st['fails'] = int(st.get('fails', 0)) + 1
-    log(f'Bridge BAD ({st["fails"]}x consecutive) health={text[:150]}')
-    if st['fails'] >= FAIL_THRESHOLD and not st.get('alerted'):
-        send_telegram(f'⚠️ بریج MT5 قطع است ({st["fails"]} بررسی متوالی ناموفق)\n{datetime.now(timezone.utc).strftime("%H:%M UTC")}\nبررسی: ترمینال MT5 روی ویندوز / C:\\Temp\\bridge.py')
-        st['alerted'] = True
-    _save_state(st)
-    return 1
+    # b31: daemon liveness + heartbeat (market-hours only, deduped 6h)
+    try:
+        import sys
+        sys.path.insert(0, str(BASE))
+        from engines.market_hours import is_market_open
+        if is_market_open():
+            problem = _daemon_check()
+            now_ts = datetime.now(timezone.utc).timestamp()
+            last_alert = float(st.get('daemon_alerted_at', 0) or 0)
+            if problem and (now_ts - last_alert) > 6 * 3600:
+                send_telegram(f'🔴 دایمون هرمس: {problem}\n{datetime.now(timezone.utc).strftime("%H:%M UTC")}')
+                st['daemon_alerted_at'] = now_ts
+                _save_state(st)
+                log(f'Daemon alert: {problem}')
+    except Exception as e:
+        log(f'daemon check skipped: {e}')
+
+    return 0 if healthy else 1
 
 
 if __name__ == '__main__':

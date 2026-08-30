@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-0753f3b7",
+  "plan_id": "xau-dce5da4b",
   "symbol": "XAUUSD",
   "bias": "bearish",
   "session": "london",
@@ -49,13 +49,13 @@
       "m15": "neutral"
     },
     "regime": "breakout_continuation",
-    "smc_confidence": 0.78,
-    "smc_poi": "A+",
-    "smc_signal": "wait"
+    "smc_confidence": 0.46,
+    "smc_poi": "A",
+    "smc_signal": "bearish"
   },
-  "created_at": "2026-08-30T12:05:34.199899+00:00",
-  "expires_at": "2026-08-31T00:05:34.199899+00:00",
-  "next_reassessment": "2026-08-30T12:10:34.199899+00:00",
+  "created_at": "2026-08-30T11:55:24.195330+00:00",
+  "expires_at": "2026-08-30T23:55:24.195330+00:00",
+  "next_reassessment": "2026-08-30T12:00:24.195330+00:00",
   "context": {
     "m5_last": 4454.75,
     "h1_last": 4454.75,
@@ -517,18 +517,18 @@
         "swing_low": 4445.47
       },
       "killzone": {
-        "session": "newyork",
-        "weight": 1.0
+        "session": "dead",
+        "weight": 0.0
       },
       "bias": "bearish",
-      "confidence": 0.9179238046535413,
-      "signal": "wait",
-      "signal_confidence": 0.3,
-      "poi": "A+",
+      "confidence": 0.9176891615541921,
+      "signal": "bearish",
+      "signal_confidence": 0.27530674846625763,
+      "poi": "A",
       "swing_high": 4631.7,
       "swing_low": 4445.47,
       "last_price": 4454.75,
-      "smc_weight": 1.0,
+      "smc_weight": 0.5,
       "h1_structure": {
         "phase": "bos_bearish",
         "confidence": 1.0
@@ -767,8 +767,8 @@
     },
     "merged": {
       "bias": "bearish",
-      "confidence": 0.78,
-      "action": "bearish",
+      "confidence": 0.46,
+      "action": "short",
       "classic_source": {
         "bias": "bearish",
         "confidence": 0.35,
@@ -777,17 +777,17 @@
       },
       "smc_source": {
         "bias": "bearish",
-        "signal": "wait",
-        "confidence": 0.9179238046535413,
-        "weight": 1.0,
-        "poi": "A+",
+        "signal": "bearish",
+        "confidence": 0.9176891615541921,
+        "weight": 0.5,
+        "poi": "A",
         "market_structure": {
           "phase": "bos_bearish",
           "confidence": 0.7881136950904715
         },
         "killzone": {
-          "session": "newyork",
-          "weight": 1.0
+          "session": "dead",
+          "weight": 0.0
         }
       }
     }

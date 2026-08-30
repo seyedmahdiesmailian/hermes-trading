@@ -66,12 +66,26 @@ def evaluate_news_lock(
     Accepts either a calendar dict ({events: [...]}) or a raw event list.
     Event timestamps are read from 'timestamp' | 'datetime_utc' | 'date' |
     'date'+'time' (ForexFactory gives ISO dates with offset, time=None).
+
+    b31 SHAPE FIX — this guard was mathematically DEAD in production: the
+    only calendar it ever receives is plan.context.macro.calendar, written
+    from get_upcoming_events(), whose shape is
+    {'source','high_impact':[...],'medium_impact':[...],'total_events',...}
+    — there is NO 'events' key. The old lookup chain fell through to the
+    dict itself, `isinstance(events, list)` failed, and the guard returned
+    None for ANY input. Proof: scripts/probe_news_lock.py feeds a FOMC
+    event 10 minutes away (dead center of the 30-min window) in the
+    production shape → None; in the raw {'events': [...]} shape → correct
+    lock. 'high_impact' is now read first, pinned by a regression test.
     """
     if not macro_calendar:
         return None
     now = now or datetime.now(timezone.utc)
     if isinstance(macro_calendar, dict):
-        events = macro_calendar.get("events") or macro_calendar.get("calendar_summary") or macro_calendar
+        events = (macro_calendar.get("high_impact")
+                  or macro_calendar.get("events")
+                  or macro_calendar.get("calendar_summary")
+                  or macro_calendar)
     else:
         events = macro_calendar  # raw list of events
     if isinstance(events, dict):

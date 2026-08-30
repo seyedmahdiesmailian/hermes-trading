@@ -26,11 +26,22 @@ export PYTHONPATH=/home/ai/hermes-trading
 NOW=$(date '+%Y-%m-%d %H:%M:%S')
 echo "[$NOW] Cron triggered" >> logs/cron.log
 
+# b31: flock — if a previous master cycle is still hung (bridge stall,
+# calendar fetch), SKIP this tick instead of running two masters racing on
+# cooldown/plan state. timeout 840s = hard ceiling below the 15-min period.
+exec 9>/tmp/hermes_master.lock
+if ! flock -n 9; then
+  echo "[$NOW] Phase 1 SKIPPED (previous cycle still running)" >> logs/cron.log
+  exit 0
+fi
+
 # Phase 1: Autonomous trading
-python3 /home/ai/hermes-trading/hermes_master.py >> logs/master_cron.log 2>&1
+timeout 840 python3 /home/ai/hermes-trading/hermes_master.py >> logs/master_cron.log 2>&1
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
   echo "[$NOW] Phase 1 OK" >> logs/cron.log
+elif [ $RESULT -eq 124 ]; then
+  echo "[$NOW] Phase 1 TIMEOUT (killed at 840s)" >> logs/cron.log
 else
   echo "[$NOW] Phase 1 FAILED (exit $RESULT)" >> logs/cron.log
 fi
