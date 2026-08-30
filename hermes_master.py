@@ -24,18 +24,29 @@ from notifier.telegram import send_telegram, send_ops
 
 BASE_DIR = Path('/home/ai/hermes-trading')
 # logs go through paths so a test/staging run (HERMES_DATA_ROOT) can never
-# write into production logs (2026-08-30 audit convention: state via engines.paths)
+# write into production logs (2026-08-30 audit convention: state via engines.paths).
+# b37: these were module-level constants bound at IMPORT time — which is
+# before hermetic.use_temp_data_root() flips HERMES_DATA_ROOT, so any test
+# importing hermes_master wrote straight into production logs/master.log.
+# Resolved at CALL time now, like everything else.
 from engines import paths as _paths
-LOG_FILE = _paths.logs_dir() / 'master.log'
-REPORT_FILE = _paths.logs_dir() / 'report.txt'
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 
 
+def _log_file():
+    return _paths.logs_dir() / 'master.log'
+
+
+def _report_file():
+    return _paths.logs_dir() / 'report.txt'
+
+
 def log(msg: str):
-    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    path = _log_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
     line = f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
     # no print(): cron redirects stdout into the same log → duplicate lines
-    with LOG_FILE.open('a', encoding='utf-8') as f:
+    with path.open('a', encoding='utf-8') as f:
         f.write(line + '\n')
 
 
@@ -82,8 +93,81 @@ def build_report(payload: dict, bridge_health: dict) -> str:
 
 
 def save_report(text: str):
-    REPORT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_FILE.write_text(text, encoding='utf-8')
+    path = _report_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding='utf-8')
+
+
+# Resolved at CALL time (engines.paths convention): hermetic.use_temp_data_root()
+# sets HERMES_DATA_ROOT after this module is imported, so a module-level
+# constant would point at PRODUCTION data/ops and a test could unlink it.
+def _guard_alert_state():
+    return _paths.data_dir() / 'ops' / 'guard_alert_state.json'
+
+
+# Re-alert interval for an UNCHANGED degradation. The master runs every 15
+# min; without this a calendar outage (both feeds failing was measured
+# live-reachable in b30) pages the ops channel 4x/hour for the same fact
+# until it heals — alert fatigue that gets the next real page ignored.
+GUARD_ALERT_COOLDOWN_SEC = 6 * 3600
+
+
+def alert_degraded_guards(payload: dict, step: str,
+                          now: datetime | None = None) -> bool:
+    """b37: hermes_runtime.cycle tags the fallback guard merge outcome in
+    payload['guards']. 'error' (news_lock/time_exit blew up) and
+    'calendar_unavailable' (news_lock could not see the news) mean a live
+    position is being managed with FEWER safety guards than usual — that must
+    reach the ops channel even on a step that is otherwise silent.
+
+    Deduped: the same (state, detail) re-alerts at most once per
+    GUARD_ALERT_COOLDOWN_SEC; a CHANGED failure alerts immediately, and so
+    does the same failure recurring after a healthy cycle cleared the state.
+    The log line is written every time — only the page is throttled.
+
+    Returns True if an alert was sent (so a test can assert it)."""
+    guards = payload.get('guards') or {}
+    state = guards.get('state')
+    if state not in {'error', 'calendar_unavailable'}:
+        if state in {'none', 'applied'}:
+            # Guards ran fine this cycle → forget the old degradation so the
+            # next one pages immediately, even inside the cooldown window.
+            # NOTE: an ABSENT guards key means the watchdog is alive (the
+            # runtime did not manage at all), NOT that guards are healthy —
+            # so it must not clear the state.
+            try:
+                _guard_alert_state().unlink(missing_ok=True)
+            except OSError:
+                pass
+        return False
+    detail = str(guards.get('detail') or '')[:200]
+    key = f"{state}|{detail[:80]}"
+    now = now or datetime.now(timezone.utc)
+    prev = _paths.read_json_safe(_guard_alert_state(), {},
+                                 label='guard_alert') or {}
+    if isinstance(prev, dict) and prev.get('key') == key:
+        try:
+            age = (now - datetime.fromisoformat(str(prev['at']))).total_seconds()
+        except (KeyError, TypeError, ValueError):
+            age = None
+        if age is not None and 0 <= age < GUARD_ALERT_COOLDOWN_SEC:
+            log(f"GUARDS DEGRADED [{state}] step={step}: {detail} "
+                f"(already paged {int(age)}s ago, suppressed)")
+            return False
+    log(f"GUARDS DEGRADED [{state}] step={step}: {detail}")
+    try:
+        _paths.write_json_atomic(_guard_alert_state(),
+                                 {'key': key, 'state': state, 'step': step,
+                                  'detail': detail, 'at': now.isoformat()})
+    except Exception as e:
+        log(f"guard alert state write failed: {e}")   # page anyway
+    try:
+        from notifier.telegram import send_ops
+        send_ops(f"🛑 Hermes | گاردهای ایمنی مدیریت ضعیف شد\n"
+                 f"step={step} | state={state}\n{detail}")
+    except Exception as e:
+        log(f"ops alert failed: {e}")
+    return True
 
 
 def main():
@@ -135,6 +219,13 @@ def main():
     # ── Build report ──
     report = build_report(payload, bridge_health)
     save_report(report)
+
+    # ── b37: safety-guard failures on the fallback management path ──
+    # The runtime's news_lock/time_exit merge used to swallow errors in a
+    # bare `except Exception: pass` — the trade kept its original stop and
+    # nobody knew the guards were skipped. The cycle now tags the outcome;
+    # surface it on the ops channel even when the step is otherwise silent.
+    alert_degraded_guards(payload, step)
 
     # ── Telegram: report plan/halt/execute (reassess = silent unless bias flips) ──
     if step == 'reassess':

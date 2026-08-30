@@ -25,6 +25,7 @@ from engines.risk import assess_account_policy, compute_performance_state
 from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log
 from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
 from engines.macro_filter import apply_macro_guard
+from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock
 from engines.auto_executor import evaluate_proposal, execute_trade, evaluate_management_action
 from engines.kill_switch import check_kill_switch
 
@@ -219,6 +220,144 @@ def _fallback_opened_at(broker_time, wd_entry,
     return _epoch_to_iso(broker_time)
 
 
+def _runtime_log(msg: str) -> None:
+    """b37: the runtime had NO logger — every swallowed exception was
+    invisible. Append to logs/runtime.log (resolved at CALL time so a test
+    run with HERMES_DATA_ROOT can never write into production logs)."""
+    try:
+        path = _paths.logs_dir() / 'runtime.log'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        with path.open('a', encoding='utf-8') as f:
+            f.write(f"[{ts}] {msg}\n")
+    except Exception:
+        pass  # logging must never take the trading cycle down
+
+
+def _guard_brief_line(status: dict | None, ticket) -> str:
+    """b37: make the guard outcome VISIBLE. An error or a blind calendar is
+    appended to the brief (hermes_master sends it to Telegram on step=manage);
+    a clean 'none' adds nothing so normal cycles stay quiet."""
+    if not status:
+        return ''
+    state = status.get('state')
+    if state in (None, 'none', 'applied'):
+        return ''
+    detail = str(status.get('detail') or '')[:160]
+    tag = f" #ticket {ticket}" if ticket is not None else ''
+    if state == 'error':
+        return (f"\n\n🛑 گاردهای ایمنی (news_lock/time_exit) اجرا نشدند"
+                f"{tag}: {detail} — مدیریت فقط بر زنجیره اصلی")
+    if state == 'calendar_unavailable':
+        return (f"\n\n⚠️ تقویم اخبار در دسترس نیست — news_lock این چرخه "
+                f"نمی‌تواند قفل کند (time_exit فعال است)")
+    return ''
+
+
+def _plan_calendar(plan: dict) -> dict | None:
+    """plan.context.macro.calendar — shape-safe.
+
+    b37: the inline chain `plan.get('context',{}).get('macro',{}).get('calendar')`
+    raised AttributeError whenever `context['macro']` was None — which the
+    monitor path writes literally (`plan['context']['macro'] = macro_snap`,
+    macro_snap=None after a failed analyze_macro). The exception landed in the
+    guard merge's bare `except Exception: pass`, so BOTH safety guards were
+    dropped in silence.
+    """
+    ctx = plan.get('context')
+    macro = ctx.get('macro') if isinstance(ctx, dict) else None
+    if not isinstance(macro, dict):
+        return None
+    cal = macro.get('calendar')
+    return cal if isinstance(cal, (dict, list)) else None
+
+
+def _guard_calendar(plan: dict, now: datetime) -> tuple[dict | None, str]:
+    """Calendar for the management guards, with a live-fetch fallback.
+
+    Returns (calendar, source) where source ∈ plan / plan_stale / fetched /
+    unavailable. b37: news_lock is only as alive as the calendar it is handed,
+    and a plan built by build_live_plan (plan/reassess step) carries NO macro
+    context at all — the guard merge used to pass None and the lock could
+    never fire. Mirrors position_daemon._guard_calendar: plan first, then a
+    fresh fetch (the calendar module caches to disk, so this is cheap).
+    """
+    cal = _plan_calendar(plan)
+    if isinstance(cal, dict) and cal.get('source') == 'unavailable':
+        cal = None
+    if cal:
+        if isinstance(cal, list):      # raw event list — news_lock accepts it
+            return cal, 'plan'
+        return cal, ('plan' if not cal.get('stale') else 'plan_stale')
+    try:
+        from engines.economic_calendar import get_upcoming_events
+        fetched = get_upcoming_events(hours_ahead=24) or {}
+        # NOTE: get_upcoming_events returns 'high_impact'/'total_events', NOT
+        # 'events' (that key belongs to fetch_economic_calendar). A real
+        # 'no news today' bucket still carries total_events > 0; only a dead
+        # feed is 'unavailable'/empty.
+        dead = (fetched.get('source') == 'unavailable'
+                or not (fetched.get('total_events') or fetched.get('high_impact')))
+        if dead:
+            return None, 'unavailable'
+        return fetched, 'fetched'
+    except Exception as e:
+        _runtime_log(f'guard calendar failed: {type(e).__name__}: {e}')
+        return None, 'unavailable'
+
+
+def evaluate_legacy_guards(management: dict, plan: dict, trade: dict,
+                           p, market_price: float, now: datetime,
+                           broker_offset: float | None,
+                           wd_entry: dict | None = None) -> tuple[dict, dict]:
+    """b37 — priority merge with an OBSERVABLE outcome.
+
+    news_lock(1) > time_exit(2) > core management(3+), mirroring
+    position_daemon.apply_legacy_guards. The old inline block in cycle()
+    ended in `except Exception: pass`: any broken plan shape or calendar
+    error silently DROPPED both guards — the same fail-open hole class b30
+    closed on the entry side, and worse than the daemon's version because
+    the runtime did not even log it.
+
+    Now returns (management, guards_status):
+      status['state'] = 'applied' | 'none' | 'error'
+      status['detail'] = reason / error text (surfaced in the brief + payload
+                         so hermes_master can alert)
+    A guard-eval error deliberately does NOT block new entries: the entry
+    path has its own fail-closed blackout gate (b30), and with
+    MAX_OPEN_POSITIONS=1 a cycle that just failed to manage an open position
+    cannot open a second one anyway. It IS loud — log + brief + Telegram.
+    """
+    status: dict = {'state': 'none', 'guards': 'news_lock,time_exit'}
+    try:
+        cal, cal_src = _guard_calendar(plan, now)
+        status['calendar'] = cal_src
+        if cal_src == 'unavailable':
+            # news_lock cannot evaluate without a calendar. Not an error, but
+            # the operator must know the lock was blind this cycle.
+            status['state'] = 'calendar_unavailable'
+        opened_at = _fallback_opened_at(getattr(p, 'time', None),
+                                        wd_entry, broker_offset)
+        nl_trade = {**trade,
+                    'entry_price': getattr(p, 'price_open', market_price),
+                    'sl': getattr(p, 'sl', 0),
+                    'atr': plan.get('atr') or (plan.get('quality') or {}).get('atr') or 5}
+        guards = (evaluate_news_lock(nl_trade, market_price, cal, now),
+                  evaluate_time_exit({'opened_at': opened_at}, now))
+        for g in guards:
+            if g and int(g.get('priority', 9)) < int(management.get('priority', 3)):
+                status['state'] = 'applied'
+                status['detail'] = g.get('reason')
+                return g, status
+        return management, status
+    except Exception as e:
+        status['state'] = 'error'
+        status['detail'] = f'{type(e).__name__}: {e}'
+        _runtime_log(f"guard eval error #{getattr(p, 'ticket', '?')}: "
+                     f"{status['detail']} — falling back to core management")
+        return management, status
+
+
 def _load_closed_trades(bridge, days=7) -> list[dict]:
     r = bridge.get_history_deals(SYMBOL, days)
     if isinstance(r, dict) and r.get('ok'):
@@ -316,6 +455,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
 
     # ── Manage Existing Positions ──
     # Skip if position watchdog daemon is alive (manages every 5s)
+    guard_status_last: dict | None = None
     hb = _plan_dir() / 'watchdog_heartbeat'
     watchdog_alive = False
     if hb.exists():
@@ -364,21 +504,15 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             management = evaluate_trade_management(trade, market_price, now)
 
             # ── Legacy priority merge: news_lock(1) > time_exit(2) > legacy chain(3+) ──
-            try:
-                from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock
-                _cal = plan.get('context', {}).get('macro', {}).get('calendar') if plan.get('context') else None
-                _tx = evaluate_time_exit(
-                    {'opened_at': _fallback_opened_at(
-                        getattr(p, 'time', None),
-                        wd_positions.get(str(p.ticket)), broker_offset),
-                     'side': trade['side']}, now)
-                _nl = evaluate_news_lock({**trade, 'side': trade['side'], 'entry_price': getattr(p, 'price_open', market_price), 'sl': getattr(p, 'sl', 0), 'atr': plan.get('atr') or plan.get('quality', {}).get('atr') or 5}, market_price, _cal, now)
-                for _guard in (_nl, _tx):
-                    if _guard and int(_guard.get('priority', 9)) < int(management.get('priority', 3)):
-                        management = _guard
-                        break
-            except Exception:
-                pass
+            # b37: was an inline `try: ... except Exception: pass` — a broken
+            # plan shape (context['macro']=None is written by the monitor path
+            # itself) or a calendar error dropped BOTH guards with no log and
+            # no trace in the report. Now a named helper that logs, tags the
+            # status, and hands it to the brief/payload.
+            management, guard_status = evaluate_legacy_guards(
+                management, plan, trade, p, market_price, now, broker_offset,
+                wd_entry=wd_positions.get(str(p.ticket)))
+            guard_status_last = guard_status
 
             if management.get('action') != 'hold':
                 # AUTO-EXECUTE management action
@@ -410,6 +544,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                     management['runner_active'] = False
 
                 brief = render_management_brief(plan, management)
+                brief += _guard_brief_line(guard_status, p.ticket)
                 if not _committed and mgmt_result.get('error'):
                     brief += (f"\n\n⚠️ اقدام مدیریت انجام نشد (بروکر رد کرد): "
                               f"{mgmt_result['error'][:120]} — وضعیت قبلی دست‌نخورده")
@@ -424,9 +559,16 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                     elif management.get('action') in {'close_runner', 'close_trade_early'}:
                         tstate['runner_active'] = False
                 save_runtime_state(_plan_dir(), runtime)
-                return {'ok': True, 'step': 'manage', 'plan_id': plan.get('plan_id'), 'management': management, 'brief': brief, 'will_execute_now': mgmt_result.get('executed', False), 'account_policy': policy, 'performance_state': performance}
+                return {'ok': True, 'step': 'manage', 'plan_id': plan.get('plan_id'), 'management': management, 'guards': guard_status, 'brief': brief, 'will_execute_now': mgmt_result.get('executed', False), 'account_policy': policy, 'performance_state': performance}
 
     # ── Monitor for New Entry ──
+    # b37: if the fallback loop ran but took no action, a guard error or a
+    # blind calendar must still reach the operator — otherwise the cycle
+    # reports a clean 'monitor' step while both safety guards were skipped.
+    # (A new entry is already impossible here: MAX_OPEN_POSITIONS=1 and
+    # evaluate_proposal's position_limit blocks it — the guard failure is a
+    # VISIBILITY problem, not a gate-bypass one.)
+    guard_note = _guard_brief_line(guard_status_last, None) if positions else ''
     monitor = evaluate_monitor_cycle(plan, price=price, now=now)
     # Stale plan (price ran far from zones) → force reassess next cycle
     if 'plan_stale' in str(monitor.get('reason', '')):
@@ -556,6 +698,8 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
 
     # Build brief
     brief = render_monitor_brief(plan, monitor)
+    if guard_note:
+        brief += guard_note
     if will_execute and execution_result:
         brief += "\n\n" + render_execution_brief(plan, execution_result)
     elif proposal and proposal.get('skip_reason'):
@@ -579,6 +723,8 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         'execution_result': execution_result,
         'account_policy': policy, 'performance_state': performance,
     }
+    if guard_status_last:
+        payload['guards'] = guard_status_last
 
     runtime['active_plan_id'] = plan.get('plan_id')
     runtime['last_step'] = 'monitor'

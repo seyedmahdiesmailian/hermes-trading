@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T13:11:46.692959+00:00",
+ "last_run_utc": "2026-08-30T16:11:15.729321+00:00",
  "recent_commits": [
-  "e2b93e1 b31: news_lock was mathematically DEAD \u2014 evaluate_news_lock read calendar['events'] but production writes {'high_impact':[...]}, so it returned None on every call ever; now reads impact buckets (tightening-only, 3 protective tests red-verified against old code); staleness audit: calendar median age 0min, perf day-rollover rebases correctly, management state empty because daemon owns mgmt (b32 filed)",
-  "039b6b3 b30: news/spread gates FAIL CLOSED on both entry paths \u2014 dead calendar no longer means 'no news' (staleness budget + no cache poisoning), signal news blackout is a hard block not a -2.0 penalty, tick/staleness/spread gate errors skip instead of trading unchecked; 14 regression tests (7 red against old code), 117 green, live cycle OK",
-  "8f57eb5 b29: safety gates FAIL CLOSED \u2014 grade/DEFCON/cooldown/account-policy gate errors now block entry instead of silently bypassing (tests/test_failclosed_gates.py, verified red against old code); b30 todo filed for remaining fail-open macro/spread gates",
-  "28c661e b28: M15 added as 4th analytical vote (never decides entry)",
-  "e4b8dce b27: TF naming truth + M15 A/B evidence"
+  "706375c b37: 3rd Telegram bot (ops/reports) \u2014 routing split: trade events -> trade bot, system status (autopilot, health, backup, watchdog, kill-switch, daemon errors) -> ops bot via send_ops()",
+  "77836fa b36: per-run autopilot Telegram report (silent when idle, loud on work/failure; AUTOPILOT_REPORT_BOT_TOKEN/CHAT_ID for a dedicated bot)",
+  "c0798c4 autopilot: b35 filed b37 (bare except on fallback guard merge) + b38 (live calibration check after market open)",
+  "86cd130 autopilot: b35 broker-clock calibration handoff \u2014 watchdog publishes, runtime fallback time_exit consumes; detection-time fallback errs early-not-late; 17 tests",
+  "1b789b3 b35: DR architecture finalized \u2014 backup now includes .git_token (conditional), verified on Windows (tar+bundle present)"
  ]
 }
