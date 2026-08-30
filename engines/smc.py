@@ -840,16 +840,24 @@ def evaluate_silver_bullet_setup(now=None) -> dict:
 # ── 7. Session Liquidity ─────────────────────────────────────────────────────
 
 def compute_session_liquidity(rows: list[dict], session: str = "asia") -> dict:
-    """Compute session highs, lows, midpoint, and sweep detection."""
+    """Compute session highs, lows, midpoint, and sweep detection.
+
+    BUG FIX 2026-08-30: swept_* compared the last 3 bars against a range
+    that INCLUDED them — max(high) can never be exceeded by its own member,
+    so both flags were mathematically always False (dead detector).
+    The range must come from the earlier bars; the last 3 are the sweepers.
+    """
     if not rows:
         return {"session_high": 0.0, "session_low": 0.0, "midpoint": 0.0, "swept_high": False, "swept_low": False, "session": session, "range": 0.0}
-    sh = max(r["high"] for r in rows)
-    sl = min(r["low"] for r in rows)
+    base = rows[:-3] if len(rows) > 3 else rows
+    tail = rows[-3:] if len(rows) > 3 else []
+    sh = max(r["high"] for r in base)
+    sl = min(r["low"] for r in base)
     return {
         "session": session, "session_high": sh, "session_low": sl,
         "midpoint": round((sh + sl) / 2, 2),
-        "swept_high": any(r["high"] > sh for r in rows[-3:]),
-        "swept_low": any(r["low"] < sl for r in rows[-3:]),
+        "swept_high": any(r["high"] > sh for r in tail),
+        "swept_low": any(r["low"] < sl for r in tail),
         "range": round(sh - sl, 2),
     }
 

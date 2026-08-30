@@ -128,5 +128,26 @@ class SignalFreshnessGateTests(unittest.TestCase):
         self.assertEqual(self._found_count([900]), 0)         # 15 min → dropped
 
 
+class SessionLiquidityDetectorTests(unittest.TestCase):
+    """compute_session_liquidity swept_* was mathematically always False:
+    the last-3 bars were compared against a range that included them."""
+
+    def test_sweep_detected_after_fix(self):
+        from engines.smc import compute_session_liquidity
+        rows = [{"high": 100 + i, "low": 90 + i} for i in range(10)]
+        # last bar spikes above the earlier range → swept_high must fire
+        rows.append({"high": 120.0, "low": 99.0})
+        r = compute_session_liquidity(rows)
+        self.assertTrue(r["swept_high"])
+        self.assertFalse(r["swept_low"])
+
+    def test_no_sweep_inside_range(self):
+        from engines.smc import compute_session_liquidity
+        rows = [{"high": 100.0, "low": 90.0}] * 12
+        r = compute_session_liquidity(rows)
+        self.assertFalse(r["swept_high"])
+        self.assertFalse(r["swept_low"])
+
+
 if __name__ == "__main__":
     unittest.main()

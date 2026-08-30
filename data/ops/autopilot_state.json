@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T05:36:10.839579+00:00",
+ "last_run_utc": "2026-08-30T06:47:08.656762+00:00",
  "recent_commits": [
-  "2ae9a7f b5: backtest<->live parity gaps closed \u2014 entry TF parameterizable (M5 live parity: 49 trades/59%/+308 on 1500 bars), H1/H4 windows matched to live (80/80), session detection identical to _detect_session (21-24h was mislabeled london)",
-  "e3920c6 autopilot: spread sensitivity \u2014 edge cost-insensitive (12/13 windows profitable even at 0.50 spread, break-even ~2.86); spread_override in run_backtest + spread_sensitivity.py + symmetric-cost test; dead _exit_price removed",
-  "1ecd9fa b4: range_kill A/B on 13 windows \u2014 0.20 vs 0.35 identical (196 trades, +1066$, 12/13 prof) \u2192 threshold not the bottleneck, live unchanged; ab_range_kill.py + measure_neutral.py",
-  "f573aef b3: unblock the funnel \u2014 cooldown self-rearm fix (0/51\u219224/51 entries reach real gates), RR rounding parity, grade gate parity in backtest (was dead: C<B inverted), robustness state/results desync fix",
-  "0b34712 autopilot: env_loader fallback for all dotenv consumers (5 scripts + 2 daemons) + repo-wide regression test"
+  "87cc0f0 b11: reusable A/B harness scripts/ab.py (const-patch + run_backtest kwarg modes, auto-restore) + BE-at-R curve finding: peak +1030 at 0.7R vs 949 at live 0.5R \u2014 keep 0.5R (tighten-only rule, later BE = looser per-trade protection)",
+  "2c08a9b b10b: alert-hygiene audit closed \u2014 fills alert, rejections were silent, now fixed",
+  "85377be b10: alert hygiene \u2014 broker rejection after passing all gates now surfaces skip_reason=broker_rejected (was silent: will_execute=False + no skip_reason meant Telegram never told us we're NOT in the trade we thought we placed)",
+  "3ca7092 b9b: zone-width A/B (8/12/20 bars, cached M5 data) \u2014 keep 12: 13/13 windows profitable, +949/206 trades; 8 marginally higher PnL but one losing window + 9% more trades (cost-sensitive); ZONE_LOOKBACK constant + ab_zone_width.py",
+  "daf9962 b9: backlog checked"
  ]
 }

@@ -29,6 +29,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       append_execution_log rows in hermes_runtime.py + signal_listener.py (result
       already contains it) so future regime joins are exact, not heuristic.
 
+## Findings
+- 2026-08-30 ICT concepts edge audit (scripts/measure_ict_edge.py, 1274 real M5
+  samples, forward 1h move vs baseline): NONE of the 8 unused concepts has a
+  usable directional edge (all |t| below 2.3). silver_bullet window shows a
+  NEGATIVE -0.41 ATR drift (|t|=2.2, n=166 — thin, not actionable alone).
+  DECISION: keep them report-only; do NOT wire into the funnel. Found and
+  fixed a dead detector on the way: compute_session_liquidity swept_high/low
+  were mathematically always False (range included its own sweepers) — fixed
+  plus 2 regression tests (76 green).
+
 ## Done
 - [x] 2026-08-30 Spread/slippage sensitivity: edge is cost-INSENSITIVE — spread is a
       linear per-trade tax (entry/exit geometry unchanged), measured on the 13 cached
