@@ -15,7 +15,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       max-spread pre-entry gate in hermes_runtime (read-only tick check, e.g.
       skip if ask-bid > 0.60) — propose threshold from tick history, do NOT
       weaken existing gates.
-- [ ] Zone-width sanity: long/short entry zones are 0.5 ATR wide from a 12-bar window —
+- [x] Zone-width sanity (done 2026-08-30: A/B 8/12/20 bars on 13 M5 windows — 8: 12/13 prof +970/225t, 12: 13/13 +949/206t, 20: 13/13 +788/179t → keep 12, best balance): long/short entry zones are 0.5 ATR wide from a 12-bar window —
       test 8/12/20-bar lookbacks in the parity funnel, pick best by PnL+trades.
 - [ ] Alert hygiene: master.log 'execute=True' events — verify a Telegram report fires
       within 60s of every live execution (check report path in hermes_master.py).

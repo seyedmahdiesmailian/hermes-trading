@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from statistics import mean
 
+# Entry-zone lookback in bars (M5). A/B 2026-08-30 (scripts/ab_zone_width.py)
+# on 13×500-bar M5 windows: 8/12/20 bars → see finding in backlog.
+ZONE_LOOKBACK = 12
+
 
 
 def estimate_atr(rows: list[dict]) -> float:
@@ -49,7 +53,7 @@ def classify_bias(rows: list[dict], min_move: float | None = None, min_agreement
 
 def compute_m5_zones(m5_rows: list[dict], atr: float) -> dict:
     """Compute tighter zones from M5 data for faster entries."""
-    lookback = m5_rows[-12:]  # 1 hour on M5 — tracks fast-crashing markets
+    lookback = m5_rows[-ZONE_LOOKBACK:]  # 1 hour on M5 — tracks fast-crashing markets
     m5_low = min(r["low"] for r in lookback)
     m5_high = max(r["high"] for r in lookback)
     mid = (m5_low + m5_high) / 2.0
