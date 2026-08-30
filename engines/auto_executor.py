@@ -404,11 +404,16 @@ def execute_trade(command: dict, bridge, dry_run: bool = False) -> dict:
             tp=tp_price,
         )
 
+        _accepted = isinstance(result, dict) and result.get("ok", False)
         return {
-            "ok": isinstance(result, dict) and result.get("ok", False),
+            "ok": _accepted,
             "result": result,
             "command": command,
-            "executed": True,
+            # executed must mean "broker accepted the order". It was hardcoded
+            # True whenever send_order returned at all — a retcode 10018/20004
+            # rejection still reported "✅ trade opened" to Telegram and the
+            # signal listener propagated the lie.
+            "executed": _accepted,
         }
 
     except Exception as e:
