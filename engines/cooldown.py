@@ -31,9 +31,7 @@ def _load() -> dict:
 
 
 def _save(state: dict):
-    state_file = paths.cooldown_state()
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    state_file.write_text(json.dumps(state, indent=1), encoding="utf-8")
+    paths.write_json_atomic(paths.cooldown_state(), state, indent=1)
 
 
 def _market_open_utc(now: datetime) -> datetime:

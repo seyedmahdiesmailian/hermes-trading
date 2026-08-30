@@ -46,9 +46,7 @@ def _load_state() -> dict:
 
 
 def _save_state(state: dict):
-    state_file = paths.kill_switch_state()
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    state_file.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    paths.write_json_atomic(paths.kill_switch_state(), state, indent=2)
 
 
 def check_kill_switch(

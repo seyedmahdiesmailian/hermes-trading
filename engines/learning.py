@@ -323,8 +323,7 @@ def apply(deltas: dict) -> dict:
         cur['risk_mult'] = _clamp(min(proposed, cur.get('risk_mult', 1.0)), 0.5, 1.0)
     cur['updated_at'] = datetime.now(timezone.utc).isoformat()
     learning_json = paths.learning_state()
-    learning_json.parent.mkdir(parents=True, exist_ok=True)
-    learning_json.write_text(json.dumps(cur, indent=1), encoding='utf-8')
+    paths.write_json_atomic(learning_json, cur, indent=1)
     return cur
 
 

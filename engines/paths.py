@@ -14,7 +14,9 @@ Production default is unchanged.
 """
 from __future__ import annotations
 
+import json
 import os
+import time
 from pathlib import Path
 
 PRODUCTION_ROOT = Path("/home/ai/hermes-trading")
@@ -90,3 +92,50 @@ def trade_journal() -> Path:
 
 def calendar_cache() -> Path:
     return calendar_dir() / "economic_calendar.json"
+
+
+# ── durable JSON I/O ────────────────────────────────────────────────────
+# Why (2026-08-30 audit): state files were written with a bare
+# path.write_text(). A crash or power loss mid-write leaves a truncated JSON
+# file, and the readers had no try/except — so the NEXT trading cycle died on
+# an unhandled JSONDecodeError and stayed dead until a human noticed. Writes
+# now go temp-file + os.replace (atomic on POSIX); reads degrade to "no
+# state" and quarantine the bad file instead of taking the system down.
+
+def write_json_atomic(path, payload, *, indent: int | None = None, **dumps_kw) -> Path:
+    """Persist JSON so a crash can never leave a half-written file."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    dumps_kw.setdefault("default", str)      # datetimes/Paths → str, never crash
+    text = json.dumps(payload, ensure_ascii=False, indent=indent, **dumps_kw)
+    with tmp.open("w", encoding="utf-8") as f:
+        f.write(text)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)          # atomic rename, same directory
+    return path
+
+
+def read_json_safe(path, default=None, *, label: str | None = None):
+    """Load JSON; on missing/corrupt input return `default` and warn.
+
+    A corrupt state file must degrade to 'no state', never crash the cycle.
+    The unreadable file is kept aside as <name>.corrupt.<ts> for forensics.
+    """
+    path = Path(path)
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        tag = label or path.name
+        try:
+            kept = path.with_name(f"{path.name}.corrupt.{int(time.time())}")
+            path.replace(kept)
+            print(f"[paths] WARN {tag} unreadable ({exc}); moved to "
+                  f"{kept.name}, continuing with default", flush=True)
+        except Exception:
+            print(f"[paths] WARN {tag} unreadable ({exc}); using default",
+                  flush=True)
+        return default

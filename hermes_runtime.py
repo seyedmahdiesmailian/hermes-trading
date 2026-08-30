@@ -424,8 +424,8 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                 macro_snap['calendar'] = None
             macro_snap['_fetched_at'] = _time.time()
             try:
-                snap_file.parent.mkdir(parents=True, exist_ok=True)
-                snap_file.write_text(json.dumps(macro_snap, ensure_ascii=False, default=str), encoding='utf-8')
+                from engines import paths as _pp
+                _pp.write_json_atomic(snap_file, macro_snap)
             except Exception:
                 pass
         plan.setdefault('context', {})['macro'] = macro_snap

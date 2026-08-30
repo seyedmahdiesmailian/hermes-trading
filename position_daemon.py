@@ -33,12 +33,11 @@ except ImportError:
 load_dotenv(BASE / '.env')
 
 from bridge_client import BridgeClient
+from engines import paths
 from engines.trade_management import evaluate_trade_management
 from engines.auto_executor import evaluate_management_action
 
-LOG_FILE = BASE / 'logs' / 'position_daemon.log'
-STATE_FILE = BASE / 'data' / 'xau_plan' / 'watchdog_state.json'
-PLAN_FILE = BASE / 'data' / 'xau_plan' / 'current_plan.json'
+LOG_FILE = paths.logs_dir() / 'position_daemon.log'
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 POLL_SEC = 5
 
@@ -67,26 +66,17 @@ def send_telegram(text: str):
 
 
 def load_state() -> dict:
-    if STATE_FILE.exists():
-        try:
-            return json.loads(STATE_FILE.read_text())
-        except Exception:
-            pass
-    return {"positions": {}, "closed": []}
+    return paths.read_json_safe(paths.watchdog_state(),
+                                {"positions": {}, "closed": []},
+                                label="watchdog_state")
 
 
 def save_state(state: dict):
-    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    tmp = STATE_FILE.with_suffix('.tmp')
-    tmp.write_text(json.dumps(state, default=str))
-    tmp.replace(STATE_FILE)
+    paths.write_json_atomic(paths.watchdog_state(), state, default=str)
 
 
 def load_plan() -> dict:
-    try:
-        return json.loads(PLAN_FILE.read_text())
-    except Exception:
-        return {}
+    return paths.read_json_safe(paths.current_plan(), {}, label="current_plan")
 
 
 def _pos_obj(raw: dict):
@@ -291,7 +281,7 @@ def main():
                                               f'اتصال/SL اصلی هنوز فعال — تلاش مجدد خودکار')
 
             save_state(state)
-            (BASE / 'data' / 'xau_plan' / 'watchdog_heartbeat').write_text(
+            (paths.plan_dir() / 'watchdog_heartbeat').write_text(
                 datetime.now(timezone.utc).isoformat())
             errors = 0
             time.sleep(POLL_SEC)

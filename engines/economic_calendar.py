@@ -58,10 +58,8 @@ def _load_cache() -> dict | None:
 
 
 def _save_cache(data: dict):
-    cache_file = _cache_file()
-    cache_file.parent.mkdir(parents=True, exist_ok=True)
     data["cached_at"] = _now_utc().isoformat()
-    cache_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
+    paths.write_json_atomic(_cache_file(), data, indent=2)
 
 
 def _fetch_forexfactory() -> dict | None:

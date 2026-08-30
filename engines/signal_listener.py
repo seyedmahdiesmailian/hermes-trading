@@ -63,9 +63,7 @@ def _load_state() -> dict:
 
 
 def _save_state(state: dict):
-    state_file = paths.listener_state()
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    state_file.write_text(json.dumps(state), encoding='utf-8')
+    paths.write_json_atomic(paths.listener_state(), state)
 
 
 def _log_signal(signal_text: str, parsed: dict, decision: dict):
@@ -76,19 +74,15 @@ def _log_signal(signal_text: str, parsed: dict, decision: dict):
         "parsed": parsed,
         "decision": decision,
     }
-    log = []
     log_file = paths.signals_log()
-    log_file.parent.mkdir(parents=True, exist_ok=True)
-    if log_file.exists():
-        try:
-            log = json.loads(log_file.read_text(encoding='utf-8'))
-        except Exception:
-            log = []
+    log = paths.read_json_safe(log_file, [], label="signals_log")
+    if not isinstance(log, list):
+        log = []
     log.append(entry)
     # Keep last 200 entries
     if len(log) > 200:
         log = log[-200:]
-    log_file.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding='utf-8')
+    paths.write_json_atomic(log_file, log, indent=2)
 
 
 def fetch_new_messages() -> list[dict]:
