@@ -17,7 +17,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       weaken existing gates.
 - [x] Zone-width sanity (done 2026-08-30: A/B 8/12/20 bars on 13 M5 windows — 8: 12/13 prof +970/225t, 12: 13/13 +949/206t, 20: 13/13 +788/179t → keep 12, best balance): long/short entry zones are 0.5 ATR wide from a 12-bar window —
       test 8/12/20-bar lookbacks in the parity funnel, pick best by PnL+trades.
-- [ ] Alert hygiene: master.log 'execute=True' events — verify a Telegram report fires
+- [x] Alert hygiene (done 2026-08-30: audit of 4 execute=True events — 2 real fills DID alert, 2 broker rejections were SILENT; b10 now sets skip_reason=broker_rejected so master brief + Telegram surface every rejection)
       within 60s of every live execution (check report path in hermes_master.py).
 - [ ] Reusable A/B template: scripts/ab_aggressive_entry.py pattern (one cached
       dataset + run_backtest(data=...) + exclude_styles prefixes in backtest_ohlc)
