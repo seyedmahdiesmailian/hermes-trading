@@ -88,7 +88,7 @@ printf '%s' '<توکن گیت‌هاب>' > .git_token && chmod 600 .git_token
 ```bash
 cp ops/systemd/*.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now hermes-position hermes-signal
+systemctl --user enable --now hermes-position hermes-signal hermes-dashboard
 crontab ops/cron/crontab.backup.txt
 loginctl enable-linger $USER   # سرویس‌ها بدون لاگین هم زنده بمانند
 ```
@@ -105,7 +105,7 @@ python3 scripts/_deploy_bridge.py   # از لینوکس، با WIN_USER/WIN_PASS
 python3 -m unittest discover -s tests        # باید OK باشد
 python3 scripts/verify_chain.py              # پاریتی زنده با بریج/تقویم
 python3 scripts/hermes_cron.sh               # یک چرخهٔ کامل master دستی
-systemctl --user status hermes-position hermes-signal
+systemctl --user status hermes-position hermes-signal hermes-dashboard
 ```
 
 ## گیت‌های ایمنی (چرا سیستم خودکار بی‌خطر است)

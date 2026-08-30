@@ -24,12 +24,12 @@ pip3 install -q requests python-dotenv pywinrm requests_ntlm pandas numpy python
 mkdir -p logs data/commands data/xau_plan data/trading
 chmod +x scripts/*.sh scripts/hermes_cron.sh scripts/bridge_health_monitor.py 2>/dev/null || true
 
-# 4. systemd user services (position + signal daemons)
+# 4. systemd user services (position + signal daemons + ops dashboard bot)
 echo "── systemd user services"
 mkdir -p ~/.config/systemd/user
-cp ops/systemd/hermes-position.service ops/systemd/hermes-signal.service ~/.config/systemd/user/
+cp ops/systemd/hermes-position.service ops/systemd/hermes-signal.service ops/systemd/hermes-dashboard.service ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now hermes-position hermes-signal || echo "⚠️  services failed to start — check journalctl --user"
+systemctl --user enable --now hermes-position hermes-signal hermes-dashboard || echo "⚠️  services failed to start — check journalctl --user"
 loginctl enable-linger "$(id -un)" 2>/dev/null || true
 
 # 5. crontab (master cycle, health monitor, backup, git sync, autopilot)
