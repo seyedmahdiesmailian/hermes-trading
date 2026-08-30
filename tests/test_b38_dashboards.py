@@ -59,14 +59,14 @@ class TradeCallbackTests(unittest.TestCase):
         calls = self._calls(_cb('194015957', 'tr:does_not_exist'))
         edit = [c for c in calls if c[0] == 'editMessageText']
         self.assertEqual(len(edit), 1)
-        self.assertIn('داشبورد', edit[0][1]['text'])
+        self.assertIn('هرمس تریدر', edit[0][1]['text'])
 
     def test_command_routes_to_panels(self):
         sent = []
         def fake_api(method, params=None):
             sent.append((method, params or {}))
             return {'ok': True}
-        for cmd, needle in (('/plan', 'پلن فعال'), ('/positions', 'پوزیشن'),
+        for cmd, needle in (('/plan', 'پلن معاملاتی'), ('/positions', 'پوزیشن'),
                             ('/pnl', 'سود و ضرر'), ('/risk', 'گیت‌های ایمنی')):
             sent.clear()
             with patch.object(sl, '_telegram_api', side_effect=fake_api):

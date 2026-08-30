@@ -33,7 +33,13 @@ HARD RULES (violating any = revert everything):
 - Keep changes small, tested, committed. If an item cannot be finished in this
   run, leave it todo and add a progress note under it instead.
 
-FINAL OUTPUT: one paragraph — what you did, what you found, next item picked.'
+FINAL OUTPUT: your last message MUST be a Persian (Farsi) management report,
+plain prose (no English, no markdown headers). Structure it as:
+۱) چه کاری انجام شد — آیتم بک‌لاگ و خلاصهٔ تغییر (فایل‌ها/تست‌ها/کامیت)
+۲) چه چیزی کشف شد — یافتهٔ مهم یا ریشهٔ مشکل، به زبان ساده
+۳) نتیجه — تعداد تست‌ها، وضعیت چرخه زنده، وضعیت کامیت
+۴) قدم بعدی — کدام آیتم در نوبت است و چرا
+If the run failed or changed nothing, say exactly that in Persian and why.'
 
 # Agent: hermes -z (headless). Absolute path — cron PATH lacks ~/.local/bin.
 # It loads the same persistent memory, which carries the autonomy rule

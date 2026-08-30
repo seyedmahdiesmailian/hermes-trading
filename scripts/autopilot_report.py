@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Per-run autopilot report → Telegram (separate bot/chat).
+"""Per-run autopilot report → Telegram (ops bot), Persian narrative.
+
+b39 redesign: instead of a bare commit list, the report tells WHAT HAPPENED:
+the agent's own Persian summary of the run (required by the autopilot
+prompt), backlog progress, and the next queued item. Falls back to commit
+subjects when the agent produced no narrative (e.g. model API failure).
 Sends ONLY when something happened: new commits, backlog progress, or a
 failed run. Silent on idle runs unless the run crashed.
-Config: AUTOPILOT_REPORT_CHAT_ID (chat), token from TELEGRAM_BOT_TOKEN.
+Config: AUTOPILOT_REPORT_BOT_TOKEN / AUTOPILOT_REPORT_CHAT_ID.
 State: data/ops/autopilot_report_state.json (last seen commit + done count).
 """
 import json
@@ -10,7 +15,7 @@ import re
 import subprocess
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path('/home/ai/hermes-trading')
@@ -24,8 +29,8 @@ load_dotenv(ROOT / '.env')
 
 STATE = ROOT / 'data/ops/autopilot_report_state.json'
 BACKLOG = ROOT / 'data/ops/autopilot_backlog.md'
-LOG = ROOT / 'logs/autopilot.log'
 rc = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+TEHRAN = timezone(timedelta(hours=3, minutes=30))
 
 
 def git(*args):
@@ -50,35 +55,46 @@ if BACKLOG.exists():
     txt = BACKLOG.read_text()
     done_now = len(re.findall(r'^- \[x\]', txt, re.M))
     m = re.search(r'^- \[ \] (.+)$', txt, re.M)
-    first_todo = (m.group(1)[:110] if m else '')
+    first_todo = (m.group(1)[:150] if m else '')
 
 new_commits = []
 if prev.get('head') and head != prev['head']:
     log = git('log', '--oneline', f"{prev['head']}..HEAD", '--format=%s')
     new_commits = [l for l in log.splitlines() if l][:6]
 
-progress = done_now > prev.get('done', done_now)
-lines = []
+# the agent's own Persian narrative of this run (from autopilot.log)
+narrative = ''
+try:
+    from notifier.dashboards import _autopilot_narrative
+    narrative = _autopilot_narrative(max_chars=900)
+except Exception:
+    narrative = ''
+
+lines = [f'🤖 <b>گزارش اتوپایلوت هرمس</b>',
+         datetime.now(TEHRAN).strftime('%A · %H:%M تهران'), '']
+
 if rc != 0:
-    lines.append(f'🔴 <b>اجرای autopilot با خطا تمام شد</b> (rc={rc})')
-    if LOG.exists():
-        tail = LOG.read_text(errors='ignore').splitlines()[-40:]
-        errs = [l for l in tail if 'ERROR' in l or 'Traceback' in l][-2:]
-        lines += [f'<code>{e[:120]}</code>' for e in errs]
-if new_commits:
+    lines.append(f'🔴 <b>این اجرا با خطا تمام شد (کد {rc})</b>')
+
+if narrative:
+    lines.append(narrative)
+    lines.append('')
+elif new_commits:
     lines.append('🛠 <b>تغییرات این اجرا:</b>')
     lines += [f'· {c[:110]}' for c in new_commits]
-if progress:
-    lines.append(f'📋 پیشرفت بک‌لاگ: {prev.get("done","?")} ← {done_now} انجام‌شده')
-if not lines and rc == 0 and (head != prev.get('head') or done_now != prev.get('done')):
-    lines.append('✅ اجرا شد، تغییر جدیدی نبود')
-if not lines:
-    print('nothing to report')
-    sys.exit(0)
+
+if new_commits:
+    lines.append(f'📌 {len(new_commits)} تغییر کد کامیت و روی گیت‌هاب ثبت شد')
+
+if done_now > prev.get('done', done_now):
+    lines.append(f'📋 بک‌لاگ: {prev.get("done", "?")} ← {done_now} آیتم انجام‌شده')
 
 if first_todo:
-    lines.append(f'➡️ بعدی: {first_todo}')
-lines.insert(0, f'🤖 <b>گزارش autopilot</b> — {datetime.now(timezone.utc).strftime("%H:%M UTC")}')
+    lines.append(f'➡️ در نوبت بعدی: {first_todo[:130]}')
+
+if not new_commits and done_now == prev.get('done', done_now) and rc == 0:
+    print('nothing to report')
+    sys.exit(0)
 
 token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', '')
 chat = os.getenv('AUTOPILOT_REPORT_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID', '194015957'))
