@@ -6,7 +6,8 @@ from pathlib import Path
 import requests
 
 BASE_DIR = Path('/home/ai/hermes-trading')
-LOG_DIR = BASE_DIR / 'logs'
+from engines import paths as _paths
+LOG_DIR = _paths.logs_dir()
 
 def send_telegram(message: str) -> bool:
     token=os.getenv('TELEGRAM_BOT_TOKEN')

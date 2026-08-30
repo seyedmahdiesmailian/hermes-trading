@@ -23,8 +23,11 @@ from engines.signal_listener import run_signal_check
 from notifier.telegram import send_telegram
 
 BASE_DIR = Path('/home/ai/hermes-trading')
-LOG_FILE = BASE_DIR / 'logs' / 'master.log'
-REPORT_FILE = BASE_DIR / 'logs' / 'report.txt'
+# logs go through paths so a test/staging run (HERMES_DATA_ROOT) can never
+# write into production logs (2026-08-30 audit convention: state via engines.paths)
+from engines import paths as _paths
+LOG_FILE = _paths.logs_dir() / 'master.log'
+REPORT_FILE = _paths.logs_dir() / 'report.txt'
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 
 
