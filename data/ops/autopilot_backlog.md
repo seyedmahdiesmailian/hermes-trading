@@ -23,7 +23,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       dataset + run_backtest(data=...) + exclude_styles prefixes in backtest_ohlc)
       — reuse for future branch A/Bs: SMC range-kill rule on/off, macro blackout
       on/off, BE-at-R 0.4 vs 0.5.
-- [ ] Ticket→plan linkage: execution_log.csv has no ticket column and orders carry no
+- [x] Ticket→plan linkage (done 2026-08-30: ticket column in execution_log + exact join in learning.analyze, proximity kept as fallback): execution_log.csv has no ticket column and orders carry no
       Hermes comment, so journal trades can only be attributed to plans by time
       proximity (48h lookback in learning.analyze). Add 'ticket' to the
       append_execution_log rows in hermes_runtime.py + signal_listener.py (result
