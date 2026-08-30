@@ -44,6 +44,9 @@ RC=$?
 
 echo "$(date -u +%FT%TZ) === autopilot run end rc=$RC ===" >> "$LOG"
 
+# per-run Telegram report (only when something happened / on failure)
+python3 scripts/autopilot_report.py "$RC" >> "$LOG" 2>&1 || true
+
 # surface a compact status line for the daily digest
 python3 - <<'PY'
 import json, subprocess, datetime, pathlib
