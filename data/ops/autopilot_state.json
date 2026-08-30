@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T08:51:08.791825+00:00",
+ "last_run_utc": "2026-08-30T10:37:19.431492+00:00",
  "recent_commits": [
-  "6571011 b20: cron log cap \u2014 any logs/*.log over 5MB trimmed to last 2MB (master.log grew every tick forever)",
-  "1b4750b b19: backfill close-deal tickets for the 3 real executions (journal keys on closing deal, not order) \u2014 learner join now resolves funnel trades to trend regime; untrack listener_state (mtimes-only churn)",
-  "5f458d6 b18: neutral_bias gate audit \u2014 forgone +8183$ is dataset drift; neutral bars are 0.49$/bar WORSE than traded bars, gate justified (unchanged); b15 cooldown fix verified live on 08:00 tick",
-  "7290d06 b17: rejected breakeven/trail move now alerts instantly (was log-only until close report) \u2014 trade running on original stop is never silent; backlog fully closed",
-  "50e6afe b16: funnel_attribution replay parity \u2014 is_market_open used wall clock (fake market_closed when run while market shut); with b15 cooldown fix the replay now shows 27/27 EXECUTED (was 0/27) \u2014 reconciles the 24-vs-27 open discrepancy: 24 grade-C rejects + 27 executed"
+  "7550884 b24: CRITICAL \u2014 tests were writing into LIVE production state",
+  "3701677 b23: CRITICAL \u2014 signal path now runs the full gate gauntlet + live daily trade cap",
+  "1560558 b22: weekly performance report \u2192 Telegram (Fri 22:30 UTC cron); remove stale journal backup",
+  "49134ea b21: REMOVE ALL MANUAL APPROVAL PATHS (user's explicit standing order) \u2014 verdict 'review' deleted (mid-score signals now skip, never escalate); approval_gate.py + cli send + dead master signal block removed; no /trade exists anywhere in the system",
+  "6571011 b20: cron log cap \u2014 any logs/*.log over 5MB trimmed to last 2MB (master.log grew every tick forever)"
  ]
 }

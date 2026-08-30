@@ -168,5 +168,53 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-08-30T10:57:47.984403+00:00",
+    "raw_text": "🔵Buy  4311/4312\n\n🔴Stop 4306\n\nTp1:4316\nTp2:4322\nTp3:4328\nTp4:4338\nTp5:4348\n\n🗓Expiration Time: 2025/08/14 , 22:00",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4311.0,
+      "sl": 4306.0,
+      "tp": 4316.0,
+      "tp2": 4322.0,
+      "lot": 0.0,
+      "rr_ratio": 1.0,
+      "order_type": "market",
+      "confidence": 0.7,
+      "warnings": [
+        "symbol_defaulted_xauusd",
+        "sl_below_entry_for_sell"
+      ]
+    },
+    "decision": {
+      "verdict": "execute",
+      "reasons": [
+        "high_confidence",
+        "direction_aligned",
+        "acceptable_rr_1.0",
+        "parser:sl_below_entry_for_sell"
+      ],
+      "score": 6.0,
+      "max_score": 10.0,
+      "trade_allowed": true,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4311.0,
+        "sl": 4306.0,
+        "tp": 4316.0,
+        "tp2": 4322.0,
+        "lot": 0.0,
+        "rr_ratio": 1.0,
+        "order_type": "market",
+        "confidence": 0.7,
+        "warnings": [
+          "symbol_defaulted_xauusd",
+          "sl_below_entry_for_sell"
+        ]
+      }
+    }
   }
 ]

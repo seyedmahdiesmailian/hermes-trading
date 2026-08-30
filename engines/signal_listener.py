@@ -226,8 +226,13 @@ def check_signals(bridge=None) -> list[dict]:
                 "open_positions": _open_ct,
                 "balance": float(acct.get("balance", 0) or 0),
             }
-        except Exception:
-            pass  # fail-open to the previous behavior rather than blocking signals on tooling bugs
+        except Exception as e:
+            # b29 FAIL-CLOSED: if the kill-switch/account check itself errors,
+            # the previous behavior fell back to trade_allowed=True — a broken
+            # safety gate must block, never green-light.
+            account_policy = {"trade_allowed": False, "regime": "policy_error",
+                              "open_positions": 0, "balance": 0,
+                              "policy_error": str(e)[:200]}
 
         # News blackout for the signal path too — evaluate_signal has the
         # gate (Check 7) but nobody ever passed macro_filter, so it was dead.

@@ -197,8 +197,10 @@ def evaluate_proposal(
                 "command": None,
                 "reasons": reasons,
             }
-    except Exception:
-        pass
+    except Exception as e:
+        # b29 FAIL-CLOSED: grade gate error blocks entry, never bypasses it.
+        return {"execute": False, "reason": "learning_gate_error",
+                "command": None, "reasons": reasons + [f"learning_error:{e}"]}
 
     # ── Check 6.6: DEFCON (legacy closed-trade feedback loop) ──
     # GREEN full risk / YELLOW half risk, no runner / RED no new entries.
@@ -220,8 +222,10 @@ def evaluate_proposal(
                 "reasons": reasons + [f"defcon_{_defcon_insights.get('defcon')}"],
                 "defcon": _defcon_insights.get("defcon"),
             }
-    except Exception:
-        pass
+    except Exception as e:
+        # b29 FAIL-CLOSED: a broken safety gate must never let a trade through.
+        return {"execute": False, "reason": "defcon_gate_error",
+                "command": None, "reasons": reasons + [f"defcon_error:{e}"]}
 
     # ── Check 6.7: Post-open / restart cooldown (legacy engine_state) ──
     try:
@@ -235,8 +239,10 @@ def evaluate_proposal(
                 "reasons": reasons + [_cd.get("reason")],
                 "cooldown_until": _cd.get("until"),
             }
-    except Exception:
-        pass
+    except Exception as e:
+        # b29 FAIL-CLOSED: cooldown gate error blocks entry, never bypasses it.
+        return {"execute": False, "reason": "cooldown_gate_error",
+                "command": None, "reasons": reasons + [f"cooldown_error:{e}"]}
 
     # ── Check 7: Macro/news filter ──
     if proposal.get("blocked_by_macro"):
