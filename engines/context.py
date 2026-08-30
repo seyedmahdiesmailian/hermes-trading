@@ -190,7 +190,12 @@ def _build_execution_plan(bias: str, zones: dict, atr: float, regime: str) -> di
     }
 
 
-def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[dict], session_name: str) -> dict:
+def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[dict], session_name: str,
+                       m15_rows: list[dict] | None = None) -> dict:
+    """Multi-TF plan context. m15_rows (b28) is an ANALYTICAL VOTE only:
+    recorded in bias_votes for reports/learning, never decides the entry.
+    A/B on 282h real data (scripts/ab_entry_tf.py) showed M15 as an entry
+    lane is worse than M5 (+991 vs +1680 $/1000h, unique trades WR 48%)."""
     atr = estimate_atr(m5_rows)
     # Zones come from the last hour of entry-TF structure (M5 in live). The old
     # H1 percentile value zone was computed and immediately overwritten — dead.
@@ -198,6 +203,7 @@ def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[d
     value_low = m5_zones["value_low"]
     value_high = m5_zones["value_high"]
     m5_bias = classify_bias(m5_rows)
+    m15_bias = classify_bias(m15_rows) if m15_rows else None
     h1_bias = classify_bias(h1_rows)
     h4_bias = classify_bias(h4_rows)
     bias = h4_bias if h4_bias != "neutral" else h1_bias
@@ -234,7 +240,8 @@ def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[d
         "alignment": alignment,
         "distance_to_value_low_atr": round(_distance_in_atr(last_price, zones["value_low"], atr), 2),
         "distance_to_value_high_atr": round(_distance_in_atr(last_price, zones["value_high"], atr), 2),
-        "bias_votes": {"m5": m5_bias, "h1": h1_bias, "h4": h4_bias},
+        "bias_votes": {"m5": m5_bias, "h1": h1_bias, "h4": h4_bias,
+                       **({"m15": m15_bias} if m15_bias else {})},
         "regime": regime,
     }
     # Tight invalidation: recent 1-hour M5 swing ± 0.5 ATR (scalping-grade stop)

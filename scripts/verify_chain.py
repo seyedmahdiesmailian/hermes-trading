@@ -45,13 +45,18 @@ def main():
     b = BridgeClient()
     # entry TF must match live TIMEFRAME='M5' (b27: was M15, a parity drift)
     m5 = rows_of(b.get_rates("XAUUSD", "M5", 200))
+    m15 = rows_of(b.get_rates("XAUUSD", "M15", 80))  # analytical vote only (b28)
     h1 = rows_of(b.get_rates("XAUUSD", "H1", 120))
     h4 = rows_of(b.get_rates("XAUUSD", "H4", 60))
     check("bridge OHLC", len(m5) > 100 and len(h1) > 50 and len(h4) > 30,
           f"m5={len(m5)} h1={len(h1)} h4={len(h4)}")
 
     now = datetime.now(timezone.utc)
-    ctx = build_plan_context(m5, h1, h4, "any")
+    ctx = build_plan_context(m5, h1, h4, "any", m15_rows=m15)
+    check("m15 analytical vote present",
+          ctx.get("quality", {}).get("bias_votes", {}).get("m15")
+          in ("bullish", "bearish", "neutral"),
+          f"votes={ctx.get('quality', {}).get('bias_votes')}")
     atr = ctx.get("atr", 0)
     ts = ctx.get("quality", {}).get("trend_strength", 0)
     zones = ctx.get("zones", {})

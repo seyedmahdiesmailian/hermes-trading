@@ -48,6 +48,9 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
             session = "london"
         else:
             session = "newyork"
+        # NOTE: m15_window here is the ENTRY stream (M5 in live-parity runs),
+        # not real M15 bars — so no analytical m15 vote is recorded in backtest.
+        # The vote is a live-reporting field only and never decides entries.
         ctx = build_plan_context(m15_window[-120:], h1_window[-80:], h4_window[-80:], session)
         smc_result = smc_analyse(m15_window[-120:], now=now, h1_rows=h1_window[-80:])
         merged = merge_smc_with_classic(ctx, smc_result)

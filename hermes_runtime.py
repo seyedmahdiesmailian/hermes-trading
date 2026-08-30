@@ -111,6 +111,7 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     now = now or _now()
     session = _detect_session(now)
     m5 = _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, 120))
+    m15 = _data_list(bridge.get_rates(SYMBOL, 'M15', 80))  # analytical vote only (b28)
     h1 = _data_list(bridge.get_rates(SYMBOL, 'H1', 80))
     h4 = _data_list(bridge.get_rates(SYMBOL, 'H4', 80))
     # Right after a bridge/MT5 restart, M5 history may still be syncing — retry once
@@ -120,7 +121,7 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
         m5 = _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, 120))
     if not (m5 and h1 and h4):
         return None, {'ok': False, 'error': 'insufficient_market_data', 'counts': {'M5': len(m5), 'H1': len(h1), 'H4': len(h4)}, 'session': session}
-    ctx = build_plan_context(m5, h1, h4, session)
+    ctx = build_plan_context(m5, h1, h4, session, m15_rows=m15)
     smc_result = smc_analyse(m5, now=now, h1_rows=h1)
     merged = merge_smc_with_classic(ctx, smc_result)
     classic_regime = ctx.get('quality', {}).get('regime', '')
