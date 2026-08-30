@@ -30,6 +30,14 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+- 2026-08-30 grade-gate efficacy audit (scripts/measure_grade_edge.py, 348 trades
+  across 13 M5 windows, min_grade=None so C setups traded too): grade DOES rank
+  quality — A 55.2% WR/$3.54 avg, B 52.9%/$4.33, C 45.9%/$1.32. C is still net
+  +239$ but earns 1/3 of B per trade AND occupies the single position slot,
+  blocking later B setups. MIN_SETUP_GRADE=B stays. (answers 'funnel too tight':
+  this gate earns its keep; the loose ones were the parity bugs, already fixed)
+
+
 - 2026-08-30 ICT concepts edge audit (scripts/measure_ict_edge.py, 1274 real M5
   samples, forward 1h move vs baseline): NONE of the 8 unused concepts has a
   usable directional edge (all |t| below 2.3). silver_bullet window shows a
