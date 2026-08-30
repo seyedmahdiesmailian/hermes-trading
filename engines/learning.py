@@ -5,7 +5,9 @@ performance". This module closes the loop:
 
 1. journal()      — records every executed trade's outcome (from MT5 deal
                     history) into data/xau_plan/trade_journal.csv
-2. analyze()      — computes stats per setup-grade / session / side
+2. analyze()      — computes stats per setup-grade / session / side, plus a
+                    session × regime breakdown (asia/london/newyork ×
+                    trend/range) so risk_mult can become session-aware later
 3. adjustments()  — proposes parameter deltas (risk budget, min grade,
                     RR floor) from the stats, with hard safety clamps
 4. apply()        — writes the deltas into data/xau_plan/learning_state.json
@@ -103,9 +105,48 @@ def journal(bridge, days: int = 30) -> int:
 
 # ── 2. Analysis ───────────────────────────────────────────────────────────
 
+# Session buckets (UTC) — must mirror hermes_runtime._detect_session so journal
+# stats match the session that actually produced the plan. Kept as a local copy
+# on purpose: learning must stay importable without the runtime/bridge stack.
+SESSION_BOUNDS = ((0, 7, 'asia'), (7, 13, 'london'), (13, 24, 'newyork'))
+REGIME_BUCKETS = {'breakout_continuation': 'trend',
+                  'pullback_continuation': 'trend',
+                  'range': 'range'}
+
+
+def session_of(ts: datetime) -> str:
+    """UTC timestamp → 'asia' | 'london' | 'newyork' (hermes_runtime bounds)."""
+    for lo, hi, name in SESSION_BOUNDS:
+        if lo <= ts.hour < hi:
+            return name
+    return 'newyork'
+
+
+def _regime_for_plan(plan_id: str) -> str:
+    """Join execution_log.plan_id → plan_history/<ts>_<plan_id>.json.
+
+    Any ambiguity/failure → '' (bucket simply skipped, never guessed).
+    """
+    if not plan_id:
+        return ''
+    matches = list(PLAN_DIR.glob(f'*_{plan_id}.json'))
+    if len(matches) != 1:
+        return ''
+    try:
+        data = json.loads(matches[0].read_text(encoding='utf-8'))
+    except Exception:
+        return ''
+    return str((data.get('quality') or {}).get('regime') or '')
+
+
+def _bucket_for(regime: str) -> str:
+    return REGIME_BUCKETS.get(regime, 'other')
+
+
 def analyze() -> dict:
     rows = _load_journal()
-    out = {'sample': len(rows), 'by_side': {}, 'overall': {}}
+    out = {'sample': len(rows), 'by_side': {}, 'overall': {},
+           'by_session': {}, 'by_session_regime': {}}
     if not rows:
         return out
 
@@ -127,6 +168,79 @@ def analyze() -> dict:
         s = stats(sub)
         if s:
             out['by_side'][side] = s
+
+    # ── session × regime breakdown ──
+    # Trade time = journal close_time (unix seconds or ISO). Regime = the
+    # bucketed quality.regime of the plan attributed via TIME-PROXIMITY join:
+    # execution_log has no ticket column, so a trade is matched to the most
+    # recent successful (result_ok, non-dry-run) plan execution at or before
+    # its close, within EXEC_JOIN_LOOKBACK_H hours. No match → 'unknown'
+    # (bucket is skipped from regime stats, never guessed).
+    def _trade_time(row: dict):
+        raw = str(row.get('close_time') or '')
+        if raw.isdigit():
+            return datetime.fromtimestamp(int(raw), tz=timezone.utc)
+        try:
+            ts = datetime.fromisoformat(raw)
+        except ValueError:
+            return None
+        return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
+
+    EXEC_JOIN_LOOKBACK_H = 48
+
+    exec_events: list[tuple[datetime, str]] = []   # (at, plan_id)
+    exec_log = PLAN_DIR / 'execution_log.csv'
+    try:
+        with exec_log.open(newline='', encoding='utf-8') as f:
+            for r in csv.DictReader(f):
+                if str(r.get('dry_run', '')).strip().lower() == 'true':
+                    continue
+                if str(r.get('result_ok', '')).strip().lower() != 'true':
+                    continue
+                plan_id = str(r.get('plan_id') or '').strip()
+                if not plan_id or plan_id == 'signal':
+                    continue
+                try:
+                    at = datetime.fromisoformat(str(r.get('at') or ''))
+                except ValueError:
+                    continue
+                if at.tzinfo is None:
+                    at = at.replace(tzinfo=timezone.utc)
+                exec_events.append((at, plan_id))
+    except OSError:
+        pass
+    exec_events.sort(key=lambda x: x[0])
+
+    def _plan_for_close(close_ts: datetime) -> str:
+        best = ''
+        for at, plan_id in exec_events:
+            if at > close_ts:
+                break
+            if (close_ts - at).total_seconds() <= EXEC_JOIN_LOOKBACK_H * 3600:
+                best = plan_id
+        return best
+
+    by_session: dict[str, list[dict]] = {}
+    by_session_regime: dict[str, dict[str, list[dict]]] = {}
+    for row in rows:
+        ts = _trade_time(row)
+        session = session_of(ts) if ts else 'unknown'
+        plan_id = _plan_for_close(ts) if ts else ''
+        regime = _regime_for_plan(plan_id)
+        bucket = _bucket_for(regime) if regime else 'unknown'
+        by_session.setdefault(session, []).append(row)
+        by_session_regime.setdefault(session, {}).setdefault(bucket, []).append(row)
+
+    for session, sub in sorted(by_session.items()):
+        s = stats(sub)
+        if s:
+            out['by_session'][session] = s
+    for session, buckets in sorted(by_session_regime.items()):
+        out['by_session_regime'][session] = {}
+        for bucket, sub in sorted(buckets.items()):
+            s = stats(sub)
+            if s:
+                out['by_session_regime'][session][bucket] = s
     return out
 
 

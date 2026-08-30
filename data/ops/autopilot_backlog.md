@@ -9,8 +9,6 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] Journal by session+regime: extend learning.py analyze() to break down by
-      (asia/london/newyork) × (trend/range) so risk_mult can become session-aware later.
 - [ ] Backtest robustness: run the parity funnel on 3+ separate 500-bar windows
       (different weeks if broker history allows, else offsets) — report variance of WR/PnL.
 - [ ] Spread/slippage sensitivity: rerun backtest with spread 0.35 and 0.50 — does
@@ -23,8 +21,21 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       dataset + run_backtest(data=...) + exclude_styles prefixes in backtest_ohlc)
       — reuse for future branch A/Bs: SMC range-kill rule on/off, macro blackout
       on/off, BE-at-R 0.4 vs 0.5.
+- [ ] Ticket→plan linkage: execution_log.csv has no ticket column and orders carry no
+      Hermes comment, so journal trades can only be attributed to plans by time
+      proximity (48h lookback in learning.analyze). Add 'ticket' to the
+      append_execution_log rows in hermes_runtime.py + signal_listener.py (result
+      already contains it) so future regime joins are exact, not heuristic.
 
 ## Done
+- [x] 2026-08-30 Journal by session+regime: analyze() now emits by_session and
+      by_session_regime (asia/london/newyork × trend/range/unknown); session bounds
+      parity-tested against hermes_runtime._detect_session; regime joined via
+      time-proximity to execution_log (dry-run/failed excluded, 48h lookback) →
+      plan_history quality.regime. Finding: all 5 journaled trades pre-date any
+      logged successful execution → regime='unknown' (honest, not guessed); exact
+      join impossible until execution_log gains a ticket column → new todo added.
+      64 tests green, live cycle OK.
 - [x] 2026-08-30 A/B aggressive premium/discount entries (parity funnel, 3000 M15 bars
       ~31 days, spread 0.20, one cached dataset for all runs): KEEP — they ADD ~80% of PnL.
       Baseline (live) 156 trades / 57.0% WR / +807.76; PD-aggressive disabled 60 / 56.7% /
