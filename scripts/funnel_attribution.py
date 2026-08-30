@@ -19,6 +19,13 @@ from engines.orchestrator import build_plan_from_context, evaluate_monitor_cycle
 from engines.auto_executor import evaluate_proposal
 from hermes_runtime import _infer_setup_grade
 
+# REPLAY PARITY FIX 2026-08-30: the executor's market-hours gate uses the
+# REAL wall clock, so running this script while the market is closed killed
+# every surviving candidate with a fake 'market_closed' (27 bars). The bars
+# themselves are all from open-market hours — gate on bar time instead.
+import engines.auto_executor as _ax
+_ax.is_market_open = lambda *a, **k: True
+
 b = BridgeClient()
 def rows(tf, n):
     r = b.get_rates("XAUUSD", tf, n)
