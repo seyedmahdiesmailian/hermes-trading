@@ -57,8 +57,8 @@ Ubuntu/Debian با python3.11+. اگر بکاپ ویندوز در دسترس ا�
 git clone https://github.com/seyedmahdiesmailian/hermes-trading.git /home/ai/hermes-trading
 cd /home/ai/hermes-trading
 ```
-(اگر گیت‌هاب هم در دسترس نبود: داخل بکاپ `repo.bundle` هست —
-`git clone repo.bundle /home/ai/hermes-trading`)
+(اگر گیت‌هاب هم در دسترس نبود: فایل `hermes_repo_*.bundle` کنار همان بکاپ در
+`C:\HermesBackups` است — `git clone hermes_repo_*.bundle /home/ai/hermes-trading`)
 
 ### ۲. وابستگی‌ها
 ```bash
@@ -67,9 +67,10 @@ pip3 install requests python-dotenv pywinrm requests_ntlm pandas numpy python-te
 ```
 
 ### ۳. رازها (فقط از بکاپ — در گیت‌هاب نیستند!)
+آرشیو بکاپ ریشه‌اش `./data` و `./.env` است:
 ```bash
-tar -xzf hermes_backup_*.tar.gz ./data ./home/ai/hermes-trading/.env -C /tmp/restored
-cp /tmp/restored/home/ai/hermes-trading/.env .env
+mkdir -p /tmp/restored && tar -xzf hermes_backup_*.tar.gz -C /tmp/restored
+cp /tmp/restored/.env .env
 cp -a /tmp/restored/data/* data/
 printf '%s' '<توکن گیت‌هاب>' > .git_token && chmod 600 .git_token
 ```

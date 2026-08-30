@@ -47,12 +47,15 @@ def build_archive():
     bundle = Path(tempfile.gettempdir()) / f'hermes_repo_{ts}.bundle'
     subprocess.run(['git', '-C', str(BASE), 'bundle', 'create', str(bundle), 'HEAD'],
                    check=True, capture_output=True)
+    members = ['./data', './.env']
+    if (BASE / '.git_token').exists():
+        members.append('./.git_token')  # conditional: missing file must not kill backup
     subprocess.run(
         ['tar', 'czf', str(out),
          '-C', str(BASE),
          '--exclude=./data/xau_plan/plan_history',
          '--exclude=*__pycache__*',
-         './data', './.env'],
+         *members],
         check=True)
     return out, bundle
 
