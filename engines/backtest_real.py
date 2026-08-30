@@ -39,15 +39,17 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
 
     try:
         now = datetime.fromtimestamp(row.get("time", 0), tz=timezone.utc)
-        session = "london"
+        # session detection identical to live _detect_session:
+        # 0-7 asia, 7-13 london, 13-24 newyork
         h = now.hour
         if 0 <= h < 7:
             session = "asia"
-        elif 13 <= h < 21:
+        elif 7 <= h < 13:
+            session = "london"
+        else:
             session = "newyork"
-
-        ctx = build_plan_context(m15_window[-120:], h1_window[-20:], h4_window[-10:], session)
-        smc_result = smc_analyse(m15_window[-120:], now=now, h1_rows=h1_window)
+        ctx = build_plan_context(m15_window[-120:], h1_window[-80:], h4_window[-80:], session)
+        smc_result = smc_analyse(m15_window[-120:], now=now, h1_rows=h1_window[-80:])
         merged = merge_smc_with_classic(ctx, smc_result)
         classic_regime = ctx.get("quality", {}).get("regime", "")
         smc_confidence = float(merged.get("confidence", 0) or 0)
@@ -93,13 +95,14 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
     spread_override: replace the live-parity 0.20 round-trip cost (cost-model
     sensitivity analysis only — never used by the live path).
     """
-    # Fetch data
+    # Fetch data — entry timeframe must match live TIMEFRAME (M5); the
+    # internal variable keeps the m15_ name for the cached-data key compat.
     if data:
-        m15_data = data.get("M15") or []
+        m15_data = data.get(timeframe) or data.get("M15") or []
         h1_data = data.get("H1") or []
         h4_data = data.get("H4") or []
     else:
-        m15_data = fetch_all_ohlc(bridge, symbol, "M15", count)
+        m15_data = fetch_all_ohlc(bridge, symbol, timeframe, count)
         h1_data = fetch_all_ohlc(bridge, symbol, "H1", count)
         h4_data = fetch_all_ohlc(bridge, symbol, "H4", count)
 
