@@ -1,0 +1,292 @@
+{
+  "n_windows": 13,
+  "window_bars": 500,
+  "results": [
+    {
+      "trades": 22,
+      "wins": 9,
+      "losses": 8,
+      "scratches": 5,
+      "net_pnl": 30.16,
+      "win_rate": 0.4091,
+      "win_rate_decided": 0.5294,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1785237600,
+        "to": 1785394500
+      },
+      "window": "win00",
+      "bars": [
+        1785237600,
+        1785394500
+      ]
+    },
+    {
+      "trades": 12,
+      "wins": 7,
+      "losses": 2,
+      "scratches": 3,
+      "net_pnl": 63.96,
+      "win_rate": 0.5833,
+      "win_rate_decided": 0.7778,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1785394800,
+        "to": 1785724500
+      },
+      "window": "win01",
+      "bars": [
+        1785394800,
+        1785724500
+      ]
+    },
+    {
+      "trades": 19,
+      "wins": 8,
+      "losses": 9,
+      "scratches": 2,
+      "net_pnl": -0.53,
+      "win_rate": 0.4211,
+      "win_rate_decided": 0.4706,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1785724800,
+        "to": 1785878100
+      },
+      "window": "win02",
+      "bars": [
+        1785724800,
+        1785878100
+      ]
+    },
+    {
+      "trades": 21,
+      "wins": 14,
+      "losses": 4,
+      "scratches": 3,
+      "net_pnl": 146.69,
+      "win_rate": 0.6667,
+      "win_rate_decided": 0.7778,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1785878400,
+        "to": 1786035300
+      },
+      "window": "win03",
+      "bars": [
+        1785878400,
+        1786035300
+      ]
+    },
+    {
+      "trades": 14,
+      "wins": 8,
+      "losses": 1,
+      "scratches": 5,
+      "net_pnl": 48.55,
+      "win_rate": 0.5714,
+      "win_rate_decided": 0.8889,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1786035600,
+        "to": 1786365300
+      },
+      "window": "win04",
+      "bars": [
+        1786035600,
+        1786365300
+      ]
+    },
+    {
+      "trades": 22,
+      "wins": 12,
+      "losses": 7,
+      "scratches": 3,
+      "net_pnl": 68.39,
+      "win_rate": 0.5455,
+      "win_rate_decided": 0.6316,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1786365600,
+        "to": 1786522500
+      },
+      "window": "win05",
+      "bars": [
+        1786365600,
+        1786522500
+      ]
+    },
+    {
+      "trades": 11,
+      "wins": 4,
+      "losses": 3,
+      "scratches": 4,
+      "net_pnl": 45.44,
+      "win_rate": 0.3636,
+      "win_rate_decided": 0.5714,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1786522800,
+        "to": 1786679700
+      },
+      "window": "win06",
+      "bars": [
+        1786522800,
+        1786679700
+      ]
+    },
+    {
+      "trades": 14,
+      "wins": 5,
+      "losses": 5,
+      "scratches": 4,
+      "net_pnl": 37.98,
+      "win_rate": 0.3571,
+      "win_rate_decided": 0.5,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1786680000,
+        "to": 1787006100
+      },
+      "window": "win07",
+      "bars": [
+        1786680000,
+        1787006100
+      ]
+    },
+    {
+      "trades": 17,
+      "wins": 8,
+      "losses": 4,
+      "scratches": 5,
+      "net_pnl": 93.53,
+      "win_rate": 0.4706,
+      "win_rate_decided": 0.6667,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1787006400,
+        "to": 1787163300
+      },
+      "window": "win08",
+      "bars": [
+        1787006400,
+        1787163300
+      ]
+    },
+    {
+      "trades": 18,
+      "wins": 13,
+      "losses": 4,
+      "scratches": 1,
+      "net_pnl": 131.82,
+      "win_rate": 0.7222,
+      "win_rate_decided": 0.7647,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1787163600,
+        "to": 1787320500
+      },
+      "window": "win09",
+      "bars": [
+        1787163600,
+        1787320500
+      ]
+    },
+    {
+      "trades": 16,
+      "wins": 10,
+      "losses": 4,
+      "scratches": 2,
+      "net_pnl": 83.51,
+      "win_rate": 0.625,
+      "win_rate_decided": 0.7143,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1787320800,
+        "to": 1787650500
+      },
+      "window": "win10",
+      "bars": [
+        1787320800,
+        1787650500
+      ]
+    },
+    {
+      "trades": 20,
+      "wins": 9,
+      "losses": 5,
+      "scratches": 6,
+      "net_pnl": 34.71,
+      "win_rate": 0.45,
+      "win_rate_decided": 0.6429,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1787650800,
+        "to": 1787807700
+      },
+      "window": "win11",
+      "bars": [
+        1787650800,
+        1787807700
+      ]
+    },
+    {
+      "trades": 16,
+      "wins": 9,
+      "losses": 3,
+      "scratches": 4,
+      "net_pnl": 186.84,
+      "win_rate": 0.5625,
+      "win_rate_decided": 0.75,
+      "ok": true,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "bars_tested": 500,
+      "data_range": {
+        "from": 1787808000,
+        "to": 1787961300
+      },
+      "window": "win12",
+      "bars": [
+        1787808000,
+        1787961300
+      ]
+    }
+  ]
+}

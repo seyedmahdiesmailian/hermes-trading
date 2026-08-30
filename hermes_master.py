@@ -31,7 +31,7 @@ DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'
 def log(msg: str):
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     line = f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
-    print(line)
+    # no print(): cron redirects stdout into the same log → duplicate lines
     with LOG_FILE.open('a', encoding='utf-8') as f:
         f.write(line + '\n')
 

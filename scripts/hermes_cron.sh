@@ -8,7 +8,8 @@ cd /home/ai/hermes-trading
 # Load .env
 if [ -f /home/ai/hermes-trading/.env ]; then
   set -a
-  export $(grep -v '^#' /home/ai/hermes-trading/.env | xargs)
+  # shellcheck disable=SC1091
+  source /home/ai/hermes-trading/.env   # was: export $(grep|xargs) — breaks on any spaced value
   set +a
 fi
 

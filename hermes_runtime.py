@@ -348,18 +348,42 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             pass
 
     # ── Legacy migration: macro snapshot into plan context + report ──
+    # analyze_macro costs ~22 bridge calls (6 FX ticks + 6 H1 rates + silver/
+    # SPX aliases + H4/D1/W1 gold). It feeds REPORTS ONLY — no decision gate
+    # reads it — so cache it on disk with a 15-min TTL instead of refetching
+    # every 15-min cycle. Calendar is refreshed with the snapshot.
+    macro_snap = None
     try:
-        from engines.macro_snapshot import analyze_macro, gold_macro_verdict
-        macro_snap = analyze_macro(bridge, SYMBOL)
-        macro_snap['verdict'] = gold_macro_verdict(macro_snap)
-        # attach the economic calendar so news_lock (legacy_guards) has data —
-        # was missing entirely: news_lock read plan.context.macro.calendar which
-        # nobody ever wrote → the guard could never fire.
+        import time as _time
+        from pathlib import Path as _P
+        snap_file = _P(str(PLAN_DIR)) / 'macro_snapshot.json'
+        snap_ttl = 900
+        cached = None
         try:
-            from engines.economic_calendar import get_upcoming_events
-            macro_snap['calendar'] = get_upcoming_events(hours_ahead=24)
+            cached = json.loads(snap_file.read_text(encoding='utf-8'))
         except Exception:
-            macro_snap['calendar'] = None
+            cached = None
+        fresh = cached and (_time.time() - float(cached.get('_fetched_at', 0))) < snap_ttl
+        if fresh:
+            macro_snap = cached
+        else:
+            from engines.macro_snapshot import analyze_macro, gold_macro_verdict
+            macro_snap = analyze_macro(bridge, SYMBOL)
+            macro_snap['verdict'] = gold_macro_verdict(macro_snap)
+            # attach the economic calendar so news_lock (legacy_guards) has data —
+            # was missing entirely: news_lock read plan.context.macro.calendar which
+            # nobody ever wrote → the guard could never fire.
+            try:
+                from engines.economic_calendar import get_upcoming_events
+                macro_snap['calendar'] = get_upcoming_events(hours_ahead=24)
+            except Exception:
+                macro_snap['calendar'] = None
+            macro_snap['_fetched_at'] = _time.time()
+            try:
+                snap_file.parent.mkdir(parents=True, exist_ok=True)
+                snap_file.write_text(json.dumps(macro_snap, ensure_ascii=False, default=str), encoding='utf-8')
+            except Exception:
+                pass
         plan.setdefault('context', {})['macro'] = macro_snap
         save_current_plan(PLAN_DIR, plan)   # persist for reports + management
     except Exception:

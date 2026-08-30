@@ -32,13 +32,16 @@ from bridge_client import BridgeClient
 from engines.backtest_real import run_backtest
 
 SYMBOL = "XAUUSD"
-M15_COUNT = 6500          # ~3 months of M15
+# Entry timeframe must match live TIMEFRAME (M5). Override with argv[1]
+# (e.g. "M15") for legacy comparisons; cache/state/out files are per-TF.
+TF = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].startswith("M") else "M5"
+M15_COUNT = 6500          # ~3 months of M15 / ~22 days of M5
 WINDOW = 500              # bars per window (non-overlapping)
 H1_PAD_BEFORE = 48        # H1 context rows before window start (live has full history)
 H4_PAD_BEFORE = 20
-DATA_CACHE = Path('/home/ai/hermes-trading/data/backtest/robustness_data.json')
-OUT = Path('/home/ai/hermes-trading/data/backtest/robustness_results.json')
-STATE = Path('/home/ai/hermes-trading/data/backtest/robustness_state.json')
+DATA_CACHE = Path(f'/home/ai/hermes-trading/data/backtest/robustness_data_{TF}.json')
+OUT = Path(f'/home/ai/hermes-trading/data/backtest/robustness_results_{TF}.json')
+STATE = Path(f'/home/ai/hermes-trading/data/backtest/robustness_state_{TF}.json')
 
 
 def fetch(bridge, tf: str, count: int) -> list:
@@ -75,18 +78,18 @@ def main() -> None:
     # One dataset, cached: every window slices the same byte-identical bars.
     if DATA_CACHE.exists():
         data = json.loads(DATA_CACHE.read_text())
-        print(f"cached: M15={len(data['M15'])} H1={len(data['H1'])} H4={len(data['H4'])}")
+        print(f"cached: {TF}={len(data[TF])} H1={len(data['H1'])} H4={len(data['H4'])}")
     else:
-        data = {"M15": fetch(bridge, "M15", M15_COUNT),
+        data = {TF: fetch(bridge, TF, M15_COUNT),
                 "H1": fetch(bridge, "H1", 2000),
                 "H4": fetch(bridge, "H4", 700)}
-        if len(data["M15"]) < WINDOW * 3 or not data["H1"] or not data["H4"]:
+        if len(data[TF]) < WINDOW * 3 or not data["H1"] or not data["H4"]:
             print("insufficient data — aborting")
             sys.exit(1)
         DATA_CACHE.write_text(json.dumps(data))
-        print(f"fetched+cached: M15={len(data['M15'])} H1={len(data['H1'])} H4={len(data['H4'])}")
+        print(f"fetched+cached: {TF}={len(data[TF])} H1={len(data['H1'])} H4={len(data['H4'])}")
 
-    m15, h1, h4 = data["M15"], data["H1"], data["H4"]
+    m15, h1, h4 = data[TF], data["H1"], data["H4"]
     n_windows = len(m15) // WINDOW
     print(f"{n_windows} non-overlapping {WINDOW}-bar windows (each ~1 trading week)\n")
 
@@ -99,12 +102,12 @@ def main() -> None:
         t_end = w_m15[-1]["time"]
         t_start_pad = w_m15[0]["time"] - H1_PAD_BEFORE * 3600
         slice_data = {
-            "M15": w_m15,
+            TF: w_m15,
             "H1": [r for r in h1 if t_start_pad <= r.get("time", 0) <= t_end],
             "H4": [r for r in h4 if w_m15[0]["time"] - H4_PAD_BEFORE * 4 * 3600
                    <= r.get("time", 0) <= t_end],
         }
-        r = run_backtest(bridge, symbol=SYMBOL, timeframe="M15", count=WINDOW, data=slice_data)
+        r = run_backtest(bridge, symbol=SYMBOL, timeframe=TF, count=WINDOW, data=slice_data)
         if not r.get("ok"):
             print(f"{key}: engine error {r.get('error')} — skipping")
             continue

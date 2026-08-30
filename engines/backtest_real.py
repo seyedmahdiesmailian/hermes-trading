@@ -109,12 +109,17 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
     if not m15_data or not h1_data or not h4_data:
         return {"ok": False, "error": "insufficient_data", "counts": {"M15": len(m15_data), "H1": len(h1_data), "H4": len(h4_data)}}
 
+    # index map: live passes full 120/80/80 windows; list.index(row) on dicts
+    # was O(n) per bar (6500 bars → O(n^2) scan). Precompute once.
+    row_index = {id(r): i for i, r in enumerate(m15_data)}
+
     def signal_fn(row):
-        idx = m15_data.index(row) if row in m15_data else 0
-        # Slice H1 and H4 windows up to this bar's approximate time
+        idx = row_index.get(id(row), 0)
+        # Slice H1 and H4 windows up to this bar's approximate time —
+        # window sizes must match live (80/80), not 30/15.
         bar_time = row.get("time", 0)
-        h1_window = [r for r in h1_data if r.get("time", 0) <= bar_time][-30:]
-        h4_window = [r for r in h4_data if r.get("time", 0) <= bar_time][-15:]
+        h1_window = [r for r in h1_data if r.get("time", 0) <= bar_time][-80:]
+        h4_window = [r for r in h4_data if r.get("time", 0) <= bar_time][-80:]
         m15_window = m15_data[max(0, idx - 120):idx + 1]
         return strategy_signal(row, h1_window, h4_window, idx, m15_window=m15_window,
                                range_kill_conf=range_kill_conf)

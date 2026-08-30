@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-54b589a7",
+  "plan_id": "xau-412183a5",
   "symbol": "XAUUSD",
   "bias": "bearish",
   "session": "asia",
@@ -48,13 +48,13 @@
       "h4": "bearish"
     },
     "regime": "breakout_continuation",
-    "smc_confidence": 0.46,
+    "smc_confidence": 0.53,
     "smc_poi": "A",
-    "smc_signal": "bearish"
+    "smc_signal": "wait"
   },
-  "created_at": "2026-08-30T05:45:01.371826+00:00",
-  "expires_at": "2026-08-30T17:45:01.371826+00:00",
-  "next_reassessment": "2026-08-30T05:50:01.371826+00:00",
+  "created_at": "2026-08-30T04:39:53.711217+00:00",
+  "expires_at": "2026-08-30T16:39:53.711217+00:00",
+  "next_reassessment": "2026-08-30T04:44:53.711217+00:00",
   "context": {
     "m15_last": 4454.75,
     "h1_last": 4454.75,
@@ -516,18 +516,18 @@
         "swing_low": 4445.47
       },
       "killzone": {
-        "session": "dead",
-        "weight": 0.0
+        "session": "asia",
+        "weight": 0.6
       },
       "bias": "bearish",
-      "confidence": 0.9176891615541921,
-      "signal": "bearish",
-      "signal_confidence": 0.27530674846625763,
+      "confidence": 0.917767362590541,
+      "signal": "wait",
+      "signal_confidence": 0.3,
       "poi": "A",
       "swing_high": 4631.7,
       "swing_low": 4445.47,
       "last_price": 4454.75,
-      "smc_weight": 0.5,
+      "smc_weight": 0.6,
       "h1_structure": {
         "phase": "bos_bearish",
         "confidence": 1.0
@@ -766,8 +766,8 @@
     },
     "merged": {
       "bias": "bearish",
-      "confidence": 0.46,
-      "action": "short",
+      "confidence": 0.53,
+      "action": "bearish",
       "classic_source": {
         "bias": "bearish",
         "confidence": 0.35,
@@ -776,265 +776,19 @@
       },
       "smc_source": {
         "bias": "bearish",
-        "signal": "bearish",
-        "confidence": 0.9176891615541921,
-        "weight": 0.5,
+        "signal": "wait",
+        "confidence": 0.917767362590541,
+        "weight": 0.6,
         "poi": "A",
         "market_structure": {
           "phase": "bos_bearish",
           "confidence": 0.7881136950904715
         },
         "killzone": {
-          "session": "dead",
-          "weight": 0.0
+          "session": "asia",
+          "weight": 0.6
         }
       }
-    },
-    "macro": {
-      "timestamp": "2026-08-30T05:38:30.896027+00:00",
-      "dxy": {
-        "change_pct": 0.004,
-        "direction": "flat",
-        "available": true,
-        "source": "synthetic"
-      },
-      "silver": {
-        "available": false
-      },
-      "risk_sentiment": {
-        "available": false
-      },
-      "tick_volume": {
-        "volume_ratio": 0.37,
-        "is_high_volume": false,
-        "is_low_volume": true,
-        "available": true
-      },
-      "higher_tf": {
-        "h4": {
-          "price": 4454.75,
-          "high_20": 4673.74,
-          "low_20": 4445.47,
-          "pos_in_range": 0.04,
-          "zone": "discount",
-          "sma10": 4571.31,
-          "trend": "bearish"
-        },
-        "d1": {
-          "price": 4454.75,
-          "high_20": 4697.2,
-          "low_20": 4019.1,
-          "pos_in_range": 0.64,
-          "zone": "equilibrium",
-          "sma10": 4535.49,
-          "trend": "bearish"
-        },
-        "w1": {
-          "price": 4454.75,
-          "high_20": 4529.55,
-          "low_20": 4445.47,
-          "pos_in_range": 0.11,
-          "zone": "discount",
-          "sma10": 4457.83,
-          "trend": "bearish"
-        }
-      },
-      "verdict": {
-        "verdict": "none",
-        "score_long": 0,
-        "score_short": 0,
-        "macro_conflicting": false
-      },
-      "calendar": {
-        "source": "forexfactory",
-        "high_impact": [
-          {
-            "title": "BOJ Core CPI y/y",
-            "currency": "JPY",
-            "impact": "low",
-            "date": "2026-08-25T01:00:00-04:00",
-            "time": "",
-            "forecast": "1.4%",
-            "previous": "1.5%"
-          },
-          {
-            "title": "German Final GDP q/q",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-08-25T02:00:00-04:00",
-            "time": "",
-            "forecast": "0.2%",
-            "previous": "0.2%"
-          },
-          {
-            "title": "ADP Weekly Employment Change",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-08-25T08:15:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": "9.5K"
-          },
-          {
-            "title": "FOMC Member Barkin Speaks",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-08-25T08:30:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          },
-          {
-            "title": "CB Consumer Confidence",
-            "currency": "USD",
-            "impact": "medium",
-            "date": "2026-08-25T10:00:00-04:00",
-            "time": "",
-            "forecast": "90.3",
-            "previous": "90.8"
-          },
-          {
-            "title": "FOMC Member Barkin Speaks",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-08-25T16:00:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          },
-          {
-            "title": "SPPI y/y",
-            "currency": "JPY",
-            "impact": "low",
-            "date": "2026-08-25T19:50:00-04:00",
-            "time": "",
-            "forecast": "3.2%",
-            "previous": "3.2%"
-          },
-          {
-            "title": "CPI m/m",
-            "currency": "AUD",
-            "impact": "high",
-            "date": "2026-08-25T21:30:00-04:00",
-            "time": "",
-            "forecast": "0.9%",
-            "previous": "-0.1%"
-          },
-          {
-            "title": "CPI y/y",
-            "currency": "AUD",
-            "impact": "high",
-            "date": "2026-08-25T21:30:00-04:00",
-            "time": "",
-            "forecast": "3.3%",
-            "previous": "3.8%"
-          },
-          {
-            "title": "Trimmed Mean CPI m/m",
-            "currency": "AUD",
-            "impact": "high",
-            "date": "2026-08-25T21:30:00-04:00",
-            "time": "",
-            "forecast": "0.4%",
-            "previous": "0.3%"
-          }
-        ],
-        "medium_impact": [
-          {
-            "title": "Core Retail Sales q/q",
-            "currency": "NZD",
-            "impact": "low",
-            "date": "2026-08-23T18:45:00-04:00",
-            "time": "",
-            "forecast": "0.3%",
-            "previous": "1.0%"
-          },
-          {
-            "title": "Retail Sales q/q",
-            "currency": "NZD",
-            "impact": "low",
-            "date": "2026-08-23T18:45:00-04:00",
-            "time": "",
-            "forecast": "0.1%",
-            "previous": "0.9%"
-          },
-          {
-            "title": "Corporate Profits q/q",
-            "currency": "CAD",
-            "impact": "low",
-            "date": "2026-08-24T08:30:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": "-2.0%"
-          },
-          {
-            "title": "Treasury Sec Bessent Speaks",
-            "currency": "USD",
-            "impact": "medium",
-            "date": "2026-08-24T13:00:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          },
-          {
-            "title": "Monetary Policy Meeting Minutes",
-            "currency": "AUD",
-            "impact": "low",
-            "date": "2026-08-24T21:30:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          },
-          {
-            "title": "German ifo Business Climate",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-08-25T04:00:00-04:00",
-            "time": "",
-            "forecast": "87.2",
-            "previous": "86.6"
-          },
-          {
-            "title": "Belgian NBB Business Climate",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-08-25T09:00:00-04:00",
-            "time": "",
-            "forecast": "-11.0",
-            "previous": "-11.9"
-          },
-          {
-            "title": "HPI m/m",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-08-25T09:00:00-04:00",
-            "time": "",
-            "forecast": "0.2%",
-            "previous": "0.3%"
-          },
-          {
-            "title": "S&P/CS Composite-20 HPI y/y",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-08-25T09:00:00-04:00",
-            "time": "",
-            "forecast": "1.8%",
-            "previous": "1.6%"
-          },
-          {
-            "title": "New Home Sales",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-08-25T10:00:00-04:00",
-            "time": "",
-            "forecast": "620K",
-            "previous": "628K"
-          }
-        ],
-        "total_events": 72,
-        "fetched_at": "2026-08-30T05:38:31.043012+00:00"
-      },
-      "_fetched_at": 1788068311.0431864
     }
   }
 }
