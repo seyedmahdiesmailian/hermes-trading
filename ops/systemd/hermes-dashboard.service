@@ -10,8 +10,8 @@ ExecStart=/usr/bin/python3 /home/ai/hermes-trading/scripts/dashboard_bot.py
 Restart=always
 RestartSec=10
 Nice=10
-StandardOutput=append:/home/ai/hermes-trading/logs/dashboard.log
-StandardError=append:/home/ai/hermes-trading/logs/dashboard.log
+# b38fix: dashboard_bot.log() appends to logs/dashboard.log itself —
+# redirecting stdout to the same file duplicated every line.
 
 [Install]
 WantedBy=default.target

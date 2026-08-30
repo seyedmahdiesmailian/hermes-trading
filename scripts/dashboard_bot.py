@@ -46,7 +46,9 @@ def api(method: str, token: str, params: dict | None = None) -> dict:
         url = f'https://api.telegram.org/bot{token}/{method}'
         data = urllib.parse.urlencode(params).encode() if params else None
         req = urllib.request.Request(url, data=data, method='POST' if data else 'GET')
-        return json.loads(urllib.request.urlopen(req, timeout=15).read().decode())
+        # b38fix: long-poll timeout must exceed the getUpdates 'timeout' param
+        # (25s), otherwise every poll dies with a socket read timeout.
+        return json.loads(urllib.request.urlopen(req, timeout=40).read().decode())
     except Exception as e:
         log(f'api {method} failed: {e}')
         return {}
