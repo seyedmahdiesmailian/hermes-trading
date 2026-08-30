@@ -61,7 +61,16 @@ def main() -> None:
         sys.exit(1)
 
     state = json.loads(STATE.read_text()) if STATE.exists() else {"done": []}
-    results = json.loads(OUT.read_text())["results"] if OUT.exists() else []
+    # Only keep stored results for windows the state still marks as done —
+    # otherwise a cleared state (fresh rerun after a parity fix) silently
+    # mixes stale pre-fix numbers with new ones (measured: 26 rows for 13 windows).
+    results = []
+    if OUT.exists():
+        try:
+            done = set(state["done"])
+            results = [r for r in json.loads(OUT.read_text())["results"] if r.get("window") in done]
+        except Exception:
+            results = []
 
     # One dataset, cached: every window slices the same byte-identical bars.
     if DATA_CACHE.exists():

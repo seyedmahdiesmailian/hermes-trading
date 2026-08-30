@@ -68,9 +68,14 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         bp = decision.get("blueprint") or {}
         if not bp:
             return None
+        # grade parity: live auto_executor Check 6 kills C-grade entries
+        # (MIN_SETUP_GRADE="B"). Without this the backtest silently traded
+        # every stale-plan C setup the live funnel would reject.
+        from hermes_runtime import _infer_setup_grade
         return {"side": bp["side"], "entry": float(bp["entry_price"]),
                 "sl": float(bp["sl"]), "tp": float(bp["tp"]),
-                "style": decision.get("execution_style")}
+                "style": decision.get("execution_style"),
+                "grade": _infer_setup_grade(plan)}
     except Exception:
         return None
 
@@ -110,6 +115,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         m15_data,
         signal_fn,
         min_rr=1.5,           # live gate 6: backtested MIN_RR
+        min_grade="B",        # live gate 7: MIN_SETUP_GRADE="B" (parity)
         breakeven_at_r=0.5,   # live trade management: BE move at +0.5R
         partial_tp1_share=0.5,  # live TP ladder: 50% at first target
         spread=0.20,          # XAUUSD demo round-trip cost

@@ -73,8 +73,19 @@ def _reanchor_blueprint(bp: dict, price: float, atr: float, min_rr: float = 1.5)
 
     bp = dict(bp)
     bp["sl"] = round(sl, 2)
-    bp["tp"] = round(tp, 2)
-    bp["tp_levels"] = [round(tp, 2)]
+    # Parity with auto_executor Check 5.6: the executor recomputes RR from the
+    # ROUNDED sl/tp. Naive rounding of tp = price + 1.5*stop can land at
+    # RR 1.4997 and the gate kills the trade this function just built
+    # (measured: 28/51 live-parity entries died as poor_rr_1.50).
+    # Pad the target to min_rr + 0.05 AFTER rounding so geometry always clears
+    # the floor with margin.
+    _sd = abs(price - bp["sl"])
+    _tp = round(tp, 2)
+    if _sd > 0:
+        _need = price - _sd * (min_rr + 0.05) if side == "SELL" else price + _sd * (min_rr + 0.05)
+        _tp = min(_tp, _need) if side == "SELL" else max(_tp, _need)
+    bp["tp"] = round(_tp, 2)
+    bp["tp_levels"] = [round(_tp, 2)]
     bp["tp_shares"] = [1.0]
     bp["reanchored"] = True
     return bp

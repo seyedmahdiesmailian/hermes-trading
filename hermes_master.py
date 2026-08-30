@@ -87,6 +87,15 @@ def main():
     bridge = BridgeClient()
     bridge_health = bridge.health()
 
+    # Startup cooldown: registered ONCE per process. (Was called inside
+    # cycle() every 15 min → each cycle re-armed a 5-min restart cooldown
+    # and then blocked its own entries. Measured: 0/51 entries survived.)
+    try:
+        from engines.cooldown import ensure_startup_cooldown
+        ensure_startup_cooldown()
+    except Exception:
+        pass
+
     if not bridge_health.get('ok'):
         log(f"Bridge unreachable: {bridge_health}")
         send_telegram(f"🛑 Hermes | Bridge unreachable\n{bridge.url}")

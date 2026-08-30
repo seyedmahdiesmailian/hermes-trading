@@ -350,8 +350,6 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # ── Legacy migration: macro snapshot into plan context + report ──
     try:
         from engines.macro_snapshot import analyze_macro, gold_macro_verdict
-        from engines.cooldown import ensure_startup_cooldown
-        ensure_startup_cooldown(now)
         macro_snap = analyze_macro(bridge, SYMBOL)
         macro_snap['verdict'] = gold_macro_verdict(macro_snap)
         # attach the economic calendar so news_lock (legacy_guards) has data —

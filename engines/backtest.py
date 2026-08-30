@@ -120,7 +120,10 @@ def backtest_ohlc(
         reward = abs(tp - entry)
         if min_rr > 0 and risk > 0 and (reward / risk) < min_rr:
             continue
-        if min_grade and str(signal.get("grade", "")).upper() < min_grade:
+        # Live gate 7 blocks when grade > MIN_SETUP_GRADE (A<B<C alphabetically,
+        # C is worst). The old `<` comparison never matched → grade gate was
+        # dead in the backtest while live rejected C setups (parity bug).
+        if min_grade and str(signal.get("grade", "")).upper() > min_grade:
             continue
         if exclude_styles:
             style = str(signal.get("style") or "")
