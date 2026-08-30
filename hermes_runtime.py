@@ -435,6 +435,8 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                     'risk_usd': eval_result.get('risk_usd'),
                     'dry_run': dry_run,
                     'result_ok': execution_result.get('ok', False),
+                    # exact journal→plan linkage (was time-proximity heuristic)
+                    'ticket': ((execution_result.get('result') or {}).get('ticket')),
                 })
         else:
             proposal['skip_reason'] = eval_result.get('reason')

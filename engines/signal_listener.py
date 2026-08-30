@@ -360,6 +360,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             "risk_usd": 0,
             "dry_run": dry_run,
             "result_ok": result.get("ok", False),
+            "ticket": (result.get("result") or {}).get("ticket"),
         })
 
     return {

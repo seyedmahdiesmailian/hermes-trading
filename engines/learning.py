@@ -171,11 +171,11 @@ def analyze() -> dict:
 
     # ── session × regime breakdown ──
     # Trade time = journal close_time (unix seconds or ISO). Regime = the
-    # bucketed quality.regime of the plan attributed via TIME-PROXIMITY join:
-    # execution_log has no ticket column, so a trade is matched to the most
-    # recent successful (result_ok, non-dry-run) plan execution at or before
-    # its close, within EXEC_JOIN_LOOKBACK_H hours. No match → 'unknown'
-    # (bucket is skipped from regime stats, never guessed).
+    # bucketed quality.regime of the plan attributed via EXACT ticket join
+    # (execution_log.ticket, since 2026-08-30) with a time-proximity fallback
+    # for historical rows: the most recent successful (result_ok, non-dry-run)
+    # plan execution at or before its close, within EXEC_JOIN_LOOKBACK_H hours.
+    # No match → 'unknown' (bucket is skipped from regime stats, never guessed).
     def _trade_time(row: dict):
         raw = str(row.get('close_time') or '')
         if raw.isdigit():
@@ -189,6 +189,7 @@ def analyze() -> dict:
     EXEC_JOIN_LOOKBACK_H = 48
 
     exec_events: list[tuple[datetime, str]] = []   # (at, plan_id)
+    exec_by_ticket: dict[str, str] = {}            # ticket → plan_id (exact join)
     exec_log = PLAN_DIR / 'execution_log.csv'
     try:
         with exec_log.open(newline='', encoding='utf-8') as f:
@@ -200,6 +201,9 @@ def analyze() -> dict:
                 plan_id = str(r.get('plan_id') or '').strip()
                 if not plan_id or plan_id == 'signal':
                     continue
+                _tkt = str(r.get('ticket') or '').strip()
+                if _tkt and _tkt not in ('None', ''):
+                    exec_by_ticket[_tkt] = plan_id
                 try:
                     at = datetime.fromisoformat(str(r.get('at') or ''))
                 except ValueError:
@@ -211,7 +215,11 @@ def analyze() -> dict:
         pass
     exec_events.sort(key=lambda x: x[0])
 
-    def _plan_for_close(close_ts: datetime) -> str:
+    def _plan_for_close(close_ts: datetime, ticket: str = '') -> str:
+        # Exact linkage first (execution_log.ticket exists since 2026-08-30);
+        # fall back to time-proximity for historical rows without a ticket.
+        if ticket and ticket in exec_by_ticket:
+            return exec_by_ticket[ticket]
         best = ''
         for at, plan_id in exec_events:
             if at > close_ts:
@@ -225,7 +233,7 @@ def analyze() -> dict:
     for row in rows:
         ts = _trade_time(row)
         session = session_of(ts) if ts else 'unknown'
-        plan_id = _plan_for_close(ts) if ts else ''
+        plan_id = _plan_for_close(ts, str(row.get('ticket') or '').strip()) if ts else ''
         regime = _regime_for_plan(plan_id)
         bucket = _bucket_for(regime) if regime else 'unknown'
         by_session.setdefault(session, []).append(row)
