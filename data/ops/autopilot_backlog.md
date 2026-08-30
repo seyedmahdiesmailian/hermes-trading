@@ -9,7 +9,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] Spread gate for live entries: the parity funnel never looks at real-time
+- [x] Spread gate for live entries (done 2026-08-30: MAX_ENTRY_SPREAD=0.60 in hermes_runtime, env HERMES_MAX_SPREAD, entry-path only): the parity funnel never looks at real-time
       spread (cost is linear in trades, verified 2026-08-30), so news/rollover
       spikes (XAUUSD can blow past 2.0) are unguarded in live. Evaluate a
       max-spread pre-entry gate in hermes_runtime (read-only tick check, e.g.
