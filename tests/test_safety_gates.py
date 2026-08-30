@@ -101,5 +101,32 @@ class TradeManagementGuardTests(unittest.TestCase):
                                     "SELL breakeven SL below entry would flip stop into profit zone")
 
 
+class SignalFreshnessGateTests(unittest.TestCase):
+    """getUpdates replays the 24h buffer after any daemon downtime —
+    a stale signal executed at today's price is a guaranteed loss."""
+
+    def _found_count(self, ages_sec):
+        import os
+        from datetime import datetime, timezone
+        from engines import signal_listener as sl
+        now = int(datetime.now(timezone.utc).timestamp())
+        msgs = [{"update_id": 100 + i, "chat_id": "-100test", "chat_title": "t",
+                 "from": "x", "text": "BUY XAUUSD 4470 SL 4460 TP 4500",
+                 "date": now - a} for i, a in enumerate(ages_sec)]
+        orig = {"fetch": sl.fetch_new_messages, "log": sl._log_signal}
+        sl.fetch_new_messages = lambda: msgs
+        sl._log_signal = lambda *a, **k: None
+        os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100test"
+        try:
+            return len(sl.check_signals(bridge=None))
+        finally:
+            sl.fetch_new_messages, sl._log_signal = orig["fetch"], orig["log"]
+
+    def test_fresh_signal_passes_stale_dropped(self):
+        self.assertEqual(self._found_count([60]), 1)          # 1 min old → live
+        self.assertEqual(self._found_count([60, 7200]), 1)    # 2 h old → ghost
+        self.assertEqual(self._found_count([900]), 0)         # 15 min → dropped
+
+
 if __name__ == "__main__":
     unittest.main()
