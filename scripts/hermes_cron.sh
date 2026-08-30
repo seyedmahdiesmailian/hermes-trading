@@ -13,6 +13,15 @@ if [ -f /home/ai/hermes-trading/.env ]; then
   set +a
 fi
 
+# Log hygiene: cap any log over 5MB by keeping its last 2MB (no logrotate dep;
+# master.log grows every 15-min tick forever otherwise)
+for f in logs/*.log; do
+  sz=$(stat -c%s "$f" 2>/dev/null || echo 0)
+  if [ "$sz" -gt 5242880 ]; then
+    tail -c 2097152 "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+  fi
+done
+
 export PYTHONPATH=/home/ai/hermes-trading
 NOW=$(date '+%Y-%m-%d %H:%M:%S')
 echo "[$NOW] Cron triggered" >> logs/cron.log
