@@ -70,7 +70,9 @@ class AnalyzeTest(unittest.TestCase):
         self.exec_log = self.plan_dir / 'execution_log.csv'
         plan = {'plan_id': 'xau-test01',
                 'quality': {'regime': 'breakout_continuation'}}
-        (self.plan_dir / '20260830_010000_xau-test01.json').write_text(
+        hist = self.plan_dir / 'plan_history'
+        hist.mkdir(exist_ok=True)
+        (hist / '20260830_010000_xau-test01.json').write_text(
             json.dumps(plan), encoding='utf-8')
 
     def patched(self):
@@ -136,7 +138,7 @@ class AnalyzeTest(unittest.TestCase):
             out['by_session_regime']['london']['trend']['trades'], 1)
 
     def test_corrupt_plan_file_does_not_crash(self):
-        (self.plan_dir / '20260830_010000_xau-bad.json').write_text(
+        (self.plan_dir / 'plan_history' / '20260830_010000_xau-bad.json').write_text(
             '{not json', encoding='utf-8')
         write_csv(self.journal, JH, [jrow('555', ep(9, 30), 'BUY', '5')])
         write_csv(self.exec_log, EH,
@@ -147,17 +149,21 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual(london['unknown']['trades'], 1)
         self.assertNotIn('trend', london)
 
-    def test_ambiguous_plan_id_skipped(self):
-        for stamp in ('20260829_010000', '20260830_010000'):
-            (self.plan_dir / (stamp + '_xau-dup.json')).write_text(
-                json.dumps({'quality': {'regime': 'range'}}), encoding='utf-8')
+    def test_duplicate_plan_archives_use_newest(self):
+        # 2026-08-30 behavior change: multiple archives of one plan_id used to
+        # be bailed on as ambiguous (→ 'unknown'); now the NEWEST wins.
+        hist = self.plan_dir / 'plan_history'
+        for stamp, regime in (('20260829_010000', 'range'),
+                              ('20260830_010000', 'breakout_continuation')):
+            (hist / (stamp + '_xau-dup.json')).write_text(
+                json.dumps({'quality': {'regime': regime}}), encoding='utf-8')
         write_csv(self.journal, JH, [jrow('777', ep(9, 30), 'SELL', '2')])
         write_csv(self.exec_log, EH,
                   [erow('2026-08-29T08:00:00+00:00', 'xau-dup')])
         with self.patched():
             out = learning.analyze()
         london = out['by_session_regime']['london']
-        self.assertEqual(london['unknown']['trades'], 1)
+        self.assertEqual(london['trend']['trades'], 1)  # newest = breakout → trend
         self.assertNotIn('range', london)
 
     def test_iso_close_time_and_naive(self):
