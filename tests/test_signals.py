@@ -77,13 +77,14 @@ class TestSignalDecision(unittest.TestCase):
         )
         self.assertEqual(result["verdict"], "execute")
 
-    def test_review_conflict_signal(self):
+    def test_skip_conflict_signal(self):
         from engines.signal_decision import evaluate_signal
         result = evaluate_signal(
             {"symbol": "XAUUSD", "side": "BUY", "entry": 2595, "sl": 2590, "tp": 2610, "confidence": 0.8, "rr_ratio": 3.0, "warnings": []},
             {"bias": "bearish"}, {"trade_allowed": True, "regime": "normal", "open_positions": 0}
         )
-        self.assertIn(result["verdict"], {"review", "skip"})
+        # Autonomous: a signal fighting our own trend read is skipped, not escalated.
+        self.assertEqual(result["verdict"], "skip")
 
     def test_skip_when_account_locked(self):
         from engines.signal_decision import evaluate_signal
@@ -99,7 +100,9 @@ class TestSignalDecision(unittest.TestCase):
             {"symbol": "XAUUSD", "side": "BUY", "entry": 2595, "sl": 0, "tp": 2610, "confidence": 0.9, "rr_ratio": 0, "warnings": ["missing_sl"]},
             {"bias": "bullish"}, {"trade_allowed": True, "regime": "normal", "open_positions": 0}
         )
-        self.assertIn(result["verdict"], {"review", "skip"})
+        # Autonomous: a signal missing its stop-loss is skipped outright,
+        # never escalated to a human.
+        self.assertEqual(result["verdict"], "skip")
 
 
 class TestEconomicCalendar(unittest.TestCase):

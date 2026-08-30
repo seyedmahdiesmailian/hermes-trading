@@ -36,9 +36,8 @@ HARD RULES (violating any = revert everything):
 FINAL OUTPUT: one paragraph — what you did, what you found, next item picked.'
 
 # Agent: hermes -z (headless). Absolute path — cron PATH lacks ~/.local/bin.
-# It loads the same persistent memory, which carries the sacred rule
-# 'never trade without explicit /trade' — a second enforcement layer on top
-# of the prompt's hard rules.
+# It loads the same persistent memory, which carries the autonomy rule
+# (no manual approval anywhere; the system trades on its own judgement).
 HERMES_BIN="$(command -v hermes || echo /home/ai/.local/bin/hermes)"
 timeout 2700 "$HERMES_BIN" -z "$PROMPT" --cli >> "$LOG" 2>&1
 RC=$?

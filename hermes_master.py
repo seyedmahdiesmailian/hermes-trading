@@ -116,7 +116,6 @@ def main():
     log(f"Step={step} execute={will_execute} action={monitor_action}")
 
     # ── Phase 2: signals handled instantly by signal_daemon.py (systemd) ──
-    signal_executions = []
 
     # ── Phase 2.5: adaptive learning loop (journal → analyze → adjust) ──
     try:
@@ -149,26 +148,6 @@ def main():
     elif step == 'manage':
         send_telegram(report)
 
-    # ── Telegram: report signal executions AND reviews ──
-    for se in signal_executions:
-        sig = se.get("signal", {})
-        verdict = se.get("verdict", "?")
-        if se.get("executed"):
-            send_telegram(
-                f"\U0001f4e1 SIGNAL TRADE\n"
-                f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
-                f"SL: {sig.get('sl')} | TP: {sig.get('tp')}\n"
-                f"Verdict: {verdict}"
-            )
-        elif verdict == "review":
-            reasons = ", ".join(se.get("reasons", [])[:3])
-            send_telegram(
-                f"\u26a0\ufe0f SIGNAL REVIEW \u2014 \u0646\u06cc\u0627\u0632 \u062a\u0635\u0645\u06cc\u0645 \u0634\u0645\u0627\n"
-                f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
-                f"SL: {sig.get('sl')} | TP: {sig.get('tp')}\n"
-                f"\u062f\u0644\u06cc\u0644: {reasons}\n"
-                f"\u0627\u06af\u0631 \u0645\u06cc\u062e\u0648\u0627\u06cc \u0628\u0632\u0646\u0645: /trade {sig.get('side','').lower()} {sig.get('entry')} sl:{sig.get('sl')} tp:{sig.get('tp')}"
-            )
     # no_trade → silent
 
     log("Cycle complete.")

@@ -149,18 +149,16 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
             score -= 0.5
             reasons.append(f"parser:{w}")
 
-    # ── Verdict ──
+    # ── Verdict ── (fully autonomous: execute or skip, never "ask the user")
     final_score = round(min(max_score, max(0, score)), 2)
     if final_score >= 6.0 and account_policy.get("trade_allowed", False):
         verdict = "execute"
-    elif final_score >= 4.0:
-        verdict = "review"
     else:
         verdict = "skip"
 
     # Never auto-execute without SL
     if verdict == "execute" and sl <= 0:
-        verdict = "review"
+        verdict = "skip"
         reasons.append("no_sl_critical")
 
     return {

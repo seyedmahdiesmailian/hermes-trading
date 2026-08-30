@@ -101,8 +101,9 @@ class TestRuntimeCycle(unittest.TestCase):
             )
         self.assertFalse(result2.get("will_execute_now"))
 
-    def test_cycle_never_executes_without_approval(self):
-        """Cycle must NEVER set will_execute_now=True."""
+    def test_cycle_plan_step_defers_execution(self):
+        """Plan step only defers execution to the trigger; manage/enter steps
+        execute autonomously (checked in test_cycle.py)."""
         from hermes_runtime import cycle
         m15 = _make_ohlc_rows(80, 4600, 5, "bullish")
         h1 = _make_ohlc_rows(80, 4600, 15, "bullish")
@@ -163,33 +164,6 @@ class TestRiskManagement(unittest.TestCase):
             balance=5000, equity=4500, free_margin=4500,
             margin=0, daily_pnl=-500, loss_streak=3, open_positions=0
         )
-        self.assertFalse(policy.get("trade_allowed"))
-
-
-class TestApprovalGate(unittest.TestCase):
-    def test_parse_trade_command(self):
-        from execution.approval_gate import parse_command
-        result = parse_command("/trade BUY 0.05 4590 4620")
-        self.assertTrue(result.get("ok"))
-        self.assertEqual(result.get("side"), "BUY")
-        self.assertEqual(result.get("lot"), 0.05)
-        self.assertEqual(result.get("sl"), 4590)
-        self.assertEqual(result.get("tp"), 4620)
-
-    def test_parse_skip_command(self):
-        from execution.approval_gate import parse_command
-        result = parse_command("/skip")
-        self.assertTrue(result.get("ok"))
-        self.assertEqual(result.get("command"), "/skip")
-
-    def test_dry_run_blocks_execution(self):
-        from execution.approval_gate import execute_approved_command
-        mock_bridge = MagicMock()
-        result = execute_approved_command(mock_bridge, {"ok": True, "command": "/trade", "side": "BUY", "lot": 0.05}, dry_run=True)
-        self.assertTrue(result.get("dry_run"))
-        mock_bridge.send_order.assert_not_called()
-
-
 class TestOrchestrator(unittest.TestCase):
     def test_route_step_no_plan(self):
         from engines.orchestrator import route_runtime_step

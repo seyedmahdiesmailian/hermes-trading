@@ -68,7 +68,7 @@ class BridgeClient:
     def get_history_deals(self, symbol="XAUUSD", days=7):
         return self._get(f"/api/history/deals?symbol={urllib.parse.quote(symbol)}&days={int(days)}")
 
-    # execution endpoints are available but called only by approval_gate after explicit command
+    # execution endpoints — used by the autonomous executor and signal listener
     def send_order(self, side, lot, symbol="XAUUSD", sl=None, tp=None):
         return self._post("/api/order", {"type": side.lower(), "volume": float(lot), "symbol": symbol, "sl": sl, "tp": tp})
     def close_position(self, ticket): return self._post("/api/close", {"ticket": int(ticket)})

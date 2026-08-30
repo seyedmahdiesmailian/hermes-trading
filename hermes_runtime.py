@@ -197,8 +197,8 @@ def _build_proposal(plan: dict, monitor: dict, policy: dict, tick_price: float) 
 def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_calendar: dict | None = None) -> dict:
     """Main autonomous trading cycle.
 
-    This function NEVER returns requires_user_approval=True.
-    It makes decisions and executes them automatically.
+    Fully autonomous: this function decides and executes on its own.
+    There is no human approval path anywhere in the system.
     """
     now = now or _now()
     runtime = load_runtime_state(PLAN_DIR)

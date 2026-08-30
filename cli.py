@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Hermes Trading CLI — send commands and check status."""
+"""Hermes Trading CLI — read-only status/report/plan inspection.
+
+Fully autonomous system: there are NO manual trade commands. The scanner and
+the signal listener decide and execute on their own; this CLI only shows state.
+"""
 from __future__ import annotations
 
 import argparse
@@ -9,19 +13,9 @@ import sys
 from pathlib import Path
 
 BASE_DIR = Path('/home/ai/hermes-trading')
-CMD_FILE = BASE_DIR / 'data' / 'commands' / 'hermes_command.txt'
 REPORT_FILE = BASE_DIR / 'logs' / 'report.txt'
 PLAN_FILE = BASE_DIR / 'data' / 'xau_plan' / 'current_plan.json'
 RUNTIME_FILE = BASE_DIR / 'data' / 'xau_plan' / 'runtime_state.json'
-
-
-def cmd_send(args):
-    """Send a command to Hermes."""
-    CMD_FILE.parent.mkdir(parents=True, exist_ok=True)
-    CMD_FILE.write_text(args.command, encoding='utf-8')
-    print(f"✅ Command sent: {args.command}")
-    print(f"   Will be consumed on next cron cycle (within 15 min)")
-    print(f"   Or run: python3 hermes_master.py")
 
 
 def cmd_status(args):
@@ -102,16 +96,12 @@ def main():
     sub.add_parser('report', help='Show last report')
     sub.add_parser('plan', help='Show current plan')
 
-    p_send = sub.add_parser('send', help='Send a command')
-    p_send.add_argument('command', help='Command: /trade BUY 0.05 4590 4620, /close TICKET, /partial TICKET 50, /modify TICKET sl=4600, /skip')
-
     p_run = sub.add_parser('run', help='Run a cycle now')
     p_run.add_argument('--live', action='store_true', help='Execute for real (no DRY_RUN)')
 
     args = parser.parse_args()
     if args.action == 'status': cmd_status(args)
     elif args.action == 'report': cmd_report(args)
-    elif args.action == 'send': cmd_send(args)
     elif args.action == 'run': cmd_run(args)
     elif args.action == 'plan': cmd_plan(args)
 

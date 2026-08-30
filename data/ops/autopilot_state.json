@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T07:45:43.113394+00:00",
+ "last_run_utc": "2026-08-30T08:51:08.791825+00:00",
  "recent_commits": [
-  "2a03cb0 b14: grade-gate efficacy audit \u2014 grade ranks PnL correctly (C avg 1/3 of B, WR 45.9 vs 52.9); gate B stays justified under single-position constraint; run_backtest min_grade now parameterizable + grade in trade_log",
-  "6ef121a b13c: untrack watchdog heartbeat/state \u2014 pure mtime churn, 22 noise commits in 2 days, zero forensic value",
-  "c689e2e b13b: learning test fixtures moved to real plan_history/ layout + newest-wins duplicate test (76 green)",
-  "d72e7cb b13: learning._regime_for_plan globbed wrong dir (PLAN_DIR vs PLAN_DIR/plan_history) \u2014 regime join was ALWAYS empty; + plan_history retention cap 1500 files",
-  "d6d39cc b12: ICT concepts edge audit \u2014 no usable edge in any of the 8 (report-only decision locked); fixed dead swept_high/low detector in compute_session_liquidity + 2 regression tests"
+  "6571011 b20: cron log cap \u2014 any logs/*.log over 5MB trimmed to last 2MB (master.log grew every tick forever)",
+  "1b4750b b19: backfill close-deal tickets for the 3 real executions (journal keys on closing deal, not order) \u2014 learner join now resolves funnel trades to trend regime; untrack listener_state (mtimes-only churn)",
+  "5f458d6 b18: neutral_bias gate audit \u2014 forgone +8183$ is dataset drift; neutral bars are 0.49$/bar WORSE than traded bars, gate justified (unchanged); b15 cooldown fix verified live on 08:00 tick",
+  "7290d06 b17: rejected breakeven/trail move now alerts instantly (was log-only until close report) \u2014 trade running on original stop is never silent; backlog fully closed",
+  "50e6afe b16: funnel_attribution replay parity \u2014 is_market_open used wall clock (fake market_closed when run while market shut); with b15 cooldown fix the replay now shows 27/27 EXECUTED (was 0/27) \u2014 reconciles the 24-vs-27 open discrepancy: 24 grade-C rejects + 27 executed"
  ]
 }

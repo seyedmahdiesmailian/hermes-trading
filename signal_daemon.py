@@ -82,14 +82,6 @@ def main():
                             f"SL: {sig.get('sl')} | TP: {sig.get('tp')}\n"
                             f"lot: {se.get('lot', sig.get('lot', '?'))}"
                         )
-                    elif verdict == 'review':
-                        reasons = ', '.join(se.get('reasons', [])[:3])
-                        send_telegram(
-                            f"⚠️ SIGNAL REVIEW — نیاز به تصمیم شما\n"
-                            f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
-                            f"SL: {sig.get('sl')} | TP: {sig.get('tp')}\n"
-                            f"دلیل: {reasons}"
-                        )
                     elif verdict == 'skip':
                         reasons = ', '.join(se.get('reasons', [])[:3])
                         send_telegram(
