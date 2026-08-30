@@ -166,7 +166,10 @@ def evaluate_proposal(
             }
 
     # ── Check 6: Setup grade ──
-    grade = _infer_setup_grade(plan)
+    # The signal path supplies its own quality verdict (the 8-check scorer in
+    # signal_decision) via proposal['grade']; the plan path leaves it unset
+    # and the grade is inferred from plan quality as before.
+    grade = str(proposal.get("grade") or "").upper() or _infer_setup_grade(plan)
     if grade > MIN_SETUP_GRADE:  # A < B < C in string order, but A is best grade
         reasons.append(f"grade_{grade}_below_minimum")
         return {

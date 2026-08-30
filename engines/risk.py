@@ -11,14 +11,37 @@ def _base_risk_pct(balance: float) -> float:
     return 0.015
 
 
+def _count_entries_today(closed_trades: list[dict], today: str) -> int:
+    """Count DEAL_ENTRY_IN deals whose timestamp falls on `today` (UTC).
+
+    BUG FIX 2026-08-30: `trades_today` was READ by the MAX_DAILY_TRADES gate
+    in auto_executor but never WRITTEN by anyone — the daily trade cap had
+    been dead code since day one (it always saw 0).
+    """
+    from datetime import datetime, timezone
+    n = 0
+    for t in closed_trades or []:
+        if str(t.get('entry', '1')) not in ('0', 'IN'):
+            continue  # only opening deals
+        ts = t.get('time') or t.get('time_done')
+        try:
+            if datetime.fromtimestamp(float(ts), tz=timezone.utc).date().isoformat() == today:
+                n += 1
+        except (TypeError, ValueError, OSError):
+            continue
+    return n
+
+
 def compute_performance_state(current: dict, today: str, balance: float, closed_trades: list[dict]) -> dict:
     state = dict(current or {})
+    entries_today = _count_entries_today(closed_trades, today)
     if state.get("day") != today:
         return {
             "day": today,
             "starting_balance": balance,
             "daily_pnl": 0.0,
             "loss_streak": 0,
+            "trades_today": entries_today,
             "last_closed_ticket": state.get("last_closed_ticket"),
         }
 
@@ -40,6 +63,9 @@ def compute_performance_state(current: dict, today: str, balance: float, closed_
         "starting_balance": float(state.get("starting_balance", balance) or balance),
         "daily_pnl": running_daily_pnl,
         "loss_streak": loss_streak,
+        # max() keeps the count monotonic within a day even if the broker feed
+        # returns a shorter window than the previous tick
+        "trades_today": max(entries_today, int(state.get("trades_today", 0) or 0)),
         "last_closed_ticket": new_trades[-1].get("ticket") if new_trades else last_closed_ticket,
         # last 10 closed deals (with MT5 comment) → DEFCON exit classification
         "recent_closed": (closed_trades or [])[-10:],

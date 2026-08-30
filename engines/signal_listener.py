@@ -216,10 +216,19 @@ def check_signals(bridge=None) -> list[dict]:
                 margin=float(acct.get("margin", 0) or 0),
                 now=_now,
             )
+            # REAL open-position count — hardcoded 0 made the decision engine
+            # blind to existing exposure (already_in_position check never fired)
+            _open_ct = 0
+            try:
+                _pr = bridge.get_positions("XAUUSD") or {} if bridge is not None else {}
+                _open_ct = len(_pr.get("data", []) or [])
+            except Exception:
+                pass
             account_policy = {
                 "trade_allowed": not _kill.get("halted", False),
                 "regime": "halted" if _kill.get("halted") else "normal",
-                "open_positions": 0,
+                "open_positions": _open_ct,
+                "balance": float(acct.get("balance", 0) or 0),
             }
         except Exception:
             pass  # fail-open to the previous behavior rather than blocking signals on tooling bugs
@@ -298,43 +307,69 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
         except Exception:
             pass
 
-        command = {
+        # ── Final safety gates BEFORE any order ──
+        # CRITICAL FIX 2026-08-30: the signal path called execute_trade()
+        # directly, bypassing EVERY gate the plan path enforces — cooldown,
+        # daily loss limit, daily trade cap, position cap, RR floor, and
+        # risk-based sizing. A channel posting "lot: 5" would have opened 5
+        # lots (~10% of account at risk). Signals now run the SAME
+        # evaluate_proposal() gauntlet; the parsed lot is only a ceiling,
+        # actual size comes from our own risk model.
+        from engines.auto_executor import evaluate_proposal, execute_trade
+
+        _blueprint = {
             "side": parsed["side"],
-            "lot": parsed.get("lot", 0.01) or 0.01,
-            "symbol": parsed["symbol"],
+            "entry_price": parsed["entry"],
             "sl": parsed["sl"],
             "tp": parsed["tp"],
-            "entry": parsed["entry"],
-            "sl_points": int(round(abs(parsed["entry"] - parsed["sl"]) / 0.01)) if parsed["sl"] > 0 else 0,
-            "tp_points": int(round(abs(parsed["tp"] - parsed["entry"]) / 0.01)) if parsed["tp"] > 0 else 0,
+            "symbol": parsed["symbol"],
         }
-
-        # ── Final safety gates BEFORE any order (same as the plan path) ──
-        # 1) market hours — the signal path used to skip this entirely
-        from engines.market_hours import is_market_open
-        if not is_market_open():
+        _proposal = {
+            "blueprint": _blueprint,
+            "monitor_action": "signal_market_entry",
+            "at": datetime.now(timezone.utc).isoformat(),
+            # map the 8-check score onto the shared grade gate
+            "grade": "A" if decision.get("score", 0) >= 8.0 else "B",
+        }
+        try:
+            # real current plan → DEFCON context + grade fallback see the same
+            # quality data the scanner wrote
+            from engines.storage import load_current_plan as _load_plan
+            _cur_plan = _load_plan(PLAN_DIR) or {}
+            from hermes_runtime import _performance_and_policy
+            _pp = _performance_and_policy(
+                bridge, bridge.get_account() or {}, datetime.now(timezone.utc))
+            _perf_state = _pp['performance_state']
+            _acct_policy = _pp['account_policy']
+            _acct_data = (account_resp or {}).get('data', account_resp) or {}
+            _acct_policy["open_positions"] = max(
+                _acct_policy.get("open_positions", 0),
+                int(_acct_data.get("positions", 0) or 0))
+        except Exception as _pe:
+            # fail-CLOSED: if we cannot compute the account state, the gates
+            # cannot be trusted — do not trade on a blind spot
             executions.append({
                 "signal": parsed, "verdict": "skip",
-                "reasons": ["market_closed"],
+                "reasons": [f"policy_unavailable:{_pe}"],
                 "executed": False,
             })
             continue
-        # 2) open-positions cap — signals used to bypass MAX_OPEN_POSITIONS
-        try:
-            _pos_resp = bridge.get_positions(parsed["symbol"]) or {}
-            _live = _pos_resp.get("data", _pos_resp.get("positions", []))
-            if isinstance(_live, list) and len(_live) >= 2:
-                executions.append({
-                    "signal": parsed, "verdict": "skip",
-                    "reasons": ["position_limit"],
-                    "executed": False,
-                })
-                continue
-        except Exception:
-            pass
 
-        # Execute via auto_executor
-        from engines.auto_executor import execute_trade
+        eval_result = evaluate_proposal(_proposal, _acct_policy, _perf_state,
+                                        _cur_plan, bridge)
+        if not eval_result.get("execute"):
+            executions.append({
+                "signal": parsed, "verdict": "skip",
+                "reasons": eval_result.get("reasons", []) + [eval_result.get("reason", "")],
+                "executed": False,
+            })
+            continue
+
+        command = eval_result.get("command")
+        # never exceed the lot the signal channel itself specified
+        if parsed.get("lot") and command:
+            command["lot"] = min(command["lot"], float(parsed["lot"]))
+
         result = execute_trade(command, bridge, dry_run=dry_run)
 
         executions.append({
