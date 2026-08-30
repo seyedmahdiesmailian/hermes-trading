@@ -5,3 +5,4 @@ __pycache__/
 .env
 data/xau_plan/watchdog_heartbeat
 data/xau_plan/watchdog_state.json
+data/signals/listener_state.json
