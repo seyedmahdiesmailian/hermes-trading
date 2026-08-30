@@ -14,7 +14,7 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
 except ImportError:
-    load_dotenv = lambda *a, **k: None
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
 load_dotenv(Path(__file__).parent / '.env')
 
 from bridge_client import BridgeClient

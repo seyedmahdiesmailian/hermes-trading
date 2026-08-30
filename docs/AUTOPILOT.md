@@ -1,13 +1,13 @@
 # Autopilot — خودگردان شبانه‌روزی
 
 ## چطور کار می‌کند
-- `scripts/autopilot.sh` هر ۳ ساعت (cron: `15 */3 * * *`) یک اجرای headless
+- `scripts/autopilot.sh` هر ساعت (cron: `5 * * * *`، flock از هم‌پوشانی جلوگیری می‌کند) یک اجرای headless
   `hermes -z` (کلیدی: **مسیر مطلق** `/home/ai/.local/bin/hermes` — cron PATH
   ندارد `~/.local/bin`) با prompt مشخص شروع می‌کند.
 - عامل، **قلم اول با وضعیت `todo`** را از `data/ops/autopilot_backlog.md` برمی‌دارد،
   کامل پیاده/تحلیل می‌کند، تست می‌گیرد (unittest + یک سایکل واقعی master)،
   در بک‌لاگ `done` می‌کند و commit می‌زند.
-- `scripts/autopilot_digest.py` هر شب ۲۲:۳۰ UTC خلاصه را از توکن ربات تریدینگ
+- `scripts/autopilot_digest.py` هر شب ۰۲:۰۰ UTC خلاصه را از توکن ربات تریدینگ
   به چت ۱۹۴۰۱۵۹۵۷ می‌فرستد (پیشرفت بک‌لاگ، کارها، خطاها، سلامت دایمون‌ها).
 
 ## خط قرمزها (در prompt + ساختار)

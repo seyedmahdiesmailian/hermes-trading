@@ -9,8 +9,10 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] Backtest robustness: run the parity funnel on 3+ separate 500-bar windows
-      (different weeks if broker history allows, else offsets) — report variance of WR/PnL.
+- [ ] env_loader fallback for remaining scripts: _check_bridge.py, autopilot_digest.py,
+      backtest_sweep.py still import dotenv bare (crash without python-dotenv); and
+      ab_aggressive_entry.py + scripts/backtest_robustness.py hand-parse .env —
+      switch all to the shared env_loader.load_dotenv() pattern.
 - [ ] Spread/slippage sensitivity: rerun backtest with spread 0.35 and 0.50 — does
       edge survive realistic costs?
 - [ ] Zone-width sanity: long/short entry zones are 0.5 ATR wide from a 12-bar window —
@@ -28,6 +30,23 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Done
+- [x] 2026-08-30 Backtest robustness: parity funnel on 13 NON-OVERLAPPING 500-bar
+      windows (separate weeks, May 21→Aug 28, broker history allowed, one cached
+      dataset; H1/H4 context time-padded before each window). Variance: PnL mean
+      +132.66 sd 118.83 (min −57.84 / max +434.81), WR mean 50.6% sd 12.7
+      (26.9→79.2), trades ~26/week sd 3. 12/13 weeks profitable, +1724.61 total
+      over 341 trades — edge is broad, not a few lucky weeks; one bad week
+      (late May) ≈ 0.5R of a normal week. Tools: scripts/backtest_robustness.py
+      (resumable, window-by-window state files), results in
+      data/backtest/robustness_results.json. 71 tests green, live cycle OK.
+- [x] 2026-08-30 CRITICAL FIX found by the run gate: python-dotenv missing on this
+      box → hermes_master's `except ImportError: load_dotenv = lambda: None`
+      silently skipped .env → no bridge token → 401 → 'insufficient_market_data'
+      on EVERY direct cycle (pre-existing since at least 08-28; one prior
+      autopilot even mislabeled it 'weekend, expected'). Cron masked it by
+      exporting .env in the wrapper. Fix: engines/env_loader.py fallback
+      (dotenv-compatible: no-override, quotes, comments) wired into the 4 core
+      entrypoints + tests/test_env_loader.py; gate now passes.
 - [x] 2026-08-30 Journal by session+regime: analyze() now emits by_session and
       by_session_regime (asia/london/newyork × trend/range/unknown); session bounds
       parity-tested against hermes_runtime._detect_session; regime joined via
