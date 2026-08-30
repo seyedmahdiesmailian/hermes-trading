@@ -1,8 +1,8 @@
 {
-  "plan_id": "xau-33fc634e",
+  "plan_id": "xau-709ef534",
   "symbol": "XAUUSD",
   "bias": "bearish",
-  "session": "asia",
+  "session": "newyork",
   "zones": {
     "value_low": 4456.82,
     "value_high": 4459.15,
@@ -48,13 +48,13 @@
       "h4": "bearish"
     },
     "regime": "breakout_continuation",
-    "smc_confidence": 0.53,
+    "smc_confidence": 0.46,
     "smc_poi": "A",
-    "smc_signal": "wait"
+    "smc_signal": "bearish"
   },
-  "created_at": "2026-08-30T02:00:01.703123+00:00",
-  "expires_at": "2026-08-30T14:00:01.703123+00:00",
-  "next_reassessment": "2026-08-30T02:05:01.703123+00:00",
+  "created_at": "2026-08-29T22:15:02.295360+00:00",
+  "expires_at": "2026-08-30T10:15:02.295360+00:00",
+  "next_reassessment": "2026-08-29T22:20:02.295360+00:00",
   "context": {
     "m15_last": 4454.75,
     "h1_last": 4454.75,
@@ -516,18 +516,18 @@
         "swing_low": 4445.47
       },
       "killzone": {
-        "session": "asia",
-        "weight": 0.6
+        "session": "dead",
+        "weight": 0.0
       },
       "bias": "bearish",
-      "confidence": 0.917767362590541,
-      "signal": "wait",
-      "signal_confidence": 0.3,
+      "confidence": 0.9176891615541921,
+      "signal": "bearish",
+      "signal_confidence": 0.27530674846625763,
       "poi": "A",
       "swing_high": 4631.7,
       "swing_low": 4445.47,
       "last_price": 4454.75,
-      "smc_weight": 0.6,
+      "smc_weight": 0.5,
       "h1_structure": {
         "phase": "bos_bearish",
         "confidence": 1.0
@@ -766,8 +766,8 @@
     },
     "merged": {
       "bias": "bearish",
-      "confidence": 0.53,
-      "action": "bearish",
+      "confidence": 0.46,
+      "action": "short",
       "classic_source": {
         "bias": "bearish",
         "confidence": 0.35,
@@ -776,59 +776,74 @@
       },
       "smc_source": {
         "bias": "bearish",
-        "signal": "wait",
-        "confidence": 0.917767362590541,
-        "weight": 0.6,
+        "signal": "bearish",
+        "confidence": 0.9176891615541921,
+        "weight": 0.5,
         "poi": "A",
         "market_structure": {
           "phase": "bos_bearish",
           "confidence": 0.7881136950904715
         },
         "killzone": {
-          "session": "asia",
-          "weight": 0.6
+          "session": "dead",
+          "weight": 0.0
         }
       }
     },
     "macro": {
-      "timestamp": "2026-08-30T02:03:54.599144+00:00",
+      "timestamp": "2026-08-29T22:16:03.339266+00:00",
       "dxy": {
-        "value": 4599.5,
+        "change_pct": 0.004,
+        "direction": "flat",
         "available": true,
-        "source": "broker"
+        "source": "synthetic"
       },
       "silver": {
-        "value": 4599.5,
-        "change_pct": -2.979,
-        "direction": "down",
-        "bullish_for_gold": false,
-        "available": true
+        "available": false
       },
       "risk_sentiment": {
-        "symbol": "US500",
-        "change_pct": -2.979,
-        "risk_mode": "risk_off",
-        "available": true
+        "available": false
       },
       "tick_volume": {
-        "available": false
+        "volume_ratio": 0.37,
+        "is_high_volume": false,
+        "is_low_volume": true,
+        "available": true
       },
       "higher_tf": {
         "h4": {
-          "price": 4969.17,
-          "high_20": 5033.67,
-          "low_20": 4894.54,
-          "pos_in_range": 0.54,
+          "price": 4454.75,
+          "high_20": 4673.74,
+          "low_20": 4445.47,
+          "pos_in_range": 0.04,
+          "zone": "discount",
+          "sma10": 4571.31,
+          "trend": "bearish"
+        },
+        "d1": {
+          "price": 4454.75,
+          "high_20": 4697.2,
+          "low_20": 4019.1,
+          "pos_in_range": 0.64,
           "zone": "equilibrium",
-          "sma10": 4985.74,
+          "sma10": 4535.49,
+          "trend": "bearish"
+        },
+        "w1": {
+          "price": 4454.75,
+          "high_20": 4529.55,
+          "low_20": 4445.47,
+          "pos_in_range": 0.11,
+          "zone": "discount",
+          "sma10": 4457.83,
           "trend": "bearish"
         }
       },
       "verdict": {
         "verdict": "none",
-        "score_long": 1,
-        "score_short": 1,
-        "macro_conflicting": true
+        "score_long": 0,
+        "score_short": 0,
+        "macro_conflicting": false
       },
       "calendar": {
         "source": "forexfactory",
@@ -1017,7 +1032,7 @@
           }
         ],
         "total_events": 72,
-        "fetched_at": "2026-08-30T02:03:54.599465+00:00"
+        "fetched_at": "2026-08-29T22:16:03.542481+00:00"
       }
     }
   }

@@ -1,0 +1,8 @@
+{
+ "last_run_utc": "2026-08-29T23:45:01.399565+00:00",
+ "recent_commits": [
+  "7f465b9 autopilot: A/B aggressive premium/discount entry paths \u2014 they add ~80% of PnL, keep live behaviour; style tag + exclude_styles in parity funnel, ab_aggressive_entry.py script",
+  "52a705f autopilot: self-driving backlog runner (3h) + daily Telegram digest",
+  "6b76ce5 baseline after analysis-chain audit round 2 (2026-08-29)"
+ ]
+}
