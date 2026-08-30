@@ -24,7 +24,7 @@ def fetch_all_ohlc(bridge, symbol: str = "XAUUSD", timeframe: str = "H1", count:
     return all_rows
 
 
-def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar_index: int, m15_window: list[dict] | None = None) -> dict | None:
+def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar_index: int, m15_window: list[dict] | None = None, range_kill_conf: float = 0.35) -> dict | None:
     """Strategy function for backtest — runs the EXACT live funnel.
 
     No hand-copied gates: builds the plan with build_plan_from_context and
@@ -52,8 +52,8 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         classic_regime = ctx.get("quality", {}).get("regime", "")
         smc_confidence = float(merged.get("confidence", 0) or 0)
         smc_bias = merged.get("bias", "neutral")
-        # same range-kill rule as build_live_plan
-        if classic_regime == "range" and smc_bias != "neutral" and smc_confidence < 0.35:
+        # same range-kill rule as build_live_plan (threshold overridable for A/B)
+        if classic_regime == "range" and smc_bias != "neutral" and smc_confidence < range_kill_conf:
             ctx["bias"] = "neutral"
             merged["bias"] = "neutral"
             merged["confidence"] = min(smc_confidence, 0.3)
@@ -81,7 +81,8 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
 
 
 def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: int = 500,
-                 exclude_styles: list[str] | None = None, data: dict | None = None) -> dict:
+                 exclude_styles: list[str] | None = None, data: dict | None = None,
+                 range_kill_conf: float = 0.35) -> dict:
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
@@ -109,7 +110,8 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         h1_window = [r for r in h1_data if r.get("time", 0) <= bar_time][-30:]
         h4_window = [r for r in h4_data if r.get("time", 0) <= bar_time][-15:]
         m15_window = m15_data[max(0, idx - 120):idx + 1]
-        return strategy_signal(row, h1_window, h4_window, idx, m15_window=m15_window)
+        return strategy_signal(row, h1_window, h4_window, idx, m15_window=m15_window,
+                               range_kill_conf=range_kill_conf)
 
     result = backtest_ohlc(
         m15_data,
