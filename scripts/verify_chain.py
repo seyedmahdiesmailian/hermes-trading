@@ -43,14 +43,15 @@ def rows_of(resp):
 
 def main():
     b = BridgeClient()
-    m15 = rows_of(b.get_rates("XAUUSD", "M15", 200))
+    # entry TF must match live TIMEFRAME='M5' (b27: was M15, a parity drift)
+    m5 = rows_of(b.get_rates("XAUUSD", "M5", 200))
     h1 = rows_of(b.get_rates("XAUUSD", "H1", 120))
     h4 = rows_of(b.get_rates("XAUUSD", "H4", 60))
-    check("bridge OHLC", len(m15) > 100 and len(h1) > 50 and len(h4) > 30,
-          f"m15={len(m15)} h1={len(h1)} h4={len(h4)}")
+    check("bridge OHLC", len(m5) > 100 and len(h1) > 50 and len(h4) > 30,
+          f"m5={len(m5)} h1={len(h1)} h4={len(h4)}")
 
     now = datetime.now(timezone.utc)
-    ctx = build_plan_context(m15, h1, h4, "any")
+    ctx = build_plan_context(m5, h1, h4, "any")
     atr = ctx.get("atr", 0)
     ts = ctx.get("quality", {}).get("trend_strength", 0)
     zones = ctx.get("zones", {})
@@ -59,7 +60,7 @@ def main():
     check("bias present", ctx.get("bias") in ("bullish", "bearish", "neutral"),
           f"bias={ctx.get('bias')}")
     vl, vh = zones.get("value_low", 0), zones.get("value_high", 0)
-    last = m15[-1]["close"]
+    last = m5[-1]["close"]
     check("zones ordered & near price", 0 < vl < vh and abs(vl - last) < 10 * atr and abs(vh - last) < 10 * atr,
           f"vl={vl:.1f} vh={vh:.1f} last={last:.1f}")
     check("invalidation sane side",
@@ -68,7 +69,7 @@ def main():
           ctx["bias"] == "neutral",
           f"inv={ctx['invalidation']} last={last:.1f} bias={ctx['bias']}")
 
-    smc = smc_analyse(m15, now, h1)
+    smc = smc_analyse(m5, now, h1)
     conf = smc.get("confidence")
     check("smc confidence 0..1", isinstance(conf, (int, float)) and 0 <= conf <= 1,
           f"conf={conf}")
@@ -82,7 +83,7 @@ def main():
     qc = plan.get("quality", {}).get("smc_confidence")
     check("plan quality.smc_confidence wired", qc is not None, f"qc={qc}")
 
-    act = evaluate_monitor_cycle(plan, m15[-1]["close"], now)
+    act = evaluate_monitor_cycle(plan, m5[-1]["close"], now)
     check("monitor cycle runs", isinstance(act, dict) and "action" in act,
           f"action={act.get('action')} reason={str(act.get('reason'))[:60]}")
 

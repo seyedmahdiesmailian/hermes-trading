@@ -80,8 +80,8 @@ def derive_trade_zones(value_low: float, value_high: float, atr: float) -> dict:
     }
 
 
-def _alignment_label(m15_bias: str, h1_bias: str, h4_bias: str) -> str:
-    votes = [m15_bias, h1_bias, h4_bias]
+def _alignment_label(m5_bias: str, h1_bias: str, h4_bias: str) -> str:
+    votes = [m5_bias, h1_bias, h4_bias]
     directional = [v for v in votes if v in {"bullish", "bearish"}]
     if len(directional) >= 2 and len(set(directional)) == 1:
         return "aligned"
@@ -104,13 +104,13 @@ def _detect_regime(
     value_low: float,
     value_high: float,
     atr: float,
-    m15_bias: str,
+    m5_bias: str,
     h1_bias: str,
     h4_bias: str,
 ) -> str:
     strong_trend = trend_strength >= 0.35  # ATR units (was 1.5 USD raw)
     higher_tf_aligned = h1_bias == h4_bias and h1_bias in {"bullish", "bearish"}
-    pullback_alignment = higher_tf_aligned and m15_bias not in {h1_bias, "neutral"}
+    pullback_alignment = higher_tf_aligned and m5_bias not in {h1_bias, "neutral"}
 
     if bias == "neutral" or not strong_trend:
         return "range"
@@ -190,21 +190,21 @@ def _build_execution_plan(bias: str, zones: dict, atr: float, regime: str) -> di
     }
 
 
-def build_plan_context(m15_rows: list[dict], h1_rows: list[dict], h4_rows: list[dict], session_name: str) -> dict:
-    atr = estimate_atr(m15_rows)
+def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[dict], session_name: str) -> dict:
+    atr = estimate_atr(m5_rows)
     # Zones come from the last hour of entry-TF structure (M5 in live). The old
     # H1 percentile value zone was computed and immediately overwritten — dead.
-    m5_zones = compute_m5_zones(m15_rows, atr)
+    m5_zones = compute_m5_zones(m5_rows, atr)
     value_low = m5_zones["value_low"]
     value_high = m5_zones["value_high"]
-    m15_bias = classify_bias(m15_rows)
+    m5_bias = classify_bias(m5_rows)
     h1_bias = classify_bias(h1_rows)
     h4_bias = classify_bias(h4_rows)
     bias = h4_bias if h4_bias != "neutral" else h1_bias
     if bias == "neutral":
-        bias = m15_bias
+        bias = m5_bias
     zones = derive_trade_zones(value_low=value_low, value_high=value_high, atr=atr)
-    last_price = m15_rows[-1]["close"]
+    last_price = m5_rows[-1]["close"]
     # trend_strength = recent push on the ENTRY timeframe, in ATR units of that
     # same timeframe. The old formula divided a 4-bar H4 delta (30-130 USD on
     # gold) by nothing, so every consumer threshold (1.5 / 2.0 / 3 / 12) was
@@ -213,9 +213,9 @@ def build_plan_context(m15_rows: list[dict], h1_rows: list[dict], h4_rows: list[
     # Same-TF ratio lands in a sane 0-4 band: 12 bars ≈ 1 hour on M5.
     # Threshold mapping (raw USD → ATR units): 1.5→1.0, 2.0→1.0, 3→1.2,
     # 12→3.0, vol-high 15→3.0, momentum /20 → /2.0.
-    push = abs(m15_rows[-1]["close"] - m15_rows[-13]["close"]) if len(m15_rows) >= 13 else 0.0
+    push = abs(m5_rows[-1]["close"] - m5_rows[-13]["close"]) if len(m5_rows) >= 13 else 0.0
     trend_strength = round(push / max(atr, 0.01), 2)
-    alignment = _alignment_label(m15_bias, h1_bias, h4_bias)
+    alignment = _alignment_label(m5_bias, h1_bias, h4_bias)
     regime = _detect_regime(
         bias=bias,
         alignment=alignment,
@@ -224,7 +224,7 @@ def build_plan_context(m15_rows: list[dict], h1_rows: list[dict], h4_rows: list[
         value_low=zones["value_low"],
         value_high=zones["value_high"],
         atr=atr,
-        m15_bias=m15_bias,
+        m5_bias=m5_bias,
         h1_bias=h1_bias,
         h4_bias=h4_bias,
     )
@@ -234,12 +234,12 @@ def build_plan_context(m15_rows: list[dict], h1_rows: list[dict], h4_rows: list[
         "alignment": alignment,
         "distance_to_value_low_atr": round(_distance_in_atr(last_price, zones["value_low"], atr), 2),
         "distance_to_value_high_atr": round(_distance_in_atr(last_price, zones["value_high"], atr), 2),
-        "bias_votes": {"m15": m15_bias, "h1": h1_bias, "h4": h4_bias},
+        "bias_votes": {"m5": m5_bias, "h1": h1_bias, "h4": h4_bias},
         "regime": regime,
     }
-    # Tight invalidation: recent 1-hour M15 swing ± 0.5 ATR (scalping-grade stop)
-    swing_low = min(r["low"] for r in m15_rows[-12:])
-    swing_high = max(r["high"] for r in m15_rows[-12:])
+    # Tight invalidation: recent 1-hour M5 swing ± 0.5 ATR (scalping-grade stop)
+    swing_low = min(r["low"] for r in m5_rows[-12:])
+    swing_high = max(r["high"] for r in m5_rows[-12:])
     if bias == "bullish":
         invalidation = round(min(swing_low, zones["long_entry_low"]) - (atr * 0.5), 2)
         targets = execution["tp_levels"] or [zones["short_entry_low"], zones["short_entry_high"]]
@@ -260,7 +260,7 @@ def build_plan_context(m15_rows: list[dict], h1_rows: list[dict], h4_rows: list[
         "quality": quality,
         "execution": execution,
         "context": {
-            "m15_last": last_price,
+            "m5_last": last_price,
             "h1_last": h1_rows[-1]["close"],
             "h4_last": h4_rows[-1]["close"],
         },
