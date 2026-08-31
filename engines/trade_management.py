@@ -109,7 +109,12 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
     next_target = _next_unfilled_target(trade)
     if next_target is not None:
         hit = market_price >= next_target if side_buy else market_price <= next_target
-        if hit:
+        # b44: a target on the WRONG side of entry is not a take-profit —
+        # stale plan levels once fired "TP1" one second after entry and
+        # closed 0.06 lots at a loss (#103326893). Never realize a "profit"
+        # that is actually negative.
+        profit_side = next_target > entry if side_buy else next_target < entry
+        if hit and profit_side:
             close_fraction, reason = _partial_close_fraction(trade)
             return {
                 "action": "partial_take_profit",
@@ -121,12 +126,17 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
 
     if filled and not trade.get("breakeven_active"):
         new_sl, reason = _breakeven_stop(trade)
-        return {
-            "action": "move_stop_to_breakeven",
-            "new_sl": new_sl,
-            "reason": reason,
-            "at": now.isoformat(),
-        }
+        # b44: the broker rejects a stop on the wrong side of the market
+        # (retcode 10016 — SELL needs SL ABOVE price). Before this guard the
+        # watchdog hammered the same invalid modify every 5s for minutes.
+        gap_ok = (new_sl < market_price - 0.10) if side_buy else (new_sl > market_price + 0.10)
+        if gap_ok:
+            return {
+                "action": "move_stop_to_breakeven",
+                "new_sl": new_sl,
+                "reason": reason,
+                "at": now.isoformat(),
+            }
 
     if len(filled) >= 2 and trade.get("runner_active"):
         if _runner_should_die(trade):
@@ -142,6 +152,19 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
             new_sl = max(new_sl, entry)
         else:
             new_sl = min(new_sl, entry)
+        # b44: a stop on the wrong side of the market is rejected by the
+        # broker (retcode 10025 — SELL SL must sit ABOVE current price with
+        # the spread). #103326893: price ran back above entry, the clamp
+        # pinned SL at entry, and the trail hammered invalid modifies until
+        # the position died on that stop. Hold instead — the existing SL
+        # stays in force.
+        gap_ok = (new_sl < market_price - 0.10) if side_buy else (new_sl > market_price + 0.10)
+        if not gap_ok:
+            return {
+                "action": "hold",
+                "reason": "trail_stop_invalid_vs_market",
+                "at": now.isoformat(),
+            }
         return {
             "action": "trail_stop",
             "new_sl": round(new_sl, 2),

@@ -153,6 +153,7 @@ def get_history_deals():
         data.append({
             "ticket": int(d.ticket),
             "order": int(d.order),
+            "position_id": int(getattr(d, "position_id", 0) or 0),
             "entry": int(d.entry),          # 0=IN 1=OUT 2=INOUT
             "symbol": d.symbol,
             "type": "BUY" if d.type == mt5.ORDER_TYPE_BUY else "SELL",

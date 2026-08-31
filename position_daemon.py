@@ -126,14 +126,24 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
     quality = plan.get('quality') or {}
     trend = float(quality.get('trend_strength', 0) or 0)
     alignment = quality.get('alignment', '')
+    side = p.type if p.type in ('BUY', 'SELL') else ('BUY' if p.type == 0 else 'SELL')
+    # b44: plan levels are re-drawn every reassessment and can end up on the
+    # WRONG side of this position's entry (re-anchored entries get a different
+    # TP than the plan file keeps). #103326893: stale TP1 4416.78 sat above a
+    # SELL entered at 4415.82 → "TP hit" one second after entry → 0.06 lots
+    # closed at a LOSS. Only targets beyond entry (in profit direction) are
+    # valid partial-close levels for this trade.
+    raw_levels = execution.get('tp_levels') or plan.get('targets') or []
+    tp_levels = [float(t) for t in raw_levels
+                 if (float(t) > p.price_open) == (side == 'BUY')]
     return {
         'symbol': 'XAUUSD',
-        'side': p.type if p.type in ('BUY', 'SELL') else ('BUY' if p.type == 0 else 'SELL'),
+        'side': side,
         'entry_price': p.price_open,
         # b32: broker open time, consumed by _position_opened_at → time_exit.
         'time': getattr(p, 'time', None),
         'sl': p.sl or plan.get('invalidation') or p.price_open,
-        'tp_levels': execution.get('tp_levels') or plan.get('targets') or [],
+        'tp_levels': tp_levels,
         'tp_shares': execution.get('tp_shares') or [0.5, 0.3, 0.2],
         'scale_in_levels': [],
         'filled_tp_levels': wstate.get('filled_tp_levels', []),
@@ -413,6 +423,29 @@ def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
                           f'اتصال/SL اصلی هنوز فعال — تلاش مجدد خودکار')
 
 
+def realized_pnl_usd(bridge, ticket: int):
+    """b44: sum of broker-confirmed OUT deals for one position ticket.
+
+    The close report used `last_profit` — the FLOATING pnl of the volume
+    remaining at the final poll. After partial closes that number is not the
+    trade result (#103326893: report said +1.83$, broker deals summed to
+    -0.27$). Returns None when the bridge cannot answer (caller falls back).
+    """
+    try:
+        res = bridge.get_history_deals(days=1) or {}
+        deals = res.get('data') or []
+        mine = [d for d in deals
+                if int(d.get('position_id') or d.get('order') or 0) == int(ticket)]
+        # require at least one OUT deal — otherwise history is not complete
+        if not mine or not any(int(d.get('entry', 0)) != 0 for d in mine):
+            return None
+        # all deals incl. the IN one: its commission belongs to the trade too
+        return round(sum(float(d.get('profit', 0)) + float(d.get('commission', 0))
+                         + float(d.get('swap', 0)) for d in mine), 2)
+    except Exception:
+        return None
+
+
 def close_reason(final_sl: float, final_tp: float, exit_price: float, side: str) -> str:
     if final_tp and ((side == 'SELL' and exit_price <= final_tp) or (side == 'BUY' and exit_price >= final_tp)):
         return "TP خورد"
@@ -471,12 +504,19 @@ def main():
                     mfe = w.get('mfe', 0.0); mae = w.get('mae', 0.0)
                     reason = close_reason(w.get('sl', 0), w.get('tp', 0), exit_price, side)
                     pnl_pts = (entry - exit_price) if side == 'SELL' else (exit_price - entry)
-                    pnl_usd = w.get('last_profit', 0.0)
+                    # b44: 'last_profit' is the FLOATING pnl of whatever volume
+                    # remained at the end — after partial closes it is NOT the
+                    # trade result (#103326893 reported +1.83$ while the real
+                    # outcome was -0.27$ gross). Ask the broker for the sum of
+                    # realized deals on this ticket; fall back to floating.
+                    pnl_usd = realized_pnl_usd(bridge, int(tkt))
+                    if pnl_usd is None:
+                        pnl_usd = w.get('last_profit', 0.0)
                     events = w.get('events', [])
                     ev_txt = "\n".join(f"  • {e}" for e in events[-6:]) or "  (بدون رویداد)"
                     report = (
                         f"📕 گزارش معامله بسته‌شده (#{tkt})\n"
-                        f"{side} {w.get('volume')} لات @ {entry:.2f}\n"
+                        f"{side} {w.get('volume0', w.get('volume'))} لات @ {entry:.2f}\n"
                         f"خروج: {exit_price:.2f} — {reason}\n"
                         f"سود/ضرر: {pnl_usd:+.2f}$ ({pnl_pts:+.1f} پوینت)\n"
                         f"مدت: {dur_min:.0f} دقیقه\n"
@@ -498,7 +538,8 @@ def main():
                 cur_pts = (p['open_price'] - bid) if side == 'SELL' else (ask - p['open_price'])
                 if tkt_s not in tracked:
                     tracked[tkt_s] = {
-                        'side': side, 'volume': p['volume'], 'entry': p['open_price'],
+                        'side': side, 'volume': p['volume'], 'volume0': p['volume'],
+                        'entry': p['open_price'],
                         'opened_at': datetime.now(timezone.utc).isoformat(),
                         'mfe': cur_pts, 'mae': cur_pts,
                         'sl': p.get('sl') or 0, 'tp': p.get('tp') or 0,
