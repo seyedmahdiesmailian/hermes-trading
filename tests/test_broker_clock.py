@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import hermetic
 import position_daemon as pd
+import fixtures_bridge as fb  # b36: production-shaped payloads
 from engines import paths
 from engines import broker_clock as bc
 
@@ -178,13 +179,10 @@ class RuntimeCycleTimeExitTests(unittest.TestCase):
     def _pos(hours_ago, offset=BROKER_OFFSET, ticket=99002):
         """SELL position at 4450, opened `hours_ago` REAL hours ago, stamped
         on the broker clock — and priced so nothing else manages it
-        (TP1=4435 is below the 4445.5 bid, no TP filled → core = hold)."""
-        broker_epoch = int((datetime.now(timezone.utc)
-                            - timedelta(hours=hours_ago)).timestamp()) + offset
-        return {'ticket': ticket, 'symbol': 'XAUUSD', 'type': 'SELL',
-                'volume': 0.02, 'price_open': 4450.0, 'sl': 4460.0,
-                'tp': 4600.0, 'price_current': 4450.0, 'profit': 0.0,
-                'swap': 0.0, 'comment': '', 'time': broker_epoch}
+        (TP1=4435 is below the 4445.5 bid, no TP filled → core = hold).
+        b36: built by the shared production-shaped fixture."""
+        return fb.pos_raw('SELL', ticket=ticket, age_hours=hours_ago,
+                          broker_offset=offset)
 
     def _run(self, raw, accept=True):
         from test_runtime_fallback_management import ManageBridge

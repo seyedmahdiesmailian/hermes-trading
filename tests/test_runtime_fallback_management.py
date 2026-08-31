@@ -27,10 +27,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import hermetic
 from test_integration import MockBridge
+import fixtures_bridge as fb
 
 
-TICK_S = {'ok': True, 'ask': 4430.5, 'bid': 4430.0}   # SELL TP1=4435 hit
-TICK_B = {'ok': True, 'ask': 4496.0, 'bid': 4495.5}   # BUY  TP1=4490 hit
+TICK_S = fb.tick_payload(ask=4430.5, bid=4430.0)   # SELL TP1=4435 hit
+TICK_B = fb.tick_payload(ask=4496.0, bid=4495.5)   # BUY  TP1=4490 hit
 
 
 def production_plan(side='SELL'):
@@ -59,17 +60,14 @@ def production_plan(side='SELL'):
 
 
 def bridge_with(positions, tick):
-    return MockBridge(tick=tick, positions={'ok': True, 'data': positions,
-                                            'count': len(positions)})
+    return MockBridge(tick=tick, positions=fb.positions_payload(positions))
 
 
 class ManageBridge(MockBridge):
     """MockBridge + the three management endpoints, recording every call."""
 
     def __init__(self, positions, tick, accept=True):
-        super().__init__(tick=tick,
-                         positions={'ok': True, 'data': positions,
-                                    'count': len(positions)})
+        super().__init__(tick=tick, positions=fb.positions_payload(positions))
         self.accept = accept
         self.mgmt_calls = []
 
@@ -89,13 +87,12 @@ class ManageBridge(MockBridge):
 
 
 def pos_raw(type_val, entry=4450.0):
-    """Position exactly as /api/positions returns it (bridge v2: type is a
-    STRING, time is broker-clock epoch)."""
-    broker_epoch = int(datetime.now(timezone.utc).timestamp()) + 3 * 3600 - 7200
-    return {'ticket': 99001, 'symbol': 'XAUUSD', 'type': type_val,
-            'volume': 0.02, 'price_open': entry, 'sl': 4460.0, 'tp': 4600.0,
-            'price_current': entry, 'profit': 0.0, 'swap': 0.0,
-            'comment': '', 'time': broker_epoch}
+    """Position exactly as /api/positions returns it — b36: the shared
+    production-shaped fixture (bridge v2: type is a STRING unless the test
+    passes an int to replay the legacy shape, time is broker-clock epoch,
+    2h old like the original hand-rolled fake)."""
+    return fb.pos_raw(type=type_val, ticket=99001, entry=entry,
+                      sl=4460.0, tp=4600.0, age_hours=2.0)
 
 
 class RuntimeFallbackTests(unittest.TestCase):

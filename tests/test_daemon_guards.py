@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import hermetic
 import position_daemon as pd
+import fixtures_bridge as fb
 
 
 BROKER_OFFSET = 3 * 3600  # CapitalXtend server clock = UTC+3 (measured b32)
@@ -99,13 +100,11 @@ def write_plan(calendar=None, atr=5.0, side='SELL'):
 
 def position(ticket=98000001, side='SELL', hours_ago=2.0, sl=4460.0,
              offset=BROKER_OFFSET):
-    """A live position as the bridge returns it: 'time' is epoch seconds on
-    the BROKER clock, so hours_ago is de-rotated before stamping."""
-    now = datetime.now(timezone.utc)
-    broker_epoch = int((now - timedelta(hours=hours_ago)).timestamp()) + offset
-    return {'ticket': ticket, 'type': side, 'volume': 0.02,
-            'price_open': 4450.0, 'sl': sl, 'tp': 4600.0, 'profit': 0.0,
-            'time': broker_epoch}
+    """A live position exactly as the bridge returns it — b36: built by the
+    shared production-shaped fixture (type is the STRING 'BUY'/'SELL',
+    'time' is a BROKER-clock epoch de-rotated for hours_ago)."""
+    return fb.pos_raw(side, ticket=ticket, sl=sl, age_hours=hours_ago,
+                      broker_offset=offset)
 
 
 def tracked_for(raw, hours_ago=2.0):

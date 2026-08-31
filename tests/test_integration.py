@@ -1,18 +1,31 @@
+import sys
 import unittest
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone
+from pathlib import Path
 from types import SimpleNamespace
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import fixtures_bridge as fb  # noqa: E402
 
 
 class MockBridge:
-    """Simulates BridgeClient for testing."""
+    """Simulates BridgeClient for testing.
+
+    b36: default payloads come from tests/fixtures_bridge.py, which mirrors
+    scripts/mt5_http_server_v2.py field-for-field (drift-pinned by
+    test_b36_bridge_fixtures). Hand-rolled fakes are what let b34's
+    int('SELL') crash reach production. NOTE the account payload has NO
+    'positions' count key — the real bridge never sends one.
+    """
 
     def __init__(self, account=None, tick=None, positions=None, rates=None, history=None):
-        self._account = account or {"ok": True, "balance": 5000, "equity": 5000, "margin_free": 5000, "margin": 0, "positions": 0}
-        self._tick = tick or {"ok": True, "ask": 4600.0, "bid": 4599.5}
-        self._positions = positions or {"ok": True, "data": [], "count": 0}
+        self._account = account or fb.account_payload()
+        self._tick = tick or fb.tick_payload()
+        self._positions = positions or fb.positions_payload()
         self._rates = rates or {}
-        self._history = history or {"ok": True, "data": [], "deals": []}
+        self._history = history or fb.deals_payload()
 
     def health(self): return {"ok": True}
     def get_account(self): return self._account
@@ -25,7 +38,8 @@ class MockBridge:
 
 
 def _make_ohlc_rows(n=80, base_price=4600.0, atr=5.0, bias="neutral"):
-    """Generate synthetic OHLC data."""
+    """Generate synthetic OHLC data in the production row shape (b36:
+    built via fixtures_bridge.rate_row so the key set matches the bridge)."""
     import random
     random.seed(42)
     rows = []
@@ -40,13 +54,13 @@ def _make_ohlc_rows(n=80, base_price=4600.0, atr=5.0, bias="neutral"):
         price += move + random.uniform(-atr/2, atr/2)
         high = price + random.uniform(0, atr)
         low = price - random.uniform(0, atr)
-        rows.append({
-            "time": 1787000000 + i * 900,
-            "open": round(price - move/2, 2),
-            "high": round(high, 2),
-            "low": round(low, 2),
-            "close": round(price, 2),
-        })
+        rows.append(fb.rate_row(
+            t=1787000000 + i * 900,
+            open=round(price - move/2, 2),
+            high=round(high, 2),
+            low=round(low, 2),
+            close=round(price, 2),
+        ))
     return rows
 
 
