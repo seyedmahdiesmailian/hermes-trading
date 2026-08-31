@@ -8,9 +8,20 @@ from engines.context import build_plan_context
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, evaluate_monitor_cycle
 from engines.backtest import backtest_ohlc
+from engines import paths as _paths
 
-RESULTS_DIR = Path('/home/ai/hermes-trading/data/backtest')
-RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+RESULTS_DIR = None  # b39: removed — see _results_dir(); a module-level Path
+                    # here also mkdir'd production data/ at IMPORT time.
+
+
+def _results_dir() -> Path:
+    """Backtest artifacts land under the ACTIVE data root, resolved per call
+    (b39): the old `RESULTS_DIR = Path('/home/ai/hermes-trading/data/backtest')`
+    plus a module-level mkdir meant that merely IMPORTING this module created a
+    directory in production state, even from a test run."""
+    d = _paths.data_dir() / 'backtest'
+    d.mkdir(parents=True, exist_ok=True)
+    return d
 
 
 def fetch_all_ohlc(bridge, symbol: str = "XAUUSD", timeframe: str = "H1", count: int = 500) -> list[dict]:
@@ -155,6 +166,6 @@ def save_backtest_result(result: dict, label: str = ""):
     """Save backtest result to disk."""
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     fname = f"backtest_{label}_{ts}.json" if label else f"backtest_{ts}.json"
-    path = RESULTS_DIR / fname
+    path = _results_dir() / fname
     path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
     return str(path)

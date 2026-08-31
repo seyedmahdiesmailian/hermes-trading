@@ -22,11 +22,27 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path('/home/ai/hermes-trading')
-DATA = ROOT / 'data'
+DATA = ROOT / 'data'   # READ-ONLY by design (an operator panel must show the
+                       # real numbers even from a test run) — pinned by the
+                       # b39 tripwire's ALLOWED list. WRITERS below must not
+                       # use these constants.
 TEHRAN = timezone(timedelta(hours=3, minutes=30))
 WEEK_FA = ['دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه', 'یکشنبه']
-PAUSE_FLAG = DATA / 'ops/autopilot_paused'
-AUDIT_LOG = ROOT / 'logs/control_audit.log'
+
+
+# b39: PAUSE_FLAG / AUDIT_LOG were import-time constants under the production
+# root. They are WRITTEN by handle_control()/_audit(), so a test (or a
+# staging run) that exercised an operator action would toggle the REAL
+# autopilot pause flag and append to the REAL audit log. Resolved at call
+# time through engines.paths, like every other state writer.
+def _pause_flag() -> Path:
+    from engines import paths as _paths
+    return _paths.data_dir() / 'ops' / 'autopilot_paused'
+
+
+def _audit_log() -> Path:
+    from engines import paths as _paths
+    return _paths.logs_dir() / 'control_audit.log'
 
 RESTARTABLE = {'hermes-signal': 'سرویس سیگنال', 'hermes-position': 'سرویس پوزیشن',
                'hermes-dashboard': 'سرویس داشبورد'}
@@ -355,8 +371,9 @@ def _autopilot_narrative(max_chars: int = 700) -> str:
 
 def _autopilot_paused() -> str | None:
     try:
-        if PAUSE_FLAG.exists():
-            return PAUSE_FLAG.read_text().strip()[:80] or 'بله'
+        flag = _pause_flag()
+        if flag.exists():
+            return flag.read_text().strip()[:80] or 'بله'
     except Exception:
         pass
     return None
@@ -1062,8 +1079,9 @@ for _s, _l in RESTARTABLE.items():
 
 def _audit(action: str, result: str):
     try:
-        AUDIT_LOG.parent.mkdir(exist_ok=True)
-        with AUDIT_LOG.open('a', encoding='utf-8') as f:
+        audit_log = _audit_log()
+        audit_log.parent.mkdir(parents=True, exist_ok=True)
+        with audit_log.open('a', encoding='utf-8') as f:
             f.write(f'{datetime.now(timezone.utc).isoformat()} | {action} | {result}\n')
     except Exception:
         pass
@@ -1075,12 +1093,13 @@ def handle_control(action: str) -> tuple[bool, str]:
     ok, msg = False, 'نامعلوم'
     try:
         if action == 'auto:pause':
-            PAUSE_FLAG.parent.mkdir(parents=True, exist_ok=True)
-            PAUSE_FLAG.write_text(datetime.now(TEHRAN).strftime('%Y-%m-%d %H:%M تهران'))
+            flag = _pause_flag()
+            flag.parent.mkdir(parents=True, exist_ok=True)
+            flag.write_text(datetime.now(TEHRAN).strftime('%Y-%m-%d %H:%M تهران'))
             ok, msg = True, '⏸ اتوپایلوت متوقف شد — اجرای ساعتی بعدی رد می‌شود.'
         elif action == 'auto:resume':
             try:
-                PAUSE_FLAG.unlink()
+                _pause_flag().unlink()
             except FileNotFoundError:
                 pass
             ok, msg = True, '▶️ اتوپایلوت ازسرگیری شد — اجرای ساعتی بعدی فعال است.'

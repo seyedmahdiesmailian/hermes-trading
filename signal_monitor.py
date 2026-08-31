@@ -18,17 +18,25 @@ load_dotenv(Path(__file__).parent / '.env')
 
 from bridge_client import BridgeClient
 from notifier.telegram import send_telegram
+from engines import paths as _paths   # b39: log path resolved at CALL time
 
-BASE_DIR = Path('/home/ai/hermes-trading')
-LOG_FILE = BASE_DIR / 'logs' / 'signal_monitor.log'
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 
 
+def _log_file() -> Path:
+    """b39: import-time `LOG_FILE = BASE_DIR / 'logs' / ...` made this log
+    unredirectable by HERMES_DATA_ROOT, so importing the module from a test
+    wrote into production logs. Resolved per call now; production path
+    unchanged."""
+    return _paths.logs_dir() / 'signal_monitor.log'
+
+
 def log(msg: str):
-    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    log_file = _log_file()
+    log_file.parent.mkdir(parents=True, exist_ok=True)
     line = f"[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
     print(line)
-    with LOG_FILE.open('a', encoding='utf-8') as f:
+    with log_file.open('a', encoding='utf-8') as f:
         f.write(line + '\n')
 
 

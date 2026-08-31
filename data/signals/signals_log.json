@@ -216,5 +216,51 @@
         ]
       }
     }
+  },
+  {
+    "timestamp": "2026-08-30T21:49:20.516015+00:00",
+    "raw_text": "4406\n\n4400\n\nخرید \n\nاستاپ 4397\n\nهدف 4444",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4406.0,
+      "sl": 4397.0,
+      "tp": 4444.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 4.22,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_conflict",
+        "hermes_says_bearish_signal_says_buy",
+        "excellent_rr_4.22"
+      ],
+      "score": 4.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4406.0,
+        "sl": 4397.0,
+        "tp": 4444.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 4.22,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
   }
 ]

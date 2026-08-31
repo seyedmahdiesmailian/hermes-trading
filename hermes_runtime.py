@@ -29,11 +29,13 @@ from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock
 from engines.auto_executor import evaluate_proposal, execute_trade, evaluate_management_action
 from engines.kill_switch import check_kill_switch
 
-from engines import paths as _paths  # state paths resolved at CALL time (test-safe)
+from engines import paths as _paths  # state paths resolved at CALL time (b39)
 
-BASE_DIR = _paths.get_data_root()
-DATA_DIR = BASE_DIR / 'data'
-PLAN_DIR = DATA_DIR / 'xau_plan'   # legacy alias; live code uses _plan_dir()
+# b39: the old BASE_DIR/DATA_DIR/PLAN_DIR aliases are GONE. They bound
+# _paths.get_data_root() at IMPORT time, so HERMES_DATA_ROOT (tests via
+# hermetic, staging via env) could not move them — and the one consumer
+# (scripts/probe_gates.py) now resolves through engines.paths directly.
+# Live code must keep using _plan_dir() below.
 
 
 def _plan_dir():

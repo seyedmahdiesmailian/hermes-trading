@@ -12,10 +12,22 @@ import os
 import sys
 from pathlib import Path
 
-BASE_DIR = Path('/home/ai/hermes-trading')
-REPORT_FILE = BASE_DIR / 'logs' / 'report.txt'
-PLAN_FILE = BASE_DIR / 'data' / 'xau_plan' / 'current_plan.json'
-RUNTIME_FILE = BASE_DIR / 'data' / 'xau_plan' / 'runtime_state.json'
+from engines import paths as _paths   # b39: resolved at CALL time (see tripwire)
+
+# b39: BASE_DIR import-time constant removed — nothing used it; every state
+# path resolves through _report_file()/_plan_file()/_runtime_file() below.
+
+
+def _report_file() -> Path:
+    return _paths.logs_dir() / 'report.txt'
+
+
+def _plan_file() -> Path:
+    return _paths.plan_dir() / 'current_plan.json'
+
+
+def _runtime_file() -> Path:
+    return _paths.plan_dir() / 'runtime_state.json'
 
 
 def cmd_status(args):
@@ -46,8 +58,8 @@ def cmd_status(args):
     pos_data = positions.get('data', []) if isinstance(positions, dict) else []
     print(f"Open Positions: {len(pos_data)}")
 
-    if PLAN_FILE.exists():
-        plan = json.loads(PLAN_FILE.read_text())
+    if _plan_file().exists():
+        plan = json.loads(_plan_file().read_text())
         print(f"\nCurrent Plan: {plan.get('plan_id', 'N/A')}")
         print(f"  Bias: {plan.get('bias', 'N/A')}")
         print(f"  Session: {plan.get('session', 'N/A')}")
@@ -56,8 +68,8 @@ def cmd_status(args):
         print(f"  Alignment: {q.get('alignment', 'N/A')}")
         print(f"  Trend Strength: {q.get('trend_strength', 0):.2f}")
 
-    if RUNTIME_FILE.exists():
-        runtime = json.loads(RUNTIME_FILE.read_text())
+    if _runtime_file().exists():
+        runtime = json.loads(_runtime_file().read_text())
         print(f"\nRuntime: step={runtime.get('last_step')} action={runtime.get('last_monitor_action')}")
 
     print("═══════════════════════════════════════════")
@@ -65,8 +77,8 @@ def cmd_status(args):
 
 def cmd_report(args):
     """Show last report."""
-    if REPORT_FILE.exists():
-        print(REPORT_FILE.read_text(encoding='utf-8'))
+    if _report_file().exists():
+        print(_report_file().read_text(encoding='utf-8'))
     else:
         print("❌ No report yet. Run a cycle first.")
 
@@ -81,10 +93,10 @@ def cmd_run(args):
 
 def cmd_plan(args):
     """Show current plan details."""
-    if not PLAN_FILE.exists():
+    if not _plan_file().exists():
         print("❌ No plan file found")
         return
-    plan = json.loads(PLAN_FILE.read_text())
+    plan = json.loads(_plan_file().read_text())
     print(json.dumps(plan, indent=2, ensure_ascii=False))
 
 

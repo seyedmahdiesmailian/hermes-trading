@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T16:11:15.729321+00:00",
+ "last_run_utc": "2026-08-30T17:49:07.014464+00:00",
  "recent_commits": [
-  "706375c b37: 3rd Telegram bot (ops/reports) \u2014 routing split: trade events -> trade bot, system status (autopilot, health, backup, watchdog, kill-switch, daemon errors) -> ops bot via send_ops()",
-  "77836fa b36: per-run autopilot Telegram report (silent when idle, loud on work/failure; AUTOPILOT_REPORT_BOT_TOKEN/CHAT_ID for a dedicated bot)",
-  "c0798c4 autopilot: b35 filed b37 (bare except on fallback guard merge) + b38 (live calibration check after market open)",
-  "86cd130 autopilot: b35 broker-clock calibration handoff \u2014 watchdog publishes, runtime fallback time_exit consumes; detection-time fallback errs early-not-late; 17 tests",
-  "1b789b3 b35: DR architecture finalized \u2014 backup now includes .git_token (conditional), verified on Windows (tar+bundle present)"
+  "a1e7891 b39: managerial dashboard redesign (verdict-first, limits-as-bars, market countdown, Persian labels) + autopilot Persian narrative report",
+  "b362e2f b38fix2: dashboard buttons dead \u2014 server-side allowed_updates lacked callback_query; declare types per-request + JSON-encode list params",
+  "476031b autopilot: b37 \u2014 fallback guard merge no longer fails silently (news_lock/time_exit were dropped on the shape the monitor path itself writes)",
+  "cf1ab11 b38fix: long-poll socket timeout 40s>25s + remove duplicate stdout log",
+  "6fd7ee1 b38b: register hermes-dashboard in setup.sh + DEPLOY.md (DR parity)"
  ]
 }

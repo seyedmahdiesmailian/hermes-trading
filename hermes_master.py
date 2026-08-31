@@ -22,7 +22,8 @@ from hermes_runtime import cycle
 from engines.signal_listener import run_signal_check
 from notifier.telegram import send_telegram, send_ops
 
-BASE_DIR = Path('/home/ai/hermes-trading')
+# b39: BASE_DIR (import-time Path) removed — nothing used it; logs/reports
+# resolve through _log_file()/_report_file() below.
 # logs go through paths so a test/staging run (HERMES_DATA_ROOT) can never
 # write into production logs (2026-08-30 audit convention: state via engines.paths).
 # b37: these were module-level constants bound at IMPORT time — which is

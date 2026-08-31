@@ -26,17 +26,27 @@ load_dotenv(BASE / '.env')
 
 from bridge_client import BridgeClient
 from engines.signal_listener import run_signal_check
+from engines import paths as _paths   # b39: log path resolved at CALL time
 
-LOG_FILE = BASE / 'logs' / 'signal_daemon.log'
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 
 
+def _log_file() -> Path:
+    """b39: was `LOG_FILE = BASE / 'logs' / ...` bound at import time, so this
+    daemon's log could not be redirected by HERMES_DATA_ROOT — a test (or a
+    staging box) that imported it wrote straight into production logs. Same
+    class as hermes_master (b37) and notifier.telegram (b39). Production
+    default is unchanged: <root>/logs/signal_daemon.log."""
+    return _paths.logs_dir() / 'signal_daemon.log'
+
+
 def log(msg: str):
-    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    log_file = _log_file()
+    log_file.parent.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{ts}] {msg}"
     print(line, flush=True)
-    with LOG_FILE.open('a', encoding='utf-8') as f:
+    with log_file.open('a', encoding='utf-8') as f:
         f.write(line + '\n')
 
 

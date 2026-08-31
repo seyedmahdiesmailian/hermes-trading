@@ -51,9 +51,15 @@ class SignalPathGateTests(unittest.TestCase):
 
     def test_market_closed_blocks_signal_order(self):
         from engines import auto_executor
-        from engines import market_hours
-        orig = market_hours.is_market_open
-        market_hours.is_market_open = lambda now=None: False
+        # The gate reads auto_executor's OWN binding (`from
+        # engines.market_hours import is_market_open` at line 15), so patching
+        # market_hours.is_market_open never reached it — the real clock said
+        # "open", the order went to the fake bridge, and this safety test was
+        # silently vacuous (it failed the moment the market actually closed,
+        # 2026-08-31 audit). Patch the binding the gate actually calls.
+        real = auto_executor.is_market_open
+        auto_executor.is_market_open = lambda now=None: False
+        self.addCleanup(setattr, auto_executor, 'is_market_open', real)
         try:
             sent = {}
 
@@ -66,9 +72,10 @@ class SignalPathGateTests(unittest.TestCase):
                 {"side": "SELL", "lot": 0.01, "symbol": "XAUUSD", "sl": 4460.0, "tp": 4430.0},
                 FakeBridge(), dry_run=False)
             self.assertFalse(r.get("ok"))
+            self.assertEqual(r.get("error"), "market_closed")
             self.assertNotIn("side", sent, "order must NOT reach the bridge when market closed")
         finally:
-            market_hours.is_market_open = orig
+            auto_executor.is_market_open = real
 
     def test_kill_switch_flips_signal_policy(self):
         """evaluate_signal with a halted policy must never say trade_allowed."""

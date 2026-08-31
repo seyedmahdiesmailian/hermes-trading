@@ -12,11 +12,12 @@ from datetime import datetime, timezone
 from bridge_client import BridgeClient
 from engines.storage import load_current_plan, load_runtime_state
 from engines.auto_executor import evaluate_proposal
-from hermes_runtime import _performance_and_policy, _infer_setup_grade, _tick_price, PLAN_DIR
+from engines import paths as _paths
+from hermes_runtime import _performance_and_policy, _infer_setup_grade, _tick_price
 
 now = datetime.now(timezone.utc)
 b = BridgeClient()
-plan = load_current_plan(PLAN_DIR)
+plan = load_current_plan(_paths.plan_dir())   # b39: call-time, not import-time
 pp = _performance_and_policy(b, b.get_account(), now)
 policy, perf = pp['account_policy'], pp['performance_state']
 price = _tick_price(b.get_tick('XAUUSD'))

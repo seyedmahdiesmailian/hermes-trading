@@ -38,7 +38,9 @@ from engines.trade_management import evaluate_trade_management
 from engines.auto_executor import evaluate_management_action
 from engines.legacy_guards import evaluate_news_lock, evaluate_time_exit
 
-LOG_FILE = paths.logs_dir() / 'position_daemon.log'
+# b39: LOG_FILE removed — it was a dead import-time binding of
+# paths.logs_dir() (log() below already resolves per call). Keeping it alive
+# was a trap: any new caller would write to production logs under a test root.
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 POLL_SEC = 5
 
