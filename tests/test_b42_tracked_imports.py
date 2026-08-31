@@ -99,6 +99,20 @@ def prod_files(tracked: set) -> list:
                   and not p.startswith(EXCLUDED_PREFIXES))
 
 
+# Source extensions whose absence from git breaks a fresh checkout. .py is
+# the b42 class; .sh was added by b44 after scripts/verify_head.sh — the
+# b44 deliverable itself — sat untracked (a .py-only scan cannot see a
+# shell script: nothing imports it).
+STRAY_SOURCE_SUFFIXES = ('.py', '.sh')
+
+
+def stray_source_files(git_others_listing: str) -> list:
+    """Repo-relative untracked SOURCE files from a
+    `git ls-files --others --exclude-standard` listing."""
+    return sorted(l.strip() for l in git_others_listing.splitlines()
+                  if l.strip().endswith(STRAY_SOURCE_SUFFIXES))
+
+
 def _resolve(dotted_slash: str, importables: set):
     """Return (resolved_prefix, exact). exact=True means the FULL slash
     path itself is a tracked module/package."""
@@ -264,17 +278,32 @@ class TestTrackedImports(unittest.TestCase):
             f'checkout/cron tick dies: {findings}')
 
     def test_no_untracked_production_python(self):
-        """A .py file that exists on disk but is not tracked is invisible
+        """A source file that exists on disk but is not tracked is invisible
         to a fresh clone even when nothing imports it yet (fixtures,
         scripts, tools). `git add -A` is the rule; this makes skipping it
         loud. .gitignore'd paths (logs/, backups/, __pycache__, .env) are
-        excluded via --exclude-standard."""
-        out = _git('ls-files', '--others', '--exclude-standard')
-        stray = sorted(l.strip() for l in out.splitlines()
-                       if l.strip().endswith('.py'))
+        excluded via --exclude-standard.
+
+        b44 extension (2026-08-31): .sh is scanned too. The b44 deliverable
+        itself — scripts/verify_head.sh — sat UNTRACKED right after it was
+        written, exactly the shape this check exists for; a .py-only scan
+        was blind to it because shell scripts are never imported."""
+        stray = stray_source_files(_git('ls-files', '--others',
+                                        '--exclude-standard'))
         self.assertEqual(
             stray, [],
-            f'untracked .py files would vanish on a fresh checkout: {stray}')
+            'untracked source files would vanish on a fresh checkout: '
+            f'{stray}')
+
+    def test_stray_filter_catches_shell_not_just_python(self):
+        """Synthetic pin (b44): the filter must flag .sh and .py and ignore
+        data/log noise, so the check cannot silently regress to .py-only."""
+        listing = '\n'.join([
+            'scripts/tool.py', 'scripts/verify_head.sh',
+            'data/x.json', 'logs/y.log', 'README.md', 'notes.txt',
+        ])
+        self.assertEqual(stray_source_files(listing),
+                         ['scripts/tool.py', 'scripts/verify_head.sh'])
 
     def test_scan_actually_scans(self):
         """Anti-vacuity: the analyzer must parse a real amount of code."""

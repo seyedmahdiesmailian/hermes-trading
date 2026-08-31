@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-31T04:50:43.531659+00:00",
+ "last_run_utc": "2026-08-31T06:59:44.997480+00:00",
  "recent_commits": [
+  "5bc6838 b44: TP1 stale above entry fired 1s after entry at a loss; invalid BE/trail SL hammered ~40x; close report showed floating pnl as +1.83 while broker realized -1.05",
+  "43c5f52 autopilot: b42 \u2014 clean-checkout import integrity FINISHED (the tripwire file was itself left untracked by the previous 'commit -am' run \u2014 bug class proven twice): analyzer now scans BOTH working tree AND HEAD tree (88cac1e shape is invisible from a dirty disk), + fails on any untracked .py in repo; fixed real crash hole in ref-scan path (plain-module attr import -> git show RuntimeError uncaught) + pinned; commit-discipline rule (always git add -A, never commit -am) written into backlog header; proven to bite via injected disk-only-module import scenario. new todo b44: verify HEAD AFTER the commit. 252 green, live cycle rc=0 (monitor, execute=False)",
+  "244ff8f b42: Persian plan panel in BOTH bots (trader + report); bridge history TZ upper-bound fix deployed; journal synced with today trades",
   "f26a871 b43: rejected-management alert never shows bare None \u2014 surface bridge payload",
-  "8a1c8fe b42: trade-plan panel in Persian \u2014 strategy, price vs zones, exact entry awaited, next-step verdict",
-  "c5b1d92 autopilot: b40 \u2014 guard-degradation state now OBSERVABLE (was write-only since b37): engines/guard_status.py single canonical reader (shared path+cooldown with writer, staleness hedge, fail-safe display), wired into ops verdict/auto panel, trade home/risk, master report, daily digest; 17 tests incl. writer->reader contract + single-seam tripwire. ALSO FIXES BROKEN HEAD: previous run committed hermes_master.py importing guard_status via 'commit -am' which skipped the new untracked file -> clean checkout died ModuleNotFoundError; follow-up todo b42 adds the tracked-imports tripwire. 243 green, live cycle rc=0 (monitor, execute=False)",
-  "88cac1e b41 CRITICAL: reassess step no longer returns before entry evaluation",
-  "5ad6b45 autopilot: b41 \u2014 monkeypatch-the-wrong-binding audit: repo clean (b39 held), 2 leak hazards fixed (pre-import shadowing consumers in test_b37/test_failclosed_news_spread); AST tripwire tests/test_b41_patch_bindings.py with justified ALLOWED list + proof it catches the real pre-b39 bug from git history; 226 green, live cycle rc=0"
+  "8a1c8fe b42: trade-plan panel in Persian \u2014 strategy, price vs zones, exact entry awaited, next-step verdict"
  ]
 }

@@ -851,9 +851,9 @@
       }
     },
     "macro": {
-      "timestamp": "2026-08-31T07:47:09.592605+00:00",
+      "timestamp": "2026-08-31T07:30:02.631726+00:00",
       "dxy": {
-        "change_pct": -0.062,
+        "change_pct": -0.052,
         "direction": "down",
         "available": true,
         "source": "synthetic"
@@ -865,37 +865,37 @@
         "available": false
       },
       "tick_volume": {
-        "volume_ratio": 0.11,
+        "volume_ratio": 0.0,
         "is_high_volume": false,
         "is_low_volume": true,
         "available": true
       },
       "higher_tf": {
         "h4": {
-          "price": 4447.49,
+          "price": 4443.84,
           "high_20": 4670.85,
           "low_20": 4396.39,
-          "pos_in_range": 0.19,
+          "pos_in_range": 0.17,
           "zone": "discount",
-          "sma10": 4524.16,
+          "sma10": 4523.8,
           "trend": "bearish"
         },
         "d1": {
-          "price": 4447.49,
+          "price": 4443.84,
           "high_20": 4697.2,
           "low_20": 4042.57,
-          "pos_in_range": 0.62,
+          "pos_in_range": 0.61,
           "zone": "equilibrium",
-          "sma10": 4538.62,
+          "sma10": 4538.26,
           "trend": "bearish"
         },
         "w1": {
-          "price": 4447.49,
+          "price": 4443.84,
           "high_20": 4448.29,
-          "low_20": 4413.01,
-          "pos_in_range": 0.98,
+          "low_20": 4396.39,
+          "pos_in_range": 0.91,
           "zone": "premium",
-          "sma10": 4440.19,
+          "sma10": 4439.2,
           "trend": "bullish"
         }
       },
@@ -943,15 +943,6 @@
             "time": "",
             "forecast": "50.4",
             "previous": "50.2"
-          },
-          {
-            "title": "Italian Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:45:00-04:00",
-            "time": "",
-            "forecast": "51.6",
-            "previous": "51.3"
           }
         ],
         "medium_impact": [
@@ -990,24 +981,15 @@
             "time": "",
             "forecast": "50.4",
             "previous": "50.2"
-          },
-          {
-            "title": "Italian Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:45:00-04:00",
-            "time": "",
-            "forecast": "51.6",
-            "previous": "51.3"
           }
         ],
         "total_events": 112,
-        "upcoming_events": 16,
+        "upcoming_events": 15,
         "strict_high_count": 0,
         "window_hours": 24,
-        "fetched_at": "2026-08-31T07:47:09.759028+00:00"
+        "fetched_at": "2026-08-31T07:30:02.814333+00:00"
       },
-      "_fetched_at": 1788162429.7600265
+      "_fetched_at": 1788161402.8153927
     }
   }
 }

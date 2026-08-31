@@ -197,6 +197,41 @@ class CleanCheckoutBoot(unittest.TestCase):
 
 
 class TripwireBites(unittest.TestCase):
+    def test_verify_head_script_captures_real_rc(self):
+        """b44 finding (2026-08-31, live): the first version of
+        scripts/verify_head.sh did `if timeout … unittest; then …OK… fi`
+        followed by `RC=$?`. In bash, after an `if` whose condition failed
+        with NO else branch, `$?` is the status of the IF compound — always
+        0 — not the condition's. The real log proves it:
+        'HEAD=43c5f52 VERDICT=BROKEN rc=0'. The verdict was right but the
+        recorded code was a lie, so any future automation keying on rc would
+        read a failure as a success. Pin BOTH halves: the bash semantics
+        (old shape yields 0, new shape yields the real code) and the script
+        text (must run-then-capture, never if-then-capture)."""
+        old = ('if false; then :; fi\nRC=$?\necho "rc=$RC"\n')
+        new = ('false\nRC=$?\nif [ "$RC" -ne 0 ]; then echo "rc=$RC"; fi\n')
+        r_old = subprocess.run(['bash', '-c', old], capture_output=True,
+                               text=True)
+        r_new = subprocess.run(['bash', '-c', new], capture_output=True,
+                               text=True)
+        self.assertEqual(r_old.stdout.strip(), 'rc=0',
+                         'bash semantics changed: the old bug shape is no '
+                         'longer a lie? then the pin below is stale')
+        self.assertEqual(r_new.stdout.strip(), 'rc=1',
+                         'run-then-capture must see the real exit code')
+        script = (REPO / 'scripts' / 'verify_head.sh').read_text()
+        self.assertIn('RC=$?', script, 'verify_head.sh must capture rc')
+        # the capture must NOT sit directly after an `fi` (old broken shape)
+        lines = [l.strip() for l in script.splitlines() if l.strip()]
+        for i, l in enumerate(lines):
+            if l.startswith('RC=$?'):
+                self.assertNotEqual(lines[i - 1], 'fi',
+                                    'RC=$? after `fi` captures the if-'
+                                    'compound status (always 0), not the '
+                                    'test — the b44 rc bug is back')
+        self.assertIn('VERDICT=BROKEN', script,
+                      'broken verdict must still be logged')
+
     def test_synthetic_missing_module_is_flagged(self):
         """An entrypoint importing a module absent from the checkout must
         surface as an error — proof the child really runs the imports."""
