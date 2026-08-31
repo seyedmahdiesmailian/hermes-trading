@@ -49,6 +49,12 @@ import hermetic
 from test_runtime_fallback_management import (ManageBridge, TICK_S,
                                               production_plan, pos_raw)
 
+# b41: this file patches notifier.telegram.send_ops, and hermes_master does
+# `from notifier.telegram import send_ops` at MODULE level. If hermes_master's
+# FIRST import happened inside a patch window it would permanently bind the
+# fake. Importing it up front captures the real binding before any patch.
+import hermes_master  # noqa: E402,F401
+
 TICKET = 99001
 DEAD_CAL = {'source': 'unavailable', 'events': []}
 

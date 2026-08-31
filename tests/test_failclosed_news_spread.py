@@ -22,6 +22,14 @@ sys.path.insert(0, '/home/ai/hermes-trading/tests')
 
 import hermetic  # noqa: E402  (shared temp-root switch)
 
+# b41: this file patches engines.storage.load_current_plan /
+# append_execution_log, and hermes_runtime from-imports them at MODULE level
+# (run_signal_check lazily imports hermes_runtime INSIDE the patch window —
+# same permanent-fake-binding hazard documented in test_audit_fixes).
+# Pre-importing here makes the real bindings impossible to poison.
+import hermes_runtime  # noqa: E402,F401
+import engines.storage  # noqa: E402,F401
+
 
 class CalendarStalenessTests(unittest.TestCase):
     def setUp(self):

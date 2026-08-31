@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-30T17:49:07.014464+00:00",
+ "last_run_utc": "2026-08-31T00:49:46.891897+00:00",
  "recent_commits": [
-  "a1e7891 b39: managerial dashboard redesign (verdict-first, limits-as-bars, market countdown, Persian labels) + autopilot Persian narrative report",
-  "b362e2f b38fix2: dashboard buttons dead \u2014 server-side allowed_updates lacked callback_query; declare types per-request + JSON-encode list params",
-  "476031b autopilot: b37 \u2014 fallback guard merge no longer fails silently (news_lock/time_exit were dropped on the shape the monitor path itself writes)",
-  "cf1ab11 b38fix: long-poll socket timeout 40s>25s + remove duplicate stdout log",
-  "6fd7ee1 b38b: register hermes-dashboard in setup.sh + DEPLOY.md (DR parity)"
+  "24a6d3a autopilot: b38+b39 \u2014 broker-clock handoff verified live (offset 10798s, 3h de-rotation confirmed); import-time state paths closed repo-wide (dashboards PAUSE_FLAG/AUDIT_LOG writers were the dangerous ones) + subprocess tripwire; fixed vacuous market-closed test (patched the wrong binding)",
+  "6432458 fix: false 'position=? signal=?' daemon alert in cron (missing XDG_RUNTIME_DIR)",
+  "97fed25 avatar: signal/trader bot \u2014 candlesticks + broadcast waves",
+  "86e1b9e b40a: bot profile avatars (trader gold candlestick / ops gauge) + generator script",
+  "32c7947 b40: nested menus (drill-down + back), operator controls (pause autopilot / halt trade / restart services, 2-step confirm + audit log), deeper KPI data, English hardware labels (CPU/RAM/Disk/Load/Uptime)"
  ]
 }
