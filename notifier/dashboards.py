@@ -638,7 +638,8 @@ def ops_trade() -> tuple[str, list]:
         lines.append(_row('Net P&L', f'{st["net"]:+,.2f} $'))
         lines.append(_row('Profit Factor', f'{pf} (بالای ۱ = سودده)'))
         lines.append(_row('Equity Curve', st['curve']))
-    kb = [[_btn('📊 آمار کامل', 'ops:trade:stats')], _nav('ops', 'home')]
+    kb = [[_btn('🎯 پلن', 'ops:plan'), _btn('📊 آمار کامل', 'ops:trade:stats')],
+          _nav('ops', 'home')]
     return '\n'.join(lines), kb
 
 
@@ -735,6 +736,10 @@ OPS_RENDER = {
     'home': ops_home, 'sys': ops_sys, 'auto': ops_auto, 'auto:backlog': ops_auto_backlog,
     'auto:commits': ops_auto_commits, 'ops': ops_backup, 'trade': ops_trade,
     'trade:stats': ops_trade_stats, 'control': ops_control, 'control:restart': ops_control_restart,
+    # b42: the report bot now shows the full Persian plan too (prefix='ops')
+    'plan': lambda: trade_plan('ops'),
+    'plan:detail': lambda: trade_plan_detail('ops'),
+    'plan:hist': lambda: trade_plan_hist('ops'),
 }
 
 
@@ -939,7 +944,7 @@ def _plan_view(plan: dict, price) -> str:
     return '\n'.join(lines)
 
 
-def trade_plan() -> tuple[str, list]:
+def trade_plan(prefix: str = 'tr') -> tuple[str, list]:
     plan = _j(DATA / 'xau_plan/current_plan.json')
     q = plan.get('quality') or {}
     votes = q.get('bias_votes') or {}
@@ -951,7 +956,7 @@ def trade_plan() -> tuple[str, list]:
              f" · {_row('Session', str(plan.get('session', '—')))} · {_row('ATR', _num(plan.get('atr'), 1))}"]
     lines.append(_sec('🧠 دیدگاه — چه برنامه‌ای چیده شده'))
     lines.append(_plan_view(plan, price))
-    lines.append(_sec('🗩 رأی تایم‌فریم‌ها'))
+    lines.append(_sec('🧭 رأی تایم‌فریم‌ها'))
     for tf, v in (votes or {}).items():
         d = {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(v, '⚪ بی‌طرف')
         lines.append(_row(tf.upper(), d))
@@ -962,12 +967,13 @@ def trade_plan() -> tuple[str, list]:
     lines.append(_sec('⏳ اعتبار'))
     lines.append(_row('Expires', _ago(plan.get('expires_at'))))
     lines.append(_row('Reassess', _ago(plan.get('next_reassessment'))))
-    kb = [[_btn('🧩 جزئیات ورود', 'tr:plan:detail'), _btn('📜 تاریخچه', 'tr:plan:hist')],
-          _nav('tr', 'home')]
+    kb = [[_btn('🧩 جزئیات ورود', f'{prefix}:plan:detail'),
+           _btn('📜 تاریخچه', f'{prefix}:plan:hist')],
+          _nav(prefix, 'home')]
     return '\n'.join(lines), kb
 
 
-def trade_plan_detail() -> tuple[str, list]:
+def trade_plan_detail(prefix: str = 'tr') -> tuple[str, list]:
     plan = _j(DATA / 'xau_plan/current_plan.json')
     ex = plan.get('execution') or {}
     tgts = plan.get('targets') or []
@@ -1004,10 +1010,10 @@ def trade_plan_detail() -> tuple[str, list]:
         risk = macro.get('risk_bias') or macro.get('bias')
         if risk:
             lines.append(_row('DXY / Risk', str(risk)))
-    return '\n'.join(lines), [_nav('tr', 'plan')]
+    return '\n'.join(lines), [_nav(prefix, 'plan')]
 
 
-def trade_plan_hist() -> tuple[str, list]:
+def trade_plan_hist(prefix: str = 'tr') -> tuple[str, list]:
     lines = ['📜 <b>تاریخچه بازبینی پلن</b>', '']
     try:
         with (DATA / 'xau_plan/reassessment_log.csv').open(encoding='utf-8-sig') as f:
@@ -1021,7 +1027,7 @@ def trade_plan_hist() -> tuple[str, list]:
         lines.append(f'{arrow} {at} · {ob} ← {nb}')
     if not rows:
         lines.append('—')
-    return '\n'.join(lines), [_nav('tr', 'plan')]
+    return '\n'.join(lines), [_nav(prefix, 'plan')]
 
 
 def trade_positions() -> tuple[str, list]:
