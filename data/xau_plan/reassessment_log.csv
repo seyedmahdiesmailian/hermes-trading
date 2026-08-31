@@ -361,3 +361,6 @@ at,plan_id,event,old_bias,new_bias
 2026-08-31T14:15:02.254582+00:00,xau-c278a8c5,reassess,bearish,bearish
 2026-08-31T14:30:01.651955+00:00,xau-7fae336d,reassess,bearish,bearish
 2026-08-31T14:40:08.623639+00:00,xau-9aa7e0f4,reassess,bearish,neutral
+2026-08-31T15:00:01.973037+00:00,xau-49ac2726,reassess,neutral,bearish
+2026-08-31T15:15:02.074035+00:00,xau-e837ec07,reassess,bearish,neutral
+2026-08-31T15:30:01.497843+00:00,xau-c7b3aac9,reassess,neutral,bearish

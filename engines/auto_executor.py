@@ -477,13 +477,20 @@ def execute_trade(command: dict, bridge, dry_run: bool = False) -> dict:
 
 
 def _infer_setup_grade(plan: dict) -> str:
-    """Infer setup grade from plan quality."""
+    """Infer setup grade from plan quality.
+
+    b45 FIX 2026-08-31: 'mixed' alignment no longer qualifies for B.
+    Evidence: the two mixed/range sells at 14:15/14:30 UTC (counter-trend
+    entries into a rising market with contradictory TF votes) netted -56.7$
+    (+37.67 / -94.38), while every aligned plan that day was profitable.
+    Mixed votes = coin flip = C = blocked by MIN_SETUP_GRADE.
+    """
     q = plan.get("quality", {})
     alignment = q.get("alignment")
     trend = float(q.get("trend_strength", 0) or 0)
     regime = q.get("regime")
     if alignment == "aligned" and trend >= 3.0 and regime in {"breakout_continuation", "pullback_continuation"}:
         return "A"
-    if alignment in {"aligned", "mixed"} and trend >= 1.2:
+    if alignment == "aligned" and trend >= 1.2:
         return "B"
     return "C"

@@ -175,7 +175,9 @@ def _infer_setup_grade(plan: dict) -> str:
     regime = q.get('regime')
     if alignment == 'aligned' and trend >= 3.0 and regime in {'breakout_continuation', 'pullback_continuation'}:
         return 'A'
-    if alignment in {'aligned', 'mixed'} and trend >= 1.2:
+    # b45 FIX 2026-08-31: 'mixed' alignment no longer qualifies for B —
+    # contradictory TF votes are a coin flip (see auto_executor docstring).
+    if alignment == 'aligned' and trend >= 1.2:
         return 'B'
     return 'C'
 
@@ -370,6 +372,17 @@ def _load_closed_trades(bridge, days=7) -> list[dict]:
 
 def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
     account = _account_obj(account_resp)
+    # b45 FIX 2026-08-31: the bridge /api/account payload has NO `positions`
+    # field, so account.positions was ALWAYS 0 — the MAX_OPEN_POSITIONS=1 gate
+    # never fired and a second position was opened on top of the first
+    # (14:15 + 14:30 UTC sells, net -56.7$). Count real positions from the
+    # positions endpoint; fall back to the account field only if it exists.
+    try:
+        _pr = bridge.get_positions(SYMBOL) or {}
+        _open_ct = len(_positions_list(_pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}))
+    except Exception:
+        _open_ct = account.positions
+    account.positions = max(int(account.positions or 0), _open_ct)
     today = now.date().isoformat()
     closed = _load_closed_trades(bridge, 7)
     perf = compute_performance_state(load_performance_state(_plan_dir()), today, account.balance, closed)
