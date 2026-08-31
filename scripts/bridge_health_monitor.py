@@ -83,11 +83,15 @@ def _save_state(s: dict):
 def _daemon_check() -> str | None:
     """b31: who watches the watchdog? Returns alert text if a critical daemon
     is dead or its heartbeat is stale (>120s) while the market is open."""
+    import os
     import subprocess
+    env = dict(os.environ)
+    if not env.get('XDG_RUNTIME_DIR'):
+        env['XDG_RUNTIME_DIR'] = f"/run/user/{os.getuid()}"
     try:
         r = subprocess.run(['systemctl', '--user', 'is-active',
                             'hermes-position', 'hermes-signal'],
-                           capture_output=True, text=True, timeout=10)
+                           capture_output=True, text=True, timeout=10, env=env)
         states = r.stdout.split()
         if states != ['active', 'active']:
             return f'دمون‌ها: position={states[0] if states else "?"} signal={states[1] if len(states) > 1 else "?"}'
