@@ -21,6 +21,14 @@ fi
 
 echo "$(date -u +%FT%TZ) === autopilot run start ===" >> "$LOG"
 
+# b47: HARVEST abandoned work before picking a new item. b36 proved a
+# finished 403-line deliverable can sit uncommitted in the tree, invisible
+# to cron/git_sync/verify_head (all see only HEAD) and to an agent that
+# starts by reading the backlog. scripts/autopilot_harvest.py prints a
+# STEP 0 instruction block when engines/dirty_work finds leftover code;
+# print-only, fail-safe (broken check never blocks the run).
+HARVEST="$(python3 scripts/autopilot_harvest.py 2>/dev/null || true)"
+
 PROMPT='You are the Hermes trading-system autopilot. Work autonomously, no questions.
 
 TASK: Read /home/ai/hermes-trading/data/ops/autopilot_backlog.md. Pick the TOP item
@@ -57,6 +65,12 @@ If the run failed or changed nothing, say exactly that in Persian and why.'
 # It loads the same persistent memory, which carries the autonomy rule
 # (no manual approval anywhere; the system trades on its own judgement).
 HERMES_BIN="$(command -v hermes || echo /home/ai/.local/bin/hermes)"
+if [ -n "$HARVEST" ]; then
+  echo "$(date -u +%FT%TZ) b47 harvest: leftover uncommitted code detected, STEP 0 prepended to prompt" >> "$LOG"
+  PROMPT="$HARVEST
+
+$PROMPT"
+fi
 timeout 2700 "$HERMES_BIN" -z "$PROMPT" --cli >> "$LOG" 2>&1
 RC=$?
 
