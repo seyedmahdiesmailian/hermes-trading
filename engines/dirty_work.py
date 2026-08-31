@@ -34,7 +34,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from engines import paths
+from engines import paths, selfcheck
 
 # A code file untouched this long while still uncommitted = abandoned work,
 # not an agent mid-edit. 60 min comfortably exceeds any single edit burst
@@ -67,7 +67,10 @@ def _porcelain_entries(root: Path) -> list[tuple[str, str]] | None:
         r = subprocess.run(
             ['git', 'status', '--porcelain=v1', '-z', '--untracked-files=all'],
             cwd=root, capture_output=True, timeout=15)
-    except Exception:
+    except Exception as e:
+        # b49: silent None is correct for panels, but --self-check re-raises
+        # so a broken detector can't masquerade as a clean tree.
+        selfcheck.fail('dirty_work git call', e)
         return None
     if r.returncode != 0:
         return None

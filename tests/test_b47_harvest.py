@@ -170,9 +170,20 @@ class AutopilotShWiring(unittest.TestCase):
         self.assertLess(sh.index('autopilot_harvest.py'),
                         sh.index('"$HERMES_BIN" -z'),
                         'harvest must happen before the agent starts')
-        # fail-safe: a broken harvester must not kill the run
-        self.assertIn('|| true', sh[sh.index('autopilot_harvest.py'):
-                                    sh.index('PROMPT=\'You are')])
+        # b49: the blind `|| true` is GONE — the harvester now runs with
+        # --self-check and its real rc is captured immediately (never after
+        # an `if` compound, b44 lesson); a broken harvester must be LOUD in
+        # the log while the run still continues (no exit on the failure path).
+        seg = sh[sh.index('autopilot_harvest.py'):sh.index('PROMPT=\'You are')]
+        code = '\n'.join(l for l in seg.splitlines()
+                         if not l.strip().startswith('#'))
+        self.assertIn('--self-check', code,
+                      'autopilot.sh must run the harvester in self-check mode')
+        self.assertIn('HARVEST_RC=$?', code)
+        self.assertNotIn('|| true', code,
+                         'blind || true would make BROKEN == CLEAN again')
+        self.assertNotIn('exit', code,
+                         'a failed self-check must LOG, never kill the run')
 
     def test_bash_prepend_semantics_replayed(self):
         """Prove the exact shell shape in autopilot.sh behaves: non-empty

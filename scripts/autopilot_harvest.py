@@ -18,6 +18,13 @@ Fail-safe posture (same as b40/b46 readers): any error — git missing,
 non-repo, timeout, import failure — prints nothing and exits 0. A broken
 harvest check must never block the autopilot run itself.
 
+b49 SELF-CHECK: that fail-safe posture makes BROKEN and CLEAN print the
+same thing (nothing). `python3 scripts/autopilot_harvest.py --self-check`
+(or HERMES_SELFCHECK=1) re-raises inside the swallow block instead: exit 0
++ STEP 0 printed = alive and firing; non-zero = machinery broken; exit 0 +
+empty = genuinely clean. tests/test_b49_selfcheck.py drives it against a
+throwaway repo holding b36-shaped leftover code.
+
 Test seam: HERMES_REPO_ROOT points the scan at a throwaway repo (same
 seam b46 introduced for autopilot_digest.py), so tests never depend on
 whether the live tree happens to be mid-edit.
@@ -35,6 +42,11 @@ from pathlib import Path
 CODE_ROOT = Path('/home/ai/hermes-trading')
 SCAN_ROOT = Path(os.getenv('HERMES_REPO_ROOT', str(CODE_ROOT)))
 sys.path.insert(0, str(CODE_ROOT))
+
+# b49: the self-check seam itself must be importable OUTSIDE the swallow
+# block (a leaf module: os/sys only), otherwise the except handler below
+# could not tell the difference between "clean" and "seam missing".
+from engines import selfcheck
 
 
 def harvest_block(res: dict | None) -> str:
@@ -73,8 +85,11 @@ def main() -> int:
         block = harvest_block(res)
         if block:
             print(block)
-    except Exception:
-        pass  # a broken harvest check must never block the run
+    except Exception as e:
+        # a broken harvest check must never block the run — but under
+        # --self-check (b49) fail() re-raises so BROKEN can't masquerade as
+        # CLEAN (both print nothing otherwise; that ambiguity is the bug).
+        selfcheck.fail('harvest scan', e)
     return 0
 
 

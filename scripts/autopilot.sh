@@ -27,7 +27,19 @@ echo "$(date -u +%FT%TZ) === autopilot run start ===" >> "$LOG"
 # starts by reading the backlog. scripts/autopilot_harvest.py prints a
 # STEP 0 instruction block when engines/dirty_work finds leftover code;
 # print-only, fail-safe (broken check never blocks the run).
-HARVEST="$(python3 scripts/autopilot_harvest.py 2>/dev/null || true)"
+#
+# b49: run it WITH --self-check. The old blind `|| true` made a BROKEN
+# harvester byte-identical to a CLEAN one (empty HARVEST, run continues) —
+# exactly the ambiguity b49 exists to kill. --self-check keeps the never-
+# block posture (the run continues on failure) but the exit code now says
+# WHICH happened: rc=0 + empty = genuinely clean, rc!=0 = machinery broken,
+# logged loudly. The assignment's $? is the script's real status (b44:
+# capture immediately, never after an `if` compound).
+HARVEST="$(python3 scripts/autopilot_harvest.py --self-check 2>>logs/autopilot_selfcheck.err)"
+HARVEST_RC=$?
+if [ "$HARVEST_RC" -ne 0 ]; then
+  echo "$(date -u +%FT%TZ) b49 SELFCHECK FAILED rc=$HARVEST_RC — harvest/dirty_work machinery is BROKEN (its silence is NOT 'clean tree'); see logs/autopilot_selfcheck.err" >> "$LOG"
+fi
 
 PROMPT='You are the Hermes trading-system autopilot. Work autonomously, no questions.
 

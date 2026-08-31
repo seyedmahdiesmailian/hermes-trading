@@ -9,6 +9,13 @@ Sends ONLY when something happened: new commits, backlog progress, or a
 failed run. Silent on idle runs unless the run crashed.
 Config: AUTOPILOT_REPORT_BOT_TOKEN / AUTOPILOT_REPORT_CHAT_ID.
 State: data/ops/autopilot_report_state.json (last seen commit + done count).
+
+b49 SELF-CHECK: `python3 scripts/autopilot_report.py 0 --self-check` (or
+HERMES_SELFCHECK=1) re-raises inside the swallow blocks (git helper, state
+read, narrative import) instead of degrading to ''/{} — so "nothing to
+report" can never mean "the git call is broken". Self-check mode also
+suppresses the Telegram send AND the STATE write: probing the machinery
+must not consume the pending report or page the ops chat.
 """
 import json
 import re
@@ -27,9 +34,14 @@ except ImportError:
 import os
 load_dotenv(ROOT / '.env')
 
+# b49: leaf seam imported outside the guard blocks (os/sys only).
+from engines import selfcheck
+
+_SELFCHECK = selfcheck.enabled()
+
 STATE = ROOT / 'data/ops/autopilot_report_state.json'
 BACKLOG = ROOT / 'data/ops/autopilot_backlog.md'
-rc = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+rc = int(sys.argv[1]) if len(sys.argv) > 1 and not sys.argv[1].startswith('-') else 0
 TEHRAN = timezone(timedelta(hours=3, minutes=30))
 
 
@@ -37,7 +49,8 @@ def git(*args):
     try:
         return subprocess.run(['git', '-C', str(ROOT)] + list(args),
                               capture_output=True, text=True, timeout=15).stdout.strip()
-    except Exception:
+    except Exception as e:
+        selfcheck.fail('git helper', e)
         return ''
 
 
@@ -45,7 +58,8 @@ prev = {}
 if STATE.exists():
     try:
         prev = json.loads(STATE.read_text())
-    except Exception:
+    except Exception as e:
+        selfcheck.fail('report state read', e)
         prev = {}
 
 head = git('rev-parse', 'HEAD')
@@ -67,7 +81,8 @@ narrative = ''
 try:
     from notifier.dashboards import _autopilot_narrative
     narrative = _autopilot_narrative(max_chars=900)
-except Exception:
+except Exception as e:
+    selfcheck.fail('narrative import', e)
     narrative = ''
 
 lines = [f'🤖 <b>گزارش اتوپایلوت هرمس</b>',
@@ -98,7 +113,7 @@ if not new_commits and done_now == prev.get('done', done_now) and rc == 0:
 
 token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', '')
 chat = os.getenv('AUTOPILOT_REPORT_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID', '194015957'))
-if token and chat:
+if token and chat and not _SELFCHECK:
     req = urllib.request.Request(
         f'https://api.telegram.org/bot{token}/sendMessage',
         data=json.dumps({'chat_id': chat, 'text': '\n'.join(lines),
@@ -113,5 +128,7 @@ if token and chat:
 else:
     print('\n'.join(lines))
 
-STATE.write_text(json.dumps({'head': head, 'done': done_now,
-                             'ts': datetime.now(timezone.utc).isoformat()}))
+# b49: a self-check probe must not consume the pending report state.
+if not _SELFCHECK:
+    STATE.write_text(json.dumps({'head': head, 'done': done_now,
+                                 'ts': datetime.now(timezone.utc).isoformat()}))

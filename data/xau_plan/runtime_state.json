@@ -1,6 +1,6 @@
 {
-  "active_plan_id": "xau-c7b3aac9",
+  "active_plan_id": "xau-ab3637ff",
   "last_step": "monitor",
-  "last_report_key": "reassess:xau-c7b3aac9",
-  "last_monitor_action": "market_entry_now"
+  "last_report_key": "reassess:xau-ab3637ff",
+  "last_monitor_action": "place_sell_stop"
 }
