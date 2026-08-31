@@ -7,10 +7,11 @@ list check and returned None for every production input: the guard that is
 supposed to tighten SL before high-impact news never existed in practice.
 """
 import sys
+from pathlib import Path
 import unittest
 from datetime import datetime, timedelta, timezone
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from engines.legacy_guards import evaluate_news_lock, NEWS_LOCK_MINUTES_BEFORE
 

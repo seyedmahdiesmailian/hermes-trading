@@ -45,9 +45,9 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-REPO = Path('/home/ai/hermes-trading')
+REPO = Path(__file__).resolve().parents[1]
 
 # Directories that are not production code and must not be scanned.
 EXCLUDED_PREFIXES = ('tests/', 'legacy_backup/', 'legacy_removed/', 'backups/')

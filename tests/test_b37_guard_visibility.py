@@ -42,7 +42,8 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import hermetic
@@ -572,7 +573,7 @@ class NoSilentPassRegression(unittest.TestCase):
                          f'— {offenders}')
 
     def test_cycle_delegates_the_merge_to_the_named_helper(self):
-        src = Path('/home/ai/hermes-trading/hermes_runtime.py').read_text(
+        src = (REPO / 'hermes_runtime.py').read_text(
             encoding='utf-8')
         self.assertIn('evaluate_legacy_guards(', src)
         self.assertNotIn("plan.get('context', {}).get('macro', {})", src,

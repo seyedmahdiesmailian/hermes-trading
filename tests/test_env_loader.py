@@ -12,7 +12,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
 
 from env_loader import load_dotenv
 
@@ -64,7 +65,7 @@ class TestEnvLoader(unittest.TestCase):
         """The silent no-op lambda must not come back in core entrypoints."""
         for rel in ("hermes_master.py", "signal_monitor.py", "backtest_runner.py",
                     "engines/signal_listener.py"):
-            src = Path("/home/ai/hermes-trading", rel).read_text(encoding="utf-8")
+            src = (REPO / rel).read_text(encoding="utf-8")
             self.assertNotIn("load_dotenv = lambda", src,
                              f"{rel} still silently no-ops .env loading")
             self.assertIn("env_loader", src, f"{rel} missing env_loader fallback")
@@ -74,7 +75,7 @@ class TestEnvLoader(unittest.TestCase):
         fallback (python-dotenv is NOT installed on this box — a bare import
         crashes the script; a silent no-op starves it of the bridge token).
         Also bans hand-parsed .env reads outside env_loader itself."""
-        root = Path("/home/ai/hermes-trading")
+        root = REPO
         checked = 0
         for py in sorted(root.rglob("*.py")):
             if "__pycache__" in py.parts or ".git" in py.parts:

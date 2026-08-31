@@ -14,11 +14,13 @@ Audit found three fail-open holes (all verified against the old code):
 """
 import os
 import sys
+from pathlib import Path
 import unittest
 from datetime import datetime, timedelta, timezone
 
-sys.path.insert(0, '/home/ai/hermes-trading')
-sys.path.insert(0, '/home/ai/hermes-trading/tests')
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / 'tests'))
 
 import hermetic  # noqa: E402  (shared temp-root switch)
 

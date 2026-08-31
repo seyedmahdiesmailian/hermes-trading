@@ -39,7 +39,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-REPO = Path('/home/ai/hermes-trading')
+REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / 'tests'))
 

@@ -43,9 +43,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-REPO = Path('/home/ai/hermes-trading')
+REPO = Path(__file__).resolve().parents[1]
 
 # Modules cron/systemd actually launch (or that those launches import at
 # boot). Verified against ops/cron/crontab.backup.txt + ops/systemd/*.

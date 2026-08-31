@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from engines import learning
 

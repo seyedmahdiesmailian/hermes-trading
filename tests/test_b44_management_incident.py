@@ -37,14 +37,14 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import hermetic  # noqa: E402
 import position_daemon as pd  # noqa: E402
 from engines.trade_management import evaluate_trade_management  # noqa: E402
 
-REPO = Path('/home/ai/hermes-trading')
+REPO = Path(__file__).resolve().parents[1]
 
 
 def plan_with_tps(tps, side='SELL'):

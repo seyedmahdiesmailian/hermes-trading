@@ -8,10 +8,11 @@ Covers:
 """
 import os
 import sys
+from pathlib import Path
 import unittest
 from datetime import datetime, timezone
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from engines.market_hours import is_market_open
 
