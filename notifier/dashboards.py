@@ -795,22 +795,170 @@ def trade_home() -> tuple[str, list]:
     return '\n'.join(lines), kb
 
 
+# ─────────────────────── b42: plan panel — Persian narrative ───────────────────────
+# The old panel showed raw fields (entry_mode=mean_reversion_wait, votes…)
+# which the owner cannot read. These maps translate the engine's vocabulary
+# into plain Persian, and _plan_view() assembles the "what happens next"
+# story: current price vs. the zones, the exact entry we are waiting for,
+# and what invalidates the plan.
+
+_ACTION_FA = {
+    'market_entry_now': '🚀 ورود فوری با قیمت بازار',
+    'market_order': '🚀 ورود فوری با قیمت بازار',
+    'place_sell_limit': '📉 فروش limit روی قیمت بالا (سفارش معلق)',
+    'place_buy_limit': '📈 خرید limit روی قیمت پایین (سفارش معلق)',
+    'place_sell_stop': '📉 فروش روی شکست به پایین (stop)',
+    'place_buy_stop': '📈 خرید روی شکست به بالا (stop)',
+    'wait_for_trigger': '⏳ منتظر تریگر تأیید',
+    'wait_for_pullback': '⏳ منتظر پولبک به ناحیه ارزش',
+    'no_trade': '🛑 بدون ترید',
+    'none': '🛑 بدون ترید',
+}
+_REASON_FA = {
+    'neutral_bias': 'جهت بازار الان بی‌طرف است؛ صبر می‌کنیم تایم‌فریم‌ها هم‌راستا شوند',
+    'outside_entry_zones': 'قیمت بیرون از نواحی ورود است؛ نزدیک یکی از نواحی که شد اقدام می‌کنیم',
+    'price_extended_above_breakout_zone': 'قیمت برای فروش خیلی بالا رفته (از ناحیه شکست رد شده)؛ پولبک می‌خواهیم',
+    'price_extended_below_breakout_zone': 'قیمت برای خرید خیلی پایین آمده (از ناحیه شکست رد شده)؛ صبر برای اصلاح',
+    'inside_value_without_trigger': 'قیمت داخل ناحیه ارزش است ولی تریگر تأیید (کندل/شکست) هنوز نزده',
+    'quality_filter': 'ستاپ از گیت کیفیت رد شد (قدرت روند یا SMC کافی نیست)',
+    'price_far_above_zone_plan_stale': 'قیمت از پلن دور شده؛ منتظر پلن تازه در بازبینی بعدی',
+    'price_far_below_zone_plan_stale': 'قیمت از پلن دور شده؛ منتظر پلن تازه در بازبینی بعدی',
+    'discount_zone_with_weak_smc': 'ناحیه تخفیف دیده شد ولی سیگنال SMC ضعیف است',
+}
+_MODE_FA = {
+    'mean_reversion_wait': 'بازگشت به میانگین — ترید فقط در لبه نواحی، نه وسط رنج',
+    'mean_reversion': 'بازگشت به میانگین — ترید در لبه نواحی',
+    'trend_follow': 'دنبال‌کننده روند — ورود در جهت روند اصلی',
+    'breakout': 'شکست — ورود با شکست تأییدشده ناحیه',
+    'range': 'نوسان‌گیری رنج',
+}
+
+
+def _plan_price():
+    """Live bid/ask from the bridge; None if unreachable (panel stays useful)."""
+    try:
+        import sys
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from env_loader import load_dotenv
+        load_dotenv(ROOT / '.env')
+        from bridge_client import BridgeClient
+        t = BridgeClient().get_tick('XAUUSD') or {}
+        bid = t.get('data', {}).get('bid') if isinstance(t.get('data'), dict) else t.get('bid')
+        if bid is None:
+            bid = t.get('last')
+        return float(bid) if bid is not None else None
+    except Exception:
+        return None
+
+
+def _plan_view(plan: dict, price) -> str:
+    """The 'what is the plan and what happens next' narrative in Persian."""
+    bias = str(plan.get('bias') or '')
+    q = plan.get('quality') or {}
+    ex = plan.get('execution') or {}
+    z = plan.get('zones') or {}
+    votes = q.get('bias_votes') or {}
+    regime = str(q.get('regime') or '')
+    lines = []
+
+    # 1) read of the market
+    agree = sum(1 for v in votes.values() if v == bias and bias)
+    dir_fa = 'نزولی' if bias == 'bearish' else 'صعودی' if bias == 'bullish' else 'بی‌طرف'
+    regime_fa = {'range': 'رنج (بی‌روند)', 'trending': 'رونددار', 'trend': 'رونددار',
+                 'volatile': 'پرنوسان'}.get(regime, regime or '—')
+    lines.append(f'بازار در حالت <b>{regime_fa}</b> است و {agree} از {len(votes) or 4} '
+                 f'تایم‌فریم نظر {("🔴 " if bias == "bearish" else "🟢 " if bias == "bullish" else "⚪ ")}'
+                 f'<b>{dir_fa}</b> را تأیید می‌کنند.')
+    if bias == 'bearish':
+        lines.append('استراتژی: <b>فروش در صعود</b> — وقتی قیمت به ناحیه عرضه بالا برسد وارد شرت می‌شویم، نه در کف.')
+    elif bias == 'bullish':
+        lines.append('استراتژی: <b>خرید در ریزش</b> — وقتی قیمت به ناحیه تقاضا برسد وارد لانگ می‌شویم، نه در سقف.')
+    else:
+        lines.append('استراتژی: <b>صبر</b> — تا جهت روشن شود دست نمی‌زنیم.')
+
+    # 2) where price is vs the zones
+    if price and z:
+        se_l, se_h = z.get('short_entry_low'), z.get('short_entry_high')
+        le_l, le_h = z.get('long_entry_low'), z.get('long_entry_high')
+        vl, vh = z.get('value_low'), z.get('value_high')
+        pos_fa = None
+        if se_l is not None and price >= se_l and price <= se_h:
+            pos_fa = 'دقیقاً داخل <b>ناحیه فروش</b> است'
+        elif le_l is not None and price >= le_l and price <= le_h:
+            pos_fa = 'دقیقاً داخل <b>ناحیه خرید</b> است'
+        elif se_h is not None and price > se_h:
+            pos_fa = f'از ناحیه فروش <b>{_num(price - se_h)} دلار بالاتر</b> رفته'
+        elif le_l is not None and price < le_l:
+            pos_fa = f'از ناحیه خرید <b>{_num(le_l - price)} دلار پایین‌تر</b> آمده'
+        if pos_fa:
+            lines.append(f'قیمت الان {_num(price)} — {pos_fa}.')
+        if vl is not None and vh is not None:
+            lines.append(f'ناحیه ارزش (وسط رنج): {_num(vl)} تا {_num(vh)} — آنجا نه می‌خریم نه می‌فروشیم.')
+
+    # 3) the exact entry we wait for
+    wait = []
+    if bias == 'bearish' and z.get('short_entry_low') is not None:
+        wait.append(f'📉 ورود فروش: پولبک به {_num(z["short_entry_low"])}–{_num(z["short_entry_high"])} با تریگر تأییدشده')
+    if bias == 'bullish' and z.get('long_entry_low') is not None:
+        wait.append(f'📈 ورود خرید: ریزش به {_num(z["long_entry_low"])}–{_num(z["long_entry_high"])} با تریگر تأییدشده')
+    if ex.get('breakout_trigger') is not None:
+        side = 'به پایین' if bias == 'bearish' else 'به بالا'
+        wait.append(f'💥 یا شکست تأییدشده {_num(ex["breakout_trigger"])} {side} (ورود stop)')
+    if ex.get('stop_loss') is not None:
+        wait.append(f'🛡 حد ضرر پلن: {_num(ex["stop_loss"])}')
+    if plan.get('invalidation') is not None:
+        wait.append(f'❌ ابطال پلن: عبور قیمت از {_num(plan["invalidation"])}')
+    tg = plan.get('targets') or ex.get('tp_levels') or []
+    if tg:
+        wait.append('🎯 اهداف سود: ' + ' ← '.join(_num(x) for x in tg[:3]) + ' (خروج پله‌ای)')
+    if wait:
+        lines.append('\n'.join(wait))
+
+    # 4) what the engine decided right now
+    try:
+        import sys
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from engines.orchestrator import evaluate_monitor_cycle
+        from datetime import timezone as _tz
+        dec = evaluate_monitor_cycle(plan, price or 0.0, now=datetime.now(_tz.utc))
+        act = str(dec.get('action') or 'none')
+        rsn = str(dec.get('reason') or '')
+        head = _ACTION_FA.get(act, act)
+        body = _REASON_FA.get(rsn, rsn)
+        if act.startswith('market_entry') or act.startswith('place_'):
+            lines.append(f'⏭ وضعیت فعلی: {head} — گیت‌ها بازند؛ در چرخه بعدی (هر ۱۵ دقیقه) اجرا می‌شود.')
+        else:
+            lines.append(f'⏭ الان: {head}. {body}.')
+    except Exception:
+        rt = _j(DATA / 'xau_plan/runtime_state.json')
+        last = str(rt.get('last_monitor_action') or '')
+        if last:
+            lines.append(f'⏭ آخرین تصمیم موتور: {_ACTION_FA.get(last, last)} (چرخه قبلی)')
+    return '\n'.join(lines)
+
+
 def trade_plan() -> tuple[str, list]:
     plan = _j(DATA / 'xau_plan/current_plan.json')
     q = plan.get('quality') or {}
     votes = q.get('bias_votes') or {}
     bias = str(plan.get('bias') or '—')
+    price = _plan_price()
     lines = ['🎯 <b>پلن معاملاتی</b>', _fa_date(), '',
              'جهت: ' + {'bullish': '🟢 <b>صعودی</b>', 'bearish': '🔴 <b>نزولی</b>'}.get(bias, f'⚪ {bias}'),
-             _row('Session', str(plan.get('session', '—'))),
-             _row('ATR', _num(plan.get('atr'), 1))]
+             _row('قیمت بازار', _num(price) if price else 'نامعلوم (بریج قطع)') +
+             f" · {_row('Session', str(plan.get('session', '—')))} · {_row('ATR', _num(plan.get('atr'), 1))}"]
+    lines.append(_sec('🧠 دیدگاه — چه برنامه‌ای چیده شده'))
+    lines.append(_plan_view(plan, price))
     lines.append(_sec('🗩 رأی تایم‌فریم‌ها'))
     for tf, v in (votes or {}).items():
         d = {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(v, '⚪ بی‌طرف')
         lines.append(_row(tf.upper(), d))
     al = {'aligned': 'هم‌راستا ✓', 'mixed': 'مخلوط', 'conflicting': 'متناقض ✗'}.get(
         str(q.get('alignment')), str(q.get('alignment', '—')))
-    lines.append(_row('Quality', al))
+    smc = q.get('smc_confidence')
+    lines.append(_row('Quality', al + (f" · SMC {_num(smc, 1)}" if smc is not None else '')))
     lines.append(_sec('⏳ اعتبار'))
     lines.append(_row('Expires', _ago(plan.get('expires_at'))))
     lines.append(_row('Reassess', _ago(plan.get('next_reassessment'))))
@@ -823,19 +971,29 @@ def trade_plan_detail() -> tuple[str, list]:
     plan = _j(DATA / 'xau_plan/current_plan.json')
     ex = plan.get('execution') or {}
     tgts = plan.get('targets') or []
+    z = plan.get('zones') or {}
     macro = _j(DATA / 'xau_plan/macro_snapshot.json')
-    lines = ['🧩 <b>جزئیات اجرای پلن</b>', '',
-             _row('Entry Mode', str(ex.get('entry_mode', '—')))]
+    mode = str(ex.get('entry_mode', '—'))
+    lines = ['🧩 <b>جزئیات اجرای پلن</b>', _fa_date(), '',
+             _row('مدل ورود', _MODE_FA.get(mode, mode))]
+    if z.get('short_entry_low') is not None:
+        lines.append(_row('ناحیه فروش', f"{_num(z['short_entry_low'])} – {_num(z['short_entry_high'])}"))
+    if z.get('long_entry_low') is not None:
+        lines.append(_row('ناحیه خرید', f"{_num(z['long_entry_low'])} – {_num(z['long_entry_high'])}"))
     if ex.get('breakout_trigger'):
-        lines.append(_row('Breakout Trigger', _num(ex['breakout_trigger'])))
+        lines.append(_row('تریگر شکست', _num(ex['breakout_trigger'])))
     if ex.get('pullback_trigger'):
-        lines.append(_row('Pullback Trigger', _num(ex['pullback_trigger'])))
+        lines.append(_row('تریگر پولبک', _num(ex['pullback_trigger'])))
     if ex.get('scale_in_levels'):
-        lines.append(_row('Scale-In', ', '.join(_num(x) for x in ex['scale_in_levels'])))
+        lines.append(_row('پله‌های ورود', ', '.join(_num(x) for x in ex['scale_in_levels'])))
     if tgts:
-        lines.append(_row('Targets', ' · '.join(_num(x) for x in tgts)))
+        lines.append(_row('اهداف سود', ' ← '.join(_num(x) for x in tgts)))
+    if ex.get('tp_shares') and any(ex.get('tp_levels')):
+        lines.append(_row('خروج', ' · '.join(f"{int(float(s)*100)}٪" for s in ex['tp_shares']) + ' پله‌ای'))
     if ex.get('stop_loss'):
-        lines.append(_row('Plan SL', _num(ex['stop_loss'])))
+        lines.append(_row('حد ضرر', _num(ex['stop_loss'])))
+    if plan.get('invalidation'):
+        lines.append(_row('ابطال پلن', _num(plan['invalidation'])))
     if macro:
         lines.append(_sec('🌍 ماکرو'))
         news = macro.get('high_impact_today') or macro.get('events') or []
