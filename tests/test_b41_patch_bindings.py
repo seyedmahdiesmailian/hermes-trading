@@ -65,6 +65,13 @@ ALLOWED = {
         'LAZILY inside the function (b37), so the patch reaches it. No test '
         'calls main(). The leak half is closed by the module-level '
         '`import hermes_master` in that test file.',
+    ('test_b40_guard_observability.py', 'notifier.telegram.send_ops',
+     'hermes_master'):
+        'same shape as the b37 exemption: the writer under test '
+        '(alert_degraded_guards) re-imports send_ops LAZILY inside the '
+        'function, so the patch reaches it; no test calls main(). The leak '
+        'half is closed by the module-level `import hermes_master` in that '
+        'file (b41 discipline, stated in its header).',
     ('test_audit_fixes.py', 'engines.storage.load_current_plan',
      'hermes_runtime'):
         'patch targets signal_listener\'s LAZY import (inside run_signal_check); '

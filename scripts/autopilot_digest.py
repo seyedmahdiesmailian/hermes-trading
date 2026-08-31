@@ -53,6 +53,20 @@ if STATE.exists():
     except Exception:
         pass
 
+# b40: guard-degradation alert state (written by hermes_master, b37). The
+# ops chat gets a page; the daily digest must show it too, because the page
+# is deduped to 1/6h and a degraded management path is exactly the kind of
+# fact a skimmed digest should not lose. Read through engines.guard_status —
+# the single canonical reader (never hand-parse the file again).
+try:
+    from engines import guard_status
+    _gl = guard_status.describe(guard_status.read())
+    if _gl:
+        lines.append('')
+        lines.append(f'🛑 <b>{_gl}</b>')
+except Exception:
+    pass
+
 # errors in autopilot log (last 200 lines)
 if LOG.exists():
     try:

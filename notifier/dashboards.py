@@ -379,6 +379,23 @@ def _autopilot_paused() -> str | None:
     return None
 
 
+def _guard_line(short: bool = False) -> str:
+    """b40: one-line description of the guard-degradation alert state that
+    hermes_master writes (b37). Until now the file was write-only — a
+    degraded management path was visible only in the ops chat. This reads it
+    through engines.guard_status, the SINGLE canonical reader (lazy import,
+    so tests can redirect the root via HERMES_DATA_ROOT). Empty string =
+    nothing degraded / nothing observable. Display-only: never raises."""
+    try:
+        import sys
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from engines import guard_status
+        return guard_status.describe(guard_status.read(), short=short)
+    except Exception:
+        return ''
+
+
 def _verdict() -> tuple[bool, list[str]]:
     svcs = _services()
     _, acct, _ = _bridge()
@@ -394,6 +411,12 @@ def _verdict() -> tuple[bool, list[str]]:
         problems.append('ترید متوقف شده (kill switch)')
     if (bh.get('fails') or 0) > 0:
         problems.append(f"بریج {bh['fails']} بار پشت سر هم شکست خورد")
+    # b40: a degraded guard state means a live position is being managed
+    # with fewer safety guards than usual — that is a "needs attention"
+    # fact, not a stat line.
+    g = _guard_line(short=True)
+    if g:
+        problems.append(g)
     return (not problems), problems
 
 
@@ -526,6 +549,10 @@ def ops_auto() -> tuple[str, list]:
         lines.append('🟢 <b>فعال</b> — هر ساعت یک آیتم از بک‌لاگ')
         lines.append(_row('Last Run', _ago(ap.get('last_run_utc'))))
     lines.append(_row('Progress', f'{_bar(done_n / all_n if all_n else 0)} {done_n} از {all_n}'))
+    g = _guard_line()
+    if g:
+        lines.append('')
+        lines.append(f'🛑 <b>{g}</b>')
     nar = _autopilot_narrative()
     if nar:
         lines.append(_sec('📝 آخرین اجرا چه کرد'))
@@ -741,6 +768,11 @@ def trade_home() -> tuple[str, list]:
             lines.append(_row('Reopens', f'ساعت {flip[0]} تهران'))
     else:
         lines.append('🟢 <b>ترید فعال</b> — بازار باز، گیت‌ها سبز')
+    # b40: entry gates green ≠ management guards healthy. If the fallback
+    # path lost news_lock/time_exit, say so on the trader's front page too.
+    g = _guard_line(short=True)
+    if g:
+        lines.append(f'🛑 {g}')
     lines.append(_sec('💰 حساب'))
     if acct.get('ok'):
         lines.append(_row('Balance', f"<b>{_num(acct.get('balance'))} $</b> · دارایی {_num(acct.get('equity'))} $"))
@@ -972,6 +1004,11 @@ def trade_risk() -> tuple[str, list]:
     lines = ['🛡 <b>گیت‌های ایمنی</b>', _fa_date(), '',
              _dot(not ks.get('halted')) + (' <b>ترید مجاز</b>' if not ks.get('halted')
               else f' <b>متوقف</b> — {ks.get("halt_reason", "")}')]
+    # b40: entry gates can be green while the MANAGEMENT guards (news_lock /
+    # time_exit on the fallback path) are degraded — show both on one panel.
+    g = _guard_line()
+    if g:
+        lines.append(f'🛑 {g}')
     lines.append(_sec('📉 فاصله تا توقف'))
     lines.append(_row('Daily Loss', f'{_bar(daily_pct / (DAILY_LOSS_LIMIT_PCT * 100))} '
                       f'{daily_pct:.1f}٪ از {DAILY_LOSS_LIMIT_PCT * 100:.0f}٪'))

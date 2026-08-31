@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-08-31T00:49:46.891897+00:00",
+ "last_run_utc": "2026-08-31T02:57:42.654319+00:00",
  "recent_commits": [
+  "5ad6b45 autopilot: b41 \u2014 monkeypatch-the-wrong-binding audit: repo clean (b39 held), 2 leak hazards fixed (pre-import shadowing consumers in test_b37/test_failclosed_news_spread); AST tripwire tests/test_b41_patch_bindings.py with justified ALLOWED list + proof it catches the real pre-b39 bug from git history; 226 green, live cycle rc=0",
   "24a6d3a autopilot: b38+b39 \u2014 broker-clock handoff verified live (offset 10798s, 3h de-rotation confirmed); import-time state paths closed repo-wide (dashboards PAUSE_FLAG/AUDIT_LOG writers were the dangerous ones) + subprocess tripwire; fixed vacuous market-closed test (patched the wrong binding)",
   "6432458 fix: false 'position=? signal=?' daemon alert in cron (missing XDG_RUNTIME_DIR)",
   "97fed25 avatar: signal/trader bot \u2014 candlesticks + broadcast waves",
-  "86e1b9e b40a: bot profile avatars (trader gold candlestick / ops gauge) + generator script",
-  "32c7947 b40: nested menus (drill-down + back), operator controls (pause autopilot / halt trade / restart services, 2-step confirm + audit log), deeper KPI data, English hardware labels (CPU/RAM/Disk/Load/Uptime)"
+  "86e1b9e b40a: bot profile avatars (trader gold candlestick / ops gauge) + generator script"
  ]
 }
