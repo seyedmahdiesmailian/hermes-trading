@@ -380,3 +380,6 @@ at,plan_id,event,old_bias,new_bias
 2026-08-31T19:00:01.983129+00:00,xau-a8821865,reassess,bearish,neutral
 2026-08-31T19:15:02.110449+00:00,xau-2707fffe,reassess,neutral,neutral
 2026-08-31T19:30:02.032373+00:00,xau-f1d9ff90,reassess,neutral,neutral
+2026-08-31T19:45:01.727353+00:00,xau-488d6e8f,reassess,neutral,neutral
+2026-08-31T19:59:23.490509+00:00,xau-9f3e1b54,reassess,neutral,bullish
+2026-08-31T20:00:02.298537+00:00,xau-083cce5e,reassess,bullish,bullish

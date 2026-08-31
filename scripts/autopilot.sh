@@ -49,10 +49,12 @@ with status todo. Implement/analyze it fully in /home/ai/hermes-trading, then:
 2. Run one real cycle: timeout 120 python3 hermes_master.py  (must complete)
 3. Mark the item done in the backlog with a 1-line dated finding.
 4. git add -A && git -c user.email=hermes@local -c user.name=Autopilot commit -m "autopilot: <item>"
-4b. bash scripts/verify_head.sh  (b44: re-verifies the FRESH HEAD from a clean
-    git-archive checkout; logs verdict to logs/verify_head.log, pages ops if
-    broken. If it reports BROKEN, fix and commit again — never end a run on
-    a broken HEAD.)
+4b. bash scripts/verify_head.sh  (b44/b50: re-verifies the FRESH HEAD by
+    running the FULL suite inside a clean detached worktree of it; logs the
+    verdict to logs/verify_head.log, stamps data/ops/head_verified.json
+    (b45: cron's git_sync refuses to push an unverified/BROKEN HEAD), and
+    pages ops if broken. If it reports BROKEN, fix and commit again — never
+    end a run on a broken HEAD.)
 5. If you learned a reusable procedure, add it to the backlog as a new todo.
 
 HARD RULES (violating any = revert everything):

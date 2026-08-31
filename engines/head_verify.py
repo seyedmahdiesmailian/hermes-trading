@@ -117,10 +117,11 @@ def _git(*args: str, cwd: Path | str | None = None):
                           capture_output=True, text=True, timeout=120)
 
 
-def resolve_sha(ref: str = 'HEAD') -> str | None:
-    """Full sha of `ref` in this repo, or None. Never raises."""
+def resolve_sha(ref: str = 'HEAD', repo: Path | str | None = None) -> str | None:
+    """Full sha of `ref` in `repo` (default: this code's repo), or None.
+    Never raises."""
     try:
-        r = _git('rev-parse', ref)
+        r = _git('rev-parse', ref, cwd=repo)
         return r.stdout.strip() if r.returncode == 0 else None
     except Exception as exc:
         selfcheck.fail('head_verify resolve_sha', exc)
@@ -130,6 +131,77 @@ def resolve_sha(ref: str = 'HEAD') -> str | None:
 def _tail(text: str, n: int = 25) -> str:
     lines = [l for l in (text or '').splitlines() if l.strip()]
     return '\n'.join(lines[-n:])
+
+
+# ── b45: the push gate ─────────────────────────────────────────────────
+# A broken HEAD must never reach GitHub (43c5f52 / 920ed0d: commit shipped,
+# verification said BROKEN or never ran, cron's git_sync pushed it anyway,
+# and any future re-clone inherits the breakage). git_sync.sh asks
+# `push-gate` before pushing; the answer is derived ONLY from the stamp
+# this module writes. Fail-open on a missing/stale stamp: a DEAD verifier
+# must not freeze pushes forever — but a FRESH verdict is law.
+PUSH_GATE_MAX_AGE_SEC = int(os.environ.get('HERMES_PUSH_GATE_MAX_AGE', '3600'))
+
+
+def decide_push(stamp, head_sha: str, *, now=None,
+                max_age_sec: int | None = None) -> dict:
+    """Pure decision: {'push': bool, 'reason': str}.
+
+    Push ONLY when the full-suite verifier recently certified THIS exact
+    commit (verdict OK, sha == HEAD, stamp younger than max_age). Every
+    fail-open path says so in `reason` — the log must be able to tell
+    "verified good" from "verifier silent, pushed anyway" (b49 posture:
+    three states, three signatures).
+    """
+    budget = max_age_sec if max_age_sec is not None else PUSH_GATE_MAX_AGE_SEC
+    if not isinstance(stamp, dict) or not stamp:
+        return {'push': True,
+                'reason': 'no verification stamp — pushing unverified '
+                          '(fail-open: verifier never ran or stamp unreadable)'}
+    at_raw = str(stamp.get('at') or '')
+    try:
+        at = datetime.strptime(at_raw, '%Y-%m-%dT%H:%M:%SZ').replace(
+            tzinfo=timezone.utc)
+    except ValueError:
+        return {'push': True,
+                'reason': f'stamp timestamp unreadable ({at_raw!r}) — '
+                          f'fail-open'}
+    now = now or datetime.now(timezone.utc)
+    age = int((now - at).total_seconds())
+    verdict = str(stamp.get('verdict') or '?')
+    sha = str(stamp.get('sha') or '')
+    if age > budget:
+        return {'push': True,
+                'reason': f'stamp is {age}s old (> {budget}s) — verifier '
+                          f'silent, fail-open (last: {sha[:7]} '
+                          f'{verdict})'}
+    if verdict != 'OK':
+        return {'push': False,
+                'reason': f'HEAD {sha[:7]} verified {verdict} {age}s ago — '
+                          f'not pushing a broken commit'}
+    if sha != head_sha:
+        return {'push': False,
+                'reason': f'HEAD {head_sha[:7]} not yet verified (last OK: '
+                          f'{sha[:7]}, {age}s ago) — not pushing'}
+    return {'push': True,
+            'reason': f'HEAD {sha[:7]} verified OK {age}s ago'}
+
+
+def push_decision(repo: Path | str | None = None) -> dict:
+    """Glue: read the live stamp + HEAD of `repo` (default: the CALLER's
+    cwd — git_sync cd's into the repo it is about to push, so the gate must
+    answer about THAT tree, not wherever the code happens to live).
+    Never raises."""
+    try:
+        head = resolve_sha('HEAD', repo or Path.cwd())
+        if not head:
+            return {'push': True,
+                    'reason': 'cannot resolve HEAD — fail-open'}
+        return decide_push(read_stamp(), head)
+    except Exception as exc:
+        selfcheck.fail('head_verify push_decision', exc)
+        return {'push': True, 'reason': f'gate error — fail-open: {exc!r}'}
+
 
 
 def parse_counts(output: str) -> int | None:
@@ -235,11 +307,26 @@ def main(argv=None) -> int:
 
     Stamps data/ops/head_verified.json ONLY when HERMES_STAMP=1 (the
     verify_head.sh path) — a probe run must never forge a verification stamp.
+
+    b45 mode `push-gate`: print the git_sync decision as JSON on stdout
+    ('{push, reason}'), exit 0 = push allowed, 1 = blocked. Reads the stamp
+    only; never verifies, never writes, never raises.
     """
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == '--self-check':
         os.environ['HERMES_SELFCHECK'] = '1'
         argv = argv[1:]
+    if argv and argv[0] == 'push-gate':
+        # stdout is the CONTRACT (one JSON line for git_sync); readers like
+        # paths.read_json_safe print WARN lines — route them to stderr so a
+        # corrupt stamp degrades visibly without poisoning the parse.
+        real_out, sys.stdout = sys.stdout, sys.stderr
+        try:
+            dec = push_decision()
+        finally:
+            sys.stdout = real_out
+        print(json.dumps(dec, ensure_ascii=False))
+        return 0 if dec['push'] else 1
     ref = argv[0] if argv else 'HEAD'
     res = verify_ref(ref)
     if os.environ.get('HERMES_STAMP') == '1' and res['sha']:
