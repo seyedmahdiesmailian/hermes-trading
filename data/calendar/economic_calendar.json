@@ -773,7 +773,7 @@
       "date": "2026-09-03T05:03:00-04:00",
       "time": "",
       "forecast": "",
-      "previous": ""
+      "previous": "3.54|2.4"
     },
     {
       "title": "French 10-y Bond Auction",
@@ -782,7 +782,7 @@
       "date": "2026-09-03T05:18:00-04:00",
       "time": "",
       "forecast": "",
-      "previous": ""
+      "previous": "3.86|3.7"
     },
     {
       "title": "Challenger Job Cuts y/y",
@@ -882,6 +882,24 @@
       "time": "",
       "forecast": "",
       "previous": "15B"
+    },
+    {
+      "title": "FOMC Member Hammack Speaks",
+      "currency": "USD",
+      "impact": "low",
+      "date": "2026-09-03T15:00:00-04:00",
+      "time": "",
+      "forecast": "",
+      "previous": ""
+    },
+    {
+      "title": "FOMC Member Goolsbee Speaks",
+      "currency": "USD",
+      "impact": "low",
+      "date": "2026-09-03T15:05:00-04:00",
+      "time": "",
+      "forecast": "",
+      "previous": ""
     },
     {
       "title": "Household Spending y/y",
@@ -992,5 +1010,5 @@
       "previous": "55.1"
     }
   ],
-  "cached_at": "2026-08-30T21:49:20.491831+00:00"
+  "cached_at": "2026-08-31T05:15:03.332367+00:00"
 }
