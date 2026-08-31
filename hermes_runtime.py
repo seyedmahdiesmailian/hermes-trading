@@ -446,12 +446,20 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         save_runtime_state(_plan_dir(), runtime)
         if step == 'reassess' and old_plan:
             append_reassessment_log(_plan_dir(), {'at': now.isoformat(), 'plan_id': plan['plan_id'], 'event': 'reassess', 'old_bias': old_plan.get('bias'), 'new_bias': plan.get('bias')})
-            brief = render_reassess_brief(old_plan, plan)
+            plan_brief = render_reassess_brief(old_plan, plan)
         else:
-            brief = render_plan_brief(plan)
-        return {'ok': True, 'step': step, 'plan_id': plan['plan_id'], 'plan': plan, 'brief': brief, 'account_policy': policy, 'performance_state': performance, 'will_execute_now': False}
+            plan_brief = render_plan_brief(plan)
+        # b41 CRITICAL: do NOT return here. next_reassessment is now +5min
+        # (M5 scalping) while the cron ticks every 15min, so EVERY tick routed
+        # to 'reassess' — and this early return meant evaluate_monitor_cycle
+        # and the entry path NEVER ran. Measured: zero entries since 2026-08-30
+        # even while price crossed the sell zone and the breakout trigger.
+        # The fresh plan now flows straight into position management + entry
+        # evaluation in the SAME cycle.
+    else:
+        plan_brief = None
+        plan = old_plan
 
-    plan = old_plan
     if not plan:
         return {'ok': False, 'step': 'plan_missing', 'error': 'no_current_plan', 'will_execute_now': False}
 
@@ -725,6 +733,14 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         'execution_result': execution_result,
         'account_policy': policy, 'performance_state': performance,
     }
+    # b41: carry the fresh plan/reassess brief + bias flip so hermes_master
+    # still reports them (previously the reassess early-return was the only
+    # place these were produced).
+    if step in {'plan', 'reassess'}:
+        payload['plan'] = plan
+        payload['plan_brief'] = plan_brief
+        payload['previous_bias'] = (old_plan or {}).get('bias')
+        payload['new_bias'] = plan.get('bias')
     if guard_status_last:
         payload['guards'] = guard_status_last
 

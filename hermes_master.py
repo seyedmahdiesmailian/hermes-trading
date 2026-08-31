@@ -31,6 +31,12 @@ from notifier.telegram import send_telegram, send_ops
 # importing hermes_master wrote straight into production logs/master.log.
 # Resolved at CALL time now, like everything else.
 from engines import paths as _paths
+# b40: the alert-state FILE and its cooldown constant now live in
+# engines.guard_status — the single reader every dashboard/digest uses.
+# The writer (below) and the readers can no longer disagree on the path or
+# the throttle (b34/b41 lesson: two modules, one fact, no shared seam).
+# GUARD_ALERT_COOLDOWN_SEC is re-exported here for existing callers/tests.
+from engines.guard_status import GUARD_ALERT_COOLDOWN_SEC, state_path as _guard_state_path
 DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
 
 
@@ -88,6 +94,18 @@ def build_report(payload: dict, bridge_health: dict) -> str:
         else:
             lines.append(f"\n❌ Execution failed: {exec_result.get('error')}")
 
+    # b40: a degraded guard state that is being SUPPRESSED by the dedupe
+    # (already paged <6h ago) still belongs in the report — the page is
+    # throttled, the information is not.
+    try:
+        from engines import guard_status
+        line = guard_status.describe(guard_status.read(), short=True)
+        if line:
+            lines.append('')
+            lines.append(f"🛡 {line}")
+    except Exception as e:  # display must never break the report
+        log(f"guard_status report line failed: {e}")
+
     lines.append('')
     lines.append('— Hermes Brain | Linux | CapitalXtend | XAUUSD')
     return '\n'.join(lines)
@@ -102,15 +120,14 @@ def save_report(text: str):
 # Resolved at CALL time (engines.paths convention): hermetic.use_temp_data_root()
 # sets HERMES_DATA_ROOT after this module is imported, so a module-level
 # constant would point at PRODUCTION data/ops and a test could unlink it.
+# b40: the location itself moved to engines.guard_status.state_path() — the
+# single reader of this file lives there, so writer and readers cannot drift.
 def _guard_alert_state():
-    return _paths.data_dir() / 'ops' / 'guard_alert_state.json'
+    return _guard_state_path()
 
 
-# Re-alert interval for an UNCHANGED degradation. The master runs every 15
-# min; without this a calendar outage (both feeds failing was measured
-# live-reachable in b30) pages the ops channel 4x/hour for the same fact
-# until it heals — alert fatigue that gets the next real page ignored.
-GUARD_ALERT_COOLDOWN_SEC = 6 * 3600
+# Re-alert interval for an UNCHANGED degradation lives in engines.guard_status
+# (imported above; the readers compute display staleness from the same value).
 
 
 def alert_degraded_guards(payload: dict, step: str,
@@ -229,12 +246,14 @@ def main():
     alert_degraded_guards(payload, step)
 
     # ── Telegram: report plan/halt/execute (reassess = silent unless bias flips) ──
-    if step == 'reassess':
-        prev_bias = payload.get('previous_bias')
-        new_bias = (payload.get('plan') or {}).get('bias')
-        if prev_bias and new_bias and prev_bias != new_bias:
-            send_telegram(f"\u26a1 \u062a\u063a\u06cc\u06cc\u0631 \u0628\u0627\u06cc\u0632: {prev_bias} \u2192 {new_bias}")
-    if step in {'plan'}:
+    # b41: the cycle no longer returns early on plan/reassess (it falls
+    # through to entry evaluation), so the bias-flip notice keys off the
+    # payload fields the runtime now carries instead of step=='reassess'.
+    prev_bias = payload.get('previous_bias')
+    new_bias = payload.get('new_bias')
+    if prev_bias and new_bias and prev_bias != new_bias:
+        send_telegram(f"\u26a1 \u062a\u063a\u06cc\u06cc\u0631 \u0628\u0627\u06cc\u0632: {prev_bias} \u2192 {new_bias}")
+    if step == 'plan':
         send_telegram(report)
     elif step == 'halted':
         send_ops(payload.get('brief', '\U0001f6d1 Kill Switch'))
