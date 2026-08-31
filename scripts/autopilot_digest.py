@@ -16,6 +16,11 @@ except ImportError:
 load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
 ROOT = Path('/home/ai/hermes-trading')
+# b46: the uncommitted-work scan needs a GIT REPO (unlike the read-only data
+# paths above). HERMES_REPO_ROOT lets a test point it at a throwaway repo
+# instead of the live tree — the digest must never make its output depend on
+# whether production happens to be mid-edit.
+REPO = Path(os.getenv('HERMES_REPO_ROOT', str(ROOT)))
 BACKLOG = ROOT / 'data/ops/autopilot_backlog.md'
 STATE = ROOT / 'data/ops/autopilot_state.json'
 LOG = ROOT / 'logs/autopilot.log'
@@ -64,6 +69,20 @@ try:
     if _gl:
         lines.append('')
         lines.append(f'🛑 <b>{_gl}</b>')
+except Exception:
+    pass
+
+# b46: ABANDONED UNCOMMITTED code. The b36 incident: a finished 403-line
+# deliverable sat staged-and-dirty in the tree, invisible to cron, git_sync
+# and verify_head (all see only HEAD), and the backlog still said `todo`.
+# The daily digest is the last place that can catch it before a reset erases
+# the work. Read through engines.dirty_work — the single canonical detector.
+try:
+    from engines import dirty_work
+    _dl = dirty_work.describe(dirty_work.scan(REPO))
+    if _dl:
+        lines.append('')
+        lines.append(f'📦 <b>{_dl}</b>')
 except Exception:
     pass
 

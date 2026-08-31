@@ -396,6 +396,24 @@ def _guard_line(short: bool = False) -> str:
         return ''
 
 
+def _dirty_line(short: bool = False) -> str:
+    """b46: one-line warning for ABANDONED UNCOMMITTED code (the b36 shape:
+    a finished 403-line deliverable left staged-and-dirty by an interrupted
+    run — invisible to cron, git_sync and verify_head, all of which see only
+    HEAD). Reads through engines.dirty_work, the SINGLE canonical detector
+    (lazy import, so tests can redirect the root via HERMES_DATA_ROOT; a
+    non-repo root self-disables). Empty string = nothing abandoned.
+    Display-only: never raises."""
+    try:
+        import sys
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        from engines import dirty_work
+        return dirty_work.describe(dirty_work.scan(), short=short)
+    except Exception:
+        return ''
+
+
 def _verdict() -> tuple[bool, list[str]]:
     svcs = _services()
     _, acct, _ = _bridge()
@@ -417,6 +435,11 @@ def _verdict() -> tuple[bool, list[str]]:
     g = _guard_line(short=True)
     if g:
         problems.append(g)
+    # b46: abandoned uncommitted code is a "needs attention" fact too — no
+    # push protects it and a reset erases it.
+    d = _dirty_line(short=True)
+    if d:
+        problems.append(d)
     return (not problems), problems
 
 
@@ -553,6 +576,13 @@ def ops_auto() -> tuple[str, list]:
     if g:
         lines.append('')
         lines.append(f'🛑 <b>{g}</b>')
+    # b46: the autopilot panel is exactly where "the last run left code
+    # behind" belongs — the backlog queue below would still say `todo` for
+    # work that is actually finished but uncommitted.
+    d = _dirty_line()
+    if d:
+        lines.append('')
+        lines.append(f'📦 <b>{d}</b>')
     nar = _autopilot_narrative()
     if nar:
         lines.append(_sec('📝 آخرین اجرا چه کرد'))

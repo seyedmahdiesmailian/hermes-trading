@@ -1,41 +1,41 @@
 {
-  "plan_id": "xau-c9848131",
+  "plan_id": "xau-63e49390",
   "symbol": "XAUUSD",
   "bias": "bearish",
   "session": "london",
   "zones": {
-    "value_low": 4447.12,
-    "value_high": 4449.65,
-    "long_entry_low": 4444.583571428571,
-    "long_entry_high": 4447.12,
-    "short_entry_low": 4449.65,
-    "short_entry_high": 4452.186428571428
+    "value_low": 4448.82,
+    "value_high": 4451.2,
+    "long_entry_low": 4446.438571428571,
+    "long_entry_high": 4448.82,
+    "short_entry_low": 4451.2,
+    "short_entry_high": 4453.581428571429
   },
-  "atr": 5.072857142857109,
-  "invalidation": 4463.52,
+  "atr": 4.762857142857099,
+  "invalidation": 4463.36,
   "targets": [
-    4447.12,
-    4449.65
+    4448.82,
+    4451.2
   ],
   "execution": {
     "entry_mode": "mean_reversion_wait",
     "scale_in_levels": [],
     "tp_levels": [
-      4447.12,
-      4449.65
+      4448.82,
+      4451.2
     ],
     "tp_shares": [
       0.5,
       0.5
     ],
-    "breakout_trigger": 4450.66,
-    "pullback_trigger": 4447.12
+    "breakout_trigger": 4452.15,
+    "pullback_trigger": 4448.82
   },
   "quality": {
-    "trend_strength": 3.33,
+    "trend_strength": 2.7,
     "alignment": "mixed",
-    "distance_to_value_low_atr": 2.13,
-    "distance_to_value_high_atr": 2.63,
+    "distance_to_value_low_atr": 1.77,
+    "distance_to_value_high_atr": 2.27,
     "bias_votes": {
       "m5": "bearish",
       "h1": "neutral",
@@ -43,17 +43,17 @@
       "m15": "bearish"
     },
     "regime": "range",
-    "smc_confidence": 0.57,
-    "smc_poi": "A",
+    "smc_confidence": 0.4,
+    "smc_poi": "A+",
     "smc_signal": "bearish"
   },
-  "created_at": "2026-08-31T12:49:27.666044+00:00",
-  "expires_at": "2026-09-01T00:49:27.666044+00:00",
-  "next_reassessment": "2026-08-31T12:49:27.666044+00:00",
+  "created_at": "2026-08-31T12:45:01.762216+00:00",
+  "expires_at": "2026-09-01T00:45:01.762216+00:00",
+  "next_reassessment": "2026-08-31T12:45:01.762216+00:00",
   "context": {
-    "m5_last": 4436.33,
-    "h1_last": 4436.34,
-    "h4_last": 4436.34,
+    "m5_last": 4440.37,
+    "h1_last": 4440.37,
+    "h4_last": 4440.37,
     "smc": {
       "order_blocks": [
         {
@@ -63,7 +63,7 @@
           "open": 4439.5,
           "close": 4439.2,
           "index": 79,
-          "mitigated": true
+          "mitigated": false
         },
         {
           "type": "bullish",
@@ -81,7 +81,7 @@
           "open": 4437.83,
           "close": 4440.09,
           "index": 67,
-          "mitigated": false
+          "mitigated": true
         },
         {
           "type": "bearish",
@@ -108,7 +108,7 @@
           "open": 4435.88,
           "close": 4434.2,
           "index": 44,
-          "mitigated": true
+          "mitigated": false
         },
         {
           "type": "bearish",
@@ -122,12 +122,12 @@
       ],
       "active_order_blocks": [
         {
-          "type": "bearish",
-          "high": 4441.38,
-          "low": 4437.63,
-          "open": 4437.83,
-          "close": 4440.09,
-          "index": 67,
+          "type": "bullish",
+          "high": 4439.83,
+          "low": 4438.01,
+          "open": 4439.5,
+          "close": 4439.2,
+          "index": 79,
           "mitigated": false
         },
         {
@@ -138,15 +138,24 @@
           "close": 4448.42,
           "index": 62,
           "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4437.05,
+          "low": 4431.31,
+          "open": 4435.88,
+          "close": 4434.2,
+          "index": 44,
+          "mitigated": false
         }
       ],
       "nearest_ob": {
-        "type": "bearish",
-        "high": 4449.48,
-        "low": 4442.9,
-        "open": 4443.07,
-        "close": 4448.42,
-        "index": 62,
+        "type": "bullish",
+        "high": 4437.05,
+        "low": 4431.31,
+        "open": 4435.88,
+        "close": 4434.2,
+        "index": 44,
         "mitigated": false
       },
       "fvgs": [
@@ -410,8 +419,8 @@
         "filled": false
       },
       "liquidity_sweep": {
-        "swept": false,
-        "level": null
+        "swept": true,
+        "level": 4441.84
       },
       "market_structure": {
         "phase": "bos_bearish",
@@ -419,8 +428,8 @@
       },
       "premium_discount": {
         "zone": "equilibrium",
-        "fib_level": 0.527,
-        "quality": 44.61741424802115,
+        "fib_level": 0.58,
+        "quality": 33.95778364116097,
         "swing_high": 4472.19,
         "swing_low": 4396.39
       },
@@ -429,17 +438,17 @@
         "weight": 1.0
       },
       "bias": "bearish",
-      "confidence": 0.6946797695696374,
+      "confidence": 0.4601713741669311,
       "signal": "bearish",
-      "signal_confidence": 0.6946797695696374,
-      "poi": "A",
+      "signal_confidence": 0.4601713741669311,
+      "poi": "A+",
       "swing_high": 4472.19,
       "swing_low": 4396.39,
-      "last_price": 4436.33,
+      "last_price": 4440.37,
       "smc_weight": 1.0,
       "h1_structure": {
         "phase": "bos_bullish",
-        "confidence": 0.9093305218766634
+        "confidence": 1.0
       },
       "h1_order_blocks": [
         {
@@ -694,6 +703,21 @@
       "breaker_blocks": [
         {
           "type": "bullish_breaker",
+          "high": 4441.38,
+          "low": 4437.63,
+          "original_ob": {
+            "type": "bearish",
+            "high": 4441.38,
+            "low": 4437.63,
+            "open": 4437.83,
+            "close": 4440.09,
+            "index": 67,
+            "mitigated": true
+          },
+          "flipped": true
+        },
+        {
+          "type": "bullish_breaker",
           "high": 4443.97,
           "low": 4435.19,
           "original_ob": {
@@ -729,7 +753,7 @@
         },
         "distribution": {
           "high": 4464.09,
-          "low": 4435.79
+          "low": 4439.02
         }
       },
       "turtle_soup": {
@@ -755,7 +779,7 @@
     },
     "merged": {
       "bias": "bearish",
-      "confidence": 0.57,
+      "confidence": 0.4,
       "action": "short",
       "classic_source": {
         "bias": "bearish",
@@ -766,9 +790,9 @@
       "smc_source": {
         "bias": "bearish",
         "signal": "bearish",
-        "confidence": 0.6946797695696374,
+        "confidence": 0.4601713741669311,
         "weight": 1.0,
-        "poi": "A",
+        "poi": "A+",
         "market_structure": {
           "phase": "bos_bearish",
           "confidence": 1.0
@@ -778,255 +802,6 @@
           "weight": 1.0
         }
       }
-    },
-    "macro": {
-      "timestamp": "2026-08-31T12:49:27.891182+00:00",
-      "dxy": {
-        "change_pct": 0.033,
-        "direction": "up",
-        "available": true,
-        "source": "synthetic"
-      },
-      "silver": {
-        "available": false
-      },
-      "risk_sentiment": {
-        "available": false
-      },
-      "tick_volume": {
-        "volume_ratio": 0.39,
-        "is_high_volume": false,
-        "is_low_volume": true,
-        "available": true
-      },
-      "higher_tf": {
-        "h4": {
-          "price": 4436.24,
-          "high_20": 4649.51,
-          "low_20": 4396.39,
-          "pos_in_range": 0.16,
-          "zone": "discount",
-          "sma10": 4506.46,
-          "trend": "bearish"
-        },
-        "d1": {
-          "price": 4436.24,
-          "high_20": 4697.2,
-          "low_20": 4042.57,
-          "pos_in_range": 0.6,
-          "zone": "equilibrium",
-          "sma10": 4537.5,
-          "trend": "bearish"
-        },
-        "w1": {
-          "price": 4436.24,
-          "high_20": 4464.09,
-          "low_20": 4433.78,
-          "pos_in_range": 0.08,
-          "zone": "discount",
-          "sma10": 4451.4,
-          "trend": "bearish"
-        }
-      },
-      "verdict": {
-        "verdict": "none",
-        "score_long": 0,
-        "score_short": 1,
-        "macro_conflicting": false
-      },
-      "calendar": {
-        "source": "forexfactory",
-        "high_impact": [
-          {
-            "title": "Final Manufacturing PMI",
-            "currency": "JPY",
-            "impact": "low",
-            "date": "2026-08-31T20:30:00-04:00",
-            "time": "",
-            "forecast": "55.1",
-            "previous": "55.1"
-          },
-          {
-            "title": "Consumer Confidence",
-            "currency": "JPY",
-            "impact": "low",
-            "date": "2026-09-01T01:00:00-04:00",
-            "time": "",
-            "forecast": "35.3",
-            "previous": "34.9"
-          },
-          {
-            "title": "German Retail Sales m/m",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T02:00:00-04:00",
-            "time": "",
-            "forecast": "0.4%",
-            "previous": "-1.1%"
-          },
-          {
-            "title": "Spanish Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:15:00-04:00",
-            "time": "",
-            "forecast": "50.4",
-            "previous": "50.2"
-          },
-          {
-            "title": "Italian Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:45:00-04:00",
-            "time": "",
-            "forecast": "51.6",
-            "previous": "51.3"
-          },
-          {
-            "title": "French Final Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:50:00-04:00",
-            "time": "",
-            "forecast": "51.5",
-            "previous": "51.5"
-          },
-          {
-            "title": "German Final Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:55:00-04:00",
-            "time": "",
-            "forecast": "54.1",
-            "previous": "54.1"
-          },
-          {
-            "title": "Final Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T04:00:00-04:00",
-            "time": "",
-            "forecast": "52.8",
-            "previous": "52.8"
-          },
-          {
-            "title": "Italian Monthly Unemployment Rate",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T04:30:00-04:00",
-            "time": "",
-            "forecast": "5.6%",
-            "previous": "5.7%"
-          },
-          {
-            "title": "Final Manufacturing PMI",
-            "currency": "GBP",
-            "impact": "low",
-            "date": "2026-09-01T04:30:00-04:00",
-            "time": "",
-            "forecast": "51.5",
-            "previous": "51.5"
-          }
-        ],
-        "medium_impact": [
-          {
-            "title": "Final Manufacturing PMI",
-            "currency": "JPY",
-            "impact": "low",
-            "date": "2026-08-31T20:30:00-04:00",
-            "time": "",
-            "forecast": "55.1",
-            "previous": "55.1"
-          },
-          {
-            "title": "Consumer Confidence",
-            "currency": "JPY",
-            "impact": "low",
-            "date": "2026-09-01T01:00:00-04:00",
-            "time": "",
-            "forecast": "35.3",
-            "previous": "34.9"
-          },
-          {
-            "title": "German Retail Sales m/m",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T02:00:00-04:00",
-            "time": "",
-            "forecast": "0.4%",
-            "previous": "-1.1%"
-          },
-          {
-            "title": "Spanish Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:15:00-04:00",
-            "time": "",
-            "forecast": "50.4",
-            "previous": "50.2"
-          },
-          {
-            "title": "Italian Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:45:00-04:00",
-            "time": "",
-            "forecast": "51.6",
-            "previous": "51.3"
-          },
-          {
-            "title": "French Final Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:50:00-04:00",
-            "time": "",
-            "forecast": "51.5",
-            "previous": "51.5"
-          },
-          {
-            "title": "German Final Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T03:55:00-04:00",
-            "time": "",
-            "forecast": "54.1",
-            "previous": "54.1"
-          },
-          {
-            "title": "Final Manufacturing PMI",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T04:00:00-04:00",
-            "time": "",
-            "forecast": "52.8",
-            "previous": "52.8"
-          },
-          {
-            "title": "Italian Monthly Unemployment Rate",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-01T04:30:00-04:00",
-            "time": "",
-            "forecast": "5.6%",
-            "previous": "5.7%"
-          },
-          {
-            "title": "Final Manufacturing PMI",
-            "currency": "GBP",
-            "impact": "low",
-            "date": "2026-09-01T04:30:00-04:00",
-            "time": "",
-            "forecast": "51.5",
-            "previous": "51.5"
-          }
-        ],
-        "total_events": 112,
-        "upcoming_events": 28,
-        "strict_high_count": 0,
-        "window_hours": 24,
-        "fetched_at": "2026-08-31T12:49:28.073212+00:00"
-      },
-      "_fetched_at": 1788180568.0743518
     }
   }
 }
