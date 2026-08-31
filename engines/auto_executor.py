@@ -372,8 +372,12 @@ def evaluate_management_action(
         out = {"ok": ok, "action": action, "result": result, "executed": bool(ok),
                "management": management}
         if not ok:
-            out["error"] = str((result or {}).get("error") if isinstance(result, dict)
-                               else result) or "bridge_no_response"
+            err = (result or {}).get('error') if isinstance(result, dict) else result
+            if err in (None, '', 'None'):
+                # broker/bridge gave no reason — surface the payload itself
+                # so logs/Telegram never show a bare "None"
+                err = f'bridge_rejected:{str(result)[:100]}'
+            out['error'] = str(err) or 'bridge_no_response'
         if extra:
             out.update(extra)
         return out
