@@ -1,0 +1,146 @@
+{
+  "A_baseline": {
+    "kwargs": {},
+    "trades": 170,
+    "wins": 99,
+    "losses": 39,
+    "scratches": 32,
+    "net": 943.31,
+    "wr_decided": 0.717,
+    "avg": 5.55,
+    "max_loss": -31.59,
+    "maxdd": 32.28
+  },
+  "style_attribution": {
+    "aggressive_discount_entry": {
+      "n": 48,
+      "pnl": 265.98,
+      "w": 25,
+      "l": 23
+    },
+    "aggressive_premium_entry": {
+      "n": 100,
+      "pnl": 640.12,
+      "w": 65,
+      "l": 35
+    },
+    "pullback_continuation": {
+      "n": 19,
+      "pnl": 7.38,
+      "w": 6,
+      "l": 13
+    },
+    "aggressive_value_entry": {
+      "n": 3,
+      "pnl": 29.83,
+      "w": 3,
+      "l": 0
+    }
+  },
+  "B_no_aggr_disc": {
+    "kwargs": {
+      "exclude_styles": [
+        "aggressive_discount"
+      ]
+    },
+    "trades": 126,
+    "wins": 77,
+    "losses": 25,
+    "scratches": 24,
+    "net": 725.95,
+    "wr_decided": 0.755,
+    "avg": 5.76,
+    "max_loss": -31.59,
+    "maxdd": 34.41
+  },
+  "C_no_aggr_all": {
+    "kwargs": {
+      "exclude_styles": [
+        "aggressive"
+      ]
+    },
+    "trades": 21,
+    "wins": 8,
+    "losses": 6,
+    "scratches": 7,
+    "net": 25.42,
+    "wr_decided": 0.571,
+    "avg": 1.21,
+    "max_loss": -11.76,
+    "maxdd": 18.23
+  },
+  "D_minrr2": {
+    "kwargs": {
+      "min_rr": 2.0
+    },
+    "trades": 0,
+    "wins": 0,
+    "losses": 0,
+    "scratches": 0,
+    "net": 0.0,
+    "wr_decided": 0,
+    "avg": 0,
+    "max_loss": 0,
+    "maxdd": 0.0
+  },
+  "E_be075": {
+    "kwargs": {
+      "breakeven_at_r": 0.75
+    },
+    "trades": 152,
+    "wins": 110,
+    "losses": 39,
+    "scratches": 3,
+    "net": 1044.29,
+    "wr_decided": 0.738,
+    "avg": 6.87,
+    "max_loss": -31.59,
+    "maxdd": 35.78
+  },
+  "F_be10": {
+    "kwargs": {
+      "breakeven_at_r": 1.0
+    },
+    "trades": 149,
+    "wins": 110,
+    "losses": 39,
+    "scratches": 0,
+    "net": 1040.09,
+    "wr_decided": 0.738,
+    "avg": 6.98,
+    "max_loss": -31.59,
+    "maxdd": 37.32
+  },
+  "G_rr2_be075": {
+    "kwargs": {
+      "min_rr": 2.0,
+      "breakeven_at_r": 0.75
+    },
+    "trades": 0,
+    "wins": 0,
+    "losses": 0,
+    "scratches": 0,
+    "net": 0.0,
+    "wr_decided": 0,
+    "avg": 0,
+    "max_loss": 0,
+    "maxdd": 0.0
+  },
+  "H_no_disc_no_val": {
+    "kwargs": {
+      "exclude_styles": [
+        "aggressive_discount",
+        "aggressive_value"
+      ]
+    },
+    "trades": 120,
+    "wins": 72,
+    "losses": 25,
+    "scratches": 23,
+    "net": 657.18,
+    "wr_decided": 0.742,
+    "avg": 5.48,
+    "max_loss": -31.59,
+    "maxdd": 34.41
+  }
+}

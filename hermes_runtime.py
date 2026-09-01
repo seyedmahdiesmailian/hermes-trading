@@ -403,6 +403,10 @@ def _build_proposal(plan: dict, monitor: dict, policy: dict, tick_price: float) 
         'blueprint': blueprint,
         'monitor_action': monitor.get('action'),
         'zone': monitor.get('zone'),
+        # b53: the executor sizes risk per ENTRY STYLE. Without the tag the
+        # weakest lane (no-trigger discount) traded at full 2% like the
+        # strongest — M5 parity backtest: discount WR 52% vs premium 65%.
+        'execution_style': monitor.get('execution_style'),
         'price': tick_price,
         'at': datetime.now(timezone.utc).isoformat(),
     }

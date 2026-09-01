@@ -100,8 +100,16 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
                  exclude_styles: list[str] | None = None, data: dict | None = None,
                  range_kill_conf: float = 0.35,
                  spread_override: float | None = None,
-                 breakeven_at_r: float = 0.5,
-                 min_grade: str | None = "B") -> dict:
+                 # b53 PARITY FIX: live has NO standalone breakeven-at-+XR move.
+                 # trade_management.py only brings SL to entry AFTER a TP fill
+                 # (the partial branch), which backtest_ohlc already models via
+                 # partial_tp1_share. The old 0.5 default simulated a rule live
+                 # never runs — it inflated scratches 32x and hid the true
+                 # live result (be=0: 149 trades / 73.8% WR / +1040 vs the
+                 # phantom +943). 0.0 = honest live geometry.
+                 breakeven_at_r: float = 0.0,
+                 min_grade: str | None = "B",
+                 min_rr: float = 1.5) -> dict:
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
@@ -143,7 +151,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
     result = backtest_ohlc(
         m15_data,
         signal_fn,
-        min_rr=1.5,           # live gate 6: backtested MIN_RR
+        min_rr=min_rr,         # live gate 6: backtested MIN_RR (A/B-able)
         min_grade=min_grade,  # live gate 7: MIN_SETUP_GRADE="B" (parity; None = measure-only)
         breakeven_at_r=breakeven_at_r,   # live trade management: BE move at +0.5R (A/B-able)
         partial_tp1_share=0.5,  # live TP ladder: 50% at first target

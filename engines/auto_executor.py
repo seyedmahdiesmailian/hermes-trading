@@ -29,6 +29,16 @@ MAX_OPEN_POSITIONS = 1              # max simultaneous positions. Was 2 — a
                                     # on the single-slot constraint. Live now matches
                                     # both (tightening only, never loosening).
 MIN_SETUP_GRADE = "B"               # backtest 2026-08-29: C-grade (weak trend) entries drag win-rate; B keeps 13-trade sample with 61.5% WR
+# b53: per-entry-style risk multiplier (M5 parity backtest, 6500 bars,
+# 2026-09-01). aggressive_discount_entry = no-trigger chase of a move that
+# already left the zone: WR 52% vs premium 65%, and it produced the two
+# worst live losses (-105$ #103649120, -94$ #103506741). Deleting the lane
+# costs ~280$ of 3-week PnL (it is still net positive), so the professional
+# answer is HALF SIZE, not removal. Styles not listed keep full risk.
+STYLE_RISK_MULT = {
+    "aggressive_discount_entry": 0.5,
+    "aggressive_value_entry": 0.5,
+}
 STOP_TRADING_REGIMES = {"locked"}   # regimes that block new trades
 TIGHT_REGIMES = {"defensive"}       # reduced sizing regimes
 
@@ -267,6 +277,10 @@ def evaluate_proposal(
 
     # ── Calculate position size ──
     risk_pct = MAX_RISK_PER_TRADE_PCT * float(_ls.get("risk_mult", 1.0))  # adaptive multiplier (≤1.0)
+    # b53: per-entry-style risk (see STYLE_RISK_MULT). The style tag comes
+    # from the monitor decision via _build_proposal; missing tag = full risk.
+    _style_mult = STYLE_RISK_MULT.get(str(proposal.get("execution_style") or ""), 1.0)
+    risk_pct *= _style_mult
     # DEFCON YELLOW → half risk (legacy rule); RED never reaches here
     _risk_override = (_defcon_insights or {}).get("risk_override")
     if _risk_override is not None:
