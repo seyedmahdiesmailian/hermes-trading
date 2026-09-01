@@ -129,7 +129,12 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
         # b44: the broker rejects a stop on the wrong side of the market
         # (retcode 10016 — SELL needs SL ABOVE price). Before this guard the
         # watchdog hammered the same invalid modify every 5s for minutes.
-        gap_ok = (new_sl < market_price - 0.10) if side_buy else (new_sl > market_price + 0.10)
+        # b52: 0.10 was not enough — the broker measures stops from the far
+        # side of the spread (SELL SL vs ASK) plus trade_stops_level, so an SL
+        # a hair above the bid passed this guard and still died with retcode
+        # 10025 (#103636278 hammered ~28x, 03:42-03:45 UTC). 0.5 covers
+        # XAUUSD spread+stops with room; below that we hold, existing SL stays.
+        gap_ok = (new_sl < market_price - 0.50) if side_buy else (new_sl > market_price + 0.50)
         if gap_ok:
             return {
                 "action": "move_stop_to_breakeven",
@@ -158,7 +163,12 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
         # pinned SL at entry, and the trail hammered invalid modifies until
         # the position died on that stop. Hold instead — the existing SL
         # stays in force.
-        gap_ok = (new_sl < market_price - 0.10) if side_buy else (new_sl > market_price + 0.10)
+        # b52: 0.10 was not enough — the broker measures stops from the far
+        # side of the spread (SELL SL vs ASK) plus trade_stops_level, so an SL
+        # a hair above the bid passed this guard and still died with retcode
+        # 10025 (#103636278 hammered ~28x, 03:42-03:45 UTC). 0.5 covers
+        # XAUUSD spread+stops with room; below that we hold, existing SL stays.
+        gap_ok = (new_sl < market_price - 0.50) if side_buy else (new_sl > market_price + 0.50)
         if not gap_ok:
             return {
                 "action": "hold",
