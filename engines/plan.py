@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-
-
-
-
+# b54: strategy knobs as patchable module constants (swept by
+# scripts/ab_b54_sweep.py on the live-parity M5 funnel; values = live as-is).
+# SMC_CONF_FLOOR gates every no-trigger aggressive lane (4 call sites).
+SMC_CONF_FLOOR = 0.4
+# Late entries re-anchor their stop to min(structure, price ± cap*ATR).
+REANCHOR_STOP_ATR_CAP = 2.0
+# ...and keep at least this reward:risk after re-anchoring.
+REANCHOR_MIN_RR = 1.5
 
 
 def classify_price_location(price: float, zones: dict) -> str:
@@ -40,18 +44,23 @@ def build_trade_blueprint(plan: dict, price: float, trigger_ok: bool) -> dict:
     }
 
 
-def _reanchor_blueprint(bp: dict, price: float, atr: float, min_rr: float = 1.5) -> dict:
+def _reanchor_blueprint(bp: dict, price: float, atr: float, min_rr: float | None = None) -> dict:
     """Re-anchor SL/TP around the live price for aggressive (late) entries.
 
     When price has already run past the plan zones, the structural invalidation
     is far and the first TP is close, so RR collapses (poor_rr / invalid_geometry
     blockers). Tighten the stop to ~2 ATR and pick the furthest valid target so
     the trade keeps sane geometry; if nothing works, mark the blueprint blocked.
+
+    b54: min_rr None-resolved at CALL time (a default bound at def-time would
+    make the sweep's monkeypatch of REANCHOR_MIN_RR a silent no-op).
     """
+    if min_rr is None:
+        min_rr = REANCHOR_MIN_RR
     atr = float(atr or 0) or 5.0
     side = bp["side"]
     sl = float(bp["sl"])
-    stop_dist_cap = 2.0 * atr
+    stop_dist_cap = REANCHOR_STOP_ATR_CAP * atr
 
     if side == "SELL":
         # stop must sit above entry: min(structural invalidation, price + 2*ATR)
@@ -138,7 +147,7 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dic
                 "at": now.isoformat(),
             }
         smc_conf = plan.get("quality", {}).get("smc_confidence", 0) or 0
-        if smc_conf >= 0.4:
+        if smc_conf >= SMC_CONF_FLOOR:
             # Re-anchor the blueprint to current market conditions, otherwise the
             # stale plan TP (far above after a long move) breaks trade geometry.
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
@@ -155,7 +164,7 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dic
         near_value_high = abs(price - zones["value_high"]) < (zones["value_high"] - zones["value_low"]) * 0.3
         if near_value_high and plan.get("bias") == "bullish":
             smc_conf = plan.get("quality", {}).get("smc_confidence", 0) or 0
-            if smc_conf >= 0.4:
+            if smc_conf >= SMC_CONF_FLOOR:
                 bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
                 bp = _reanchor_blueprint(
                     bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
@@ -230,7 +239,7 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> di
     if price >= breakout_trigger:
         # Aggressive: if price is near value_low and trending, allow entry
         near_value_low = abs(price - zones["value_low"]) < (zones["value_high"] - zones["value_low"]) * 0.3
-        if near_value_low and plan.get("quality", {}).get("smc_confidence", 0) >= 0.4:
+        if near_value_low and plan.get("quality", {}).get("smc_confidence", 0) >= SMC_CONF_FLOOR:
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
             bp = _reanchor_blueprint(
                 bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
@@ -264,7 +273,7 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> di
                 "execution_style": "wait_for_replan",
                 "at": now.isoformat(),
             }
-        if smc_conf >= 0.4:
+        if smc_conf >= SMC_CONF_FLOOR:
             # Re-anchor the blueprint to current market conditions, otherwise the
             # stale plan TP (far below after a long move) breaks trade geometry.
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)

@@ -33,6 +33,12 @@ def _grade_value(trade: dict) -> int:
 
 
 def _partial_close_fraction(trade: dict) -> tuple[float, str]:
+    # b54: shares raised after the 13-week M5 parity ladder test
+    # (scripts/ab_b54_windows.py + ab_b54_ladder_weeks): 0.7 beats 0.5 in
+    # 13/13 weeks (+180$/3wk), 0.85 beats it in 13/13 (+315$). After TP1 the
+    # final target rarely fills in this regime — lock more early. The 0.3
+    # strong-runner branch stays: it is the only lane with a momentum thesis
+    # the parity backtest cannot model.
     momentum = float(trade.get("momentum_strength", 0.5) or 0.5)
     grade = _grade_value(trade)
     rr_remaining = float(trade.get("rr_remaining", 0.0) or 0.0)
@@ -41,8 +47,8 @@ def _partial_close_fraction(trade: dict) -> tuple[float, str]:
     if grade >= 3 and momentum >= 0.8 and rr_remaining >= 2.0 and structure == "healthy":
         return 0.3, "strong_runner_keep_more"
     if grade <= 1 or momentum <= 0.4 or rr_remaining <= 1.2 or structure == "failing":
-        return 0.7, "weak_follow_through_lock_more"
-    return 0.5, "balanced_partial"
+        return 0.85, "weak_follow_through_lock_more"
+    return 0.7, "balanced_partial"
 
 
 def _breakeven_stop(trade: dict) -> tuple[float, str]:

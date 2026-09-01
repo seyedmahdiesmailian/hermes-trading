@@ -10,6 +10,8 @@ def backtest_ohlc(
     min_grade: str | None = None,
     breakeven_at_r: float = 0.0,
     partial_tp1_share: float = 0.0,
+    tp1_position: float = 0.5,
+    partial_share_fn=None,          # b54c: callable(grade)->share; overrides flat share
     spread: float = 0.0,
     exclude_styles: list[str] | None = None,
 ) -> dict:
@@ -83,16 +85,20 @@ def backtest_ohlc(
                     # 3) partial TP1 (half the distance to final TP, once) —
                     #    stop moves to entry, effective NEXT bar (no same-bar re-entry exit)
                     if partial_tp1_share > 0 and not t["partial_taken"] and risk > 0:
-                        tp1 = t["entry"] + (t["tp"] - t["entry"]) * 0.5 if side == "BUY" \
-                            else t["entry"] - (t["entry"] - t["tp"]) * 0.5
-                        hit_tp1 = high >= tp1 if side == "BUY" else low <= tp1
-                        if hit_tp1:
-                            part = ((tp1 - t["entry"]) if side == "BUY"
-                                    else (t["entry"] - tp1)) * partial_tp1_share - spread * partial_tp1_share
-                            t["realized"] = round(part, 6)
-                            t["partial_taken"] = partial_tp1_share
-                            t["be_moved"] = True
-                            t["sl"] = t["entry"]  # live: partial comes with BE move
+                        share = partial_tp1_share
+                        if partial_share_fn is not None:
+                            share = float(partial_share_fn(t.get("grade")))
+                        if share > 0:
+                            tp1 = t["entry"] + (t["tp"] - t["entry"]) * tp1_position if side == "BUY" \
+                                else t["entry"] - (t["entry"] - t["tp"]) * tp1_position
+                            hit_tp1 = high >= tp1 if side == "BUY" else low <= tp1
+                            if hit_tp1:
+                                part = ((tp1 - t["entry"]) if side == "BUY"
+                                        else (t["entry"] - tp1)) * share - spread * share
+                                t["realized"] = round(part, 6)
+                                t["partial_taken"] = share
+                                t["be_moved"] = True
+                                t["sl"] = t["entry"]  # live: partial comes with BE move
                     # 4) plain BE move — effective from next bar
                     if breakeven_at_r > 0 and not t["be_moved"] and risk > 0:
                         move = (high - t["entry"]) if side == "BUY" else (t["entry"] - low)

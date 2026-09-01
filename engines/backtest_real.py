@@ -109,7 +109,10 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
                  # phantom +943). 0.0 = honest live geometry.
                  breakeven_at_r: float = 0.0,
                  min_grade: str | None = "B",
-                 min_rr: float = 1.5) -> dict:
+                 min_rr: float = 1.5,
+                 partial_tp1_share: float = 0.5,
+                 tp1_position: float = 0.5,
+                 partial_share_fn=None) -> dict:
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
@@ -154,7 +157,9 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         min_rr=min_rr,         # live gate 6: backtested MIN_RR (A/B-able)
         min_grade=min_grade,  # live gate 7: MIN_SETUP_GRADE="B" (parity; None = measure-only)
         breakeven_at_r=breakeven_at_r,   # live trade management: BE move at +0.5R (A/B-able)
-        partial_tp1_share=0.5,  # live TP ladder: 50% at first target
+        partial_tp1_share=partial_tp1_share,  # live TP ladder: 50% at first target (A/B-able)
+        tp1_position=tp1_position,
+        partial_share_fn=partial_share_fn,    # b54c: grade-aware ladder (mirrors _partial_close_fraction)
         spread=spread_override if spread_override is not None else 0.20,  # XAUUSD demo round-trip cost
         exclude_styles=exclude_styles,
     )
