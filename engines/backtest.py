@@ -15,6 +15,8 @@ def backtest_ohlc(
     trail_after_partial: float = 0.0,   # b55c: trail SL this many x risk behind the
                                         # bar extreme AFTER a partial fill (0 = off,
                                         # which is what every earlier sweep ran with)
+    time_stop_bars: int = 0,            # b57: force-close at bar close after N bars
+                                        # without TP1/TP hit (0 = off)
     spread: float = 0.0,
     exclude_styles: list[str] | None = None,
 ) -> dict:
@@ -128,6 +130,14 @@ def backtest_ohlc(
                             cand = low + trail_after_partial * risk
                             if cand < t["sl"]:
                                 t["sl"] = cand
+                    # 4c) b57 TIME STOP — trade that never reached TP1 within N
+                    # bars is dead weight under the one-position gate; exit at
+                    # this bar's close (live would do the same on bar close).
+                    if (time_stop_bars > 0 and t["partial_taken"] == 0
+                            and index - t["entry_index"] >= time_stop_bars):
+                        _close(t, float(row.get("close", t["entry"])), index, "time")
+                        open_trade = None
+                        continue
 
         if open_trade is not None:
             continue  # position occupied — live blocks new entries (gate 5)
