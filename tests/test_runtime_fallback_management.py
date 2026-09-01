@@ -132,7 +132,9 @@ class RuntimeFallbackTests(unittest.TestCase):
         result = cycle(bridge, dry_run=False)
         self.assertEqual(result.get('step'), 'manage')
         self.assertEqual(result['management']['action'], 'partial_take_profit')
-        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['partial_close'])
+        # b55: default-grade trade now exits 100% at TP1 -> routed to
+        # close_position (MT5 rejects a 100% partial with retcode 10026)
+        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['close_position'])
         self.assertTrue(result['will_execute_now'])
 
     def test_buy_side_is_not_inverted(self):
@@ -149,7 +151,8 @@ class RuntimeFallbackTests(unittest.TestCase):
         result = cycle(bridge, dry_run=False)
         self.assertEqual(result.get('step'), 'manage')
         self.assertEqual(result['management']['action'], 'partial_take_profit')
-        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['partial_close'])
+        # b55: full exit at TP1 -> close_position (see SELL twin above)
+        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['close_position'])
 
     def test_legacy_int_types_still_work(self):
         from hermes_runtime import cycle

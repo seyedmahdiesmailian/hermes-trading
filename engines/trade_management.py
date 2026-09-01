@@ -33,12 +33,15 @@ def _grade_value(trade: dict) -> int:
 
 
 def _partial_close_fraction(trade: dict) -> tuple[float, str]:
-    # b54: shares raised after the 13-week M5 parity ladder test
-    # (scripts/ab_b54_windows.py + ab_b54_ladder_weeks): 0.7 beats 0.5 in
-    # 13/13 weeks (+180$/3wk), 0.85 beats it in 13/13 (+315$). After TP1 the
-    # final target rarely fills in this regime — lock more early. The 0.3
-    # strong-runner branch stays: it is the only lane with a momentum thesis
-    # the parity backtest cannot model.
+    # b55: close the FULL position at TP1 except the strong-runner lane.
+    # Evidence: honest live-parity backtest (trailing stop now simulated —
+    # b55b found the old sim lied by omission) + 13-week window test
+    # (scripts/ab_b55d_windows.py): 100% at TP1 beat 85% in 11/13 weeks,
+    # +260$/3wk, zero big-loss weeks. The runner lane rarely reached TP2
+    # live and mostly gave back locked profit at the trail.
+    # The 0.3 strong-runner branch stays: grade A+ AND momentum>=0.8 AND
+    # rr>=2 AND healthy structure — a thesis the parity backtest cannot
+    # model, and it has never fired live (0 occurrences in execution_log).
     momentum = float(trade.get("momentum_strength", 0.5) or 0.5)
     grade = _grade_value(trade)
     rr_remaining = float(trade.get("rr_remaining", 0.0) or 0.0)
@@ -47,8 +50,16 @@ def _partial_close_fraction(trade: dict) -> tuple[float, str]:
     if grade >= 3 and momentum >= 0.8 and rr_remaining >= 2.0 and structure == "healthy":
         return 0.3, "strong_runner_keep_more"
     if grade <= 1 or momentum <= 0.4 or rr_remaining <= 1.2 or structure == "failing":
-        return 0.85, "weak_follow_through_lock_more"
-    return 0.7, "balanced_partial"
+        return 1.0, "weak_full_exit_at_tp1"
+    return 1.0, "balanced_full_exit_at_tp1"
+
+
+def _tp1_exit_closes_all(trade: dict) -> bool:
+    """b55: True when the TP1 partial is the FULL position — the watchdog must
+    close the ticket instead of partial-closing (MT5 rejects a 100% partial
+    with retcode 10026). The strong-runner lane is the only share < 1."""
+    share, _reason = _partial_close_fraction(trade)
+    return share >= 1.0
 
 
 def _breakeven_stop(trade: dict) -> tuple[float, str]:

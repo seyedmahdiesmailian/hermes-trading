@@ -399,6 +399,10 @@ def evaluate_management_action(
     try:
         if action == "partial_take_profit":
             fraction = float(management.get("close_fraction", 0.5))
+            if fraction >= 1.0:
+                # b55: full exit at TP1 — MT5 rejects a 100% partial close
+                # (retcode 10026), so close the ticket outright.
+                return _wrap(bridge.close_position(ticket))
             percent = int(round(fraction * 100))
             return _wrap(bridge.partial_close(ticket, percent))
 

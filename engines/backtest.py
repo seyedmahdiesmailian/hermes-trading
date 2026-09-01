@@ -12,6 +12,9 @@ def backtest_ohlc(
     partial_tp1_share: float = 0.0,
     tp1_position: float = 0.5,
     partial_share_fn=None,          # b54c: callable(grade)->share; overrides flat share
+    trail_after_partial: float = 0.0,   # b55c: trail SL this many x risk behind the
+                                        # bar extreme AFTER a partial fill (0 = off,
+                                        # which is what every earlier sweep ran with)
     spread: float = 0.0,
     exclude_styles: list[str] | None = None,
 ) -> dict:
@@ -87,7 +90,14 @@ def backtest_ohlc(
                     if partial_tp1_share > 0 and not t["partial_taken"] and risk > 0:
                         share = partial_tp1_share
                         if partial_share_fn is not None:
-                            share = float(partial_share_fn(t.get("grade")))
+                            # b55 parity fix: pass the WHOLE trade dict — the live
+                            # _partial_close_fraction(trade) reads grade AND
+                            # momentum/rr/structure from it. (The old grade-string
+                            # call crashed / silently diverged from live.)
+                            # Accept both contracts: (share, reason) tuple like
+                            # live, or a bare float from test lambdas.
+                            v = partial_share_fn(t)
+                            share = float(v[0]) if isinstance(v, (tuple, list)) else float(v)
                         if share > 0:
                             tp1 = t["entry"] + (t["tp"] - t["entry"]) * tp1_position if side == "BUY" \
                                 else t["entry"] - (t["entry"] - t["tp"]) * tp1_position
@@ -105,6 +115,19 @@ def backtest_ohlc(
                         if move >= breakeven_at_r * risk:
                             t["sl"] = t["entry"]
                             t["be_moved"] = True
+                    # 4b) b55c TRAIL after TP1 — mirrors live update_trailing_stop:
+                    # once the partial was taken, SL follows price at trail_mult x
+                    # original risk behind the best high/low seen. Set on this bar,
+                    # enforced from the NEXT bar (no same-bar lookahead).
+                    if trail_after_partial > 0 and t["partial_taken"] > 0 and risk > 0:
+                        if side == "BUY":
+                            cand = high - trail_after_partial * risk
+                            if cand > t["sl"]:
+                                t["sl"] = cand
+                        else:
+                            cand = low + trail_after_partial * risk
+                            if cand < t["sl"]:
+                                t["sl"] = cand
 
         if open_trade is not None:
             continue  # position occupied — live blocks new entries (gate 5)

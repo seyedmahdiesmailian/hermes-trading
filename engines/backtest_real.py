@@ -112,7 +112,8 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
                  min_rr: float = 1.5,
                  partial_tp1_share: float = 0.5,
                  tp1_position: float = 0.5,
-                 partial_share_fn=None) -> dict:
+                 partial_share_fn=None,
+                 trail_after_partial: float = 0.0) -> dict:   # b55c: live-parity trail after TP1
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
@@ -160,6 +161,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         partial_tp1_share=partial_tp1_share,  # live TP ladder: 50% at first target (A/B-able)
         tp1_position=tp1_position,
         partial_share_fn=partial_share_fn,    # b54c: grade-aware ladder (mirrors _partial_close_fraction)
+        trail_after_partial=trail_after_partial,  # b55c: mirror live trailing stop after TP1
         spread=spread_override if spread_override is not None else 0.20,  # XAUUSD demo round-trip cost
         exclude_styles=exclude_styles,
     )
