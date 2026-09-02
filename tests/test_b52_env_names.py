@@ -52,11 +52,29 @@ a documented key — two names, one fact. WIN_HOST (knob, default
 '192.168.10.51') shadowed HERMES_WIN_IP (.env.example): a bridge host
 change moved the trading path while the daily off-box backup silently kept
 pushing to the OLD IP, because the knob's own default won and the liveness
-test only asked "does anyone read WIN_HOST" (yes — its own default). Fix:
+test only asked "does anyone read WIN_HOST" — yes, its own default. Fix:
 offsite_backup resolves WIN_HOST = explicit override > HERMES_WIN_IP >
 last-known default; tripwire: scan_knob_default_shadows() must stay empty,
 with a behavioural replay of the exact pre-b62 shape through the real
 analyzer.
+
+b63 closes the LAST shape in this family: TWO DOCUMENTED keys encoding one
+fact. .env.example sets HERMES_WIN_IP=192.168.10.51 AND
+HERMES_BRIDGE_URL=http://192.168.10.51:5050 — the same host written twice.
+bridge_client's precedence is BRIDGE_URL-wins-when-set, so an operator who
+moves the bridge and updates only HERMES_WIN_IP keeps trading against the
+OLD host. The b62 knob-scope scan deliberately cannot see this
+(documented↔documented value sharing can be legitimate — e.g. the two
+Telegram chat ids both point at the ops chat), so b63 adds a TARGETED
+check: parse_host_drift() compares the host inside HERMES_BRIDGE_URL's
+value against HERMES_WIN_IP, in .env.example and in the real .env when
+present (skipped in clean worktrees); on mismatch the failure names the
+precedence that makes it silent. Plus a consumer-side tripwire
+(scan_literal_bridge_url_defaults): a production read of
+HERMES_BRIDGE_URL may not carry ANY inline literal default — the default
+must DERIVE from HERMES_WIN_IP (bridge_client parity) or be absent, else a
+missing key silently pins the old URL (the exact weekly_report shape b52
+healed the NAME of but left the VALUE duplicated).
 """
 from __future__ import annotations
 
@@ -67,6 +85,7 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+from urllib.parse import urlparse
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
@@ -332,6 +351,92 @@ def scan_knob_default_shadows() -> list[dict]:
     return hits
 
 
+# ---------------------------------------------------------------------------
+# b63 — two DOCUMENTED keys, one fact: HERMES_WIN_IP vs the host inside
+# HERMES_BRIDGE_URL. The b62 shadow scan is knob-scope on purpose (two
+# documented keys MAY share a value legitimately — TELEGRAM_CHAT_ID and
+# AUTOPILOT_REPORT_CHAT_ID both point at the ops chat), so this family's
+# LAST shape needs its own targeted check: the host embedded in the URL
+# must equal the host key, in .env.example AND in the real .env. Why it
+# matters: bridge_client resolves BRIDGE_URL = getenv('HERMES_BRIDGE_URL',
+# derived-from-WIN_IP) — the URL wins whenever it is set, so a half-done
+# host migration (IP updated, URL left behind) silently keeps EVERY trading
+# consumer on the old host. No runtime error, no log line: the b62
+# silent-stale shape one level up.
+# ---------------------------------------------------------------------------
+
+def _host_of(url: str) -> str | None:
+    """Hostname part of a URL value (port stripped); None if unparseable."""
+    try:
+        h = urlparse(url).hostname
+    except ValueError:
+        return None
+    return h or None
+
+
+def parse_host_drift(values: dict[str, str], source: str) -> list[dict]:
+    """Drift hits in ONE key->value map: HERMES_BRIDGE_URL's embedded host
+    != HERMES_WIN_IP. Missing either key, or an unparseable URL, is NOT a
+    drift hit (the b61 reader scan and the doc parser own those shapes);
+    this check only fires when both facts are present and DISAGREE."""
+    ip = (values.get("HERMES_WIN_IP") or "").strip()
+    url = (values.get("HERMES_BRIDGE_URL") or "").strip()
+    if not ip or not url:
+        return []
+    host = _host_of(url)
+    if host is None or host == ip:
+        return []
+    return [{"source": source, "win_ip": ip, "bridge_url": url,
+             "url_host": host,
+             "why": "HERMES_BRIDGE_URL wins over HERMES_WIN_IP in "
+                    "bridge_client (getenv default only when unset) — "
+                    "updating just the IP leaves every consumer on the "
+                    "URL's host, silently"}]
+
+
+def env_file_values(path: Path) -> dict[str, str]:
+    """key -> value from an env file (same parse shape as _env_doc_values)."""
+    vals = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            if v.strip():
+                vals[k.strip()] = v.strip()
+    return vals
+
+
+# ---------------------------------------------------------------------------
+# b63 consumer side: an inline literal default on a HERMES_BRIDGE_URL read
+# duplicates the host a SECOND time inside code. The default must DERIVE
+# from HERMES_WIN_IP (bridge_client parity: f"http://{WIN_IP}:5050") or be
+# absent — a literal default means a missing/renamed key silently pins the
+# old URL, the exact shape b52 healed the NAME of in weekly_report while
+# the VALUE stayed duplicated. (Any literal default on the URL read is a
+# violation, not just the known IP: a stale literal is the bug, and which
+# IP it hardcodes is forensic detail.)
+# ---------------------------------------------------------------------------
+
+def literal_bridge_url_defaults(src: str) -> list[dict]:
+    return [{"key": key, "default": lit, "line": line}
+            for key, lit, line in env_reads_with_literal_defaults(src)
+            if key == "HERMES_BRIDGE_URL" and lit is not None]
+
+
+def scan_literal_bridge_url_defaults() -> list[dict]:
+    hits = []
+    for p in production_files():
+        src = p.read_text(encoding="utf-8", errors="replace")
+        try:
+            file_hits = literal_bridge_url_defaults(src)
+        except SyntaxError:
+            continue  # the main universe tripwire already reports the file
+        for h in file_hits:
+            h["file"] = str(p.relative_to(REPO))
+        hits.extend(file_hits)
+    return hits
+
+
 class TestB52EnvNames(unittest.TestCase):
     def test_production_env_reads_all_known(self):
         v = scan_universe_violations()
@@ -585,6 +690,165 @@ class TestB52EnvNames(unittest.TestCase):
                          "the exact fact b62 is about must be in the map")
         # and the knob universe must be visible to the scan
         self.assertIn("WIN_HOST", DOCUMENTED_KNOBS)
+
+    # ------------------------------------------------------------------ b63
+
+    def test_no_documented_host_drift_in_env_example(self):
+        """MAIN TRIPWIRE (b63): the host embedded in HERMES_BRIDGE_URL must
+        equal HERMES_WIN_IP in the tracked deploy contract. These two keys
+        encode ONE fact; bridge_client lets the URL win whenever it is set,
+        so a half-done host migration (IP updated, URL left behind) keeps
+        every trading consumer on the OLD host with no error anywhere."""
+        hits = parse_host_drift(_env_doc_values(), ".env.example")
+        self.assertEqual(hits, [], f".env.example host drift: {hits}")
+
+    def test_no_documented_host_drift_in_real_env(self):
+        """The same check against the REAL .env when present — that is where
+        drift actually bites (the clean b50 worktree has no .env, so it
+        skips there; the .env.example check above always runs)."""
+        env = REPO / ".env"
+        if not env.exists():
+            self.skipTest("no .env on this checkout (clean worktree)")
+        hits = parse_host_drift(env_file_values(env), ".env")
+        self.assertEqual(
+            hits, [],
+            ".env documents two different bridge hosts — bridge_client "
+            f"follows HERMES_BRIDGE_URL, so HERMES_WIN_IP is a lie: {hits}")
+
+    def test_no_literal_bridge_url_default_in_production(self):
+        """Consumer side (b63): no production read of HERMES_BRIDGE_URL may
+        carry an inline literal default — the fallback must DERIVE from
+        HERMES_WIN_IP (bridge_client parity) or be absent. A literal default
+        duplicates the host a third time and silently wins when the key is
+        missing (the pre-b63 weekly_report shape)."""
+        hits = scan_literal_bridge_url_defaults()
+        self.assertEqual(
+            hits, [],
+            f"HERMES_BRIDGE_URL reads with a literal default: {hits} — "
+            "derive from HERMES_WIN_IP instead (bridge_client parity)")
+
+    def test_host_drift_replay_is_flagged(self):
+        """BEHAVIOURAL proof through the REAL analyzer: the exact drift
+        shape must fire and name the precedence; matching hosts, a missing
+        key, and an unparseable URL must stay clean (the check owns ONLY
+        the both-present-and-disagree shape)."""
+        drifted = parse_host_drift(
+            {"HERMES_WIN_IP": "10.0.0.7",
+             "HERMES_BRIDGE_URL": "http://192.168.10.51:5050"}, ".env.test")
+        self.assertEqual(len(drifted), 1, f"drift not flagged: {drifted}")
+        self.assertEqual(drifted[0]["url_host"], "192.168.10.51")
+        self.assertIn("HERMES_BRIDGE_URL wins", drifted[0]["why"],
+                      "failure must name the precedence that makes it silent")
+        clean = [
+            {"HERMES_WIN_IP": "10.0.0.7",
+             "HERMES_BRIDGE_URL": "http://10.0.0.7:5050"},   # migrated both
+            {"HERMES_WIN_IP": "10.0.0.7"},                   # URL unset: derived
+            {"HERMES_BRIDGE_URL": "http://10.0.0.7:5050"},   # IP unset: doc check
+            {"HERMES_WIN_IP": "10.0.0.7",
+             "HERMES_BRIDGE_URL": "not a url"},              # parser owns that
+        ]
+        for vals in clean:
+            self.assertEqual(parse_host_drift(vals, ".env.test"), [],
+                             f"falsely flagged: {vals}")
+
+    def test_literal_default_replay_is_flagged(self):
+        """BEHAVIOURAL proof of the consumer tripwire: the pre-b63
+        weekly_report shape fires; the healed derivation shape and
+        bridge_client's f-string default are clean — proving DERIVATION is
+        the legal fallback, a literal is not."""
+        pre_b63 = ("import os\n"
+                   "BRIDGE_URL = os.getenv('HERMES_BRIDGE_URL', "
+                   "'http://192.168.10.51:5050')\n")
+        hits = literal_bridge_url_defaults(pre_b63)
+        self.assertEqual(len(hits), 1, f"pre-b63 shape not flagged: {hits}")
+        self.assertEqual(hits[0]["line"], 2)
+        healed = ("import os\n"
+                  "BRIDGE_URL = (os.getenv('HERMES_BRIDGE_URL')\n"
+                  "              or f\"http://{os.getenv('HERMES_WIN_IP', "
+                  "'192.168.10.51')}:5050\")\n")
+        self.assertEqual(literal_bridge_url_defaults(healed), [],
+                         "derived fallback falsely flagged")
+        bare = "import os\nBRIDGE_URL = os.getenv('HERMES_BRIDGE_URL')\n"
+        self.assertEqual(literal_bridge_url_defaults(bare), [],
+                         "no-default read falsely flagged")
+
+    def test_drift_scans_are_not_vacuous(self):
+        """Anti-vacuity (b41/b48): the host parser must actually extract
+        hosts (a parser returning None for everything passes every drift
+        test by finding nothing), and the doc map must carry BOTH keys of
+        the fact pair for the check to have anything to compare."""
+        self.assertEqual(_host_of("http://192.168.10.51:5050"), "192.168.10.51")
+        self.assertEqual(_host_of("https://example.com:8443/x"), "example.com")
+        self.assertIsNone(_host_of("not a url"))
+        self.assertIsNone(_host_of("http://"))
+        vals = _env_doc_values()
+        self.assertIn("HERMES_WIN_IP", vals)
+        self.assertIn("HERMES_BRIDGE_URL", vals)
+        # the pair must be in the scan's view AND agree, or the main
+        # tripwire above is certifying nothing
+        self.assertEqual(_host_of(vals["HERMES_BRIDGE_URL"]),
+                         vals["HERMES_WIN_IP"])
+        # and the literal-default scan must see the healed consumers
+        files = {str(p.relative_to(REPO)) for p in production_files()}
+        self.assertIn("scripts/weekly_report.py", files)
+        self.assertIn("bridge_client.py", files)
+
+    def test_healed_consumers_follow_the_documented_host(self):
+        """The two live consumers this item healed must stay healed, by
+        NAME and by BEHAVIOUR (fresh subprocess, real precedence):
+        explicit HERMES_BRIDGE_URL > derived from HERMES_WIN_IP >
+        last-known default. The health monitor is the dangerous one — it
+        used to read NO env at all while paging ops every 5 minutes."""
+        for rel in ("scripts/bridge_health_monitor.py",
+                    "scripts/weekly_report.py"):
+            src = (REPO / rel).read_text(encoding="utf-8")
+            self.assertNotIn("http://192.168.10.51", src,
+                             f"{rel} hardcodes a bridge URL again (b63)")
+            self.assertIn("HERMES_BRIDGE_URL", src,
+                          f"{rel} lost the documented URL read")
+            self.assertIn("HERMES_WIN_IP", src,
+                          f"{rel} lost the derivation from the host key")
+        script = ("import sys; sys.path.insert(0, 'scripts');"
+                  "import bridge_health_monitor as m;"
+                  "print(' '.join(m.bridge_urls()))")
+        base_env = {k: v for k, v in os.environ.items()
+                    if k not in ("HERMES_BRIDGE_URL", "HERMES_WIN_IP")}
+        cases = [
+            ({"HERMES_WIN_IP": "10.0.0.9"},
+             "http://10.0.0.9:5050/health http://10.0.0.9:5050/",
+             "documented HERMES_WIN_IP must drive the watchdog (derived)"),
+            ({"HERMES_BRIDGE_URL": "http://10.0.0.5:6060",
+              "HERMES_WIN_IP": "10.0.0.9"},
+             "http://10.0.0.5:6060/health http://10.0.0.5:6060/",
+             "explicit HERMES_BRIDGE_URL must win (bridge_client parity)"),
+            ({},
+             "http://192.168.10.51:5050/health http://192.168.10.51:5050/",
+             "nothing set -> last-known default (or .env's values)"),
+        ]
+        for inject, expect, why in cases:
+            r = subprocess.run([sys.executable, "-c", script], cwd=str(REPO),
+                               env={**base_env, **inject},
+                               capture_output=True, text=True, timeout=60)
+            self.assertEqual(r.returncode, 0, f"import failed: {r.stderr[:300]}")
+            self.assertEqual(r.stdout.strip(), expect, why)
+        # weekly_report resolves BRIDGE_URL at module level (import is safe:
+        # main() is guarded) — same precedence must hold there.
+        wr_script = ("import sys; sys.path.insert(0, 'scripts');"
+                     "import weekly_report as w; print(w.BRIDGE_URL)")
+        for inject, expect, why in [
+            ({"HERMES_WIN_IP": "10.0.0.9"}, "http://10.0.0.9:5050",
+             "weekly_report must derive from the documented host"),
+            ({"HERMES_BRIDGE_URL": "http://10.0.0.5:6060"},
+             "http://10.0.0.5:6060",
+             "explicit HERMES_BRIDGE_URL must win in weekly_report"),
+        ]:
+            r = subprocess.run([sys.executable, "-c", wr_script],
+                               cwd=str(REPO),
+                               env={**base_env, "HERMES_BRIDGE_URL": "",
+                                    "HERMES_WIN_IP": "", **inject},
+                               capture_output=True, text=True, timeout=60)
+            self.assertEqual(r.returncode, 0, f"import failed: {r.stderr[:300]}")
+            self.assertEqual(r.stdout.strip(), expect, why)
 
 
 if __name__ == "__main__":

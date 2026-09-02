@@ -29,7 +29,11 @@ LEARNING = PLAN_DIR / 'learning_state.json'
 # b52: was os.getenv('BRIDGE_URL', ...) — dead name, so the hardcoded default
 # silently won even though HERMES_BRIDGE_URL is configured in .env; a bridge
 # host change would have left the weekly report pointing at the old IP.
-BRIDGE_URL = os.getenv('HERMES_BRIDGE_URL', 'http://192.168.10.51:5050')
+# b63: the last-resort default now DERIVES from HERMES_WIN_IP (bridge_client
+# parity) instead of duplicating the URL literal — when HERMES_BRIDGE_URL is
+# unset, an operator who only updates the documented IP moves every consumer.
+BRIDGE_URL = (os.getenv('HERMES_BRIDGE_URL')
+              or f"http://{os.getenv('HERMES_WIN_IP', '192.168.10.51')}:5050")
 BRIDGE_TOKEN = os.getenv('HERMES_BRIDGE_TOKEN', '')
 
 

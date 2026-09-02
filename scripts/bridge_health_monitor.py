@@ -18,9 +18,24 @@ from pathlib import Path
 BASE = Path('/home/ai/hermes-trading')
 LOG_FILE = BASE / 'logs' / 'bridge_health.log'
 STATE_FILE = BASE / 'data' / 'bridge_health_state.json'
-HEALTH_URL = 'http://192.168.10.51:5050/health'
-ROOT_URL = 'http://192.168.10.51:5050/'
 FAIL_THRESHOLD = 3
+
+
+def bridge_urls() -> tuple[str, str]:
+    """b63: (health_url, root_url) resolved at CALL time from the documented
+    keys. Was two module-level literals pinning the only bridge host by IP —
+    the watchdog that pages ops when the bridge dies read NO env at all:
+    move the bridge and the trading path follows HERMES_BRIDGE_URL/
+    HERMES_WIN_IP while ops gets 'bridge down' every 5 minutes forever (and
+    never sees the REAL bridge fail). Precedence mirrors bridge_client
+    exactly: explicit HERMES_BRIDGE_URL > derived from HERMES_WIN_IP >
+    last-known default. Call-time, not import-time, because main() loads
+    .env first (b39 lesson).
+    """
+    url = (os.getenv('HERMES_BRIDGE_URL')
+           or f"http://{os.getenv('HERMES_WIN_IP', '192.168.10.51')}:5050")
+    url = url.rstrip('/')
+    return f"{url}/health", f"{url}/"
 
 
 def _env():
@@ -112,10 +127,11 @@ def _daemon_check() -> str | None:
 
 def main():
     _env()
-    ok, text = fetch(HEALTH_URL)
+    health_url, root_url = bridge_urls()
+    ok, text = fetch(health_url)
     healthy = ok and ('true' in text.lower() or 'ok' in text.lower())
     if not healthy:
-        ok2, text2 = fetch(ROOT_URL)
+        ok2, text2 = fetch(root_url)
         healthy = ok2 and 'Hermes' in text2
 
     st = _load_state()
