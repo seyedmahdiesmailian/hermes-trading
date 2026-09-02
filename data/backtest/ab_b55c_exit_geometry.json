@@ -1,0 +1,54 @@
+{
+  "live_07_notrail": {
+    "net_pnl": 1381.7,
+    "win_rate": 0.7483,
+    "trades": 147,
+    "max_dd": 37.32,
+    "exits": {
+      "sl_part": 47,
+      "tp": 64,
+      "sl": 36
+    }
+  },
+  "live_07_trail05": {
+    "net_pnl": 1491.34,
+    "win_rate": 0.7515,
+    "trades": 169,
+    "max_dd": 37.32,
+    "exits": {
+      "sl": 138,
+      "tp": 31
+    }
+  },
+  "live_07_trail10": {
+    "net_pnl": 1380.33,
+    "win_rate": 0.7386,
+    "trades": 153,
+    "max_dd": 37.32,
+    "exits": {
+      "sl": 63,
+      "sl_part": 29,
+      "tp": 61
+    }
+  },
+  "flat_085_trail05": {
+    "net_pnl": 1488.51,
+    "win_rate": 0.7515,
+    "trades": 169,
+    "max_dd": 37.32,
+    "exits": {
+      "sl": 138,
+      "tp": 31
+    }
+  },
+  "flat_100_trail05": {
+    "net_pnl": 1641.24,
+    "win_rate": 0.7515,
+    "trades": 169,
+    "max_dd": 37.32,
+    "exits": {
+      "sl": 138,
+      "tp": 31
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "ts_0": {
+    "net_pnl": 1651.99,
+    "win_rate": 0.7529,
+    "trades": 170,
+    "max_dd": 37.32,
+    "exits": {
+      "sl": 139,
+      "tp": 31
+    }
+  },
+  "ts_12": {
+    "net_pnl": 1464.91,
+    "win_rate": 0.6923,
+    "trades": 195,
+    "max_dd": 27.08,
+    "exits": {
+      "sl": 118,
+      "time": 43,
+      "tp": 34
+    }
+  },
+  "ts_24": {
+    "net_pnl": 1591.43,
+    "win_rate": 0.7232,
+    "trades": 177,
+    "max_dd": 31.68,
+    "exits": {
+      "sl": 128,
+      "time": 17,
+      "tp": 32
+    }
+  },
+  "ts_48": {
+    "net_pnl": 1651.31,
+    "win_rate": 0.7471,
+    "trades": 170,
+    "max_dd": 37.32,
+    "exits": {
+      "sl": 139,
+      "tp": 31
+    }
+  }
+}

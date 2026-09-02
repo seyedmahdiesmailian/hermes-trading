@@ -1,0 +1,43 @@
+{
+  "base": {
+    "net_pnl": 1650.49,
+    "win_rate": 0.7471,
+    "trades": 170,
+    "max_dd": 37.32
+  },
+  "by_style": {
+    "aggressive_premium_entry": {
+      "n": 98,
+      "net": 951.61,
+      "wins": 74
+    },
+    "aggressive_discount_entry": {
+      "n": 56,
+      "net": 588.37,
+      "wins": 42
+    },
+    "pullback_continuation": {
+      "n": 14,
+      "net": 73.51,
+      "wins": 9
+    },
+    "aggressive_value_entry": {
+      "n": 2,
+      "net": 36.99,
+      "wins": 2
+    }
+  },
+  "by_grade": {
+    "B": {
+      "n": 135,
+      "net": 1280.83,
+      "wins": 99
+    },
+    "A": {
+      "n": 35,
+      "net": 369.65,
+      "wins": 28
+    }
+  },
+  "drop_tests": {}
+}

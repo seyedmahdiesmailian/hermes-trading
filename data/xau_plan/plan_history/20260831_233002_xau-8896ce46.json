@@ -1,0 +1,873 @@
+{
+  "plan_id": "xau-8896ce46",
+  "symbol": "XAUUSD",
+  "bias": "neutral",
+  "session": "newyork",
+  "zones": {
+    "value_low": 4445.48,
+    "value_high": 4446.43,
+    "long_entry_low": 4444.539642857142,
+    "long_entry_high": 4445.48,
+    "short_entry_low": 4446.43,
+    "short_entry_high": 4447.370357142858
+  },
+  "atr": 1.8807142857142156,
+  "invalidation": 4451.11,
+  "targets": [
+    4445.48,
+    4446.43
+  ],
+  "execution": {
+    "entry_mode": "mean_reversion_wait",
+    "scale_in_levels": [],
+    "tp_levels": [
+      4445.48,
+      4446.43
+    ],
+    "tp_shares": [
+      0.5,
+      0.5
+    ],
+    "breakout_trigger": 4446.81,
+    "pullback_trigger": 4445.48
+  },
+  "quality": {
+    "trend_strength": 3.66,
+    "alignment": "mixed",
+    "distance_to_value_low_atr": 1.1,
+    "distance_to_value_high_atr": 1.61,
+    "bias_votes": {
+      "m5": "bearish",
+      "h1": "neutral",
+      "h4": "neutral",
+      "m15": "bearish"
+    },
+    "regime": "range",
+    "smc_confidence": 0.0,
+    "smc_poi": "C",
+    "smc_signal": "wait"
+  },
+  "created_at": "2026-08-31T23:30:02.069315+00:00",
+  "expires_at": "2026-09-01T11:30:02.069315+00:00",
+  "next_reassessment": "2026-08-31T23:35:02.069315+00:00",
+  "context": {
+    "m5_last": 4443.41,
+    "h1_last": 4443.41,
+    "h4_last": 4443.41,
+    "smc": {
+      "order_blocks": [
+        {
+          "type": "bearish",
+          "high": 4455.94,
+          "low": 4452.26,
+          "open": 4454.18,
+          "close": 4455.7,
+          "index": 102,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4449.55,
+          "low": 4447.77,
+          "open": 4448.3,
+          "close": 4447.93,
+          "index": 100,
+          "mitigated": true
+        },
+        {
+          "type": "bullish",
+          "high": 4434.29,
+          "low": 4433.12,
+          "open": 4433.8,
+          "close": 4433.79,
+          "index": 80,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4433.25,
+          "low": 4429.17,
+          "open": 4430.95,
+          "close": 4430.87,
+          "index": 77,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4434.66,
+          "low": 4432.37,
+          "open": 4432.93,
+          "close": 4433.58,
+          "index": 75,
+          "mitigated": true
+        },
+        {
+          "type": "bearish",
+          "high": 4433.28,
+          "low": 4431.83,
+          "open": 4432.04,
+          "close": 4433.09,
+          "index": 69,
+          "mitigated": true
+        },
+        {
+          "type": "bullish",
+          "high": 4433.21,
+          "low": 4431.2,
+          "open": 4432.29,
+          "close": 4431.35,
+          "index": 66,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4436.31,
+          "low": 4432.85,
+          "open": 4433.52,
+          "close": 4435.83,
+          "index": 56,
+          "mitigated": true
+        },
+        {
+          "type": "bullish",
+          "high": 4428.94,
+          "low": 4424.55,
+          "open": 4427.89,
+          "close": 4426.21,
+          "index": 40,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4431.48,
+          "low": 4426.28,
+          "open": 4429.9,
+          "close": 4427.42,
+          "index": 37,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4447.27,
+          "low": 4440.56,
+          "open": 4440.93,
+          "close": 4446.0,
+          "index": 10,
+          "mitigated": true
+        },
+        {
+          "type": "bullish",
+          "high": 4443.86,
+          "low": 4439.34,
+          "open": 4442.97,
+          "close": 4440.97,
+          "index": 9,
+          "mitigated": true
+        }
+      ],
+      "active_order_blocks": [
+        {
+          "type": "bearish",
+          "high": 4455.94,
+          "low": 4452.26,
+          "open": 4454.18,
+          "close": 4455.7,
+          "index": 102,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4434.29,
+          "low": 4433.12,
+          "open": 4433.8,
+          "close": 4433.79,
+          "index": 80,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4433.25,
+          "low": 4429.17,
+          "open": 4430.95,
+          "close": 4430.87,
+          "index": 77,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4433.21,
+          "low": 4431.2,
+          "open": 4432.29,
+          "close": 4431.35,
+          "index": 66,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4428.94,
+          "low": 4424.55,
+          "open": 4427.89,
+          "close": 4426.21,
+          "index": 40,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4431.48,
+          "low": 4426.28,
+          "open": 4429.9,
+          "close": 4427.42,
+          "index": 37,
+          "mitigated": false
+        }
+      ],
+      "nearest_ob": {
+        "type": "bullish",
+        "high": 4431.48,
+        "low": 4426.28,
+        "open": 4429.9,
+        "close": 4427.42,
+        "index": 37,
+        "mitigated": false
+      },
+      "fvgs": [
+        {
+          "type": "bearish",
+          "low": 4440.49,
+          "high": 4441.84,
+          "c1_index": 0,
+          "c3_index": 2,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4439.99,
+          "high": 4442.84,
+          "c1_index": 5,
+          "c3_index": 7,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4433.73,
+          "high": 4435.75,
+          "c1_index": 12,
+          "c3_index": 14,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4429.79,
+          "high": 4431.91,
+          "c1_index": 13,
+          "c3_index": 15,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4424.82,
+          "high": 4424.85,
+          "c1_index": 14,
+          "c3_index": 16,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4423.19,
+          "high": 4424.66,
+          "c1_index": 20,
+          "c3_index": 22,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4423.19,
+          "high": 4424.8,
+          "c1_index": 22,
+          "c3_index": 24,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4428.57,
+          "high": 4431.46,
+          "c1_index": 23,
+          "c3_index": 25,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4428.94,
+          "high": 4429.96,
+          "c1_index": 40,
+          "c3_index": 42,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4435.44,
+          "high": 4435.81,
+          "c1_index": 60,
+          "c3_index": 62,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4436.92,
+          "high": 4437.11,
+          "c1_index": 61,
+          "c3_index": 63,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4436.81,
+          "high": 4437.11,
+          "c1_index": 63,
+          "c3_index": 65,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4433.21,
+          "high": 4435.7,
+          "c1_index": 64,
+          "c3_index": 66,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4429.72,
+          "high": 4431.83,
+          "c1_index": 69,
+          "c3_index": 71,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4428.85,
+          "high": 4429.64,
+          "c1_index": 70,
+          "c3_index": 72,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4428.85,
+          "high": 4429.03,
+          "c1_index": 72,
+          "c3_index": 74,
+          "filled": false
+        },
+        {
+          "type": "bullish",
+          "low": 4430.26,
+          "high": 4432.37,
+          "c1_index": 73,
+          "c3_index": 75,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4434.29,
+          "high": 4438.26,
+          "c1_index": 80,
+          "c3_index": 82,
+          "filled": false
+        },
+        {
+          "type": "bullish",
+          "low": 4443.79,
+          "high": 4447.53,
+          "c1_index": 85,
+          "c3_index": 87,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4450.65,
+          "high": 4451.52,
+          "c1_index": 90,
+          "c3_index": 92,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4449.01,
+          "high": 4449.76,
+          "c1_index": 91,
+          "c3_index": 93,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4448.61,
+          "high": 4448.73,
+          "c1_index": 92,
+          "c3_index": 94,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4449.55,
+          "high": 4452.26,
+          "c1_index": 100,
+          "c3_index": 102,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4450.26,
+          "high": 4451.78,
+          "c1_index": 103,
+          "c3_index": 105,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4444.27,
+          "high": 4445.77,
+          "c1_index": 114,
+          "c3_index": 116,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4443.62,
+          "high": 4443.93,
+          "c1_index": 115,
+          "c3_index": 117,
+          "filled": true
+        }
+      ],
+      "active_fvgs": [
+        {
+          "type": "bullish",
+          "low": 4428.85,
+          "high": 4429.03,
+          "c1_index": 72,
+          "c3_index": 74,
+          "filled": false
+        },
+        {
+          "type": "bullish",
+          "low": 4434.29,
+          "high": 4438.26,
+          "c1_index": 80,
+          "c3_index": 82,
+          "filled": false
+        }
+      ],
+      "nearest_fvg": {
+        "type": "bullish",
+        "low": 4434.29,
+        "high": 4438.26,
+        "c1_index": 80,
+        "c3_index": 82,
+        "filled": false
+      },
+      "liquidity_sweep": {
+        "swept": false,
+        "level": null
+      },
+      "market_structure": {
+        "phase": "bos_bearish",
+        "confidence": 1.0
+      },
+      "premium_discount": {
+        "zone": "equilibrium",
+        "fib_level": 0.577,
+        "quality": 34.51164691458961,
+        "swing_high": 4464.09,
+        "swing_low": 4415.15
+      },
+      "killzone": {
+        "session": "dead",
+        "weight": 0.0
+      },
+      "bias": "neutral",
+      "confidence": 0.0,
+      "signal": "wait",
+      "signal_confidence": 0.0,
+      "poi": "C",
+      "swing_high": 4464.09,
+      "swing_low": 4415.15,
+      "last_price": 4443.41,
+      "smc_weight": 0.5,
+      "h1_structure": {
+        "phase": "bos_bullish",
+        "confidence": 1.0
+      },
+      "h1_order_blocks": [
+        {
+          "type": "bullish",
+          "high": 4436.81,
+          "low": 4426.26,
+          "open": 4436.63,
+          "close": 4430.93,
+          "index": 75,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4464.09,
+          "low": 4452.37,
+          "open": 4453.94,
+          "close": 4455.46,
+          "index": 68,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4627.38,
+          "low": 4593.71,
+          "open": 4601.82,
+          "close": 4603.52,
+          "index": 47,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4586.29,
+          "low": 4571.57,
+          "open": 4584.42,
+          "close": 4573.45,
+          "index": 39,
+          "mitigated": true
+        },
+        {
+          "type": "bearish",
+          "high": 4610.8,
+          "low": 4601.36,
+          "open": 4602.28,
+          "close": 4610.71,
+          "index": 32,
+          "mitigated": false
+        },
+        {
+          "type": "bullish",
+          "high": 4627.14,
+          "low": 4600.22,
+          "open": 4623.69,
+          "close": 4605.11,
+          "index": 11,
+          "mitigated": true
+        },
+        {
+          "type": "bearish",
+          "high": 4624.91,
+          "low": 4607.0,
+          "open": 4609.3,
+          "close": 4623.67,
+          "index": 10,
+          "mitigated": false
+        }
+      ],
+      "h1_active_order_blocks": [
+        {
+          "type": "bullish",
+          "high": 4436.81,
+          "low": 4426.26,
+          "open": 4436.63,
+          "close": 4430.93,
+          "index": 75,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4464.09,
+          "low": 4452.37,
+          "open": 4453.94,
+          "close": 4455.46,
+          "index": 68,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4627.38,
+          "low": 4593.71,
+          "open": 4601.82,
+          "close": 4603.52,
+          "index": 47,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4610.8,
+          "low": 4601.36,
+          "open": 4602.28,
+          "close": 4610.71,
+          "index": 32,
+          "mitigated": false
+        },
+        {
+          "type": "bearish",
+          "high": 4624.91,
+          "low": 4607.0,
+          "open": 4609.3,
+          "close": 4623.67,
+          "index": 10,
+          "mitigated": false
+        }
+      ],
+      "h1_fvgs": [
+        {
+          "type": "bearish",
+          "low": 4601.52,
+          "high": 4602.71,
+          "c1_index": 2,
+          "c3_index": 4,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4596.77,
+          "high": 4607.0,
+          "c1_index": 8,
+          "c3_index": 10,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4621.67,
+          "high": 4624.4,
+          "c1_index": 14,
+          "c3_index": 16,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4611.86,
+          "high": 4617.17,
+          "c1_index": 15,
+          "c3_index": 17,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4590.61,
+          "high": 4594.69,
+          "c1_index": 19,
+          "c3_index": 21,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4598.54,
+          "high": 4602.38,
+          "c1_index": 25,
+          "c3_index": 27,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4586.29,
+          "high": 4596.64,
+          "c1_index": 39,
+          "c3_index": 41,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4583.01,
+          "high": 4593.71,
+          "c1_index": 47,
+          "c3_index": 49,
+          "filled": false
+        },
+        {
+          "type": "bearish",
+          "low": 4529.55,
+          "high": 4530.04,
+          "c1_index": 48,
+          "c3_index": 50,
+          "filled": false
+        },
+        {
+          "type": "bearish",
+          "low": 4486.82,
+          "high": 4523.92,
+          "c1_index": 49,
+          "c3_index": 51,
+          "filled": false
+        },
+        {
+          "type": "bearish",
+          "low": 4441.43,
+          "high": 4452.17,
+          "c1_index": 57,
+          "c3_index": 59,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4434.26,
+          "high": 4436.01,
+          "c1_index": 58,
+          "c3_index": 60,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4425.04,
+          "high": 4429.23,
+          "c1_index": 61,
+          "c3_index": 63,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4445.61,
+          "high": 4452.37,
+          "c1_index": 66,
+          "c3_index": 68,
+          "filled": true
+        },
+        {
+          "type": "bearish",
+          "low": 4448.35,
+          "high": 4452.37,
+          "c1_index": 68,
+          "c3_index": 70,
+          "filled": true
+        },
+        {
+          "type": "bullish",
+          "low": 4436.81,
+          "high": 4446.41,
+          "c1_index": 75,
+          "c3_index": 77,
+          "filled": true
+        }
+      ],
+      "h1_active_fvgs": [
+        {
+          "type": "bearish",
+          "low": 4583.01,
+          "high": 4593.71,
+          "c1_index": 47,
+          "c3_index": 49,
+          "filled": false
+        },
+        {
+          "type": "bearish",
+          "low": 4529.55,
+          "high": 4530.04,
+          "c1_index": 48,
+          "c3_index": 50,
+          "filled": false
+        },
+        {
+          "type": "bearish",
+          "low": 4486.82,
+          "high": 4523.92,
+          "c1_index": 49,
+          "c3_index": 51,
+          "filled": false
+        }
+      ],
+      "breaker_blocks": [
+        {
+          "type": "bullish_breaker",
+          "high": 4447.27,
+          "low": 4440.56,
+          "original_ob": {
+            "type": "bearish",
+            "high": 4447.27,
+            "low": 4440.56,
+            "open": 4440.93,
+            "close": 4446.0,
+            "index": 10,
+            "mitigated": true
+          },
+          "flipped": true
+        },
+        {
+          "type": "bearish_breaker",
+          "high": 4443.86,
+          "low": 4439.34,
+          "original_ob": {
+            "type": "bullish",
+            "high": 4443.86,
+            "low": 4439.34,
+            "open": 4442.97,
+            "close": 4440.97,
+            "index": 9,
+            "mitigated": true
+          },
+          "flipped": true
+        }
+      ],
+      "rejection_blocks": [],
+      "ote_zone": {
+        "low": 4425.4274,
+        "high": 4433.7472,
+        "fib_range": [
+          0.62,
+          0.79
+        ]
+      },
+      "power_of_three": {
+        "phase": "accumulation",
+        "accumulation": {
+          "high": 4448.35,
+          "low": 4415.15
+        },
+        "manipulation": {
+          "high": 4440.35,
+          "low": 4423.63
+        },
+        "distribution": {
+          "high": 4455.94,
+          "low": 4432.73
+        }
+      },
+      "turtle_soup": {
+        "found": false,
+        "type": null,
+        "fake_level": null
+      },
+      "silver_bullet": {
+        "active": false,
+        "window": null,
+        "label": null
+      },
+      "session_liquidity": {
+        "session": "asia",
+        "session_high": 4455.94,
+        "session_low": 4415.15,
+        "midpoint": 4435.55,
+        "swept_high": false,
+        "swept_low": false,
+        "range": 40.79
+      },
+      "volume_imbalance": []
+    },
+    "merged": {
+      "bias": "neutral",
+      "confidence": 0.0,
+      "action": "wait",
+      "classic_source": {
+        "bias": "bearish",
+        "confidence": 0.2,
+        "regime": "range",
+        "alignment": "mixed"
+      },
+      "smc_source": {
+        "bias": "neutral",
+        "signal": "wait",
+        "confidence": 0.0,
+        "weight": 0.5,
+        "poi": "C",
+        "market_structure": {
+          "phase": "bos_bearish",
+          "confidence": 1.0
+        },
+        "killzone": {
+          "session": "dead",
+          "weight": 0.0
+        }
+      }
+    }
+  }
+}
