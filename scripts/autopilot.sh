@@ -21,6 +21,29 @@ fi
 
 echo "$(date -u +%FT%TZ) === autopilot run start ===" >> "$LOG"
 
+# b51: HEAL AN UNVERIFIED HEAD before doing anything else. The procedure
+# verifies HEAD as step 4b AFTER the commit — so a run that died between
+# step 4 and 4b (or a hand commit by an operator) leaves a fresh HEAD with
+# no stamp, and git_sync's deliberate fail-open pushes it unverified once
+# the old stamp ages out (~1h). Ask engines/head_verify.py `start-verify`
+# (pure stamp+HEAD+ahead decision, exit 0 = verify now, 1 = skip, other =
+# gate broken): when it says needed, run verify_head.sh RIGHT NOW — a
+# crashed run then heals its own verification on the next tick and the push
+# gate closes again. Read-only w.r.t. trading, never blocks the run: every
+# failure path logs and falls through (b49 posture — rc distinguishes
+# skip / heal / broken machinery). Placed BEFORE the harvest block so the
+# tree the harvest may commit is verified from a known-good base.
+SV="$(timeout 30 python3 engines/head_verify.py start-verify 2>>logs/autopilot_selfcheck.err)"
+SV_RC=$?
+case "$SV_RC" in
+  0) echo "$(date -u +%FT%TZ) b51: HEAD unverified — healing at run start: $SV" >> "$LOG"
+     bash scripts/verify_head.sh >> "$LOG" 2>&1
+     ;;
+  1) : ;;  # nothing to heal (HEAD verified & pushed) — silent idle tick
+  *) echo "$(date -u +%FT%TZ) b51 start-verify gate rc=$SV_RC (verifier broken?) — continuing without healing" >> "$LOG"
+     ;;
+esac
+
 # b47: HARVEST abandoned work before picking a new item. b36 proved a
 # finished 403-line deliverable can sit uncommitted in the tree, invisible
 # to cron/git_sync/verify_head (all see only HEAD) and to an agent that

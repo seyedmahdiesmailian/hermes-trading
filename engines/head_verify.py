@@ -203,6 +203,89 @@ def push_decision(repo: Path | str | None = None) -> dict:
         return {'push': True, 'reason': f'gate error — fail-open: {exc!r}'}
 
 
+# ── b51: start-of-run heal ─────────────────────────────────────────────
+# The autopilot procedure verifies HEAD as step 4b AFTER the commit. If a
+# run dies between step 4 and 4b (or an operator commits by hand), the
+# fresh HEAD carries no stamp — and git_sync's deliberate fail-open pushes
+# it unverified once the old stamp ages out (~1h). decide_start_verify is
+# the pure rule autopilot.sh asks at run START: when it says yes, the run
+# re-verifies HEAD immediately, so a crashed run heals its own verification
+# on the next tick and the push gate closes again.
+
+def unpushed_count(repo: Path | str | None = None) -> int | None:
+    """Commits on HEAD not present in origin/master, or None when the
+    comparison is impossible (no origin ref, offline fetch state, not a
+    repo). None is NOT zero: callers must not read 'unknown' as 'pushed'."""
+    try:
+        r = _git('rev-list', '--count', 'origin/master..HEAD',
+                 cwd=repo or Path.cwd())
+        out = (r.stdout or '').strip()
+        return int(out) if r.returncode == 0 and out.isdigit() else None
+    except Exception as exc:
+        selfcheck.fail('head_verify unpushed_count', exc)
+        return None
+
+
+def decide_start_verify(stamp, head_sha: str | None,
+                        ahead: int | None) -> dict:
+    """Pure rule (b51): {'needed': bool, 'reason': str}.
+
+    Verify at run start when EITHER half of "the last verdict may not
+    describe what cron would push" holds:
+      * unpushed commits exist (ahead > 0) — re-verifying also RE-STAMPS
+        freshness, so the push gate never fail-opens on a stale stamp for
+        a commit that was in fact verified; or
+      * the stamp names a different sha than HEAD (crashed run between
+        commit and step 4b, or a hand commit) — this exact HEAD has NEVER
+        been verified.
+    ONE exclusion (alert hygiene, b37 dedupe lesson): HEAD already carries
+    a non-OK verdict (BROKEN/TIMEOUT/ERROR). Re-running would page ops
+    EVERY HOUR for the same known-broken commit. The fix for a BROKEN HEAD
+    is a new commit, which flips the sha-mismatch clause and re-arms
+    verification. ahead=None (origin unknown) degrades to the stamp clause
+    only.
+    """
+    if not head_sha:
+        return {'needed': False,
+                'reason': 'cannot resolve HEAD — skip (fail-safe)'}
+    sha = str(stamp.get('sha') or '') if isinstance(stamp, dict) else ''
+    verdict = str(stamp.get('verdict') or '?') if isinstance(stamp,
+                                                            dict) else '?'
+    if sha == head_sha and verdict in ('BROKEN', 'TIMEOUT', 'ERROR'):
+        return {'needed': False,
+                'reason': f'HEAD {sha[:7]} already carries {verdict} — '
+                          f're-verifying hourly would re-page the same '
+                          f'broken commit (fix = new commit)'}
+    if ahead:  # None and 0 are both falsy — see docstring
+        return {'needed': True,
+                'reason': f'{ahead} commit(s) ahead of origin — HEAD '
+                          f'{head_sha[:7]} may sit unverified when the '
+                          f'stamp ages out (last: {sha[:7] or "none"} '
+                          f'{verdict})'}
+    if sha != head_sha:
+        return {'needed': True,
+                'reason': f'stamp names {sha[:7] or "nothing"} '
+                          f'({verdict}), HEAD is {head_sha[:7]} — fresh '
+                          f'HEAD never verified'}
+    return {'needed': False,
+            'reason': f'HEAD {head_sha[:7]} already verified ({verdict}) '
+                      f'and nothing is unpushed'}
+
+
+def start_verify_decision(repo: Path | str | None = None) -> dict:
+    """Glue for the CLI: resolve HEAD + ahead from the CALLER's cwd (b45
+    lesson — the gate must answer about the tree that cron pushes, not
+    wherever this code lives). Never raises."""
+    try:
+        head = resolve_sha('HEAD', repo or Path.cwd())
+        return decide_start_verify(read_stamp(), head,
+                                   unpushed_count(repo or Path.cwd()))
+    except Exception as exc:
+        selfcheck.fail('head_verify start_verify_decision', exc)
+        return {'needed': False,
+                'reason': f'decision error — skip (fail-safe): {exc!r}'}
+
+
 
 def parse_counts(output: str) -> int | None:
     """The 'Ran N tests' line from unittest's summary, if present.
@@ -311,22 +394,32 @@ def main(argv=None) -> int:
     b45 mode `push-gate`: print the git_sync decision as JSON on stdout
     ('{push, reason}'), exit 0 = push allowed, 1 = blocked. Reads the stamp
     only; never verifies, never writes, never raises.
+
+    b51 mode `start-verify`: print {needed, reason} (exit 0 = verify now,
+    1 = skip) — autopilot.sh asks this at run START so a crashed run heals
+    its own missing verification on the next tick, before the push gate's
+    fail-open window can ship an unverified HEAD.
     """
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and argv[0] == '--self-check':
         os.environ['HERMES_SELFCHECK'] = '1'
         argv = argv[1:]
-    if argv and argv[0] == 'push-gate':
-        # stdout is the CONTRACT (one JSON line for git_sync); readers like
+    if argv and argv[0] in ('push-gate', 'start-verify'):
+        # stdout is the CONTRACT (one JSON line for the caller); readers like
         # paths.read_json_safe print WARN lines — route them to stderr so a
         # corrupt stamp degrades visibly without poisoning the parse.
         real_out, sys.stdout = sys.stdout, sys.stderr
         try:
-            dec = push_decision()
+            if argv[0] == 'push-gate':
+                dec = push_decision()
+                key, allow = 'push', 0
+            else:
+                dec = start_verify_decision()
+                key, allow = 'needed', 0
         finally:
             sys.stdout = real_out
         print(json.dumps(dec, ensure_ascii=False))
-        return 0 if dec['push'] else 1
+        return allow if dec[key] else 1
     ref = argv[0] if argv else 'HEAD'
     res = verify_ref(ref)
     if os.environ.get('HERMES_STAMP') == '1' and res['sha']:
