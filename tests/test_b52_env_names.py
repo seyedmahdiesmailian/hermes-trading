@@ -45,12 +45,25 @@ Pinned here:
     in .env.example (a secret that exists only on one box is a dead name
     waiting for the next server rebuild — docs/DEPLOY.md restores from
     .env.example).
+
+b62 adds the THIRD failure shape neither direction could see: an
+undocumented-but-exempted KNOB whose inline default duplicates the VALUE of
+a documented key — two names, one fact. WIN_HOST (knob, default
+'192.168.10.51') shadowed HERMES_WIN_IP (.env.example): a bridge host
+change moved the trading path while the daily off-box backup silently kept
+pushing to the OLD IP, because the knob's own default won and the liveness
+test only asked "does anyone read WIN_HOST" (yes — its own default). Fix:
+offsite_backup resolves WIN_HOST = explicit override > HERMES_WIN_IP >
+last-known default; tripwire: scan_knob_default_shadows() must stay empty,
+with a behavioural replay of the exact pre-b62 shape through the real
+analyzer.
 """
 from __future__ import annotations
 
 import ast
 import os
 import re
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -83,7 +96,7 @@ DOCUMENTED_KNOBS = {
     # only WRITES it into the child env; the sole reader is a test file, which
     # is out of scope. The liveness test below would (rightly) reject it.
     "HERMES_MAX_SPREAD": "live entry spread gate tunable, default 0.60 (hermes_runtime, spread-gate item)",
-    "WIN_HOST": "backup target host, default = the only bridge (offsite_backup)",
+    "WIN_HOST": "backup target host override; falls back to documented HERMES_WIN_IP, last-resort default = the only bridge (offsite_backup, b62)",
     "WIN_BACKUP_DIR": "backup dir on Windows, default C:\\HermesBackups (offsite_backup)",
     "HERMES_LAN_IP": "local IP for the WinRM pull URL, default = this box (offsite_backup)",
 }
@@ -91,7 +104,8 @@ DOCUMENTED_KNOBS = {
 
 def _env_doc_keys() -> set[str]:
     """Keys declared in .env.example (tracked deploy contract). Names only —
-    this test NEVER reads values, and never requires .env to exist."""
+    the b52 universe check never requires .env to exist; the b62 shadow
+    check compares against _env_doc_values() below."""
     p = REPO / ".env.example"
     keys = set()
     for line in p.read_text(encoding="utf-8").splitlines():
@@ -109,6 +123,23 @@ def env_reads(src: str, name: str = "<memory>") -> list[tuple[str, bool, int]]:
     (Store context — e.g. head_verify setting HERMES_SELFCHECK for a child —
     is not a read). Dynamic (non-constant) keys like env_loader's loop are
     unresolvable by design and skipped."""
+    return [(key, has_default, node.lineno)
+            for key, has_default, _lit, node in _env_read_nodes(src, name)[1]]
+
+
+def env_reads_with_literal_defaults(src: str,
+                                    name: str = "<memory>"
+                                    ) -> list[tuple[str, str | None, int]]:
+    """(key, literal_default_or_None, lineno) — the inline default kept as a
+    VALUE when it is a plain string constant (None for no default OR a
+    computed default like an f-string). b62's shadow check needs the value,
+    not just the presence flag."""
+    return [(key, lit, node.lineno)
+            for key, _hd, lit, node in _env_read_nodes(src, name)[1]]
+
+
+def _env_read_nodes(src: str, name: str = "<memory>"):
+    """Shared walker: (key, has_default_arg, literal_default, node)."""
     tree = ast.parse(src, filename=name)
     bare_environ = set()
     for n in ast.walk(tree):
@@ -124,7 +155,7 @@ def env_reads(src: str, name: str = "<memory>") -> list[tuple[str, bool, int]]:
             return True
         return isinstance(node, ast.Name) and node.id in bare_environ
 
-    reads: list[tuple[str, bool, int]] = []
+    reads = []
     for n in ast.walk(tree):
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) \
                 and n.func.attr in ("getenv", "get"):
@@ -133,12 +164,16 @@ def env_reads(src: str, name: str = "<memory>") -> list[tuple[str, bool, int]]:
                 or is_env_base(base)
             if ok and n.args and isinstance(n.args[0], ast.Constant) \
                     and isinstance(n.args[0].value, str):
-                reads.append((n.args[0].value, len(n.args) > 1, n.lineno))
+                lit = None
+                if len(n.args) > 1 and isinstance(n.args[1], ast.Constant) \
+                        and isinstance(n.args[1].value, str):
+                    lit = n.args[1].value
+                reads.append((n.args[0].value, len(n.args) > 1, lit, n))
         elif isinstance(n, ast.Subscript) and isinstance(n.ctx, ast.Load) \
                 and isinstance(n.slice, ast.Constant) \
                 and isinstance(n.slice.value, str) and is_env_base(n.value):
-            reads.append((n.slice.value, False, n.lineno))
-    return reads
+            reads.append((n.slice.value, False, None, n))
+    return tree, reads
 
 
 def production_files() -> list[Path]:
@@ -231,6 +266,70 @@ def scan_universe_violations() -> list[dict]:
                                    "key": key, "default": has_default,
                                    "line": line})
     return violations
+
+
+# ---------------------------------------------------------------------------
+# b62 — knob defaults that shadow a documented key's VALUE.
+# The b52 universe check asks "does this NAME exist"; b61's reverse check
+# asks "does this documented NAME have a reader". Neither sees the THIRD
+# failure shape: an UNdocumented knob (legal in DOCUMENTED_KNOBS, invisible
+# to the reverse scan) whose inline default duplicates the VALUE of a
+# documented key — a second name for one fact. Measured 2026-09-02:
+# WIN_HOST default '192.168.10.51' == HERMES_WIN_IP's value; a bridge host
+# change moved the trading path while the daily off-box backup silently kept
+# pushing to the OLD IP (the knob's own default won, no error anywhere).
+# The knob's liveness test could never catch it: "does anyone read WIN_HOST?"
+# — yes, its own default.
+#
+# RULE: a DOCUMENTED_KNOBS read whose literal default equals the
+# .env.example VALUE of a DIFFERENT documented key is a shadow. (Scope is
+# knobs only: two documented keys may legitimately share a value — e.g.
+# TELEGRAM_CHAT_ID and AUTOPILOT_REPORT_CHAT_ID both point at the ops chat —
+# but an undocumented knob mirroring a documented value is exactly the
+# two-names-one-fact trap. Empty defaults ('') are never shadows.)
+# ---------------------------------------------------------------------------
+
+def _env_doc_values() -> dict[str, str]:
+    """key -> value from .env.example, for the b62 shadow comparison ONLY.
+    .env.example is tracked and carries placeholder values (the deploy
+    contract); real secrets live in .env, which this never reads."""
+    vals = {}
+    for line in (REPO / ".env.example").read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            if v.strip():
+                vals[k.strip()] = v.strip()
+    return vals
+
+
+def knob_shadow_hits(src: str) -> list[dict]:
+    """Shadow hits in ONE source (kept per-source so the behavioural replay
+    can run the REAL analyzer over synthetic shapes)."""
+    doc_vals = _env_doc_values()
+    hits = []
+    for key, lit, line in env_reads_with_literal_defaults(src):
+        if key not in DOCUMENTED_KNOBS or not lit:
+            continue
+        for doc_key, doc_val in doc_vals.items():
+            if doc_key != key and lit == doc_val:
+                hits.append({"knob": key, "default": lit,
+                             "shadows": doc_key, "line": line})
+    return hits
+
+
+def scan_knob_default_shadows() -> list[dict]:
+    hits = []
+    for p in production_files():
+        src = p.read_text(encoding="utf-8", errors="replace")
+        try:
+            file_hits = knob_shadow_hits(src)
+        except SyntaxError:
+            continue  # the main universe tripwire already reports the file
+        for h in file_hits:
+            h["file"] = str(p.relative_to(REPO))
+        hits.extend(file_hits)
+    return hits
 
 
 class TestB52EnvNames(unittest.TestCase):
@@ -402,6 +501,90 @@ class TestB52EnvNames(unittest.TestCase):
         finally:
             mod._env_doc_keys = orig
             mod.production_shell_files = orig_shell
+
+    # ------------------------------------------------------------------ b62
+
+    def test_no_knob_default_shadows_a_documented_value(self):
+        """MAIN TRIPWIRE (b62): no DOCUMENTED_KNOBS read may carry an inline
+        literal default equal to the .env.example VALUE of a different
+        documented key — that is two names for one fact, and the knob's own
+        default silently wins when the documented key changes (the WIN_HOST
+        vs HERMES_WIN_IP shape the b61 audit found)."""
+        hits = scan_knob_default_shadows()
+        self.assertEqual(
+            hits, [],
+            f"knob defaults shadowing documented values — the documented key "
+            f"can change while these readers silently keep the old value: {hits}")
+
+    def test_offsite_backup_follows_the_documented_host(self):
+        """The b62 deliverable named concretely: WIN_HOST must fall back to
+        HERMES_WIN_IP (explicit override still possible), not carry its own
+        copy of the IP as a first-resort default."""
+        src = (REPO / "scripts" / "offsite_backup.py").read_text(encoding="utf-8")
+        self.assertRegex(
+            src, r"os\.getenv\(['\"]WIN_HOST['\"]\)\s*or\s*os\.getenv\(['\"]HERMES_WIN_IP['\"]",
+            "offsite_backup no longer chains WIN_HOST -> HERMES_WIN_IP (b62)")
+        self.assertNotIn("os.getenv('WIN_HOST', ", src,
+                         "WIN_HOST regained a standalone inline default — "
+                         "the exact shadow shape b62 exists to kill")
+        # the shadow scan must see the read itself (chain form, no literal)
+        self.assertIn("WIN_HOST", {k for k, _d, _l in env_reads(src, "offsite_backup.py")})
+
+    def test_win_host_resolution_is_behavioural(self):
+        """Not just source text: run the REAL module resolution in a fresh
+        subprocess (env_loader never overrides an existing env var, so the
+        injected values win over .env) and check the precedence:
+        explicit WIN_HOST > documented HERMES_WIN_IP > last-known default."""
+        script = ("import sys; sys.path.insert(0, 'scripts');"
+                  "import offsite_backup as o; print(o.WIN_HOST)")
+        base_env = {k: v for k, v in os.environ.items() if k not in
+                    ("WIN_HOST", "HERMES_WIN_IP")}
+        cases = [
+            ({"HERMES_WIN_IP": "10.0.0.9"}, "10.0.0.9",
+             "documented HERMES_WIN_IP must drive the backup host"),
+            ({"WIN_HOST": "10.0.0.5", "HERMES_WIN_IP": "10.0.0.9"}, "10.0.0.5",
+             "explicit WIN_HOST override must still win"),
+            ({}, "192.168.10.51",
+             "nothing set -> last-known default (or .env's HERMES_WIN_IP)"),
+        ]
+        for inject, expect, why in cases:
+            r = subprocess.run([sys.executable, "-c", script], cwd=str(REPO),
+                               env={**base_env, **inject},
+                               capture_output=True, text=True, timeout=60)
+            self.assertEqual(r.returncode, 0, f"import failed: {r.stderr[:300]}")
+            self.assertEqual(r.stdout.strip(), expect, why)
+
+    def test_knob_shadow_replay_is_flagged(self):
+        """BEHAVIOURAL proof through the REAL analyzer: the exact pre-b62
+        shape must fire, the fixed shape must be clean, and a knob default
+        that matches NO documented value stays clean (no false-positive
+        drift toward 'no knob may have any default')."""
+        pre_b62 = ("import os\n"
+                   "WIN_HOST = os.getenv('WIN_HOST', '192.168.10.51')\n")
+        hits = knob_shadow_hits(pre_b62)
+        self.assertEqual(len(hits), 1, f"pre-b62 shape not flagged: {hits}")
+        self.assertEqual(hits[0]["knob"], "WIN_HOST")
+        self.assertEqual(hits[0]["shadows"], "HERMES_WIN_IP")
+        healed = ("import os\n"
+                  "WIN_HOST = (os.getenv('WIN_HOST')\n"
+                  "            or os.getenv('HERMES_WIN_IP', '192.168.10.51'))\n")
+        self.assertEqual(knob_shadow_hits(healed), [],
+                         "fixed chain falsely flagged")
+        innocent = "import os\nS = float(os.getenv('HERMES_MAX_SPREAD', '0.60'))\n"
+        self.assertEqual(knob_shadow_hits(innocent), [],
+                         "knob default unrelated to any documented value flagged")
+
+    def test_shadow_scan_is_not_vacuous(self):
+        """The doc-value parser must actually see the values the shadow rule
+        compares against — an empty map would pass every shadow test by
+        finding nothing (b41/b48 anti-vacuity lesson)."""
+        vals = _env_doc_values()
+        self.assertGreaterEqual(len(vals), 8,
+                                ".env.example values vanished — parser broken?")
+        self.assertEqual(vals.get("HERMES_WIN_IP"), "192.168.10.51",
+                         "the exact fact b62 is about must be in the map")
+        # and the knob universe must be visible to the scan
+        self.assertIn("WIN_HOST", DOCUMENTED_KNOBS)
 
 
 if __name__ == "__main__":

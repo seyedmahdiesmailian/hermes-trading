@@ -29,7 +29,12 @@ load_dotenv(BASE / '.env')
 # WIN_HOST/WIN_USER/WIN_PASS now come from .env (the repo-wide dotenv-fallback
 # test caught this script reading os.getenv with no loader at all — it could
 # never have run: WIN_PASS was always '').
-WIN_HOST = os.getenv('WIN_HOST', '192.168.10.51')
+# b62: WIN_HOST used to be a SECOND name for the SAME fact as the documented
+# HERMES_WIN_IP, with its own inline default — a bridge host change moved the
+# trading path but the daily backup silently kept pushing to the OLD IP (the
+# default won, no error anywhere). Precedence now: explicit WIN_HOST override
+# > documented HERMES_WIN_IP > last-known default.
+WIN_HOST = os.getenv('WIN_HOST') or os.getenv('HERMES_WIN_IP', '192.168.10.51')
 WIN_USER = os.getenv('WIN_USER', 'Administrator')
 WIN_PASS = os.getenv('WIN_PASS', '')
 REMOTE_DIR = os.getenv('WIN_BACKUP_DIR', 'C:\\HermesBackups')  # D: is FULL (0 bytes free, b31)
