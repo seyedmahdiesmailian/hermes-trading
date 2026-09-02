@@ -52,7 +52,7 @@ with status todo. Implement/analyze it fully in /home/ai/hermes-trading, then:
 4b. bash scripts/verify_head.sh  (b44/b50: re-verifies the FRESH HEAD by
     running the FULL suite inside a clean detached worktree of it; logs the
     verdict to logs/verify_head.log, stamps data/ops/head_verified.json
-    (b45: cron's git_sync refuses to push an unverified/BROKEN HEAD), and
+    (b45: the cron git_sync job refuses to push an unverified/BROKEN HEAD), and
     pages ops if broken. If it reports BROKEN, fix and commit again — never
     end a run on a broken HEAD.)
 5. If you learned a reusable procedure, add it to the backlog as a new todo.
