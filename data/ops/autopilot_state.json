@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-02T13:36:06.032254+00:00",
+ "last_run_utc": "2026-09-02T15:36:21.160851+00:00",
  "recent_commits": [
+  "2ba3dbb autopilot: b52 HEAD-verified stamp d26defb OK (434 tests, clean worktree)",
+  "d26defb autopilot: b52 dead-env-var-name tripwire \u2014 AST scan pins every production env READ to .env.example+OS+documented-knobs universe (liveness-tested exemptions, writes excluded, default does NOT grant immunity); healed 2 more dead names the b51 harvest missed: ab_b55_meta BRIDGE_TOKEN and weekly_report BRIDGE_URL (wrong name + hardcoded default = silently stale bridge URL on Friday cron); .env<->example drift check; backlog adds b61 reverse-direction (GIT_TOKEN_FILE documented, read by nobody). 434 green, live cycle rc=0",
   "9ddb780 autopilot: b51 start-of-run HEAD heal \u2014 autopilot.sh asks head_verify 'start-verify' (ahead>0 or stamp-sha!=HEAD -> run verify_head.sh NOW; non-OK verdict for HEAD excluded to avoid hourly re-pages); unpushed_count never reads unknown as pushed; crashed runs heal their own missing verification before git_sync's fail-open window can ship an unverified HEAD. 21 tests incl. crashed-run end-to-end + b45 caller-cwd replay. 428 green, live cycle rc=0",
   "9ca6632 harvest: b36-class leftover from an interrupted run \u2014 scripts/_check_live.py + _today_pnl.py (read-only bridge probes); fixed dead BRIDGE_TOKEN env name (never existed in .env -> tokenless 401) to the shared env_loader + HERMES_BRIDGE_TOKEN pattern; verified live: account 4982.77, 0 open positions, today +11.70$/10 trades",
-  "41aa6f0 fix: autopilot.sh dead since Aug31 23:33 \u2014 unescaped apostrophe in cron's inside single-quoted PROMPT broke bash parsing; hourly cron exited rc=2 silently (b45 lesson: silent fail-safe is indistinguishable from no-op \u2014 this one had no selfcheck at all)",
-  "4a830cb b60 follow-up: update b44 TP-filter tests to the [midpoint, final] ladder geometry",
-  "87cb045 b60 CRITICAL PARITY FIX: live TP1 was the plan's first intermediate target (sometimes 0.5usd from entry!) while the backtest always used midpoint-to-final \u2014 b55's 100%-at-TP1 therefore closed full positions for pennies (+0.80 on #103976964) while risking 50-100usd. Live now rebuilds the ladder from the broker TP: TP1=midpoint, TP2=final, exactly the tested geometry."
+  "41aa6f0 fix: autopilot.sh dead since Aug31 23:33 \u2014 unescaped apostrophe in cron's inside single-quoted PROMPT broke bash parsing; hourly cron exited rc=2 silently (b45 lesson: silent fail-safe is indistinguishable from no-op \u2014 this one had no selfcheck at all)"
  ]
 }

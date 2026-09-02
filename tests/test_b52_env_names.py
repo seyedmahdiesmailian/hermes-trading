@@ -50,6 +50,7 @@ from __future__ import annotations
 
 import ast
 import os
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -146,6 +147,70 @@ def production_files() -> list[Path]:
         files.update(REPO.glob(pat))
     return sorted(f for f in files
                   if "__pycache__" not in f.parts and ".git" not in f.parts)
+
+
+# ---------------------------------------------------------------------------
+# b61 — REVERSE direction: documented keys with no reader.
+# b52's rule above pins "every READ name exists in the universe". The inverse
+# was never pinned: a key in .env.example that production never reads is a
+# stale deploy contract — a fresh server gets a documented knob that does
+# nothing (measured 2026-09-02: GIT_TOKEN_FILE was read by NOTHING while
+# git_sync.sh hardcoded `cat .git_token`). Readers count in BOTH languages:
+# Python via env_reads() above, shell via $KEY / ${KEY...} expansion — a key
+# consumed by a cron .sh is just as "live" as one consumed by Python.
+# ---------------------------------------------------------------------------
+
+SHELL_GLOBS = ("*.sh", "scripts/*.sh")
+
+# Keys legitimately outside the repo's reader scope (consumed by systemd
+# units, the operator shell, or other repos). Same b40 discipline as
+# DOCUMENTED_KNOBS: every entry must have a real reader somewhere, pinned
+# by test_external_allowlist_is_still_used — a dead exemption is a hole.
+EXTERNAL_READERS = {
+    # (kept empty on purpose for now; if a key must live in .env.example
+    # without a repo reader, name it here WITH a written reason)
+}
+
+_SHELL_VAR_RE = re.compile(r"\$\{?([A-Za-z_][A-Za-z0-9_]*)")
+
+
+def shell_reads(src: str) -> set[str]:
+    """Env names referenced by bash parameter expansion: $KEY, ${KEY},
+    ${KEY:-default}, ${KEY:?msg}. Braces are optional in bash, so both
+    shapes count; the word-boundary regex cannot over-match prefixes."""
+    return set(_SHELL_VAR_RE.findall(src))
+
+
+def production_shell_files() -> list[Path]:
+    files = set()
+    for pat in SHELL_GLOBS:
+        files.update(REPO.glob(pat))
+    return sorted(f for f in files
+                  if "__pycache__" not in f.parts and ".git" not in f.parts)
+
+
+def documented_key_readers() -> dict[str, list[str]]:
+    """key -> files that read it (Python or shell). Built once per call;
+    only .env.example keys are looked up, so OS/knob noise is irrelevant."""
+    doc = _env_doc_keys()
+    readers: dict[str, list[str]] = {k: [] for k in doc}
+    for p in production_files():
+        names = {k for k, _d, _l in env_reads(
+            p.read_text(encoding="utf-8", errors="replace"), str(p))}
+        for k in names & doc:
+            readers[k].append(str(p.relative_to(REPO)))
+    for p in production_shell_files():
+        names = shell_reads(p.read_text(encoding="utf-8", errors="replace"))
+        for k in names & doc:
+            readers[k].append(str(p.relative_to(REPO)))
+    return readers
+
+
+def scan_dead_documented_keys() -> list[str]:
+    readers = documented_key_readers()
+    exempt = set(EXTERNAL_READERS)
+    return sorted(k for k, files in readers.items()
+                  if not files and k not in exempt)
 
 
 def scan_universe_violations() -> list[dict]:
@@ -246,7 +311,7 @@ class TestB52EnvNames(unittest.TestCase):
     def test_dotenv_keys_are_documented(self):
         """If a real .env exists on this box, every key in it must appear in
         .env.example — a secret that lives on one machine only is a dead name
-        waiting for the next rebuild (restore follows .env.example)."""
+        waiting for the next server rebuild (restore follows .env.example)."""
         env = REPO / ".env"
         if not env.exists():
             self.skipTest("no .env on this checkout (clean worktree)")
@@ -256,6 +321,87 @@ class TestB52EnvNames(unittest.TestCase):
                 if l.strip() and not l.strip().startswith("#") and "=" in l}
         self.assertEqual(sorted(keys - doc), [],
                          ".env keys missing from .env.example (undocumented):")
+
+    # ------------------------------------------------------------------ b61
+
+    def test_documented_keys_have_readers(self):
+        """REVERSE liveness (b61): every .env.example key must be READ by
+        production code — Python (env_reads) or shell ($KEY expansion). A
+        documented knob nobody reads is a stale deploy contract: the fresh
+        server sets it and nothing happens."""
+        dead = scan_dead_documented_keys()
+        self.assertEqual(
+            dead, [],
+            f".env.example keys with NO production reader: {dead} — wire a "
+            "reader or drop the key (and remove it from .env too, else the "
+            "drift test above goes RED)")
+
+    def test_git_token_file_is_wired_into_git_sync(self):
+        """The b61 deliverable named concretely: git_sync.sh must honor
+        GIT_TOKEN_FILE (not hardcode .git_token), and the fallback default
+        must keep the old path so behaviour is unchanged when unset."""
+        src = (REPO / "scripts" / "git_sync.sh").read_text(encoding="utf-8")
+        self.assertIn("${GIT_TOKEN_FILE:-.git_token}", src,
+                      "git_sync.sh no longer honors GIT_TOKEN_FILE with the "
+                      ".git_token fallback")
+        self.assertIn("GIT_TOKEN_FILE", _env_doc_keys(),
+                      "key dropped from .env.example but still wired — "
+                      "reverse the git_sync change too or re-document it")
+
+    def test_reverse_scan_is_not_vacuous(self):
+        """The reader map must actually see the keys it certifies alive:
+        a broken glob/regex that finds NO readers would pass the dead-key
+        test only if the doc list were empty — pin both floors, and pin
+        GIT_TOKEN_FILE's reader by name (the shell half of the scan is the
+        new machinery; a Python-only scan was the blind spot b61 fixes)."""
+        readers = documented_key_readers()
+        self.assertGreaterEqual(len(readers), 10,
+                                ".env.example shrank unexpectedly — is the "
+                                "doc parser broken?")
+        self.assertGreaterEqual(sum(1 for f in readers.values() if f), 10,
+                                "reader map found almost nothing — scan broken")
+        self.assertIn("scripts/git_sync.sh", readers["GIT_TOKEN_FILE"],
+                      "GIT_TOKEN_FILE must be read by git_sync.sh")
+        self.assertTrue(all(f.endswith(".sh") for f in readers["GIT_TOKEN_FILE"]),
+                        "GIT_TOKEN_FILE liveness must come from the SHELL scan "
+                        "(a Python-only scan was the b61 blind spot)")
+
+    def test_external_allowlist_is_still_used(self):
+        """b40 lesson on the reverse side: an allowlist entry that exempts a
+        key nobody could otherwise see is dead weight — every entry must
+        name a real .env.example key."""
+        doc = _env_doc_keys()
+        stale = sorted(set(EXTERNAL_READERS) - doc)
+        self.assertEqual(stale, [],
+                         f"EXTERNAL_READERS entries not in .env.example: {stale}")
+
+    def test_dead_documented_key_replay_is_flagged(self):
+        """BEHAVIOURAL proof the reverse scan bites: a key that appears in
+        .env.example but in no reader source must be flagged; adding a shell
+        reader heals it. Replayed through the REAL functions by temporarily
+        injecting a fake key into the doc parser's output."""
+        import sys as _sys
+        mod = _sys.modules[__name__]  # the instance discovery actually ran
+        orig = mod._env_doc_keys
+        try:
+            mod._env_doc_keys = lambda: orig() | {"BOGUS_UNREAD_KEY",
+                                                  "HERMES_BRIDGE_TOKEN"}
+            dead = scan_dead_documented_keys()
+            self.assertIn("BOGUS_UNREAD_KEY", dead,
+                          "reverse scan passed a key with zero readers")
+            self.assertNotIn("HERMES_BRIDGE_TOKEN", dead,
+                             "reverse scan flagged a key Python clearly reads")
+            # shell reader heals it: pretend a .sh references the key
+            orig_shell = mod.production_shell_files
+            mod.production_shell_files = lambda: orig_shell() + [
+                type("P", (), {
+                    "read_text": lambda self=None, **k: 'X="${BOGUS_UNREAD_KEY:-y}"',
+                    "relative_to": lambda self, o: "scripts/fake.sh"})()]
+            self.assertNotIn("BOGUS_UNREAD_KEY", scan_dead_documented_keys(),
+                             "shell reader did not heal the key")
+        finally:
+            mod._env_doc_keys = orig
+            mod.production_shell_files = orig_shell
 
 
 if __name__ == "__main__":

@@ -18,6 +18,19 @@
 set -u
 cd /home/ai/hermes-trading || exit 1
 
+# b61: GIT_TOKEN_FILE is a documented .env.example key that NOTHING read —
+# git_sync hardcoded `cat .git_token`, so a fresh server was handed a knob
+# that does nothing (stale deploy contract). Now honored: source .env with
+# the same set -a pattern as hermes_cron.sh, and keep .git_token as the
+# default so behaviour is IDENTICAL when the key is unset (the b45
+# end-to-end test runs this script in a throwaway repo with no .env).
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+
 # Nothing to push? Stay silent (the gate must not spam on idle ticks).
 AHEAD=$(git rev-list --count origin/master..HEAD 2>/dev/null || echo "?")
 if [ "$AHEAD" = "0" ]; then
@@ -39,7 +52,7 @@ case "$GATE_RC" in
      ;;
 esac
 
-TOK=$(cat .git_token 2>/dev/null) || { echo "$(date -u +%FT%TZ) no token"; exit 1; }
+TOK=$(cat "${GIT_TOKEN_FILE:-.git_token}" 2>/dev/null) || { echo "$(date -u +%FT%TZ) no token"; exit 1; }
 git -c credential.helper='!f() { echo "username=x-access-token"; echo "password='"$TOK"'"; }; f' \
     push origin master >> logs/git_sync.log 2>&1
 rc=$?
