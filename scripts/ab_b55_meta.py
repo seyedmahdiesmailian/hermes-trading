@@ -158,7 +158,10 @@ def summarize(res):
 
 
 def main():
-    bridge = BridgeClient(token=os.getenv('BRIDGE_TOKEN'))
+    # b52: was os.getenv('BRIDGE_TOKEN') — a name that exists in NO .env/unit/
+    # crontab (the harvested-probe bug class); BridgeClient's own fallback
+    # masked it, but the read was dead. Use the real key.
+    bridge = BridgeClient(token=os.getenv('HERMES_BRIDGE_TOKEN'))
     br.strategy_signal = _wrapped          # arm hook (run_backtest resolves global)
 
     train_rows = ROWS[:SPLIT]

@@ -26,7 +26,10 @@ PLAN_DIR = ROOT / 'data' / 'xau_plan'
 JOURNAL = PLAN_DIR / 'trade_journal.csv'
 EXEC_LOG = PLAN_DIR / 'execution_log.csv'
 LEARNING = PLAN_DIR / 'learning_state.json'
-BRIDGE_URL = os.getenv('BRIDGE_URL', 'http://192.168.10.51:5050')
+# b52: was os.getenv('BRIDGE_URL', ...) — dead name, so the hardcoded default
+# silently won even though HERMES_BRIDGE_URL is configured in .env; a bridge
+# host change would have left the weekly report pointing at the old IP.
+BRIDGE_URL = os.getenv('HERMES_BRIDGE_URL', 'http://192.168.10.51:5050')
 BRIDGE_TOKEN = os.getenv('HERMES_BRIDGE_TOKEN', '')
 
 
