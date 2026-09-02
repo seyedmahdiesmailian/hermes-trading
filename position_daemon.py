@@ -136,6 +136,25 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
     raw_levels = execution.get('tp_levels') or plan.get('targets') or []
     tp_levels = [float(t) for t in raw_levels
                  if (float(t) > p.price_open) == (side == 'BUY')]
+    # b60 PARITY FIX: live TP1 must mirror the backtest geometry — halfway
+    # between entry and the FINAL target. The plan's first intermediate
+    # target can sit pennies from a re-anchored entry: #103976964 SELL
+    # 4293.35 with TP1 4292.83 (0.52 away!) vs SL 10.6 away -> b55's "100%
+    # at TP1" closed the whole position for +0.80$ while risking 50$.
+    # The +1641$ backtest number was built on TP1 = midpoint (RR ~1:1);
+    # live was executing a completely different ladder. Rebuild it:
+    # TP1 = midpoint, TP2 = final target.
+    if tp_levels:
+        # The broker TP (set by the executor from the blueprint) IS the final
+        # target the backtest rides to; prefer it when it is on the profit
+        # side, else the furthest plan target.
+        _side_buy = (side == 'BUY')
+        _cands = [float(p.tp)] if (p.tp and (float(p.tp) > p.price_open) == _side_buy) else []
+        _cands += [t for t in tp_levels if (t > p.price_open) == _side_buy]
+        _final = max(_cands, key=lambda t: abs(t - p.price_open)) if _cands else None
+        if _final:
+            _mid = p.price_open + (_final - p.price_open) * 0.5
+            tp_levels = [_mid, _final]
     return {
         'symbol': 'XAUUSD',
         'side': side,
