@@ -18,7 +18,18 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from env_loader import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
-s = winrm.Session('192.168.10.51', auth=('Administrator', os.environ['WIN_PASS']),
+# b64: was winrm.Session('192.168.10.51', auth=('Administrator', ...)) — the
+# documented bridge-redeploy tool (docs/DEPLOY.md step 5) pinned the old box
+# with NO env read, so after a relocation it would redeploy the bridge to a
+# machine nothing else talks to. Same chain as offsite_backup (b62): explicit
+# WIN_HOST > documented HERMES_WIN_IP > last-known default. The 127.0.0.1
+# health check below stays literal ON PURPOSE: it runs inside the Windows VM,
+# where loopback is the bridge's own address.
+WIN_HOST = (os.getenv('WIN_HOST')
+            or os.getenv('HERMES_WIN_IP', '192.168.10.51'))
+WIN_USER = os.getenv('WIN_USER', 'Administrator')
+
+s = winrm.Session(WIN_HOST, auth=(WIN_USER, os.environ['WIN_PASS']),
                   transport='ntlm', server_cert_validation='ignore', read_timeout_sec=120)
 
 

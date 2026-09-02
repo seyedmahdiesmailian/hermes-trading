@@ -12,6 +12,18 @@ import os
 import sys
 from pathlib import Path
 
+# b65 (found by the b64 audit): cli.py imported bridge_client but NEVER
+# loaded .env — every bridge call went out tokenless (HTTP_401) and the
+# status panel showed 'Bridge: OK' next to 'Account: 401', i.e. a dead
+# auth looked like a live-but-empty account. Same bug class as b64's
+# bridge_health_monitor: a consumer that reads no env is invisible to
+# every env-name scan. Shared try-dotenv-except-env_loader pattern.
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing → local fallback
+load_dotenv(Path(__file__).resolve().parent / '.env')
+
 from engines import paths as _paths   # b39: resolved at CALL time (see tripwire)
 
 # b39: BASE_DIR import-time constant removed — nothing used it; every state
@@ -55,8 +67,13 @@ def cmd_status(args):
     else:
         print(f"XAUUSD: ❌ {tick}")
 
-    pos_data = positions.get('data', []) if isinstance(positions, dict) else []
-    print(f"Open Positions: {len(pos_data)}")
+    # b65: same ok-check as account/tick — a 401 payload has no 'data',
+    # which used to print 'Open Positions: 0' and read as an empty account.
+    if isinstance(positions, dict) and positions.get('ok'):
+        pos_data = positions.get('data', positions.get('positions', []))
+        print(f"Open Positions: {len(pos_data) if isinstance(pos_data, list) else '?'}")
+    else:
+        print(f"Open Positions: ❌ {positions}")
 
     if _plan_file().exists():
         plan = json.loads(_plan_file().read_text())
@@ -84,8 +101,17 @@ def cmd_report(args):
 
 
 def cmd_run(args):
-    """Run a cycle manually."""
-    os.environ['HERMES_DRY_RUN'] = str(args.live).lower()
+    """Run a cycle manually.
+
+    b65 (found by the b64 audit): the old line was
+    `os.environ['HERMES_DRY_RUN'] = str(args.live).lower()` — args.live is a
+    store_true flag, so a bare `cli.py run` wrote 'false' (= LIVE) and
+    `cli.py run --live` wrote 'true' (= dry run). The flag was INVERTED: the
+    safe-looking default command was the one that could execute a real order.
+    Now dry-run is the default and only --live flips it, matching
+    hermes_master's own parse (default 'true').
+    """
+    os.environ['HERMES_DRY_RUN'] = 'false' if args.live else 'true'
     from hermes_master import main
     rc = main()
     sys.exit(rc)

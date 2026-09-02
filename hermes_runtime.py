@@ -769,10 +769,22 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
 
 
 def main():
+    # b65 (found by the b64 audit): this entrypoint read NO env — no
+    # load_dotenv (so the bridge token was missing → 401) and cycle() was
+    # called with its default dry_run=False, i.e. a bare
+    # `python3 hermes_runtime.py` was a LIVE-order path. hermes_master is
+    # the production entry and always passes dry_run=DRY_RUN; this manual
+    # one now honours the same documented knob (default: dry-run).
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        from env_loader import load_dotenv  # python-dotenv missing → local fallback
+    load_dotenv(Path(__file__).resolve().parent / '.env')
+    dry_run = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
     from bridge_client import BridgeClient
     bridge = BridgeClient()
     bridge.health()
-    print(json.dumps(cycle(bridge), ensure_ascii=False, indent=2))
+    print(json.dumps(cycle(bridge, dry_run=dry_run), ensure_ascii=False, indent=2))
 
 
 if __name__ == '__main__':
