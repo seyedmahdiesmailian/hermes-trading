@@ -5,20 +5,21 @@ For every replay bar whose merged bias came out neutral, take the CLASSIC
 (pre-merge) bias direction and measure the forward 1h move. If neutral
 rejections systematically missed winners, the gate is too tight; if they
 missed coin-flips, it is earning its keep. Read-only."""
-import sys
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 import json
 from datetime import datetime, timezone
 from collections import Counter
 from engines.context import build_plan_context
 from engines.smc import smc_analyse, merge_smc_with_classic
 
-d = json.load(open('/home/ai/hermes-trading/data/backtest/robustness_data_M5.json'))
+d = json.load(open(os.path.join(_ROOT, 'data/backtest/robustness_data_M5.json')))
 m5, h1, h4 = d['M5'], d['H1'], d['H4']
 FWD = 12  # 1 hour ahead
 

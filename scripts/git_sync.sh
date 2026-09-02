@@ -16,7 +16,13 @@
 # says so loudly in the log. The reason is always logged, so "verified good"
 # and "pushed unverified" are never the same line (b49 posture).
 set -u
-cd /home/ai/hermes-trading || exit 1
+# b66: derive the repo root from THIS script's own location instead of the
+# old `cd /home/ai/hermes-trading` literal — a relocated repo or a second
+# checkout used to silently sync the OLD tree while reporting success. The
+# bootstrap layer (crontab) is the only place the install path is written.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$REPO_ROOT" || exit 1
 
 # b61: GIT_TOKEN_FILE is a documented .env.example key that NOTHING read —
 # git_sync hardcoded `cat .git_token`, so a fresh server was handed a knob

@@ -25,7 +25,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-ROOT = Path('/home/ai/hermes-trading')
+ROOT = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 sys.path.insert(0, str(ROOT))
 try:
     from dotenv import load_dotenv

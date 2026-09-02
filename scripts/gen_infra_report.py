@@ -12,7 +12,8 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 IRT = timezone(timedelta(hours=3, minutes=30))
-OUT = Path("/home/ai/hermes-trading/reports/Hermes_Trading_Infrastructure_Report.docx")
+_ROOT = Path(__file__).resolve().parent.parent
+OUT = _ROOT / "reports/Hermes_Trading_Infrastructure_Report.docx"
 OUT.parent.mkdir(exist_ok=True)
 
 DARK = RGBColor(0x1F, 0x2A, 0x44)

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """b2: replay the executor gates on the CURRENT live plan — which gate kills entries?"""
-import sys, json
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys, json
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from datetime import datetime, timezone
 from bridge_client import BridgeClient

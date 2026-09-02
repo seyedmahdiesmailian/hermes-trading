@@ -97,7 +97,7 @@ print("patched OK, compiles")
 
 # 4) push patched live + evolved v2 reference copy
 push_file('C:\\Temp\\bridge.py', src.encode('utf-8'))
-with open('/home/ai/hermes-trading/scripts/mt5_http_server_v2.py', 'rb') as f:
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mt5_http_server_v2.py'), 'rb') as f:
     push_file('C:\\Temp\\mt5_http_server_v2.py', f.read())
 
 # 5) restart the listener on 5050

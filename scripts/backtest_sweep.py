@@ -5,19 +5,20 @@ import sys
 import json
 from datetime import datetime, timezone
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv  # python-dotenv missing → local fallback
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 from bridge_client import BridgeClient
 from engines.backtest_real import strategy_signal, fetch_all_ohlc
 from engines.backtest import backtest_ohlc
 
 SPREAD = 0.20  # XAUUSD typical demo spread, price units
-OUT = '/home/ai/hermes-trading/data/backtest/sweep_results_v2.json'
-CHART = '/home/ai/hermes-trading/reports/backtest_charts.png'
+OUT = os.path.join(_ROOT, 'data/backtest/sweep_results_v2.json')
+CHART = os.path.join(_ROOT, 'reports/backtest_charts.png')
 
 bridge = BridgeClient()
 results = []

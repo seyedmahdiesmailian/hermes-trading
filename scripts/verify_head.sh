@@ -22,7 +22,17 @@
 #
 # Usage: scripts/verify_head.sh   (run right after every autopilot commit)
 set -u
-cd /home/ai/hermes-trading || exit 1
+# b66: derive the repo root from this script's own location — the verifier
+# must certify THE TREE IT LIVES IN, never a hardcoded install path that can
+# go stale on a relocated repo (it would verify the wrong checkout and stamp
+# OK on it, poisoning b45's push gate).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$REPO_ROOT" || exit 1
+# the BROKEN-path alert below runs python via a quoted heredoc (no shell
+# expansion inside) — it reads the root from this exported seam instead of
+# repeating a literal (b66).
+export HERMES_VERIFY_REPO_ROOT="$REPO_ROOT"
 
 LOCK=/tmp/hermes_verify_head.lock
 exec 9>"$LOCK"
@@ -66,10 +76,11 @@ fi
 # Loud: the whole point of b44/b50 is that a broken HEAD must not wait for
 # the next cron tick to be noticed.
 python3 - "$HEAD" <<'PY' >> "$LOG" 2>&1 || true
-import sys
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys
+_root = os.environ['HERMES_VERIFY_REPO_ROOT']
+sys.path.insert(0, _root)
 from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_root, '.env'))
 from notifier.telegram import send_ops
 head = sys.argv[1]
 try:

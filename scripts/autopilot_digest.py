@@ -29,7 +29,7 @@ from engines import selfcheck
 
 _SELFCHECK = selfcheck.enabled()
 
-ROOT = Path('/home/ai/hermes-trading')
+ROOT = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 # b46: the uncommitted-work scan needs a GIT REPO (unlike the read-only data
 # paths above). HERMES_REPO_ROOT lets a test point it at a throwaway repo
 # instead of the live tree — the digest must never make its output depend on

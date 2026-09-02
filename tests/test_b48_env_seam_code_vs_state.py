@@ -337,6 +337,12 @@ class RealRepoAudit(unittest.TestCase):
     def test_harvest_code_root_is_hardcoded_not_env_derived(self):
         # the whole b48 lesson in one line: CODE_ROOT must never become
         # SCAN_ROOT again (b47's first draft did exactly this).
+        # b66 REWRITE of the assertion: the old shape demanded the literal
+        # '/home/ai/hermes-trading' appear in CODE_ROOT's value — i.e. it
+        # pinned "not env-derived" by pinning "hardcoded install path", the
+        # exact path-literal class b66 removes. The INTENT is unchanged and
+        # now pinned directly: CODE_ROOT must resolve from __file__ (code
+        # location) and must read NO env var.
         src = (REPO / 'scripts' / 'autopilot_harvest.py').read_text()
         tree = ast.parse(src)
         code_root_value = None
@@ -346,10 +352,13 @@ class RealRepoAudit(unittest.TestCase):
                     for t in n.targets):
                 code_root_value = n.value
         self.assertIsNotNone(code_root_value, 'CODE_ROOT vanished')
+        self.assertIn('__file__', ast.dump(code_root_value),
+                      'CODE_ROOT must derive from the code location '
+                      '(__file__), not from an env var or a literal path')
         consts = [c.value for c in ast.walk(code_root_value)
                   if isinstance(c, ast.Constant)]
-        self.assertIn('/home/ai/hermes-trading', consts,
-                      'CODE_ROOT must be the fixed real repo path')
+        self.assertNotIn('/home/ai/hermes-trading', consts,
+                         'CODE_ROOT must not repeat the install literal (b66)')
         self.assertEqual(_call_root_env_keys(code_root_value), [],
                          'CODE_ROOT must not read any env var')
 

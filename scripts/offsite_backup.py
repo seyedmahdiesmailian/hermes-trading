@@ -19,7 +19,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE = Path('/home/ai/hermes-trading')
+BASE = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 sys.path.insert(0, str(BASE))
 try:
     from dotenv import load_dotenv

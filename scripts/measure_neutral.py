@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """How many bars get FORCED to neutral by the range-kill rule (vs naturally neutral)?
 If the rule is the dominant killer, an A/B on its threshold is warranted."""
-import sys
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from datetime import datetime, timezone
 from collections import Counter

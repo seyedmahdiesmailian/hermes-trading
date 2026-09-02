@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """A/B the range-kill confidence threshold on the cached robustness dataset.
 Baseline 0.35 (live) vs relaxed 0.20. Same funnel, same data, same gates."""
-import sys, json
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys, json
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from pathlib import Path
 from bridge_client import BridgeClient
 from engines.backtest_real import run_backtest
 
-data = json.loads(Path('/home/ai/hermes-trading/data/backtest/robustness_data.json').read_text())
+data = json.loads((Path(_ROOT) / 'data/backtest/robustness_data.json').read_text())
 b = BridgeClient()
 WINDOW = 500
 m15 = data['M15']

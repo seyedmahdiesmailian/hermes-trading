@@ -18,20 +18,22 @@ touches no state files, no plan, no bridge orders (bridge used for health only).
 """
 import importlib
 import json
+import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+_ROOT = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from bridge_client import BridgeClient
 from engines.backtest_real import run_backtest
 
-DATA_PATH = Path('/home/ai/hermes-trading/data/backtest/robustness_data_M5.json')
+DATA_PATH = Path(_ROOT) / 'data/backtest/robustness_data_M5.json'
 WINDOW = 500
 
 

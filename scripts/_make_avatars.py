@@ -115,7 +115,9 @@ def reporter():
     return img
 
 import os
-os.makedirs('/home/ai/hermes-trading/assets', exist_ok=True)
-trader().convert('RGB').save('/home/ai/hermes-trading/assets/avatar_trader.png')
-reporter().convert('RGB').save('/home/ai/hermes-trading/assets/avatar_report.png')
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ASSETS = os.path.join(_ROOT, 'assets')
+os.makedirs(_ASSETS, exist_ok=True)
+trader().convert('RGB').save(os.path.join(_ASSETS, 'avatar_trader.png'))
+reporter().convert('RGB').save(os.path.join(_ASSETS, 'avatar_report.png'))
 print('done')

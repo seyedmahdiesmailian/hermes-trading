@@ -21,7 +21,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-ROOT = Path('/home/ai/hermes-trading')
+ROOT = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 DATA = ROOT / 'data'   # READ-ONLY by design (an operator panel must show the
                        # real numbers even from a test run) — pinned by the
                        # b39 tripwire's ALLOWED list. WRITERS below must not

@@ -1,10 +1,12 @@
 """b31 probe 2 (read-only): age of macro.calendar at plan creation +
 runtime_state management pruning check."""
-import json, glob
+import json, glob, os, sys
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 from datetime import datetime, timezone
 
 ages = []
-for f in sorted(glob.glob('/home/ai/hermes-trading/data/xau_plan/plan_history/*.json'))[-80:]:
+for f in sorted(glob.glob(os.path.join(_ROOT, 'data/xau_plan/plan_history/*.json')))[-80:]:
     try:
         p = json.load(open(f))
     except Exception:
@@ -24,7 +26,7 @@ else:
     print('no paired timestamps')
 
 # runtime_state management keys vs live tickets
-rt = json.load(open('/home/ai/hermes-trading/data/xau_plan/runtime_state.json'))
+rt = json.load(open(os.path.join(_ROOT, 'data/xau_plan/runtime_state.json')))
 print('runtime management entries:', len(rt.get('management') or {}))
 
 # compute_performance_state day-rollover behaviour

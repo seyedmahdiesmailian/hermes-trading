@@ -9,15 +9,16 @@ Checks (read-only, no trading):
   4. build_plan_from_context: quality.smc_confidence wired (NOT None)
   5. evaluate_monitor_cycle: returns an action without exception
 """
-import sys
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 from datetime import datetime, timezone
 
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv  # python-dotenv missing → local fallback
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from bridge_client import BridgeClient
 from engines.context import build_plan_context

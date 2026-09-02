@@ -12,21 +12,23 @@ Read-only: uses the cached dataset only, never fetches, never touches orders.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+_ROOT = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from bridge_client import BridgeClient
 from engines.backtest_real import run_backtest
 
-DATA_CACHE = Path('/home/ai/hermes-trading/data/backtest/robustness_data.json')
-OUT = Path('/home/ai/hermes-trading/data/backtest/spread_sensitivity_results.json')
+DATA_CACHE = Path(_ROOT) / 'data/backtest/robustness_data.json'
+OUT = Path(_ROOT) / 'data/backtest/spread_sensitivity_results.json'
 SPREADS = (0.00, 0.20, 0.35, 0.50)
 WINDOW = 500
 

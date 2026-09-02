@@ -17,7 +17,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-ROOT = Path('/home/ai/hermes-trading')
+ROOT = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 sys.path.insert(0, str(ROOT))
 from env_loader import load_dotenv  # noqa: E402
 load_dotenv(ROOT / '.env')

@@ -16,17 +16,19 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+_ROOT = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _ROOT)
 # Shared loader: .env parsed READ-ONLY (token never printed, file never modified)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv  # python-dotenv missing → local fallback
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from bridge_client import BridgeClient
 from engines.backtest_real import run_backtest
@@ -39,9 +41,9 @@ M15_COUNT = 6500          # ~3 months of M15 / ~22 days of M5
 WINDOW = 500              # bars per window (non-overlapping)
 H1_PAD_BEFORE = 48        # H1 context rows before window start (live has full history)
 H4_PAD_BEFORE = 20
-DATA_CACHE = Path(f'/home/ai/hermes-trading/data/backtest/robustness_data_{TF}.json')
-OUT = Path(f'/home/ai/hermes-trading/data/backtest/robustness_results_{TF}.json')
-STATE = Path(f'/home/ai/hermes-trading/data/backtest/robustness_state_{TF}.json')
+DATA_CACHE = Path(_ROOT) / f'data/backtest/robustness_data_{TF}.json'
+OUT = Path(_ROOT) / f'data/backtest/robustness_results_{TF}.json'
+STATE = Path(_ROOT) / f'data/backtest/robustness_state_{TF}.json'
 
 
 def fetch(bridge, tf: str, count: int) -> list:

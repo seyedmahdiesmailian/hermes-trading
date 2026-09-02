@@ -6,21 +6,23 @@ lag fast moves; tighter = zones chase noise. Measure PnL+trades per setting
 through the live-parity funnel (run_backtest), same pattern as ab_range_kill.
 """
 import json
+import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+_ROOT = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from bridge_client import BridgeClient
 from engines import context as ctx_mod
 from engines.backtest_real import run_backtest
 
-DATA = json.loads(Path('/home/ai/hermes-trading/data/backtest/robustness_data_M5.json').read_text())
+DATA = json.loads((Path(_ROOT) / 'data/backtest/robustness_data_M5.json').read_text())
 WINDOW = 500
 m15, h1, h4 = DATA["M5"], DATA["H1"], DATA["H4"]
 n_windows = min(13, len(m15) // WINDOW)

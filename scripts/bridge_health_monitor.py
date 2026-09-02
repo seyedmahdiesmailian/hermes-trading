@@ -15,7 +15,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE = Path('/home/ai/hermes-trading')
+BASE = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 LOG_FILE = BASE / 'logs' / 'bridge_health.log'
 STATE_FILE = BASE / 'data' / 'bridge_health_state.json'
 FAIL_THRESHOLD = 3

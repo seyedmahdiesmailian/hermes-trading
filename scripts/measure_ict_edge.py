@@ -16,13 +16,14 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, '/home/ai/hermes-trading')
+_ROOT = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _ROOT)
 from engines.smc import (detect_breaker_blocks, detect_rejection_blocks,
                          detect_power_of_three, detect_turtle_soup,
                          evaluate_silver_bullet_setup,
                          compute_session_liquidity, detect_volume_imbalance)
 
-DATA = json.loads(Path('/home/ai/hermes-trading/data/backtest/robustness_data_M5.json').read_text())
+DATA = json.loads((Path(_ROOT) / 'data/backtest/robustness_data_M5.json').read_text())
 BARS = DATA['M5']
 LOOK = 120          # window fed to detectors (live feeds ~120 M5 rows)
 FWD = 12            # forward horizon: 12 M5 bars = 1 hour

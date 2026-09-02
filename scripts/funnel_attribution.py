@@ -2,13 +2,14 @@
 """b3: funnel attribution — for each bar that produced market_entry_now,
 which EXECUTOR gate would kill it? (grade / rr / cooldown / macro)
 Uses the real executor on real M5 data. Read-only."""
-import sys
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
 except ImportError:
     from env_loader import load_dotenv
-load_dotenv('/home/ai/hermes-trading/.env')
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from datetime import datetime, timezone
 from collections import Counter

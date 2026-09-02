@@ -285,8 +285,14 @@ class GitSyncGateEndToEnd(unittest.TestCase):
 
     def _run_sync(self, root, data_root):
         src = (REPO / 'scripts' / 'git_sync.sh').read_text(encoding='utf-8')
-        src = src.replace('cd /home/ai/hermes-trading || exit 1',
-                          f'cd {root} || exit 1')
+        # b66: git_sync derives its repo root from its own location, so the
+        # throwaway replay must override THAT line (the old shape replaced a
+        # `cd /home/ai/hermes-trading || exit 1` literal that no longer
+        # exists — a silently non-matching replace would have made the copy
+        # cd into the temp PARENT and the test would fail for the wrong
+        # reason).
+        src = src.replace('REPO_ROOT="$(dirname "$SCRIPT_DIR")"',
+                          f'REPO_ROOT="{root}"')
         src = src.replace('python3 engines/head_verify.py',
                           f'python3 {REPO / "engines" / "head_verify.py"}')
         src = src.replace('logs/git_sync.log', str(root / 'sync.log'))

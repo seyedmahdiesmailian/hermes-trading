@@ -39,7 +39,7 @@ from pathlib import Path
 # autopilot_digest.py's ROOT — code location, not state). HERMES_REPO_ROOT
 # only redirects the SCAN ROOT (the repo whose git status we read), so a
 # test can point the detector at a throwaway repo without breaking imports.
-CODE_ROOT = Path('/home/ai/hermes-trading')
+CODE_ROOT = Path(__file__).resolve().parent.parent  # b66: fixed to CODE location (never env — b48), but derived from __file__ so a moved repo follows
 SCAN_ROOT = Path(os.getenv('HERMES_REPO_ROOT', str(CODE_ROOT)))
 sys.path.insert(0, str(CODE_ROOT))
 

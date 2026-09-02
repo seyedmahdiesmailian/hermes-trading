@@ -15,8 +15,9 @@ GRAY = RGBColor(0x66, 0x66, 0x66)
 GREEN = RGBColor(0x2E, 0x7D, 0x32)
 RED = RGBColor(0xB3, 0x26, 0x1E)
 
-OUT = Path("/home/ai/hermes-trading/reports/Backtest_Report.docx")
-results = json.load(open("/home/ai/hermes-trading/data/backtest/sweep_results_v2.json"))
+_ROOT = Path(__file__).resolve().parent.parent
+OUT = _ROOT / "reports/Backtest_Report.docx"
+results = json.load(open(_ROOT / "data/backtest/sweep_results_v2.json"))
 by_label = {r["label"].split(":")[0]: r for r in results}
 
 doc = Document()
@@ -124,7 +125,7 @@ for line in [
 
 # ═══ 3. charts ═══
 heading("۳. نمودارها", 1)
-doc.add_picture("/home/ai/hermes-trading/reports/backtest_charts.png", width=Inches(6.4))
+doc.add_picture(str(_ROOT / "reports/backtest_charts.png"), width=Inches(6.4))
 rtl_p("وین‌ریت خام در برابر مؤثر (سبز)، PnL خالص بعد از اسپرد، تعداد ترید، منحنی سرمایه", size=9, color=GRAY, align="center")
 
 # ═══ 4. trade detail ═══

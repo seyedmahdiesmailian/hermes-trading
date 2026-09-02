@@ -4,7 +4,15 @@
 # and the agent profile has no bridge token access to order endpoints.
 # Output: logs/autopilot.log + state in data/ops/autopilot_state.json
 set -u
-cd /home/ai/hermes-trading
+# b66: derive the repo root from this script's own location (the cron entry
+# only needs to know where the script lives, never where the repo lives —
+# a relocated checkout used to keep launching the OLD tree's autopilot).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$REPO_ROOT" || exit 1
+# the state-stamp python below runs in a quoted heredoc (no shell expansion)
+# — it reads the root from this exported seam instead of a literal (b66).
+export HERMES_AUTOPILOT_REPO_ROOT="$REPO_ROOT"
 
 LOCK=/tmp/hermes_autopilot.lock
 exec 9>"$LOCK"
@@ -66,8 +74,8 @@ fi
 
 PROMPT='You are the Hermes trading-system autopilot. Work autonomously, no questions.
 
-TASK: Read /home/ai/hermes-trading/data/ops/autopilot_backlog.md. Pick the TOP item
-with status todo. Implement/analyze it fully in /home/ai/hermes-trading, then:
+TASK: Read '"$REPO_ROOT"'/data/ops/autopilot_backlog.md. Pick the TOP item
+with status todo. Implement/analyze it fully in '"$REPO_ROOT"', then:
 1. Run: python3 -m unittest discover -s tests  (must stay green; fix or revert)
 2. Run one real cycle: timeout 120 python3 hermes_master.py  (must complete)
 3. Mark the item done in the backlog with a 1-line dated finding.
@@ -118,10 +126,13 @@ python3 scripts/autopilot_report.py "$RC" >> "$LOG" 2>&1 || true
 
 # surface a compact status line for the daily digest
 python3 - <<'PY'
-import json, subprocess, datetime, pathlib
-state = pathlib.Path('/home/ai/hermes-trading/data/ops/autopilot_state.json')
+import json, os, subprocess, datetime, pathlib
+# b66: the root arrives through the exported seam (the heredoc is quoted, so
+# shell expansion cannot reach inside it) — never a literal install path.
+_root = pathlib.Path(os.environ['HERMES_AUTOPILOT_REPO_ROOT'])
+state = _root / 'data/ops/autopilot_state.json'
 try:
-    commits = subprocess.run(['git','-C','/home/ai/hermes-trading','log','--oneline','-5'],
+    commits = subprocess.run(['git','-C',str(_root),'log','--oneline','-5'],
                              capture_output=True, text=True, timeout=10).stdout.strip()
 except Exception:
     commits = ''

@@ -19,9 +19,35 @@ import os
 import time
 from pathlib import Path
 
-PRODUCTION_ROOT = Path("/home/ai/hermes-trading")
+PRODUCTION_ROOT = Path("/home/ai/hermes-trading")   # b66 allowlist: the ONE
+# canonical default, pinned by tests/test_b66_repo_path_literals.py.
 
 _override: Path | None = None
+
+
+def repo_root() -> Path:
+    """CODE location — derived from this file, never from an env var.
+
+    b66: engines/paths.PRODUCTION_ROOT is the single sanctioned place the
+    install directory is written down (the default every state accessor
+    falls back to). Everything else that needs to find the repo — a script
+    inserting itself into sys.path, loading .env, reading a sibling file —
+    must call THIS instead of repeating the literal: a moved repo or another
+    user then follows automatically, and a stale copy can never read or
+    write the wrong tree while reporting success (the b46/b48 disease from
+    the filesystem side).
+
+    Deliberately NOT env-driven: HERMES_DATA_ROOT redirects STATE only.
+    Letting any env var redirect the code root re-opens the b48 hole — a
+    shadowing engines/ package in the seam root would be imported while the
+    fail-safe swallows the crash.
+    """
+    return Path(__file__).resolve().parent.parent
+
+
+def repo_file(*parts: str) -> Path:
+    """A file inside the repo, resolved from CODE location (b66)."""
+    return repo_root().joinpath(*parts)
 
 
 def set_data_root(root: str | Path | None) -> None:

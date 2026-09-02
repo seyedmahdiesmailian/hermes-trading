@@ -3,13 +3,21 @@
 # Phase 1: Autonomous trading cycle
 # Phase 2: Signal monitor (Telegram group)
 set -u
-cd /home/ai/hermes-trading
+# b66: the repo root is DERIVED from this script's own location, never
+# hardcoded. A literal /home/ai/hermes-trading here meant a relocated repo
+# (or a second checkout) silently ran the cron of the OLD tree while
+# reporting success — the b46/b48 disease from the filesystem side. The ONLY
+# place the install path may live is the bootstrap layer (crontab/systemd),
+# which is where the OS learns about the repo in the first place.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$REPO_ROOT" || exit 1
 
 # Load .env
-if [ -f /home/ai/hermes-trading/.env ]; then
+if [ -f "$REPO_ROOT/.env" ]; then
   set -a
   # shellcheck disable=SC1091
-  source /home/ai/hermes-trading/.env   # was: export $(grep|xargs) — breaks on any spaced value
+  source "$REPO_ROOT/.env"   # was: export $(grep|xargs) — breaks on any spaced value
   set +a
 fi
 
@@ -22,7 +30,7 @@ for f in logs/*.log; do
   fi
 done
 
-export PYTHONPATH=/home/ai/hermes-trading
+export PYTHONPATH="$REPO_ROOT"
 NOW=$(date '+%Y-%m-%d %H:%M:%S')
 echo "[$NOW] Cron triggered" >> logs/cron.log
 
@@ -36,7 +44,7 @@ if ! flock -n 9; then
 fi
 
 # Phase 1: Autonomous trading
-timeout 840 python3 /home/ai/hermes-trading/hermes_master.py >> logs/master_cron.log 2>&1
+timeout 840 python3 "$REPO_ROOT/hermes_master.py" >> logs/master_cron.log 2>&1
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
   echo "[$NOW] Phase 1 OK" >> logs/cron.log

@@ -1,7 +1,8 @@
 """b31 probe (read-only): does evaluate_news_lock ever fire with the calendar
 shape production actually writes?  No bridge calls, no state writes."""
-import sys
-sys.path.insert(0, '/home/ai/hermes-trading')
+import os, sys
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
 from datetime import datetime, timedelta, timezone
 from engines.legacy_guards import evaluate_news_lock
 
@@ -21,7 +22,7 @@ print('FOMC in 10min, shape B (raw events):', evaluate_news_lock(trade, 4450, ca
 
 # Also: what does the live plan_history actually contain in macro.calendar?
 import json, glob
-files = sorted(glob.glob('/home/ai/hermes-trading/data/xau_plan/plan_history/*.json'))
+files = sorted(glob.glob(os.path.join(_ROOT, 'data/xau_plan/plan_history/*.json')))
 n_cal = n_hi = 0
 sample = None
 for f in files[-60:]:
