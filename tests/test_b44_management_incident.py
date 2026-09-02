@@ -68,8 +68,12 @@ class BuildTradeTpFilter(unittest.TestCase):
                'profit': 0.0, 'time': 1788161402}
         plan = plan_with_tps([4416.78, 4404.44, 4390.0])  # TP1 stale ABOVE
         trade = pd.build_trade(raw, plan, {})
-        self.assertEqual(trade['tp_levels'], [4404.44, 4390.0],
+        # b44 invariant: the stale 4416.78 must be gone.
+        self.assertNotIn(4416.78, trade['tp_levels'],
                          'a SELL target above entry is not a take-profit')
+        # b60 parity: ladder is rebuilt as [midpoint, final] from the deepest
+        # valid target (4390.0), mirroring the backtest geometry.
+        self.assertEqual(trade['tp_levels'], [4402.91, 4390.0])
 
     def test_buy_drops_targets_below_entry(self):
         raw = {'ticket': 1, 'type': 'BUY', 'volume': 0.05,
@@ -77,6 +81,7 @@ class BuildTradeTpFilter(unittest.TestCase):
                'profit': 0.0, 'time': 1}
         plan = plan_with_tps([4445.0, 4465.0, 4480.0], side='BUY')
         trade = pd.build_trade(raw, plan, {})
+        # b44: 4445.0 (below a BUY entry) dropped; b60: [midpoint, final].
         self.assertEqual(trade['tp_levels'], [4465.0, 4480.0])
 
     def test_int_wire_shape_still_works(self):
@@ -88,7 +93,10 @@ class BuildTradeTpFilter(unittest.TestCase):
         plan = plan_with_tps([4416.78, 4404.44])
         trade = pd.build_trade(raw, plan, {})
         self.assertEqual(trade['side'], 'SELL')
-        self.assertEqual(trade['tp_levels'], [4404.44])
+        # b44: stale 4416.78 dropped (int type normalized before the filter);
+        # b60: remaining single target becomes the final rung under [mid, final].
+        self.assertEqual([round(x, 2) for x in trade['tp_levels']],
+                         [4410.13, 4404.44])
 
     def test_all_levels_wrong_side_yields_empty(self):
         raw = {'ticket': 3, 'type': 'SELL', 'volume': 0.05,
