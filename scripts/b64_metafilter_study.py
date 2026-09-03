@@ -15,7 +15,13 @@ n dropped, and the improvement. Only filters with n>=40 kept and
 import json, os, sys, statistics
 from datetime import datetime, timezone
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _ROOT)
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv
+load_dotenv(os.path.join(_ROOT, '.env'))   # b65: a BridgeClient consumer owns its env
 from bridge_client import BridgeClient
 from engines.backtest import backtest_ohlc
 from engines.backtest_real import fetch_all_ohlc, strategy_signal

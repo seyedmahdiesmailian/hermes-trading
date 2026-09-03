@@ -1,0 +1,30 @@
+{
+  "htf_pull_50:plain": {
+    "trades": 53,
+    "exp_R": -0.063,
+    "WR%": 32.1,
+    "net_R": -3.3,
+    "maxDD_R": -8.5
+  },
+  "htf_pull_50:ladder": {
+    "trades": 74,
+    "exp_R": 0.271,
+    "WR%": 44.6,
+    "net_R": 20.1,
+    "maxDD_R": -8.4
+  },
+  "htf_pull_618:plain": {
+    "trades": 54,
+    "exp_R": -0.25,
+    "WR%": 25.9,
+    "net_R": -13.5,
+    "maxDD_R": -14.4
+  },
+  "htf_pull_618:ladder": {
+    "trades": 68,
+    "exp_R": 0.194,
+    "WR%": 42.6,
+    "net_R": 13.2,
+    "maxDD_R": -8.0
+  }
+}

@@ -30,7 +30,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] b68 STRATEGY LAB CONTINUOUS LOOP (user standing order 2026-09-03: "keep searching strategies/analysis methods, pick the best, test, bring into the real structure"). Each run: (a) pick ONE new candidate method not yet in data/backtest/b62_strategy_lab.json (sources: quant literature, ICT/SMC concepts not yet measured, session/volatility patterns; web search is low-signal — prefer implementing from the concept definition), (b) implement it as a standalone signal_fn in scripts/b62_strategy_lab.py style (indexed() adapter, ATR-based geometry, grade B), (c) run through engines.backtest.backtest_ohlc on the CACHED dataset (data/backtest/ab_aggressive_data.json, 3000 M15 bars) with spread 0.20 AND with the live b60 ladder (partial_share_fn=_partial_close_fraction, tp1_position=0.50, trail_after_partial=0.5), (d) append the row to data/backtest/b62_strategy_lab.json, (e) MERIT BAR: only propose wiring into the live funnel if exp_R beats the current funnel's 0.854R/trade (b61 best arm) on BOTH the cached set and one fresh fetch; otherwise record the rejection in ## Findings with numbers. NEVER weaken existing gates to make a new arm look better; the funnel stays the exit manager. Baseline table so far (exp_R, cached M15): funnel b60 0.854 | asia_break 0.18 | ema_pullback 0.114 | bb_bounce 0.035 | donchian -0.013 | sweep_rev -0.004 | fvg_retest -0.020 | ny_orb -0.098 | rsi_rev -0.226 | vwap_fade 0.380 (ladder; fresh-set 0.436 vs funnel 0.576 — REJECTED 2026-09-03, see Findings). SMC/RTM round (b63/b63b, 2026-09-03): turtle_soup 0.508 cached / 0.469 fresh, eqh_sweep 0.085 / 0.638, ote 0.62 / 0.299, breaker 0.008 / 0.113, ob_first_retest 0.978 (n=3) / 0.483 (n=6), sweep_choch_ob 1.702 (n=2) / 1.066 (n=4) — none beat the funnel on BOTH sets with a usable n; funnel stays. Momentum round (b68r2, 2026-09-03): atr_expand_all 0.362 / fresh 0.443, atr_expand_lny 0.344 / 0.432 — REJECTED, loses on both sets (see Findings).
+- [ ] b68 STRATEGY LAB CONTINUOUS LOOP (user standing order 2026-09-03: "keep searching strategies/analysis methods, pick the best, test, bring into the real structure"). Each run: (a) pick ONE new candidate method not yet in data/backtest/b62_strategy_lab.json (sources: quant literature, ICT/SMC concepts not yet measured, session/volatility patterns; web search is low-signal — prefer implementing from the concept definition), (b) implement it as a standalone signal_fn in scripts/b62_strategy_lab.py style (indexed() adapter, ATR-based geometry, grade B), (c) run through engines.backtest.backtest_ohlc on the CACHED dataset (data/backtest/ab_aggressive_data.json, 3000 M15 bars) with spread 0.20 AND with the live b60 ladder (partial_share_fn=_partial_close_fraction, tp1_position=0.50, trail_after_partial=0.5), (d) append the row to data/backtest/b62_strategy_lab.json, (e) MERIT BAR: only propose wiring into the live funnel if exp_R beats the current funnel's 0.854R/trade (b61 best arm) on BOTH the cached set and one fresh fetch; otherwise record the rejection in ## Findings with numbers. NEVER weaken existing gates to make a new arm look better; the funnel stays the exit manager. Baseline table so far (exp_R, cached M15): funnel b60 0.854 | asia_break 0.18 | ema_pullback 0.114 | bb_bounce 0.035 | donchian -0.013 | sweep_rev -0.004 | fvg_retest -0.020 | ny_orb -0.098 | rsi_rev -0.226 | vwap_fade 0.380 (ladder; fresh-set 0.436 vs funnel 0.576 — REJECTED 2026-09-03, see Findings). SMC/RTM round (b63/b63b, 2026-09-03): turtle_soup 0.508 cached / 0.469 fresh, eqh_sweep 0.085 / 0.638, ote 0.62 / 0.299, breaker 0.008 / 0.113, ob_first_retest 0.978 (n=3) / 0.483 (n=6), sweep_choch_ob 1.702 (n=2) / 1.066 (n=4) — none beat the funnel on BOTH sets with a usable n; funnel stays. Momentum round (b68r2, 2026-09-03): atr_expand_all 0.362 / fresh 0.443, atr_expand_lny 0.344 / 0.432 — REJECTED, loses on both sets (see Findings). HTF-trend+pullback round (b68r3, 2026-09-03): htf_pull_50 0.271 / fresh 0.317, htf_pull_618 0.194 / fresh 0.346 — REJECTED, loses on both sets (see Findings).
       (progress 2026-09-03, rounds 1+2 done: vwap_fade and atr_expand tested+rejected
       (Findings). METHOD
       RULE learned: the 0.854 bar is CACHED-set specific — on fresh 6000 bars the funnel
@@ -38,9 +38,13 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       fresh data and require the arm to beat BOTH numbers. PATTERN so far: the b60 ladder
       drags mean-reversion/momentum arms from negative-plain to positive-ladder but never
       into contention (0.34-0.44 fresh band); the funnel's edge is its ENTRY FILTER, not
-      the exit. Next candidates not yet measured: killzone-session momentum (London/NY
-      open drift), overnight-gap fade, range-compression breakout at session open,
-      higher-timeframe trend + M15 pullback-depth (discount/premium of the H1 leg).
+      the exit. Round 3 (b68r3, HTF trend + discount/premium pullback — the funnel's OWN
+      entry class, standalone) also REJECTED: 0.317/0.346 fresh vs funnel 0.577 — even a
+      correct-class entry idea measured standalone does not approach the funnel, because
+      the funnel stacks MANY context conditions (regime+SMC merge+range-kill+grade+blueprint
+      geometry) where the lab arm has one. Remaining unmeasured candidates: overnight-gap
+      fade, range-compression breakout at session open (after b69 heals the dead
+      compression arm), killzone-session open drift.
 - [ ] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -145,6 +149,23 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+- 2026-09-03 b68 round 3 — HTF trend + pullback-depth entry (scripts/b68_htf_lab.py
+  + b68d_confirm_htf.py, live-parity funnel, 0.20$ spread, b60 ladder): the first arm
+  from the funnel's OWN entry class — H1 swing-pivot trend (HH leg up / LL leg down,
+  pivots confirmed k=2, only bars CLOSED before the signal — no lookahead), enter next
+  M15 open in trend direction only after price retraced into discount (close below
+  50% or 61.8% of the last H1 impulse leg) on a bullish rejection bar (mirror for
+  premium/SELL), SL 0.25 ATR beyond the leg extreme, TP 2R. Cached 3000 M15 ladder:
+  htf_pull_50 +0.271R (n=74), htf_pull_618 +0.194R (n=68) vs funnel +0.854R. Fresh
+  6000 M15: +0.317R (n=142) / +0.346R (n=135) vs funnel +0.577R (n=319) on the SAME
+  data, and DD is 2x worse (10.7R vs 5.0R). REJECTED — loses on both sets. The deeper
+  61.8% filter does NOT beat the shallow 50% filter (opposite of the ICT textbook
+  claim on this data: more filtering just thins to the same weak expectancy).
+  STRONGEST evidence yet for the loop's core pattern: a single correct-class entry
+  condition (HTF trend + discount) is nowhere near the funnel, whose edge is the
+  STACK of context conditions (regime, SMC merge, range-kill, grade, blueprint
+  geometry) — standalone arms land in the 0.27-0.44 fresh band regardless of family
+  (mean-reversion, momentum, now trend-pullback). The funnel stays.
 - 2026-09-03 b68 round 2 — ATR-expansion continuation (scripts/b68_expand_lab.py
   + b68c_confirm_expand.py, live-parity funnel, 0.20$ spread, b60 ladder): enter
   next-bar open in the direction of a FRESH expansion bar (TR > 1.8 x ATR14, close
