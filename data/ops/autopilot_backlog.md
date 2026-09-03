@@ -83,6 +83,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       bars, fresh): n 350 vs 322, tot_R 202.6 vs 189.8 (+6.8%) but exp_R 0.579 <
       0.590 and dd_R -6.9 worse than -5.0 — the gated nr7 does NOT earn a slot;
       feeds b70 as a NEGATIVE lane candidate. See Findings.
+      Round 8 (b68i, 2026-09-04 — second combination, round-4 x round-5 per the
+      b72 playbook): PDH/PDL close-confirmed breakout GATED on the resolved
+      direction of the most recent NR7 squeeze (pdh geometry unchanged, squeeze
+      as direction oracle only). REJECTED as replacement: cached ladder 0.406
+      (n=21) vs control pdh_w10 0.627 — the gate LOWERS its own control (the
+      round-7 gate lifted it), and fresh 0.603 (n=40) vs funnel 0.590 is a
+      nominal pass on a noise-sized sample while cached fails 2.1x. Lane
+      (funnel-first, gated pdh on free bars, fresh): exp_R 0.580 < 0.590,
+      tot_R 189.0 vs 189.8 — the extra trades add nothing. Stretch probe
+      explains it: gated entries are MORE stretched from the broken level
+      (mean 0.667 vs 0.558 ATR) — a squeeze-then-breakout has already given
+      the follow-through away by the time PDH breaks. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -170,6 +182,15 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       MARGINAL trades still sit below the funnel average. b70's decision set
       is unchanged (nr7 vs pdh vs stacked) — the gated variant is dropped
       like dayext. Read-only.)
+      (progress 2026-09-04, round 8: a FIFTH lane — the GATED pdh (pdh x NR7
+      squeeze agree, data/backtest/b68i_squeeze_pdh_confirm.json) — repeats
+      the round-7 shape on the other ingredient: fresh lane exp_R 0.580 <
+      funnel 0.590 (dd -4.1 vs -5.0, tot_R 189.0 vs 189.8 — the +4 extra
+      trades add NOTHING, while the ungated pdh lane on the same bars carried
+      tot_R 206.1). Unlike round 7 the gate does not even lift its own
+      control (cached 0.627 -> 0.406). Two gated combinations now measured,
+      both lane-negative: gating a lane arm to raise its standalone R is NOT
+      the lever — b70 should decide on the UNGATED nr7/pdh lanes only.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -186,6 +207,21 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       lane exp_R AND dd_R together — round 7 proved a lane can add tot_R
       (+6.8%) while being negative on both per-trade R and DD. Small, docs/
       procedure only unless a round needs it.
+- [ ] b73 COMBINATION-ROUND SEQUENCING RULE (reusable procedure from b68 rounds
+      7+8, 2026-09-04): the two measured combination rounds split cleanly by
+      WHICH ingredient acts as the gate — a DAY-PATH gate (dayext) LIFTED its
+      control (nr7 0.598->0.622 cached), a COMPRESSION gate (NR7 squeeze
+      resolution) LOWERED its (pdh 0.627->0.406) because the squeeze's
+      information is already spent by the time a level break confirms (stretch
+      probe: gated entries 0.667 vs 0.558 ATR from the broken level). Future
+      combination rounds should therefore (a) prefer gating a LEVEL/PATH
+      ingredient on another PATH ingredient, not on a compression state, and
+      (b) run the stretch probe (entry distance from the trigger level) as a
+      STANDARD part of every combination confirm — it explained round 8's
+      failure before the R numbers did and costs one loop. Cheap to apply:
+      stretch_probe() already exists in scripts/b68i_confirm_squeeze_pdh.py;
+      fold it into the b72 playbook checklist on the next combination round.
+      Read-only, docs/procedure only.
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -325,6 +361,36 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
   tests/test_b68h_combo_lab.py (11 tests) pins the pure-intersection contract,
   the anti-vacuity probe, the round-5 control reproduction, the rebind of all
   three module datasets, and the shipped fresh-set verdict numbers.
+
+- 2026-09-04 b68 round 8 — COMBINATION: PDH breakout x NR7 squeeze direction
+  (scripts/b68i_squeeze_pdh_lab.py + b68i_confirm_squeeze_pdh.py, second round
+  on the b71 harness + b72 playbook). The other pairing the round-7 note
+  implied: round 4's ingredient (pdh_break_w10, the lane reference) gated on
+  round 5's ingredient (NR7 squeeze, used ONLY as a direction oracle — the
+  most recent NR7 bar within 6/8 bars, resolved = a later close beyond its
+  range; pdh geometry unchanged). Gate is non-degenerate on both sets (cached:
+  74 pdh signals, gate resolves 54%, agree/disagree 25/15; fresh: 151 signals,
+  55%, 45/38). RESULT: the gate LOWERS its own control — cached ladder 0.627
+  -> 0.406 (n 54 -> 21), the opposite of round 7 where the dayext gate lifted
+  nr7 (0.598 -> 0.622). Fresh ladder_ts 0.603 (n=40) nominally beats funnel
+  0.590 but n=40 is noise and the cached bar fails 2.1x -> dead as a
+  replacement on both sets. ADDITIVE LANE (funnel-first, gated pdh on free
+  bars, fresh): n 326 vs 322, tot_R 189.0 vs 189.8, exp_R 0.580 < 0.590 —
+  gating cut pdh's fresh frequency 110 -> 40 yet the lane still adds nothing,
+  and it is WORSE than the ungated pdh lane on the same bars (0.576 with
+  tot_R 206.1 — more volume, more total R). WHY: the confirm's stretch probe
+  shows gated entries sit FURTHER from the broken level (mean 0.667 vs 0.558
+  ATR at entry): a squeeze that already resolved upward pushes price past PDH
+  late and stretched, so the entry pays for the confirmation twice — the
+  classic breakout-chase tax. FINDING (new todo b73): the two combination
+  rounds split cleanly by WHICH ingredient gates — a day-path gate lifted its
+  control, a compression gate lowered it; the compression family's information
+  is already spent by the time a level break confirms. Nothing wired live.
+  tests/test_b68i_squeeze_pdh_lab.py (17 tests) pins the pure-intersection
+  contract, the oracle's no-lookahead window (synthetic squeeze resolution),
+  anti-vacuity on both shipped probes, the round-4 control reproduction, the
+  rebind+LEVELS rebuild across all four module datasets, and the shipped
+  fresh-set verdict numbers (gate lowers control; lane adds nothing).
 
 - 2026-09-03 b68 round 6 — TRADING-DAY EXTENSION continuation
   (scripts/b68g_probe.py screen + b68g_dayext_lab.py + b68g_confirm_dayext.py,
