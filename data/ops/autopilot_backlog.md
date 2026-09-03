@@ -32,7 +32,11 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 ## Active
 - [ ] b68 STRATEGY LAB CONTINUOUS LOOP (user standing order 2026-09-03: "keep searching strategies/analysis methods, pick the best, test, bring into the real structure"). Each run: (a) pick ONE new candidate method not yet in data/backtest/b62_strategy_lab.json (sources: quant literature, ICT/SMC concepts not yet measured, session/volatility patterns; web search is low-signal — prefer implementing from the concept definition), (b) implement it as a standalone signal_fn in scripts/b62_strategy_lab.py style (indexed() adapter, ATR-based geometry, grade B), (c) run through engines.backtest.backtest_ohlc on the CACHED dataset (data/backtest/ab_aggressive_data.json, 3000 M15 bars) with spread 0.20 AND with the live b60 ladder (partial_share_fn=_partial_close_fraction, tp1_position=0.50, trail_after_partial=0.5), (d) append the row to data/backtest/b62_strategy_lab.json, (e) MERIT BAR: only propose wiring into the live funnel if exp_R beats the current funnel's 0.854R/trade (b61 best arm) on BOTH the cached set and one fresh fetch; otherwise record the rejection in ## Findings with numbers. NEVER weaken existing gates to make a new arm look better; the funnel stays the exit manager. Baseline table so far (exp_R, cached M15): funnel b60 0.854 | asia_break 0.18 | ema_pullback 0.114 | bb_bounce 0.035 | donchian -0.013 | sweep_rev -0.004 | fvg_retest -0.020 | ny_orb -0.098 | rsi_rev -0.226 | vwap_fade 0.380 (ladder; fresh-set 0.436 vs funnel 0.576 — REJECTED 2026-09-03, see Findings). SMC/RTM round (b63/b63b, 2026-09-03): turtle_soup 0.508 cached / 0.469 fresh, eqh_sweep 0.085 / 0.638, ote 0.62 / 0.299, breaker 0.008 / 0.113, ob_first_retest 0.978 (n=3) / 0.483 (n=6), sweep_choch_ob 1.702 (n=2) / 1.066 (n=4) — none beat the funnel on BOTH sets with a usable n; funnel stays. Momentum round (b68r2, 2026-09-03): atr_expand_all 0.362 / fresh 0.443, atr_expand_lny 0.344 / 0.432 — REJECTED, loses on both sets (see Findings). HTF-trend+pullback round (b68r3, 2026-09-03): htf_pull_50 0.271 / fresh 0.317, htf_pull_618 0.194 / fresh 0.346 — REJECTED, loses on both sets (see Findings).
       (progress 2026-09-03, rounds 1+2 done: vwap_fade and atr_expand tested+rejected
-      (Findings). METHOD
+      (Findings). Round 4 (b68e, PDH/PDL breakout) done this run: REJECTED as a
+      replacement (loses cached 0.627 vs 0.854) but the FIRST arm to beat the funnel on
+      fresh data (0.640 vs 0.576) and the additive-lane probe says it ADDS total R —
+      escalated into new todo b70 (capacity analysis), nothing wired live.
+      METHOD
       RULE learned: the 0.854 bar is CACHED-set specific — on fresh 6000 bars the funnel
       itself scores 0.576, so every future confirm MUST re-measure the funnel on the SAME
       fresh data and require the arm to beat BOTH numbers. PATTERN so far: the b60 ladder
@@ -43,8 +47,37 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       correct-class entry idea measured standalone does not approach the funnel, because
       the funnel stacks MANY context conditions (regime+SMC merge+range-kill+grade+blueprint
       geometry) where the lab arm has one. Remaining unmeasured candidates: overnight-gap
-      fade, range-compression breakout at session open (after b69 heals the dead
-      compression arm), killzone-session open drift.
+      fade (MEASURED 2026-09-03: only 26 daily gaps in 3000 M15 bars, 6 of them weekend —
+      n too thin to ever clear the bar on this dataset, skip), range-compression breakout
+      at session open (after b69 heals the dead compression arm), killzone-session open
+      drift (MEASURED 2026-09-03: first-hour direction predicts the next 5h at t=0.65-0.67
+      for London/NY opens — noise, not an edge; the 16:00-broker hour shows t=2.03 but that
+      is one hour out of 24, a multiple-comparisons artifact). Round 4 (b68r4, PREVIOUS
+      TRADING DAY high/low close-confirmed breakout) is the FIRST arm to beat the funnel on
+      fresh data (0.640 vs 0.576, n=108) but loses cached (0.627 vs 0.854) -> REJECTED as a
+      replacement; the additive-lane probe says it is COMPLEMENTARY -> new todo b70.
+- [ ] b70 ADDITIVE-LANE CAPACITY ANALYSIS (follow-up to b68 round 4, 2026-09-03): the
+      pdh_break_w10 arm (scripts/b68e_pdh_lab.py, 1.0*ATR stop beyond the previous
+      TRADING day's extreme, close-confirmed) is the first lab arm that beats the live
+      funnel on fresh data (exp_R 0.640 vs 0.576, n=108) and the funnel's own merit bar
+      rejects it as a REPLACEMENT (cached 0.627 vs 0.854). But the additive-lane probe —
+      funnel first, arm only on bars the funnel leaves empty, one position at a time —
+      measured n 354 vs 319, tot_R 197.9 vs 183.6 (+7.8%), exp_R 0.559 vs 0.576
+      (-0.017R), dd_R 7.0 vs 5.0 on the SAME fresh 6000 M15 bars
+      (data/backtest/b68e_pdh_confirm.json). That is a CAPACITY question (does an extra
+      ~35 trades/6000 bars at slightly worse per-trade quality and worse DD earn its
+      slot?), NOT an expectancy question, and it must be settled before anything touches
+      the live structure. Decide with: (1) the same lane replay on the CACHED set and on
+      at least two independent fresh fetches (the single fresh set is one sample — the
+      arm's fresh win may be luck; b68 round-1 METHOD RULE applies to lanes too),
+      (2) the live gate stack the lane would have to pass anyway (MAX_OPEN_POSITIONS=1
+      means the lane trades only when the funnel's slot is FREE — measure how often that
+      is actually true in live, from plan_history/execution_log, not from the backtest),
+      (3) DD and losing-streak impact on the DEFCON/kill-switch inputs, and (4) the
+      grade-gate precedent: a C-grade arm that occupies the single slot was rejected in
+      the 2026-08-30 audit for blocking later B setups — the same blocking argument
+      applies to a lane entry that is still open when a funnel A setup appears. Do NOT
+      wire anything live on the strength of one fresh set. Read-only analysis.
 - [ ] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -149,6 +182,31 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+- 2026-09-03 b68 round 4 — PREVIOUS-TRADING-DAY high/low close-confirmed breakout
+  (scripts/b68e_pdh_lab.py + b68e_confirm_pdh.py, live-parity funnel, 0.20$ spread,
+  b60 ladder): the FIRST arm in the loop that beats the funnel on fresh data, and it
+  still fails the merit bar. Candidate picked by a raw-drift probe on the cached set:
+  of 141 touches of the prior day's extreme, a bar that CLOSES BACK INSIDE (a sweep)
+  drifts only +0.38 ATR against the break (t=0.8, noise), while a bar that CLOSES
+  THROUGH it drifts +1.00 ATR WITH the break over 24 bars (n=72, t=+2.1) — the
+  strongest raw predictive split this loop has produced, and the reason the arm
+  requires close confirmation instead of a wick. Trading-day boundary is 01:00-23:45
+  UTC (the data's own daily break; grouping by broker CALENDAR date splices two
+  sessions and invents a level no desk would draw). Cached 3000 M15 ladder:
+  pdh_break_t50 +0.493R (n=67), pdh_break_w10 +0.627R (n=54) vs funnel +0.854R.
+  Fresh 6000 M15: t50 +0.484R (n=136) vs funnel +0.576R, but **w10 +0.640R (n=108)
+  vs funnel +0.576R on the SAME bars** — the arm wins fresh and loses cached, so per
+  the both-sets rule it is REJECTED as a funnel REPLACEMENT. Stop width is the whole
+  story: 0.5 ATR (textbook tight) gets wicked out (plain 0.193R), 1.0 ATR survives
+  the ladder (0.627/0.640) — the same "the ladder rescues, the entry doesn't" pattern
+  in reverse: here the ladder rescues a WIDE stop, not an arm.
+  ADDITIVE-LANE PROBE (new this round, not a merit-bar test): funnel-first, arm only
+  on bars the funnel leaves empty → n 354 (vs 319), tot_R 197.9 (vs 183.6, +7.8%),
+  exp_R 0.559 (vs 0.576, -0.017R dilution), dd_R 7.0 (vs 5.0). Under the real
+  one-position-at-a-time model the arm is COMPLEMENTARY, not a replacement: it adds
+  ~35 trades and ~14R per 6000 bars at a small per-trade dilution and a worse DD.
+  That is a CAPACITY decision, not an expectancy one, and it needs its own gate
+  analysis before anything touches live → new todo b70.
 - 2026-09-03 b68 round 3 — HTF trend + pullback-depth entry (scripts/b68_htf_lab.py
   + b68d_confirm_htf.py, live-parity funnel, 0.20$ spread, b60 ladder): the first arm
   from the funnel's OWN entry class — H1 swing-pivot trend (HH leg up / LL leg down,

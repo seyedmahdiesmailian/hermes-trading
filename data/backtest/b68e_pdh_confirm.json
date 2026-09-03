@@ -1,0 +1,34 @@
+{
+  "CURRENT_FUNNEL": {
+    "n": 319,
+    "wr": 62.7,
+    "payoff": 1.5,
+    "exp_R": 0.576,
+    "tot_R": 183.6,
+    "dd_R": 5.0
+  },
+  "pdh_break_t50": {
+    "n": 136,
+    "wr": 51.5,
+    "payoff": 1.86,
+    "exp_R": 0.484,
+    "tot_R": 65.9,
+    "dd_R": 6.2
+  },
+  "pdh_break_w10": {
+    "n": 108,
+    "wr": 54.6,
+    "payoff": 1.98,
+    "exp_R": 0.64,
+    "tot_R": 69.1,
+    "dd_R": 4.5
+  },
+  "lane_funnel_then_w10": {
+    "n": 354,
+    "wr": 61.0,
+    "payoff": 1.55,
+    "exp_R": 0.559,
+    "tot_R": 197.9,
+    "dd_R": 7.0
+  }
+}

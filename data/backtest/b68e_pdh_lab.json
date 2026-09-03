@@ -1,0 +1,38 @@
+{
+  "pdh_break_t50:plain": {
+    "trades": 64,
+    "exp_R": 0.193,
+    "WR%": 40.6,
+    "avg_win_R": 1.98,
+    "avg_loss_R": -1.03,
+    "net_R": 12.4,
+    "maxDD_R": -6.2
+  },
+  "pdh_break_t50:ladder": {
+    "trades": 67,
+    "exp_R": 0.493,
+    "WR%": 52.2,
+    "avg_win_R": 1.88,
+    "avg_loss_R": -1.03,
+    "net_R": 33.1,
+    "maxDD_R": -6.2
+  },
+  "pdh_break_w10:plain": {
+    "trades": 47,
+    "exp_R": 0.069,
+    "WR%": 36.2,
+    "avg_win_R": 1.98,
+    "avg_loss_R": -1.02,
+    "net_R": 3.3,
+    "maxDD_R": -5.1
+  },
+  "pdh_break_w10:ladder": {
+    "trades": 54,
+    "exp_R": 0.627,
+    "WR%": 53.7,
+    "avg_win_R": 2.04,
+    "avg_loss_R": -1.02,
+    "net_R": 33.8,
+    "maxDD_R": -4.1
+  }
+}

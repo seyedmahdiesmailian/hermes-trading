@@ -767,19 +767,10 @@
       "previous": "52.8"
     },
     {
-      "title": "PPI m/m",
-      "currency": "EUR",
-      "impact": "low",
-      "date": "2026-09-03T05:00:00-04:00",
-      "time": "",
-      "forecast": "1.2%",
-      "previous": "-0.3%"
-    },
-    {
       "title": "Spanish 10-y Bond Auction",
       "currency": "EUR",
       "impact": "low",
-      "date": "2026-09-03T05:03:00-04:00",
+      "date": "2026-09-03T04:43:00-04:00",
       "time": "",
       "forecast": "",
       "previous": "3.54|2.4"
@@ -788,10 +779,19 @@
       "title": "French 10-y Bond Auction",
       "currency": "EUR",
       "impact": "low",
-      "date": "2026-09-03T05:18:00-04:00",
+      "date": "2026-09-03T04:57:00-04:00",
       "time": "",
       "forecast": "",
       "previous": "3.86|3.7"
+    },
+    {
+      "title": "PPI m/m",
+      "currency": "EUR",
+      "impact": "low",
+      "date": "2026-09-03T05:00:00-04:00",
+      "time": "",
+      "forecast": "1.2%",
+      "previous": "-0.3%"
     },
     {
       "title": "Challenger Job Cuts y/y",
@@ -1019,5 +1019,5 @@
       "previous": "55.1"
     }
   ],
-  "cached_at": "2026-09-03T03:45:03.844807+00:00"
+  "cached_at": "2026-09-03T10:30:03.637405+00:00"
 }
