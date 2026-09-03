@@ -90,11 +90,18 @@ def _trail_params(trade: dict) -> tuple[float, str]:
     volatility = str(trade.get("volatility_state", "normal"))
     momentum = float(trade.get("momentum_strength", 0.5) or 0.5)
 
+    # b65/b65b/b65c (2026-09-03): a tighter runner trail harvested MORE total
+    # R in every independent slice — M5 6000 bars (+189.1 vs +178.5R), M15
+    # 6000 bars (+209.4 vs +187.3R), and both halves of the M5 window
+    # (older +97.0 vs +93.8, recent +91.0 vs +84.1). The old 0.45 gave back
+    # locked profit on the runner leg; 0.30 (the former high-vol value) wins
+    # in all four cuts. Strong-runner 0.6 stays: that lane has never fired
+    # live, so there is no evidence to touch it.
     if volatility == "high":
         return round(max(risk_distance * 0.3, 3.0), 2), "high_volatility_tighter_trail"
     if momentum >= 0.8:
         return round(max(risk_distance * 0.6, 4.0), 2), "strong_runner_looser_trail"
-    return round(max(risk_distance * 0.45, 3.0), 2), "balanced_trail"
+    return round(max(risk_distance * 0.3, 3.0), 2), "balanced_trail"
 
 
 def _scale_in_allowed(trade: dict) -> tuple[bool, str]:

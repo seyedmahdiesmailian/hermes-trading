@@ -1,0 +1,22 @@
+{
+ "live ladder trail.5": {
+  "n": 322,
+  "mean_r": 0.582,
+  "total_r": 187.3
+ },
+ "trail .3": {
+  "n": 337,
+  "mean_r": 0.621,
+  "total_r": 209.4
+ },
+ "TP1=.75R": {
+  "n": 253,
+  "mean_r": 0.7,
+  "total_r": 177.0
+ },
+ "TP1=.75R + trail.3": {
+  "n": 258,
+  "mean_r": 0.685,
+  "total_r": 176.7
+ }
+}

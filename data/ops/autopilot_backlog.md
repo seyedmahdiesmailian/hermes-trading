@@ -182,6 +182,17 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- b65/b65b/b65c EXIT-GEOMETRY SWEEP (2026-09-03, INTEGRATED): swept 12 exit
+  arms on the live funnel, same entries. TP-shape arms (no-partial, TP1=0.75,
+  earlier BE, time-stop) all lost on total R. ONE arm won in every
+  independent slice: runner trail 0.45R -> 0.30R. Evidence: M5 6000 bars
+  +189.1 vs +178.5R total; M15 6000 bars +209.4 vs +187.3R; M5 older half
+  +97.0 vs +93.8; M5 recent half +91.0 vs +84.1. Integrated in
+  engines/trade_management.py _trail_params balanced_trail 0.45->0.30
+  (strong-runner 0.6 lane untouched, never fired live). 507 tests green,
+  position watchdog restarted. TP1=0.75 had the best mean/trade (+0.70R)
+  but harvested FEWER total R (fewer trades) — rejected on dollar-weight.
 - 2026-09-03 b68 round 4 — PREVIOUS-TRADING-DAY high/low close-confirmed breakout
   (scripts/b68e_pdh_lab.py + b68e_confirm_pdh.py, live-parity funnel, 0.20$ spread,
   b60 ladder): the FIRST arm in the loop that beats the funnel on fresh data, and it
