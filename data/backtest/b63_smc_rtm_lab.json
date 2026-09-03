@@ -1,0 +1,92 @@
+{
+  "sweep_choch_ob:plain": {
+    "trades": 2,
+    "exp_R": 0.45,
+    "WR%": 50.0,
+    "net_R": 0.9,
+    "maxDD_R": -1.1
+  },
+  "sweep_choch_ob:ladder": {
+    "trades": 2,
+    "exp_R": 1.702,
+    "WR%": 100.0,
+    "net_R": 3.4,
+    "maxDD_R": 0.0
+  },
+  "breaker:plain": {
+    "trades": 18,
+    "exp_R": -0.381,
+    "WR%": 22.2,
+    "net_R": -6.8,
+    "maxDD_R": -10.8
+  },
+  "breaker:ladder": {
+    "trades": 19,
+    "exp_R": 0.008,
+    "WR%": 36.8,
+    "net_R": 0.1,
+    "maxDD_R": -4.0
+  },
+  "ote:plain": {
+    "trades": 20,
+    "exp_R": -0.123,
+    "WR%": 30.0,
+    "net_R": -2.5,
+    "maxDD_R": -5.4
+  },
+  "ote:ladder": {
+    "trades": 20,
+    "exp_R": 0.62,
+    "WR%": 55.0,
+    "net_R": 12.4,
+    "maxDD_R": -3.3
+  },
+  "turtle_soup:plain": {
+    "trades": 141,
+    "exp_R": -0.07,
+    "WR%": 31.9,
+    "net_R": -9.9,
+    "maxDD_R": -24.0
+  },
+  "turtle_soup:ladder": {
+    "trades": 204,
+    "exp_R": 0.508,
+    "WR%": 50.5,
+    "net_R": 103.6,
+    "maxDD_R": -7.2
+  },
+  "compression:plain": {
+    "trades": 0
+  },
+  "compression:ladder": {
+    "trades": 0
+  },
+  "eqh_sweep:plain": {
+    "trades": 11,
+    "exp_R": -0.203,
+    "WR%": 27.3,
+    "net_R": -2.2,
+    "maxDD_R": -4.2
+  },
+  "eqh_sweep:ladder": {
+    "trades": 11,
+    "exp_R": 0.085,
+    "WR%": 36.4,
+    "net_R": 0.9,
+    "maxDD_R": -4.1
+  },
+  "ob_first_retest:plain": {
+    "trades": 3,
+    "exp_R": -0.013,
+    "WR%": 33.3,
+    "net_R": -0.0,
+    "maxDD_R": -1.0
+  },
+  "ob_first_retest:ladder": {
+    "trades": 3,
+    "exp_R": 0.978,
+    "WR%": 66.7,
+    "net_R": 2.9,
+    "maxDD_R": -1.0
+  }
+}

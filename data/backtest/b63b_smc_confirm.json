@@ -1,0 +1,53 @@
+{
+  "CURRENT_FUNNEL": {
+    "n": 282,
+    "wr": 63.5,
+    "payoff": 1.5,
+    "exp_R": 0.596,
+    "tot_R": 167.9,
+    "dd_R": 5.1
+  },
+  "turtle_soup": {
+    "n": 389,
+    "wr": 46.8,
+    "payoff": 1.88,
+    "exp_R": 0.36,
+    "tot_R": 140.0,
+    "dd_R": 7.9
+  },
+  "ote": {
+    "n": 53,
+    "wr": 50.9,
+    "payoff": 1.83,
+    "exp_R": 0.463,
+    "tot_R": 24.5,
+    "dd_R": 7.5
+  },
+  "ob_first_retest": {
+    "n": 12,
+    "wr": 66.7,
+    "payoff": 1.9,
+    "exp_R": 0.966,
+    "tot_R": 11.6,
+    "dd_R": 1.0
+  },
+  "sweep_choch_ob": {
+    "n": 0
+  },
+  "breaker": {
+    "n": 34,
+    "wr": 50.0,
+    "payoff": 1.76,
+    "exp_R": 0.393,
+    "tot_R": 13.4,
+    "dd_R": 4.0
+  },
+  "eqh_sweep": {
+    "n": 18,
+    "wr": 27.8,
+    "payoff": 1.5,
+    "exp_R": -0.321,
+    "tot_R": -5.8,
+    "dd_R": 8.8
+  }
+}
