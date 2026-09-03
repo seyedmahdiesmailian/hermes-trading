@@ -58,10 +58,15 @@ def main():
     sw, sa = stats(week), stats(rows)
 
     # ── live bridge state ──────────────────────────────────────────────
+    # Documented precedence (b52/b63): explicit HERMES_BRIDGE_URL >
+    # derived from HERMES_WIN_IP > bridge_client default. Read by NAME.
     acct, open_pos = None, None
     try:
         from bridge_client import BridgeClient
-        b = BridgeClient()
+        _win_ip = os.getenv("HERMES_WIN_IP", "")
+        _url = os.getenv("HERMES_BRIDGE_URL") or (
+            f"http://{_win_ip}:5050" if _win_ip else None)
+        b = BridgeClient(url=_url) if _url else BridgeClient()
         acct = b.get_account()
         pos = b.get_positions()
         open_pos = pos.get('data', []) if isinstance(pos, dict) else []
