@@ -1,0 +1,50 @@
+{
+  "_range_probe": {
+    "bars": 2940,
+    "ratio_min": 0.671,
+    "ratio_p05": 1.83,
+    "ratio_p25": 2.509,
+    "ratio_median": 3.354,
+    "tight_0.9atr_count": 1,
+    "contracting_count": 1541,
+    "impulse_count": 901,
+    "b63_combo_count": 0,
+    "nr7_count": 506
+  },
+  "nr7_break_c:plain": {
+    "trades": 240,
+    "exp_R": 0.188,
+    "WR%": 40.8,
+    "avg_win_R": 1.95,
+    "avg_loss_R": -1.03,
+    "net_R": 45.2,
+    "maxDD_R": -11.3
+  },
+  "nr7_break_c:ladder": {
+    "trades": 326,
+    "exp_R": 0.584,
+    "WR%": 53.1,
+    "avg_win_R": 2.01,
+    "avg_loss_R": -1.03,
+    "net_R": 190.4,
+    "maxDD_R": -5.2
+  },
+  "nr7_break_w10:plain": {
+    "trades": 110,
+    "exp_R": 0.223,
+    "WR%": 41.8,
+    "avg_win_R": 1.95,
+    "avg_loss_R": -1.02,
+    "net_R": 24.5,
+    "maxDD_R": -11.2
+  },
+  "nr7_break_w10:ladder": {
+    "trades": 218,
+    "exp_R": 0.598,
+    "WR%": 55.0,
+    "avg_win_R": 1.92,
+    "avg_loss_R": -1.02,
+    "net_R": 130.4,
+    "maxDD_R": -4.4
+  }
+}
