@@ -73,7 +73,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       gap, session drift — all screened and rejected). Next rounds should either (a)
       test a COMBINATION the funnel does not already use (e.g. two of the rejected
       families gated on each other), or (b) stop and let b70's capacity question decide.
-- [ ] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
+- [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
       artefact: mean stop 5.66 ATR from entry (max 11.2) and mean hold 87 M15 bars
@@ -90,6 +90,24 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       trap (risk <= 0 silently drops every signal -> trades:0 read as "no edge";
       b69 class, caught in round 6's own control arm) — a one-line assertion in the
       lab runner that any arm reporting trades:0 must name which clause never fired.
+      (done 2026-09-04: engines/lab_harness.py is the ONE measurement harness —
+      run_arm() scores every arm THREE ways (plain / ladder / ladder_ts = live b60
+      ladder + live time exit), the time exit is DERIVED from
+      legacy_guards.MAX_POSITION_AGE_HOURS and the dataset's own bar spacing (M15→144,
+      M5→432, never hardcoded), every row carries mean/p95/max hold + holds_over_time_exit,
+      and a trades:0 row must carry a zero_reason from diagnose() (never_fired /
+      invalid_geometry / min_rr / grade / slot_occupied / raised). check_honesty()
+      flags the w10 shape; scripts/b71_recheck_round6.py re-measured ALL round-6 arms
+      and shipped data/backtest/b71_harness_recheck.json — it REPRODUCES the artefact
+      exactly (ladder 1.096 → ladder_ts 0.787, n 30→41) and the honesty summary names
+      BOTH level-anchored arms (w10 AND w10_e25) via a p95-hold clause added during
+      this run: w10's MEAN hold (87.5) is under the 144 limit, only its TAIL (p95 248,
+      max 520) is swing-shaped — mean-hold-only checking would have missed the real
+      artefact. 12 tests in tests/test_b71_lab_harness.py pin the shipped JSON columns,
+      the artefact numbers, the derivation, the three diagnose verdicts, honesty
+      both-directions, and that no live-path module imports the harness. NOTE: the
+      harness module itself was left UNCOMMITTED by the previous run (b46 shape) —
+      shipped via this run's harvest commit.)
 - [ ] b70 ADDITIVE-LANE CAPACITY ANALYSIS (follow-up to b68 round 4, 2026-09-03): the
       pdh_break_w10 arm (scripts/b68e_pdh_lab.py, 1.0*ATR stop beyond the previous
       TRADING day's extreme, close-confirmed) is the first lab arm that beats the live
