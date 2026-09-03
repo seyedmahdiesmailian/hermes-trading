@@ -95,6 +95,23 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       explains it: gated entries are MORE stretched from the broken level
       (mean 0.667 vs 0.558 ATR) — a squeeze-then-breakout has already given
       the follow-through away by the time PDH breaks. See Findings.
+      Round 9 (b68j, 2026-09-04 — THIRD combination, the b73-recommended
+      path-on-path pairing: pdh geometry gated on day-extension commitment,
+      the pairing type whose gate LIFTED its control in round 7): the FIRST
+      arm in the loop's history to PASS the merit bar on per-trade R on BOTH
+      sets — cached ladder_ts 0.924 (n=23) vs funnel 0.854, fresh 0.891
+      (n=39) vs funnel 0.590 on the SAME bars (e25 variant: 1.105/0.947 at
+      n=19/33). Selection proven real by a COMPLEMENT arm (what the gate
+      drops): 0.398 cached / 0.467 fresh — below the 0.627/0.609 control, so
+      the gate removes the WORST pdh trades, not a lucky subset. Stretch
+      probe (b73): gated 0.564 vs control 0.558 ATR — the lift is
+      INFORMATIONAL, not geometric (round 8's failure mode absent).
+      ADDITIVE LANE on the same fresh bars is the FIRST lane to beat the
+      funnel on ALL THREE axes: exp_R 0.634 > 0.590, tot_R 212.4 > 190.6,
+      dd -4.1 BETTER than -5.0, n 335 > 323. NOT wired (hard rule): n is
+      4-12% of the funnel's and it is ONE fresh set — promotion requires the
+      b74 replication (cached + >=2 more independent fresh windows, live
+      gate stack, kill-switch streaks) which folds into b70. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -191,6 +208,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       control (cached 0.627 -> 0.406). Two gated combinations now measured,
       both lane-negative: gating a lane arm to raise its standalone R is NOT
       the lever — b70 should decide on the UNGATED nr7/pdh lanes only.)
+      (progress 2026-09-04, round 9: a SIXTH lane — the dayext-GATED pdh
+      (pdh x day-extension agree, data/backtest/b68j_dayext_pdh_confirm.json)
+      — is the FIRST lane to beat the funnel on ALL THREE axes on its fresh
+      set: exp_R 0.634 > 0.590, tot_R 212.4 > 190.6, dd -4.1 BETTER than
+      -5.0 (n 335 vs 323). Rounds 7/8 said gating is not the lever; round 9
+      refines that: gating on a PATH oracle that fires only ~37% of pdh
+      signals (the committed-day subset) is the one gate that improved every
+      axis, while gating on compression (round 8) or on the nr7 geometry
+      (round 7) did not. b70's decision set must now be re-ordered:
+      gated-pdh(dayext) > nr7 0.620 > funnel 0.590 > pdh 0.576 > gated-pdh
+      (squeeze) 0.580-flat > dayext 0.410 — but this is ONE fresh set on a
+      39-trade arm; b74 (replication) gates any promotion. Read-only.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -222,6 +251,27 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       stretch_probe() already exists in scripts/b68i_confirm_squeeze_pdh.py;
       fold it into the b72 playbook checklist on the next combination round.
       Read-only, docs/procedure only.
+- [ ] b74 CANDIDATE PROMOTION PROTOCOL (reusable procedure from b68 round 9,
+      the FIRST arm ever to pass the merit bar — the loop has never needed
+      this before): a lab arm that beats the funnel on both sets is a
+      CANDIDATE, not a winner. Before any wiring proposal, it must survive:
+      (1) REPLICATION on >=2 more independent fresh windows (non-overlapping
+      with each other and with the cached set) — a single fresh set is one
+      draw of the same regime that produced the cached number; (2) the FULL
+      LIVE GATE STACK (DEFCON, session filter, cooldown, news blackout)
+      applied on top — the lab measures the funnel+arm in isolation, the
+      live system filters both, and a lane that only fires in already-blocked
+      hours is worth zero; (3) KILL-SWITCH STREAK MATH: the lane's trades
+      feed CONSECUTIVE_LOSSES_LIMIT=4 and the daily-loss gate, so compute
+      the joint streak behaviour of funnel+lane, not the lane alone; (4) the
+      b70 slot/capacity model — a lane that cannot get a slot when it fires
+      adds tot_R on paper only. Pin the protocol as a test the way b71
+      pinned the harness: scripts/b74_replicate_candidate.py taking an arm
+      name + N windows, emitting a replication table, PASS only if exp_R
+      beats the funnel on the SAME bars in >=N-1 of N windows AND the pooled
+      n clears 100. Cheap: the machinery (indexed/backtest_ohlc/lane_sim/
+      stretch_probe) already exists in b68j/b68i/b70. Read-only; wiring
+      stays a human decision per the b68 merit bar.
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -335,6 +385,36 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-04 b68 round 9 — COMBINATION: PDH breakout x day-extension agreement
+  (scripts/b68j_dayext_pdh_lab.py + b68j_confirm_dayext_pdh.py; b72 playbook,
+  3rd pairing; b73's recommended type — a LEVEL ingredient gated on a PATH
+  ingredient, the pairing whose gate LIFTED its control in round 7). THE
+  FIRST ARM IN THE LOOP'S HISTORY TO PASS THE MERIT BAR: cached ladder_ts
+  0.924R n=23 vs funnel 0.854, fresh 0.891R n=39 vs funnel 0.590 measured on
+  the SAME fresh bars (e25 variant 1.105/0.947 at n=19/33; the 1.5-ATR arm
+  is the honest one — e25 is the same arm tuned on the probe). The gate
+  fires on ~37% of pdh signals (23/62 cached, 39/106 fresh) — a real subset,
+  not a rounding error. SELECTION PROVEN REAL by a new probe, the COMPLEMENT
+  arm (what the gate DROPS): 0.398 cached / 0.467 fresh — below the
+  0.627/0.609 control, so the gate removes the WORST pdh trades; a lucky
+  subset would have left the complement at-or-above control. STRETCH PROBE
+  (b73): gated entries 0.564 ATR from the broken level vs control 0.558 —
+  the lift is INFORMATIONAL, not geometric; round 8's failure mode absent.
+  ADDITIVE LANE on the same fresh bars: FIRST lane to beat the funnel on ALL
+  THREE axes — exp_R 0.634 > 0.590, tot_R 212.4 > 190.6, dd -4.1 BETTER than
+  -5.0, n 335 > 323 (funnel-first priority; the lane's 12 combo trades carry
+  the delta). WHY it works where rounds 7/8 failed: day-extension is a
+  same-day PATH oracle (the day has already committed >=1.5 ATR in the
+  breakout direction) — it confirms the level break is a continuation of
+  committed flow, not a first-push exhaustion; NR7-squeeze (round 8) is a
+  PAST-compression state whose information is spent by breakout time. NOT
+  WIRED (hard rule + merit bar wording): n=39 is 12% of the funnel's fresh
+  sample and it is ONE fresh set; promotion requires b74 replication
+  (>=2 more independent windows, live gate stack, kill-switch streak math,
+  b70 slot model) before any proposal, and the decision stays human. Feeds
+  b70 as lane #6 (now the top of the decision set). 21 tests
+  (tests/test_b68j_dayext_pdh_lab.py), 584 green.
 
 - 2026-09-04 b68 round 7 — COMBINATION: NR7 squeeze x day-extension agreement
   (scripts/b68h_combo_lab.py + b68h_confirm_combo.py, FIRST round measured
