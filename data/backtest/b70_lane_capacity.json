@@ -1,0 +1,350 @@
+{
+  "cached_3000": {
+    "dataset": "cached_3000",
+    "bars": 3000,
+    "range": [
+      "2026-07-15 10:00:00+00:00",
+      "2026-08-28 23:45:00+00:00"
+    ],
+    "funnel_signals": 848,
+    "arm_signals": 74,
+    "funnel_signals_live_tradable": 306,
+    "funnel_only": {
+      "n": 166,
+      "wr": 63.9,
+      "payoff": 1.43,
+      "exp_R": 0.558,
+      "tot_R": 92.7,
+      "dd_R": 3.3,
+      "max_loss_streak": 3,
+      "worst_24h_R": -3.0
+    },
+    "arm_only": {
+      "n": 54,
+      "wr": 53.7,
+      "payoff": 2.01,
+      "exp_R": 0.627,
+      "tot_R": 33.8,
+      "dd_R": 4.1,
+      "max_loss_streak": 4,
+      "worst_24h_R": -2.0
+    },
+    "lane": {
+      "n": 181,
+      "wr": 62.4,
+      "payoff": 1.51,
+      "exp_R": 0.572,
+      "tot_R": 103.6,
+      "dd_R": 3.3,
+      "max_loss_streak": 3,
+      "worst_24h_R": -2.1
+    },
+    "live_parity": {
+      "funnel_only": {
+        "n": 99,
+        "wr": 73.7,
+        "payoff": 1.42,
+        "exp_R": 0.796,
+        "tot_R": 78.8,
+        "dd_R": 2.0,
+        "max_loss_streak": 2,
+        "worst_24h_R": -2.0
+      },
+      "lane": {
+        "n": 126,
+        "wr": 66.7,
+        "payoff": 1.55,
+        "exp_R": 0.707,
+        "tot_R": 89.1,
+        "dd_R": 3.1,
+        "max_loss_streak": 3,
+        "worst_24h_R": -2.0
+      },
+      "lane_arm_trades_taken": 34,
+      "blocking": {
+        "blocked_funnel_episodes": 12,
+        "blocked_funnel_signal_bars": 24,
+        "blocked_by_grade_bars": {
+          "A": 9,
+          "B": 15
+        },
+        "arm_bars_outside_funnel": 57
+      }
+    },
+    "lane_arm_trades_taken": 23,
+    "blocking": {
+      "blocked_funnel_episodes": 12,
+      "blocked_funnel_signal_bars": 24,
+      "blocked_by_grade_bars": {
+        "A": 9,
+        "B": 15
+      },
+      "arm_bars_outside_funnel": 57
+    }
+  },
+  "fresh_w1_recent": {
+    "dataset": "fresh_w1_recent",
+    "bars": 6000,
+    "range": [
+      "2026-06-04 06:15:00+00:00",
+      "2026-09-03 19:00:00+00:00"
+    ],
+    "funnel_signals": 1579,
+    "arm_signals": 151,
+    "funnel_signals_live_tradable": 582,
+    "funnel_only": {
+      "n": 323,
+      "wr": 63.2,
+      "payoff": 1.5,
+      "exp_R": 0.586,
+      "tot_R": 189.3,
+      "dd_R": 5.0,
+      "max_loss_streak": 4,
+      "worst_24h_R": -3.9
+    },
+    "arm_only": {
+      "n": 110,
+      "wr": 53.6,
+      "payoff": 1.98,
+      "exp_R": 0.609,
+      "tot_R": 67.0,
+      "dd_R": 4.5,
+      "max_loss_streak": 4,
+      "worst_24h_R": -3.0
+    },
+    "lane": {
+      "n": 359,
+      "wr": 61.6,
+      "payoff": 1.55,
+      "exp_R": 0.573,
+      "tot_R": 205.6,
+      "dd_R": 7.0,
+      "max_loss_streak": 5,
+      "worst_24h_R": -4.6
+    },
+    "live_parity": {
+      "funnel_only": {
+        "n": 184,
+        "wr": 72.3,
+        "payoff": 1.53,
+        "exp_R": 0.826,
+        "tot_R": 152.0,
+        "dd_R": 2.0,
+        "max_loss_streak": 2,
+        "worst_24h_R": -2.0
+      },
+      "lane": {
+        "n": 238,
+        "wr": 65.5,
+        "payoff": 1.64,
+        "exp_R": 0.73,
+        "tot_R": 173.7,
+        "dd_R": 3.5,
+        "max_loss_streak": 3,
+        "worst_24h_R": -3.0
+      },
+      "lane_arm_trades_taken": 74,
+      "blocking": {
+        "blocked_funnel_episodes": 29,
+        "blocked_funnel_signal_bars": 65,
+        "blocked_by_grade_bars": {
+          "A": 22,
+          "B": 43
+        },
+        "arm_bars_outside_funnel": 124
+      }
+    },
+    "lane_arm_trades_taken": 53,
+    "blocking": {
+      "blocked_funnel_episodes": 29,
+      "blocked_funnel_signal_bars": 65,
+      "blocked_by_grade_bars": {
+        "A": 22,
+        "B": 43
+      },
+      "arm_bars_outside_funnel": 124
+    }
+  },
+  "fresh_w2_middle": {
+    "dataset": "fresh_w2_middle",
+    "bars": 6000,
+    "range": [
+      "2026-03-03 21:45:00+00:00",
+      "2026-06-04 06:00:00+00:00"
+    ],
+    "funnel_signals": 1472,
+    "arm_signals": 122,
+    "funnel_signals_live_tradable": 548,
+    "funnel_only": {
+      "n": 323,
+      "wr": 58.8,
+      "payoff": 1.52,
+      "exp_R": 0.485,
+      "tot_R": 156.7,
+      "dd_R": 8.0,
+      "max_loss_streak": 8,
+      "worst_24h_R": -5.1
+    },
+    "arm_only": {
+      "n": 92,
+      "wr": 59.8,
+      "payoff": 1.97,
+      "exp_R": 0.785,
+      "tot_R": 72.2,
+      "dd_R": 5.3,
+      "max_loss_streak": 5,
+      "worst_24h_R": -3.1
+    },
+    "lane": {
+      "n": 352,
+      "wr": 59.1,
+      "payoff": 1.59,
+      "exp_R": 0.535,
+      "tot_R": 188.2,
+      "dd_R": 6.9,
+      "max_loss_streak": 5,
+      "worst_24h_R": -4.1
+    },
+    "live_parity": {
+      "funnel_only": {
+        "n": 172,
+        "wr": 63.4,
+        "payoff": 1.51,
+        "exp_R": 0.598,
+        "tot_R": 102.9,
+        "dd_R": 5.1,
+        "max_loss_streak": 5,
+        "worst_24h_R": -3.0
+      },
+      "lane": {
+        "n": 216,
+        "wr": 63.0,
+        "payoff": 1.62,
+        "exp_R": 0.658,
+        "tot_R": 142.1,
+        "dd_R": 6.1,
+        "max_loss_streak": 6,
+        "worst_24h_R": -3.1
+      },
+      "lane_arm_trades_taken": 53,
+      "blocking": {
+        "blocked_funnel_episodes": 20,
+        "blocked_funnel_signal_bars": 55,
+        "blocked_by_grade_bars": {
+          "B": 39,
+          "A": 16
+        },
+        "arm_bars_outside_funnel": 93
+      }
+    },
+    "lane_arm_trades_taken": 46,
+    "blocking": {
+      "blocked_funnel_episodes": 20,
+      "blocked_funnel_signal_bars": 55,
+      "blocked_by_grade_bars": {
+        "B": 39,
+        "A": 16
+      },
+      "arm_bars_outside_funnel": 93
+    }
+  },
+  "fresh_w3_older": {
+    "dataset": "fresh_w3_older",
+    "bars": 6000,
+    "range": [
+      "2025-11-28 03:00:00+00:00",
+      "2026-03-03 21:30:00+00:00"
+    ],
+    "funnel_signals": 1712,
+    "arm_signals": 160,
+    "funnel_signals_live_tradable": 628,
+    "funnel_only": {
+      "n": 319,
+      "wr": 61.8,
+      "payoff": 1.5,
+      "exp_R": 0.546,
+      "tot_R": 174.2,
+      "dd_R": 9.6,
+      "max_loss_streak": 7,
+      "worst_24h_R": -7.1
+    },
+    "arm_only": {
+      "n": 114,
+      "wr": 44.7,
+      "payoff": 2.05,
+      "exp_R": 0.37,
+      "tot_R": 42.2,
+      "dd_R": 11.2,
+      "max_loss_streak": 11,
+      "worst_24h_R": -9.2
+    },
+    "lane": {
+      "n": 339,
+      "wr": 59.3,
+      "payoff": 1.54,
+      "exp_R": 0.511,
+      "tot_R": 173.4,
+      "dd_R": 10.6,
+      "max_loss_streak": 8,
+      "worst_24h_R": -7.1
+    },
+    "live_parity": {
+      "funnel_only": {
+        "n": 172,
+        "wr": 69.8,
+        "payoff": 1.52,
+        "exp_R": 0.761,
+        "tot_R": 131.0,
+        "dd_R": 5.0,
+        "max_loss_streak": 5,
+        "worst_24h_R": -3.0
+      },
+      "lane": {
+        "n": 223,
+        "wr": 60.1,
+        "payoff": 1.61,
+        "exp_R": 0.571,
+        "tot_R": 127.4,
+        "dd_R": 9.1,
+        "max_loss_streak": 9,
+        "worst_24h_R": -5.1
+      },
+      "lane_arm_trades_taken": 73,
+      "blocking": {
+        "blocked_funnel_episodes": 40,
+        "blocked_funnel_signal_bars": 89,
+        "blocked_by_grade_bars": {
+          "B": 61,
+          "A": 28
+        },
+        "arm_bars_outside_funnel": 132
+      }
+    },
+    "lane_arm_trades_taken": 47,
+    "blocking": {
+      "blocked_funnel_episodes": 40,
+      "blocked_funnel_signal_bars": 89,
+      "blocked_by_grade_bars": {
+        "B": 61,
+        "A": 28
+      },
+      "arm_bars_outside_funnel": 132
+    }
+  },
+  "_live_occupancy": {
+    "entries_executed": 19,
+    "closed_intervals": 19,
+    "span_days": 6.04,
+    "market_open_hours": 95.9,
+    "position_hours": 55.9,
+    "slot_occupied_pct": 58.3,
+    "ticks_with_position_pct": 32.8,
+    "median_trade_minutes": 184.5
+  },
+  "_safety_context": {
+    "kill_switch_consecutive_losses_limit": 4,
+    "kill_switch_daily_loss_pct": 0.05,
+    "risk_usd_typical": 100.0,
+    "note": "daily-loss halt in R \u2248 5% of balance / risk per trade"
+  }
+}

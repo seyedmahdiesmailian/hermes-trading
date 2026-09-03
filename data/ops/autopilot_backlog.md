@@ -183,6 +183,15 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 
 ## Findings
 
+- b66/b66b EXIT-GRID ROUND 2 (2026-09-03, REJECTED-NO-CHANGE, incumbent kept):
+  2D grid TP1-step x partial-share on the winning trail=.30. TP1: .60 wins M5
+  (+2.1R) but .45 wins M15 (+7.0R) — contradictory, incumbent .50 sits between
+  and loses <3% on either; not worth the churn. SHARE: b66 had a bug (flat
+  share ignored because grade-fn overrides it) — b66b tested it correctly:
+  live grade-based share 184.3R M5 / 211.5R M15 vs flat 30/50/70% all far
+  worse (91-168R). Grade-weighted partial sizing CONFIRMED as real edge.
+  Exit geometry now declared locally optimal; next lever = fresh live sample.
+
 - b65/b65b/b65c EXIT-GEOMETRY SWEEP (2026-09-03, INTEGRATED): swept 12 exit
   arms on the live funnel, same entries. TP-shape arms (no-partial, TP1=0.75,
   earlier BE, time-stop) all lost on total R. ONE arm won in every
