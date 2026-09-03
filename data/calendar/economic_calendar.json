@@ -905,7 +905,7 @@
       "title": "FOMC Member Goolsbee Speaks",
       "currency": "USD",
       "impact": "low",
-      "date": "2026-09-03T15:05:00-04:00",
+      "date": "2026-09-03T15:55:00-04:00",
       "time": "",
       "forecast": "",
       "previous": ""
@@ -1019,5 +1019,5 @@
       "previous": "55.1"
     }
   ],
-  "cached_at": "2026-09-02T21:30:03.262919+00:00"
+  "cached_at": "2026-09-03T03:45:03.844807+00:00"
 }

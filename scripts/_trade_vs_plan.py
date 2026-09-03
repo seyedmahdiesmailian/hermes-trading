@@ -1,5 +1,19 @@
-import sys, os, json, glob, datetime
-sys.path.insert(0, '.')
+#!/usr/bin/env python3
+import json
+import os
+import sys
+import datetime
+import glob
+from pathlib import Path
+
+_ROOT = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _ROOT)
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing -> local fallback
+load_dotenv(os.path.join(_ROOT, '.env'))
+os.chdir(_ROOT)  # b67-harvest: these probes glob data/... relative paths
 
 # map every closed deal to its plan file so we can compare PLANNED geometry
 # vs REALIZED outcome.
@@ -16,7 +30,7 @@ for f in glob.glob('data/xau_plan/plan_history/*.json'):
 print('plans with tickets:', len(plans))
 
 from bridge_client import BridgeClient
-c = BridgeClient(token=os.getenv('BRIDGE_TOKEN'))
+c = BridgeClient(token=os.getenv('HERMES_BRIDGE_TOKEN'))
 h = c.get_history_deals('XAUUSD', 60)
 pos = {}
 for x in h['data']:

@@ -1,11 +1,26 @@
-import sys, os, json, glob, datetime, statistics
-sys.path.insert(0, '.')
+#!/usr/bin/env python3
+import json
+import os
+import sys
+import statistics
+import datetime
+import glob
+from pathlib import Path
+
+_ROOT = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, _ROOT)
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    from env_loader import load_dotenv  # python-dotenv missing -> local fallback
+load_dotenv(os.path.join(_ROOT, '.env'))
+os.chdir(_ROOT)  # b67-harvest: these probes glob data/... relative paths
 from bridge_client import BridgeClient
 def num(x):
     try: return float(x)
     except Exception: return None
 
-c = BridgeClient(token=os.getenv('BRIDGE_TOKEN'))
+c = BridgeClient(token=os.getenv('HERMES_BRIDGE_TOKEN'))
 acct = c.get_account()
 bal = num(acct.get('balance')) or num((acct.get('data') or {}).get('balance')) or 4982.0
 h = c.get_history_deals('XAUUSD', 60)
