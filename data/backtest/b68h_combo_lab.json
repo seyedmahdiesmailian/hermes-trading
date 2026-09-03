@@ -1,0 +1,149 @@
+{
+  "_probe": {
+    "ext": 1.5,
+    "e25": {
+      "nr7_signals": 560,
+      "dayext_gate_fires": 189,
+      "agree": 93,
+      "disagree": 96,
+      "gate_share": 0.338,
+      "agree_share_of_gated": 0.492
+    },
+    "e15": {
+      "nr7_signals": 560,
+      "dayext_gate_fires": 222,
+      "agree": 109,
+      "disagree": 113,
+      "gate_share": 0.396,
+      "agree_share_of_gated": 0.491
+    }
+  },
+  "_time_stop_bars": 144,
+  "nr7_w10_control": {
+    "plain": {
+      "trades": 110,
+      "exp_R": 0.223,
+      "WR%": 41.8,
+      "avg_win_R": 1.95,
+      "avg_loss_R": -1.02,
+      "net_R": 24.5,
+      "maxDD_R": -11.2,
+      "mean_hold_bars": 22.6,
+      "p95_hold_bars": 45,
+      "max_hold_bars": 742,
+      "holds_over_time_exit": 1
+    },
+    "ladder": {
+      "trades": 218,
+      "exp_R": 0.598,
+      "WR%": 55.0,
+      "avg_win_R": 1.92,
+      "avg_loss_R": -1.02,
+      "net_R": 130.4,
+      "maxDD_R": -4.4,
+      "mean_hold_bars": 9.3,
+      "p95_hold_bars": 34,
+      "max_hold_bars": 152,
+      "holds_over_time_exit": 1
+    },
+    "ladder_ts": {
+      "trades": 218,
+      "exp_R": 0.598,
+      "WR%": 55.0,
+      "avg_win_R": 1.92,
+      "avg_loss_R": -1.02,
+      "net_R": 130.4,
+      "maxDD_R": -4.4,
+      "mean_hold_bars": 9.3,
+      "p95_hold_bars": 34,
+      "max_hold_bars": 152,
+      "holds_over_time_exit": 1
+    },
+    "_time_stop_bars": 144
+  },
+  "nr7_dayext_agree": {
+    "plain": {
+      "trades": 45,
+      "exp_R": 0.147,
+      "WR%": 40.0,
+      "avg_win_R": 1.89,
+      "avg_loss_R": -1.02,
+      "net_R": 6.6,
+      "maxDD_R": -5.1,
+      "mean_hold_bars": 30.5,
+      "p95_hold_bars": 39,
+      "max_hold_bars": 742,
+      "holds_over_time_exit": 1
+    },
+    "ladder": {
+      "trades": 68,
+      "exp_R": 0.622,
+      "WR%": 55.9,
+      "avg_win_R": 1.92,
+      "avg_loss_R": -1.02,
+      "net_R": 42.3,
+      "maxDD_R": -5.1,
+      "mean_hold_bars": 10.3,
+      "p95_hold_bars": 32,
+      "max_hold_bars": 152,
+      "holds_over_time_exit": 1
+    },
+    "ladder_ts": {
+      "trades": 68,
+      "exp_R": 0.622,
+      "WR%": 55.9,
+      "avg_win_R": 1.92,
+      "avg_loss_R": -1.02,
+      "net_R": 42.3,
+      "maxDD_R": -5.1,
+      "mean_hold_bars": 10.3,
+      "p95_hold_bars": 32,
+      "max_hold_bars": 152,
+      "holds_over_time_exit": 1
+    },
+    "_time_stop_bars": 144
+  },
+  "nr7_dayext_agree_e25": {
+    "plain": {
+      "trades": 38,
+      "exp_R": 0.046,
+      "WR%": 36.8,
+      "avg_win_R": 1.87,
+      "avg_loss_R": -1.02,
+      "net_R": 1.8,
+      "maxDD_R": -4.2,
+      "mean_hold_bars": 33.8,
+      "p95_hold_bars": 76,
+      "max_hold_bars": 742,
+      "holds_over_time_exit": 1
+    },
+    "ladder": {
+      "trades": 55,
+      "exp_R": 0.556,
+      "WR%": 52.7,
+      "avg_win_R": 1.97,
+      "avg_loss_R": -1.02,
+      "net_R": 30.6,
+      "maxDD_R": -4.1,
+      "mean_hold_bars": 11.6,
+      "p95_hold_bars": 32,
+      "max_hold_bars": 152,
+      "holds_over_time_exit": 1
+    },
+    "ladder_ts": {
+      "trades": 55,
+      "exp_R": 0.556,
+      "WR%": 52.7,
+      "avg_win_R": 1.97,
+      "avg_loss_R": -1.02,
+      "net_R": 30.6,
+      "maxDD_R": -4.1,
+      "mean_hold_bars": 11.6,
+      "p95_hold_bars": 32,
+      "max_hold_bars": 152,
+      "holds_over_time_exit": 1
+    },
+    "_time_stop_bars": 144
+  },
+  "_honesty_complaints": []
+}

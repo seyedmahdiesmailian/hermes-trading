@@ -73,6 +73,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       gap, session drift — all screened and rejected). Next rounds should either (a)
       test a COMBINATION the funnel does not already use (e.g. two of the rejected
       families gated on each other), or (b) stop and let b70's capacity question decide.
+      Round 7 (b68r7, 2026-09-04 — option (a), FIRST round measured entirely on the
+      b71 harness): NR7 squeeze breakout GATED on trading-day-extension agreement
+      (pure intersection, nr7 geometry unchanged, dayext as direction oracle only).
+      REJECTED as replacement: cached ladder_ts 0.622 (n=68) vs funnel 0.854; fresh
+      0.587 (n=135) vs funnel 0.590 on the SAME bars. The gate DOES lift its own
+      control (nr7_w10: 0.598->0.622 cached, 0.519->0.587 fresh) — the combination
+      direction is real but sub-funnel. ADDITIVE LANE (funnel-first, combo on free
+      bars, fresh): n 350 vs 322, tot_R 202.6 vs 189.8 (+6.8%) but exp_R 0.579 <
+      0.590 and dd_R -6.9 worse than -5.0 — the gated nr7 does NOT earn a slot;
+      feeds b70 as a NEGATIVE lane candidate. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -150,6 +160,32 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       anti-correlated with how OFTEN the arm fires (dayext fires on 800 bars =
       2.5x the funnel's 323 and crowds the single slot; nr7 455, pdh 108) —
       b70 should measure slot-contention directly, not just tot_R.)
+      (progress 2026-09-04, round 7: a FOURTH lane has data and it tests the
+      contention question DIRECTLY — the GATED nr7 (nr7 x dayext agree,
+      data/backtest/b68h_combo_confirm.json) fires 3x less than raw nr7 (135
+      vs 453 fresh trades) and its lane is NEGATIVE: exp_R 0.579 < funnel
+      0.590, dd_R -6.9 vs -5.0, despite the arm's own exp_R being the best
+      non-funnel number measured (0.587). So round 6's anti-correlation rule
+      holds in reverse: cutting frequency raised per-trade R but the lane's
+      MARGINAL trades still sit below the funnel average. b70's decision set
+      is unchanged (nr7 vs pdh vs stacked) — the gated variant is dropped
+      like dayext. Read-only.)
+- [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
+      every future b68 round that gates one family on another): (1) build the
+      combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
+      the other is a direction/timing oracle only, so no new stop geometry can
+      reintroduce the b69/round-6 traps; (2) ship an ANTI-VACUITY probe with
+      the ledger (fire counts of each ingredient + agree/disagree split of the
+      gated subset) — a combination whose gate fires on ~100% or whose
+      agree/disagree split is ~0/100 is the same arm twice, not a combo;
+      (3) always re-measure the UNGATED ingredient as a control arm in the
+      same run so the gate's delta is same-dataset same-harness; (4) pin the
+      CONFIRM ledger's verdict numbers (funnel vs arm vs lane) with a test,
+      not just the cached lab — round 7's cached 0.622 would have looked like
+      a lane promotion until the fresh 0.587-vs-0.590 lane said no; (5) quote
+      lane exp_R AND dd_R together — round 7 proved a lane can add tot_R
+      (+6.8%) while being negative on both per-trade R and DD. Small, docs/
+      procedure only unless a round needs it.
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -263,6 +299,32 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-04 b68 round 7 — COMBINATION: NR7 squeeze x day-extension agreement
+  (scripts/b68h_combo_lab.py + b68h_confirm_combo.py, FIRST round measured
+  end-to-end on the b71 harness — plain/ladder/ladder_ts + hold columns on
+  every row, zero honesty complaints on both sets). The round-6 note asked for
+  option (a): two rejected families gated on each other. The combo is a PURE
+  INTERSECTION — nr7_break wide supplies the geometry unchanged, dayext
+  continuation (>=1.5 ATR from the trading-day open after 13:00 UTC) is used
+  ONLY as a direction oracle, so no new stop geometry can sneak in. The gate
+  is real, not vacuous: of 560 nr7 signals the dayext gate fires on 34-40%,
+  and agree/disagree split ~50/50 (109 vs 113 at ext=1.5) — the two arms are
+  genuinely independent conditions. RESULT: the gate LIFTS its own control on
+  both sets — cached ladder_ts 0.598 -> 0.622 (n 218 -> 68), fresh 0.519 ->
+  0.587 (n 453 -> 135) — the combination direction is REAL. But it still loses
+  the merit bar on both sides: cached 0.622 vs funnel 0.854, fresh 0.587 vs
+  funnel 0.590 on the SAME 6000 bars. ADDITIVE LANE (funnel-first, combo on
+  free bars, fresh): n 350 vs 322, tot_R 202.6 vs 189.8 (+6.8%) but exp_R
+  0.579 < 0.590 and dd_R -6.9 vs -5.0 — unlike raw nr7 (the strongest lane,
+  0.620 fresh) the GATED variant does NOT earn a slot: cutting frequency 3x
+  bought +0.068R per trade but the lane's marginal trades still sit below the
+  funnel's average, and DD got worse. FINDING FOR b70: lane quality tracks
+  how much marginal volume the arm brings, not its standalone exp_R — the
+  gated arm is the cleanest counter-example yet. Nothing wired live.
+  tests/test_b68h_combo_lab.py (11 tests) pins the pure-intersection contract,
+  the anti-vacuity probe, the round-5 control reproduction, the rebind of all
+  three module datasets, and the shipped fresh-set verdict numbers.
 
 - 2026-09-03 b68 round 6 — TRADING-DAY EXTENSION continuation
   (scripts/b68g_probe.py screen + b68g_dayext_lab.py + b68g_confirm_dayext.py,
