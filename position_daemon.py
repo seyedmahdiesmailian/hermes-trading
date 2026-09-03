@@ -34,6 +34,7 @@ load_dotenv(BASE / '.env')
 
 from bridge_client import BridgeClient
 from engines import paths
+from engines.bridge_payload import positions_list
 from engines.trade_management import evaluate_trade_management
 from engines.auto_executor import evaluate_management_action
 from engines.legacy_guards import evaluate_news_lock, evaluate_time_exit
@@ -504,7 +505,7 @@ def main():
             # b35: share the calibration with hermes_runtime's fallback
             # time_exit (throttled inside; only writes real measurements).
             publish_calibration()
-            live = {int(p['ticket']): p for p in resp.get('data', [])}
+            live = {int(p['ticket']): p for p in positions_list(resp)}
             # Normalize bridge field name: server sends 'price_open'; legacy code
             # below reads 'open_price'. Without this, every tracking iteration
             # raised KeyError and was swallowed by the outer handler.

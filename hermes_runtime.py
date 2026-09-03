@@ -18,6 +18,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from engines.context import build_plan_context
+from engines.bridge_payload import positions_list
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
 from engines.trade_management import evaluate_trade_management
@@ -125,9 +126,12 @@ def _pos_obj(p: dict):
 
 
 def _positions_list(resp: dict) -> list:
-    if not isinstance(resp, dict) or not resp.get('ok'): return []
-    data = resp.get('data', resp.get('positions', []))
-    return data if isinstance(data, list) else []
+    # b66-follow-up: delegates to the ONE canonical reader (engines.
+    # bridge_payload) — this private copy was the shape-safe original, but
+    # being private is why four other consumers hand-rolled WORSE copies
+    # (dashboards crashed on a 401 dict-'data' in the clean-worktree verify).
+    # Name kept: hermes_runtime's own call sites + tests import it.
+    return positions_list(resp)
 
 
 def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, dict | None]:

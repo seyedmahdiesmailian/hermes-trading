@@ -301,8 +301,13 @@ def check_signals(bridge=None) -> list[dict]:
             # blind to existing exposure (already_in_position check never fired)
             _open_ct = 0
             try:
+                from engines.bridge_payload import position_count
                 _pr = bridge.get_positions("XAUUSD") or {} if bridge is not None else {}
-                _open_ct = len(_pr.get("data", []) or [])
+                # b66-follow-up: shape-safe reader — a 401/MT5-error reply
+                # carries data as a DICT; len() of it used to count envelope
+                # KEYS as positions (and a non-list would raise → caught →
+                # _open_ct=0 → the already_in_position gate goes blind).
+                _open_ct = position_count(_pr)
             except Exception:
                 pass
             account_policy = {

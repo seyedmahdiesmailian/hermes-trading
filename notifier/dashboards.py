@@ -17,6 +17,7 @@ from __future__ import annotations
 import csv
 import json
 import subprocess
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -26,6 +27,13 @@ DATA = ROOT / 'data'   # READ-ONLY by design (an operator panel must show the
                        # real numbers even from a test run) — pinned by the
                        # b39 tripwire's ALLOWED list. WRITERS below must not
                        # use these constants.
+# b66-follow-up: the shape-safe /api/positions reader (stdlib-only module, no
+# side effects — safe at import time, unlike the engines imports below that
+# need .env). dashboards is imported both by dashboard_bot (which puts ROOT on
+# sys.path) and lazily from signal_listener, so guard the path here.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from engines.bridge_payload import positions_list, position_count  # noqa: E402
 TEHRAN = timezone(timedelta(hours=3, minutes=30))
 WEEK_FA = ['دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه', 'یکشنبه']
 
@@ -813,9 +821,9 @@ def trade_home() -> tuple[str, list]:
         lines.append(_row('Balance', f"<b>{_num(acct.get('balance'))} $</b> · دارایی {_num(acct.get('equity'))} $"))
     else:
         lines.append(_row('Account', 'نامعلوم — بریج قطع'))
-    fl = sum(float(p.get('profit') or 0) for p in (pos.get('data') or [])
+    fl = sum(float(p.get('profit') or 0) for p in positions_list(pos)
              if str(p.get('profit') or '').replace('.', '').replace('-', '').replace(',', '').isdigit())
-    lines.append(_row('Open Positions', f"{pos.get('count', 0)} · سود شناور {fl:+,.2f} $"))
+    lines.append(_row('Open Positions', f"{position_count(pos)} · سود شناور {fl:+,.2f} $"))
     lines.append(_sec('🎯 پلن'))
     lines.append(_row('Bias', {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(bias, f'⚪ {bias}'))
                  + f" · اعتبار {_ago(plan.get('expires_at'))}")
@@ -1062,7 +1070,7 @@ def trade_plan_hist(prefix: str = 'tr') -> tuple[str, list]:
 
 def trade_positions() -> tuple[str, list]:
     _, acct, pos = _bridge()
-    rows = pos.get('data') or []
+    rows = positions_list(pos)
     if not acct.get('ok'):
         return ('📌 <b>پوزیشن‌ها</b>\n\n🔴 بریج ویندوز در دسترس نیست.',
                 [_nav('tr', 'home')])
@@ -1096,7 +1104,7 @@ def trade_positions() -> tuple[str, list]:
 
 def trade_pos_detail(ticket: str) -> tuple[str, list]:
     _, acct, pos = _bridge()
-    p = next((x for x in (pos.get('data') or []) if str(x.get('ticket')) == ticket), None)
+    p = next((x for x in positions_list(pos) if str(x.get('ticket')) == ticket), None)
     if not p:
         return ('🔴 این پوزیشن دیگر باز نیست (بسته شده).', [_nav('tr', 'pos')])
     rt = _j(DATA / 'xau_plan/runtime_state.json')
