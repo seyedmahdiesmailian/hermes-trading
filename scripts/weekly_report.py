@@ -16,6 +16,12 @@ except ImportError:
     from env_loader import load_dotenv
 load_dotenv(os.path.join(_ROOT, '.env'))
 
+# Documented precedence (b52/b63): explicit HERMES_BRIDGE_URL > derived
+# from HERMES_WIN_IP > last-known default. Resolved at module level so the
+# b52 behavioural test can import and inspect it.
+BRIDGE_URL = os.getenv("HERMES_BRIDGE_URL") or \
+    f"http://{os.getenv('HERMES_WIN_IP', '192.168.10.51')}:5050"
+
 DAYS = 7
 WEEK_S = DAYS * 86400
 FA_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
@@ -63,10 +69,7 @@ def main():
     acct, open_pos = None, None
     try:
         from bridge_client import BridgeClient
-        _win_ip = os.getenv("HERMES_WIN_IP", "")
-        _url = os.getenv("HERMES_BRIDGE_URL") or (
-            f"http://{_win_ip}:5050" if _win_ip else None)
-        b = BridgeClient(url=_url) if _url else BridgeClient()
+        b = BridgeClient(url=BRIDGE_URL)
         acct = b.get_account()
         pos = b.get_positions()
         open_pos = pos.get('data', []) if isinstance(pos, dict) else []
