@@ -59,6 +59,7 @@ def backtest_ohlc(
         else:
             losses += 1
         trade_log.append({**{k: t[k] for k in ("entry_index", "side", "entry", "style", "grade")},
+                          "orig_sl": t.get("orig_sl"),
                           "exit_index": index, "exit": round(exit_price, 2),
                           "pnl": round(net, 2), "exit_reason": reason})
 

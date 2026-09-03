@@ -1,0 +1,68 @@
+{
+  "b60_tp1_0.50_full": {
+    "n": 172,
+    "wr": 74.4,
+    "avg_win_R": 1.49,
+    "avg_loss_R": -1.0,
+    "payoff": 1.49,
+    "expectancy_R": 0.854,
+    "total_R": 146.9,
+    "maxDD_R": 3.1,
+    "net_pnl": 1670.47
+  },
+  "tp1_0.75_full": {
+    "n": 144,
+    "wr": 63.9,
+    "avg_win_R": 2.12,
+    "avg_loss_R": -1.0,
+    "payoff": 2.12,
+    "expectancy_R": 0.996,
+    "total_R": 143.4,
+    "maxDD_R": 4.1,
+    "net_pnl": 1612.13
+  },
+  "tp1_1.00_full": {
+    "n": 126,
+    "wr": 57.1,
+    "avg_win_R": 1.52,
+    "avg_loss_R": -1.02,
+    "payoff": 1.48,
+    "expectancy_R": 0.429,
+    "total_R": 54.1,
+    "maxDD_R": 4.1,
+    "net_pnl": 658.96
+  },
+  "hold_to_final": {
+    "n": 126,
+    "wr": 57.1,
+    "avg_win_R": 1.52,
+    "avg_loss_R": -1.02,
+    "payoff": 1.48,
+    "expectancy_R": 0.429,
+    "total_R": 54.1,
+    "maxDD_R": 4.1,
+    "net_pnl": 658.96
+  },
+  "tp1_0.50_half": {
+    "n": 172,
+    "wr": 74.4,
+    "avg_win_R": 1.14,
+    "avg_loss_R": -1.0,
+    "payoff": 1.14,
+    "expectancy_R": 0.593,
+    "total_R": 102.0,
+    "maxDD_R": 3.1,
+    "net_pnl": 1147.68
+  },
+  "tp1_0.75_half": {
+    "n": 144,
+    "wr": 63.9,
+    "avg_win_R": 1.65,
+    "avg_loss_R": -1.0,
+    "payoff": 1.64,
+    "expectancy_R": 0.691,
+    "total_R": 99.4,
+    "maxDD_R": 4.1,
+    "net_pnl": 1120.01
+  }
+}
