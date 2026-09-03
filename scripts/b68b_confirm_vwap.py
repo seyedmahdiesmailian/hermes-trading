@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""b63b CONFIRM — top SMC/RTM arms vs the CURRENT live funnel, same engine,
-same dataset (6000 fresh M15 bars), both with the exact live b60 ladder.
+"""b68b CONFIRM — vwap_fade vs the CURRENT live funnel on FRESH data.
 
-b63 flagged on 3000 bars: turtle_soup +0.51R (n=204), ote +0.62R (n=20),
-ob_first_retest +0.98R (n=3), sweep_choch_ob +1.70R (n=2). Small-n arms are
-noise until proven. Merit bar: the live funnel's +0.854R/trade (b61).
+b68 merit bar: an arm must beat the funnel on BOTH the cached 3000-bar set
+AND one fresh fetch, same engine, same live b60 ladder. Cached result:
+vwap_fade ladder +0.380R (n=118) vs funnel +0.854R -> already short. This
+script settles it on fresh bars (funnel re-measured on the SAME fresh data,
+because 0.854 was the cached-set number — same-data comparison is the honest
+one; the backlog bar is reported alongside).
 """
 import sys, os, json
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,11 +20,10 @@ from bridge_client import BridgeClient
 from engines.backtest import backtest_ohlc
 from engines.backtest_real import fetch_all_ohlc, strategy_signal
 from engines.trade_management import _partial_close_fraction
-from scripts import b63_smc_rtm_lab as lab63
-from scripts.b63_smc_rtm_lab import (sweep_choch_ob, ote, turtle_soup,
-                                     ob_first_retest, breaker, eqh_sweep)
+from scripts import b68_vwap_lab as lab68
+from scripts.b68_vwap_lab import vwap_band_fade
 
-TF = "M5"   # live entry timeframe (same as b61 audit)
+TF = "M15"
 COUNT = 6000
 SPREAD = 0.20
 LADDER = dict(partial_share_fn=lambda t: _partial_close_fraction(t),
@@ -59,8 +60,10 @@ def main():
     h4 = fetch_all_ohlc(bridge, "XAUUSD", "H4", COUNT)
     print("bars:", len(m15), len(h1), len(h4), flush=True)
     idx_of = {r["time"]: n for n, r in enumerate(m15)}
-    # b63 arms close over the MODULE-level M15 — repoint it at this dataset
-    lab63.M15 = m15
+    # vwap_fade closes over the MODULE-level M15/VWAP/VSD — repoint at fresh data
+    lab68.M15 = m15
+    lab68.IDX = idx_of
+    lab68.recompute_vwap()
 
     def wrap(fn):
         def w(row):
@@ -78,10 +81,7 @@ def main():
         mw = m15[max(0, i - 120):i + 1]
         return strategy_signal(row, hw, h4w, i, m15_window=mw)
 
-    arms = [("CURRENT_FUNNEL", funnel), ("turtle_soup", wrap(turtle_soup)),
-            ("ote", wrap(ote)), ("ob_first_retest", wrap(ob_first_retest)),
-            ("sweep_choch_ob", wrap(sweep_choch_ob)), ("breaker", wrap(breaker)),
-            ("eqh_sweep", wrap(eqh_sweep))]
+    arms = [("CURRENT_FUNNEL", funnel), ("vwap_fade", wrap(vwap_band_fade))]
     out = {}
     print(f"{'arm':18s} {'n':>4s} {'WR%':>6s} {'payoff':>7s} {'exp_R':>7s} "
           f"{'tot_R':>7s} {'dd_R':>6s}")
@@ -93,8 +93,7 @@ def main():
               f"{s.get('payoff',0):7.2f} {s.get('exp_R',0):7.3f} "
               f"{s.get('tot_R',0):7.1f} {s.get('dd_R',0):6.1f}", flush=True)
 
-    p = os.path.join(os.path.dirname(__file__), "..", "data", "backtest",
-                     "b63b_smc_confirm.json")
+    p = os.path.join(_ROOT, "data", "backtest", "b68b_vwap_confirm.json")
     json.dump(out, open(p, "w"), indent=2)
     print("saved:", os.path.abspath(p))
 

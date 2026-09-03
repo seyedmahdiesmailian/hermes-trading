@@ -1,0 +1,16 @@
+{
+  "vwap_fade:plain": {
+    "trades": 86,
+    "exp_R": -0.259,
+    "WR%": 25.6,
+    "net_R": -22.3,
+    "maxDD_R": -25.3
+  },
+  "vwap_fade:ladder": {
+    "trades": 118,
+    "exp_R": 0.38,
+    "WR%": 48.3,
+    "net_R": 44.9,
+    "maxDD_R": -6.1
+  }
+}
