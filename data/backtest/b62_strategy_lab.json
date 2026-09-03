@@ -78,5 +78,25 @@
   "net_R": -9.5,
   "maxDD_R": -12.4,
   "name": "rsi_rev"
+ },
+ {
+  "trades": 104,
+  "exp_R": 0.362,
+  "WR%": 48.1,
+  "avg_win_R": 1.85,
+  "avg_loss_R": -1.01,
+  "net_R": 37.6,
+  "maxDD_R": -9.5,
+  "name": "atr_expand_all"
+ },
+ {
+  "trades": 69,
+  "exp_R": 0.344,
+  "WR%": 47.8,
+  "avg_win_R": 1.82,
+  "avg_loss_R": -1.01,
+  "net_R": 23.7,
+  "maxDD_R": -3.0,
+  "name": "atr_expand_lny"
  }
 ]

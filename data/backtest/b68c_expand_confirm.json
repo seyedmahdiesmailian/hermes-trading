@@ -1,0 +1,26 @@
+{
+  "CURRENT_FUNNEL": {
+    "n": 319,
+    "wr": 63.0,
+    "payoff": 1.49,
+    "exp_R": 0.577,
+    "tot_R": 184.0,
+    "dd_R": 5.0
+  },
+  "atr_expand_all": {
+    "n": 202,
+    "wr": 50.0,
+    "payoff": 1.88,
+    "exp_R": 0.443,
+    "tot_R": 89.5,
+    "dd_R": 9.5
+  },
+  "atr_expand_lny": {
+    "n": 134,
+    "wr": 49.3,
+    "payoff": 1.9,
+    "exp_R": 0.432,
+    "tot_R": 57.9,
+    "dd_R": 6.1
+  }
+}
