@@ -56,6 +56,11 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       TRADING DAY high/low close-confirmed breakout) is the FIRST arm to beat the funnel on
       fresh data (0.640 vs 0.576, n=108) but loses cached (0.627 vs 0.854) -> REJECTED as a
       replacement; the additive-lane probe says it is COMPLEMENTARY -> new todo b70.
+      Round 5 (b68r5, NR7 compression breakout) MEASURED 2026-09-03: nr7_break_c 0.584
+      cached / 0.460 fresh, nr7_break_w10 0.598 / 0.517 vs funnel 0.854 / 0.586 —
+      REJECTED as replacement (loses BOTH sets), but its additive lane is the strongest
+      probe yet (fresh lane exp_R 0.620 > funnel 0.586, tot_R +64%) -> data appended to
+      b70's queue, nothing wired. See Findings for the full numbers + the b69 range probe.
 - [ ] b70 ADDITIVE-LANE CAPACITY ANALYSIS (follow-up to b68 round 4, 2026-09-03): the
       pdh_break_w10 arm (scripts/b68e_pdh_lab.py, 1.0*ATR stop beyond the previous
       TRADING day's extreme, close-confirmed) is the first lab arm that beats the live
@@ -78,13 +83,32 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       the 2026-08-30 audit for blocking later B setups — the same blocking argument
       applies to a lane entry that is still open when a funnel A setup appears. Do NOT
       wire anything live on the strength of one fresh set. Read-only analysis.
-- [ ] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
+      (progress 2026-09-03, round 5: a SECOND lane candidate now has lane data —
+      nr7_break_w10 (scripts/b68f_nr7_lab.py). Its fresh lane (data/backtest/
+      b68f_nr7_confirm.json) is the strongest probe yet: n 499 vs funnel 323,
+      tot_R 309.5 vs 189.2 (+120R incremental — ~8x what pdh's lane added),
+      lane exp_R 0.620 ABOVE the funnel's 0.586 — which also proves the lane
+      is NOT funnel-trades + free extras: the arm's open positions BLOCK some
+      funnel entries (one-position model), changing the mix. b70 must now
+      compare BOTH lanes (pdh vs nr7 vs funnel+pdh+nr7 stacked), measure the
+      blocking cost explicitly, and replay on cached + >=2 fresh fetches
+      before any capacity decision.)
+- [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
       plus the contracting-halves condition never co-occur on gold M15. Either
       loosen the definition to something that actually fires (measure the range
       distribution first) or remove it from the lab registry so future rounds do
       not read "compression tested" as "compression measured". Small, lab-only.
+      (done 2026-09-03 via b68 round 5: range_probe in scripts/b68f_nr7_lab.py MEASURED
+      the distribution — 12-bar range/ATR(50) ratio min 0.671, p05 1.83, median 3.35;
+      the 0.9*ATR tightness clause fires 1/2940 bars, the full b63 combo 0/2940 — so the
+      gate was mathematically unreachable on gold M15, not "tested and flat". The arm is
+      annotated DEAD at its definition site (b63_smc_rtm_lab.py) with the numbers, the
+      loosened definition that actually fires (NR7 squeeze, 506 occurrences) was
+      implemented and MEASURED this round (rejected as replacement, positive lane), and
+      tests/test_b68f_nr7_lab.py pins combo_count<=2 + nr7_count>100 from the shipped
+      JSON so the premise can't rot silently.)
 - [x] b66 Absolute REPO-PATH literals — the b64 bug class one level down (reusable procedure from b64/b65): the b64 scan pins hardcoded HOST literals, but the same "works on this box, silently wrong anywhere else" shape sits in hardcoded filesystem paths: scripts/probe_gates.py and scripts/measure_neutral.py do `sys.path.insert(0, '/home/ai/hermes-trading')` + `load_dotenv('/home/ai/hermes-trading/.env')`, scripts/gen_backtest_report.py opens `/home/ai/hermes-trading/reports/...` and `.../data/backtest/sweep_results_v2.json` as literals, scripts/offsite_backup.py BASE, scripts/autopilot_digest.py ROOT, notifier/dashboards.py ROOT (b39-justified: read-only by design), engines/paths.py PRODUCTION_ROOT (the ONE canonical default — allowlist material), scripts/autopilot.sh's cd + inline python paths. Move the repo or run under another user and each of these either breaks LOUDLY (good) or reads/writes the WRONG tree while reporting success (the b46/b48 disease from the filesystem side — e.g. a digest pointed at an old checkout summarizes stale state). Fix: extend the b64 analyzer with a path-literal rule — any production .py/.sh containing the literal '/home/ai/hermes-trading' (or any absolute path under a home dir that engines/paths.PRODUCTION_ROOT also resolves to) outside the allowlist fails and names the file; heal consumers to Path(__file__)-derived roots or engines.paths accessors (b39 pattern), allowlist the canonical default with a written reason + liveness check (b40 rule), and pin the two-language scope + anti-vacuity floors the b64 file already documents. Small, read-only.
 - [x] b65 Bridge consumers must bootstrap their OWN env (found by the b64 audit, healed same run): b64 scans literals; b52-b63 scan env READS — a file that resolves the bridge through bridge_client and never loads .env is invisible to ALL of them, and that is exactly what the audit turned up twice in production files. (1) cli.py imported bridge_client with NO load_dotenv: every `cli.py status` call went out tokenless → 'Bridge: OK' next to 'Account: HTTP_401', and the positions line skipped the ok-check, so a 401 printed 'Open Positions: 0' — an auth failure rendered as an empty account (verified live: 401s + balance-less output before the fix, $4982.77 after). (2) cli.py `run` had `os.environ['HERMES_DRY_RUN'] = str(args.live).lower()` on a store_true flag — INVERTED: bare `cli.py run` wrote 'false' (= LIVE, real orders on this box's .env) and `--live` wrote 'true' (= dry-run). (3) hermes_runtime.main() read no env and called cycle() with its default dry_run=False — a bare `python3 hermes_runtime.py` was a live-order-by-accident path (saved only by the 401s from the same missing bootstrap). All three healed: shared try-dotenv-except-env_loader pattern (b30/env_loader rule), dry-run default matching hermes_master's parse, positions ok-check; hermes_master (production entry, always passed dry_run=DRY_RUN) untouched. Tripwire: tests/test_b65_env_bootstrap.py — AST scan: every production file that CONSTRUCTS BridgeClient must CALL load_dotenv (43 consumer files, all clean after the heal), scope floor ≥40 ctor sites, pre-b65 replay, and BEHAVIOURAL subprocess tests: cli import restores the token, `cli.py run` → DRY=true / `--live` → DRY=false through the real argparse with hermes_master stubbed, cmd_status with a fake 401 bridge must print ❌ never '0', runtime main() knob wiring + safe-default source pin. PROVEN to bite: HEAD cli.py restored → 4 RED; HEAD hermes_runtime.py → 2 RED; restored. 471 green, live cycle rc=0 (monitor, no_trade).
       (done 2026-09-03: see b65 entry above — implemented, tested, and shipped inside the b64 run as the live-finding follow-up, same convention as b63's bridge_health_monitor heal.)
@@ -183,6 +207,37 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 
 ## Findings
 
+- 2026-09-03 b68 round 5 — NR7 volatility-compression breakout
+  (scripts/b68f_nr7_lab.py + b68f_confirm_nr7.py, live-parity funnel, 0.20$
+  spread, b60 ladder): the compression->expansion family, finally MEASURED —
+  b63's compression arm was mathematically dead (b69, done this run: the
+  12-bar range/ATR(50) ratio on gold M15 has MIN 0.671 and p05 1.83, so the
+  "<=0.9*ATR" gate fired 1/2940 bars and the full combo 0/2940). The healed
+  definition is Carter's NR7 (narrowest plain range of the last 7 bars, 506
+  occurrences on cached): enter next-bar open on a CLOSE-CONFIRMED break of
+  the squeeze range within 6 bars. Cached 3000 M15 ladder: nr7_break_c
+  +0.584R (n=326), nr7_break_w10 +0.598R (n=218) vs funnel +0.854R — the
+  best cached numbers of any standalone arm since the loop began. Fresh
+  6000 M15: +0.460R (n=708) / +0.517R (n=455) vs funnel +0.586R (n=323) on
+  the SAME bars -> REJECTED as replacement (loses both sets, per the merit
+  bar). But the ADDITIVE-LANE probe (funnel-first, arm on free bars, one
+  position at a time) is the strongest yet: lane n 499, tot_R 309.5 vs
+  funnel 189.2 (+64% total R), lane exp_R 0.620 vs funnel 0.586 — the FIRST
+  lane whose per-trade expectancy is ABOVE the funnel's (pdh's lane diluted
+  -0.017R; nr7's lane ADDS +0.034R while adding 176 more trades), dd 6.3
+  vs 5.0. Two independent positive lanes (pdh, nr7) now queue at b70; the
+  capacity analysis must compare both plus a stacked lane on >=2 fresh
+  fetches. Nothing wired live.
+  PATTERN UPDATE: nr7_break_c's fresh n=708 (2.2x the funnel) with exp_R
+  still 0.46 says the squeeze-break signal is COMMON and mildly positive on
+  its own, and nr7_break_w10 is the second arm (after pdh_break_w10) whose
+  cached-to-fresh move beats the funnel's own decay (0.598->0.517, -14%,
+  vs the funnel's 0.854->0.586, -31%) — consistent with the funnel's cached
+  0.854 bar being partly dataset drift rather than pure edge. CAUTION for
+  b70: in the lane model an open arm position BLOCKS any funnel signal that
+  arrives mid-trade (the engine is one-position-at-a-time), so lane exp_R
+  0.620 is not automatically "the funnel's trades + free extra R" — the
+  blocking cost is exactly what b70's gate analysis must measure.
 - b66/b66b EXIT-GRID ROUND 2 (2026-09-03, REJECTED-NO-CHANGE, incumbent kept):
   2D grid TP1-step x partial-share on the winning trail=.30. TP1: .60 wins M5
   (+2.1R) but .45 wins M15 (+7.0R) — contradictory, incumbent .50 sits between

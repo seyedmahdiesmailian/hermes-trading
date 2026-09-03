@@ -893,6 +893,15 @@
       "previous": "15B"
     },
     {
+      "title": "MPC Member Pill Speaks",
+      "currency": "GBP",
+      "impact": "low",
+      "date": "2026-09-03T11:00:00-04:00",
+      "time": "",
+      "forecast": "",
+      "previous": ""
+    },
+    {
       "title": "FOMC Member Hammack Speaks",
       "currency": "USD",
       "impact": "low",
@@ -1019,5 +1028,5 @@
       "previous": "55.1"
     }
   ],
-  "cached_at": "2026-09-03T10:30:03.637405+00:00"
+  "cached_at": "2026-09-03T16:45:02.730073+00:00"
 }

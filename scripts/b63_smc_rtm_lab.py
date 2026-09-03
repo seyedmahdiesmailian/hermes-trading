@@ -206,6 +206,14 @@ def turtle_soup(i):
 
 
 # ---------- 5) compression -> expansion ----------
+# b69 DEAD ARM (measured 2026-09-03, scripts/b68f_nr7_lab.py range_probe):
+# on 2940 cached M15 gold bars the 12-bar range / ATR(50) ratio has MINIMUM
+# 0.671 and 5th percentile 1.83 — the "<= 0.9*ATR" tightness gate below
+# fires 1 time in 2940, and the full combo (tight AND contracting AND
+# impulse) 0 times. This arm has NEVER measured anything; do not read
+# trades:0 in b63_smc_rtm_lab.json as "compression has no edge". The
+# loosened definition that actually fires (NR7 squeeze, 506 occurrences) is
+# tested in scripts/b68f_nr7_lab.py — kept here unchanged for history.
 def compression(i):
     if i < 60:
         return None
