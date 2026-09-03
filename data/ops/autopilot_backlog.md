@@ -61,6 +61,35 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       REJECTED as replacement (loses BOTH sets), but its additive lane is the strongest
       probe yet (fresh lane exp_R 0.620 > funnel 0.586, tot_R +64%) -> data appended to
       b70's queue, nothing wired. See Findings for the full numbers + the b69 range probe.
+      Round 6 (b68r6, TRADING-DAY EXTENSION continuation — the path-shape family the
+      b68g probe picked on the strongest raw drift this loop has ever measured, t=7.4)
+      is REJECTED on every axis: cached 0.327/0.361 vs 0.854, fresh 0.312/0.345 vs
+      0.585, and its additive lane is NEGATIVE (0.410 vs 0.585 — the weakest lane of
+      three, because the arm fires 2.5x more often than the funnel and squats in the
+      single slot). METHOD RULE from it: raw drift != tradeable edge (overlapping
+      samples inflate t; only de-overlapped trade-level R is honest). See Findings.
+      Remaining unmeasured families: none of the classic ones left (mean-rev, momentum,
+      trend+pullback, level breakout, compression breakout, SMC/RTM, day path-shape,
+      gap, session drift — all screened and rejected). Next rounds should either (a)
+      test a COMBINATION the funnel does not already use (e.g. two of the rejected
+      families gated on each other), or (b) stop and let b70's capacity question decide.
+- [ ] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
+      (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
+      exp_R +1.096 — the best number any lab arm has ever produced — and it was an
+      artefact: mean stop 5.66 ATR from entry (max 11.2) and mean hold 87 M15 bars
+      (max 520 = 5+ days), i.e. a swing position scored on an intraday board. Under
+      the live 36h time_exit (backtest_ohlc time_stop_bars=144) it collapsed to
+      +0.787R on n=41. The lab harness (scripts/b68*_lab.py + the confirm scripts)
+      never passes time_stop_bars, so ANY arm whose natural hold exceeds 36h is
+      measured under exit rules live will never give it. Fix: add a
+      `time_stop_bars=144` pass to the standard arm grid (or, cheaper and equally
+      honest: report mean/max hold in bars alongside exp_R and FAIL the round's own
+      summary if mean_hold > 144 without a time-stopped re-measurement), and pin it
+      with a test that the shipped JSON carries the hold column. Small, lab-only,
+      read-only. Also worth pinning in the same pass: the fade/level-stop geometry
+      trap (risk <= 0 silently drops every signal -> trades:0 read as "no edge";
+      b69 class, caught in round 6's own control arm) — a one-line assertion in the
+      lab runner that any arm reporting trades:0 must name which clause never fired.
 - [ ] b70 ADDITIVE-LANE CAPACITY ANALYSIS (follow-up to b68 round 4, 2026-09-03): the
       pdh_break_w10 arm (scripts/b68e_pdh_lab.py, 1.0*ATR stop beyond the previous
       TRADING day's extreme, close-confirmed) is the first lab arm that beats the live
@@ -93,6 +122,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       compare BOTH lanes (pdh vs nr7 vs funnel+pdh+nr7 stacked), measure the
       blocking cost explicitly, and replay on cached + >=2 fresh fetches
       before any capacity decision.)
+      (progress 2026-09-03, round 6: a THIRD lane candidate has data and it is
+      NEGATIVE — dayext_cont_a10 (scripts/b68g_dayext_lab.py) lane exp_R 0.410
+      vs funnel 0.585, dd_R 17.6 vs 5.0 (data/backtest/b68g_dayext_confirm.json).
+      Ranking so far: nr7 0.620 > pdh 0.559 > funnel 0.585 > dayext 0.410, so
+      b70 can DROP dayext from the lane comparison and decide between nr7 and
+      pdh (note nr7 is the only lane above the funnel's own per-trade R). New
+      capacity sub-question the dayext lane exposed: lane quality is
+      anti-correlated with how OFTEN the arm fires (dayext fires on 800 bars =
+      2.5x the funnel's 323 and crowds the single slot; nr7 455, pdh 108) —
+      b70 should measure slot-contention directly, not just tot_R.)
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -206,6 +245,44 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-03 b68 round 6 — TRADING-DAY EXTENSION continuation
+  (scripts/b68g_probe.py screen + b68g_dayext_lab.py + b68g_confirm_dayext.py,
+  live-parity funnel, 0.20$ spread, b60 ladder). New family: PATH SHAPE of the
+  trading day (how far price has moved from the day's open), not a level and
+  not an indicator. The probe screened 10 conditions by raw ATR-normalised
+  forward drift and the result was one-sided: |close - day_open| >= 2.5 ATR
+  after 13:00 UTC CONTINUES (+0.400 ATR at 8 bars t=4.9, +0.945 ATR at 24 bars
+  t=7.4, n=918) while fading it LOSES — the strongest raw drift the loop has
+  ever measured. THE FINDING IS THAT THE DRIFT DID NOT CONVERT: cached 3000
+  M15 ladder dayext_cont_a10 +0.327R (n=407), _e25 +0.361R (n=328) vs funnel
+  +0.854R; fresh 6000 M15 +0.312R (n=800) / +0.345R (n=672) vs funnel +0.585R
+  on the SAME bars -> REJECTED as replacement (loses both sets, by 2x). The
+  ADDITIVE-LANE probe is NEGATIVE too — lane n 747, exp_R 0.410 vs funnel
+  0.585, dd_R 17.6 vs 5.0: the arm fires on 800 bars (2.5x the funnel's 323),
+  so a funnel-first lane lets it squat in the single slot through real funnel
+  setups and the mix degrades. It is the WEAKEST of the three lanes measured
+  (pdh 0.559, nr7 0.620, dayext 0.410) despite the strongest raw drift.
+  METHOD RULE (reusable, added as todo b71): a high raw-drift t-stat is NOT
+  evidence of tradeable edge — P3/P4's samples overlap (2310 and 918 of 2940
+  bars, most of them consecutive), so serial correlation inflates t; only the
+  de-overlapped trade-level R (one position at a time) is honest, and here it
+  says the drift is eaten by the stop. CONTROL arm: fading the extension
+  (dayext_fade_a10) scored -0.136R plain / +0.150R ladder (n=321) — mean
+  reversion on the day-shape family is dead on gold M15, matching vwap/bb/rsi.
+  GEOMETRY TRAP caught in this round's own control (b69 class): a fade arm
+  with a LEVEL-anchored stop puts the stop on the wrong side of the entry
+  (risk <= 0) and silently drops every signal -> trades:0 that reads as "no
+  edge" when nothing was measured; pinned by
+  tests/test_b68g_dayext_lab.py::TestDeadArmTrap. SECOND geometry trap: the
+  level-anchored CONTINUATION arm (dayext_cont_w10, stop at day_open +/- 1 ATR)
+  printed +1.096R — its mean stop is 5.66 ATR from entry (max 11.2) and its
+  mean hold is 87 bars (max 520), i.e. it is a swing position, not an intraday
+  trade, and its R is not comparable to the funnel's ~1 ATR risk. Under the
+  LIVE 36h time_exit (time_stop_bars=144) it collapses to +0.787R (n=41,
+  net_R 32.9 -> 32.3, dd -1.0 -> -3.0). RULE: any lab arm whose mean hold
+  exceeds the live time-exit must be re-measured with time_stop_bars=144
+  before its exp_R is quoted. Nothing wired live.
 
 - 2026-09-03 b68 round 5 — NR7 volatility-compression breakout
   (scripts/b68f_nr7_lab.py + b68f_confirm_nr7.py, live-parity funnel, 0.20$

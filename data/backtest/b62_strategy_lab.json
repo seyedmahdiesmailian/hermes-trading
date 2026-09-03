@@ -174,5 +174,47 @@
     "fresh_n": 455,
     "funnel_fresh_exp_R": 0.586,
     "verdict": "REJECTED 2026-09-03 as replacement (loses cached 0.854 and fresh 0.586); lane probe POSITIVE (exp_R 0.620>0.586, tot_R +64%) -> feeds b70"
+  },
+  {
+    "trades": 407,
+    "exp_R": 0.327,
+    "WR%": 45.0,
+    "avg_win_R": 1.98,
+    "avg_loss_R": -1.02,
+    "net_R": 132.9,
+    "maxDD_R": -14.0,
+    "name": "dayext_cont_a10",
+    "fresh_exp_R": 0.312,
+    "fresh_n": 800,
+    "funnel_fresh_exp_R": 0.585,
+    "verdict": "REJECTED 2026-09-03 as replacement (loses cached 0.854 and fresh 0.585); lane probe NEGATIVE (lane exp_R 0.41 < funnel 0.585) - DILUTES the funnel, does not add to it. Weakest lane probe of the three measured (pdh +0.559, nr7 +0.620)."
+  },
+  {
+    "trades": 328,
+    "exp_R": 0.361,
+    "WR%": 45.7,
+    "avg_win_R": 2.01,
+    "avg_loss_R": -1.02,
+    "net_R": 118.5,
+    "maxDD_R": -15.6,
+    "name": "dayext_cont_a10_e25",
+    "fresh_exp_R": 0.345,
+    "fresh_n": 672,
+    "funnel_fresh_exp_R": 0.585,
+    "verdict": "REJECTED 2026-09-03 as replacement (loses cached 0.854 and fresh 0.585); lane probe NEGATIVE (lane exp_R 0.41 < funnel 0.585) - DILUTES the funnel, does not add to it. Weakest lane probe of the three measured (pdh +0.559, nr7 +0.620)."
+  },
+  {
+    "trades": 321,
+    "exp_R": 0.15,
+    "WR%": 38.9,
+    "avg_win_R": 1.98,
+    "avg_loss_R": -1.02,
+    "net_R": 48.2,
+    "maxDD_R": -20.9,
+    "name": "dayext_fade_a10",
+    "fresh_exp_R": null,
+    "fresh_n": null,
+    "funnel_fresh_exp_R": 0.585,
+    "verdict": "REJECTED 2026-09-03 (cached ladder +0.150R n=321, plain -0.136R). CONTROL arm: mean reversion on the day-shape family is dead on gold M15, matching vwap/bb/rsi. Not run on fresh - it lost the cached bar by 5.7x."
   }
 ]

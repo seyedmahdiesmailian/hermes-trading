@@ -1,0 +1,103 @@
+{
+  "_shape_probe": {
+    "bars_after_open_hour": 1434,
+    "dist_median": 3.94,
+    "dist_p75": 6.91,
+    "dist_p95": 12.89,
+    "dist_max": 24.74,
+    "fire_at_1.0atr": 1240,
+    "fire_at_1.5atr": 1130,
+    "fire_at_2.0atr": 1029,
+    "fire_at_2.5atr": 954
+  },
+  "dayext_cont_w10:plain": {
+    "trades": 8,
+    "exp_R": 0.23,
+    "WR%": 37.5,
+    "avg_win_R": 2.0,
+    "avg_loss_R": -0.83,
+    "net_R": 1.8,
+    "maxDD_R": -4.0
+  },
+  "dayext_cont_w10:ladder": {
+    "trades": 30,
+    "exp_R": 1.096,
+    "WR%": 73.3,
+    "avg_win_R": 1.86,
+    "avg_loss_R": -1.0,
+    "net_R": 32.9,
+    "maxDD_R": -1.0
+  },
+  "dayext_cont_a10:plain": {
+    "trades": 301,
+    "exp_R": 0.09,
+    "WR%": 37.2,
+    "avg_win_R": 1.97,
+    "avg_loss_R": -1.03,
+    "net_R": 27.0,
+    "maxDD_R": -21.1
+  },
+  "dayext_cont_a10:ladder": {
+    "trades": 407,
+    "exp_R": 0.327,
+    "WR%": 45.0,
+    "avg_win_R": 1.98,
+    "avg_loss_R": -1.02,
+    "net_R": 132.9,
+    "maxDD_R": -14.0
+  },
+  "dayext_cont_w10_e25:plain": {
+    "trades": 7,
+    "exp_R": -0.021,
+    "WR%": 28.6,
+    "avg_win_R": 2.0,
+    "avg_loss_R": -0.83,
+    "net_R": -0.1,
+    "maxDD_R": -4.0
+  },
+  "dayext_cont_w10_e25:ladder": {
+    "trades": 25,
+    "exp_R": 0.701,
+    "WR%": 60.0,
+    "avg_win_R": 1.84,
+    "avg_loss_R": -1.0,
+    "net_R": 17.5,
+    "maxDD_R": -2.0
+  },
+  "dayext_cont_a10_e25:plain": {
+    "trades": 242,
+    "exp_R": 0.163,
+    "WR%": 39.7,
+    "avg_win_R": 1.97,
+    "avg_loss_R": -1.03,
+    "net_R": 39.5,
+    "maxDD_R": -16.1
+  },
+  "dayext_cont_a10_e25:ladder": {
+    "trades": 328,
+    "exp_R": 0.361,
+    "WR%": 45.7,
+    "avg_win_R": 2.01,
+    "avg_loss_R": -1.02,
+    "net_R": 118.5,
+    "maxDD_R": -15.6
+  },
+  "dayext_fade_a10:plain": {
+    "trades": 251,
+    "exp_R": -0.136,
+    "WR%": 29.5,
+    "avg_win_R": 1.98,
+    "avg_loss_R": -1.02,
+    "net_R": -34.1,
+    "maxDD_R": -53.8
+  },
+  "dayext_fade_a10:ladder": {
+    "trades": 321,
+    "exp_R": 0.15,
+    "WR%": 38.9,
+    "avg_win_R": 1.98,
+    "avg_loss_R": -1.02,
+    "net_R": 48.2,
+    "maxDD_R": -20.9
+  }
+}
