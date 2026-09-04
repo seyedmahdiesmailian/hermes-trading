@@ -64,14 +64,20 @@ def _tg(text: str, token: str, chat=None):
     chat = chat or os.getenv('TELEGRAM_CHAT_ID', '194015957')
     if not token:
         return
-    import urllib.request, urllib.parse
+    import json, urllib.request, urllib.parse
     try:
         url = f'https://api.telegram.org/bot{token}/sendMessage'
         data = urllib.parse.urlencode({
             'chat_id': chat, 'text': text,
             'disable_web_page_preview': 'true',
         }).encode()
-        urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=10)
+        resp = json.loads(urllib.request.urlopen(
+            urllib.request.Request(url, data=data), timeout=10).read())
+        # b71: delivery receipts — a SKIP verdict with no visible message was
+        # undebuggable (sends were fire-and-forget). One line per send proves
+        # whether the daemon spoke and Telegram accepted.
+        log(f'tg send ok={resp.get("ok")} msg_id={resp.get("result", {}).get("message_id")} '
+            f'first_line={text.splitlines()[0][:40]!r}')
     except Exception as e:
         log(f'telegram send failed: {e}')
 
