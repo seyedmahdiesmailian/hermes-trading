@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-04T15:41:19.001647+00:00",
+ "last_run_utc": "2026-09-04T17:19:08.553313+00:00",
  "recent_commits": [
-  "5d35924 b71: signal daemon logs every Telegram send (ok/msg_id) \u2014 silent SKIP with no message was undebuggable",
-  "9a86ae2 b71 fix: b70 tests use hermetic env seam (set_data_root is shadowed by the verifier's HERMES_DATA_ROOT -> state bleed between tests -> 2 red on clean checkout)",
-  "2ce88e8 b71: isolate b70 pending tests to temp data root \u2014 they were writing fake ticket 9001 @4472 into PRODUCTION pending_orders.json, which made the live daemon fire a false 'LIMIT \u062d\u0630\u0641 \u0634\u062f' alert",
-  "92f62ee b71: allowlist _deploy_pending_bridge host chain (b64 tripwire)",
-  "e304c63 b71: multi-leg signal entries (MORE BUY / '\u06f7\u06f2 \u0648 \u06f8\u06f2 \u062e\u0631\u06cc\u062f') + b62 tripwire fix \u2014 pending gate as DISABLE-flag"
+  "cdd894c autopilot heal: b73 shipped two scripts with a broken env bootstrap (from engines.env_loader import load_env \u2014 module does not exist, real one is root env_loader.py with load_dotenv); radin_replay died on ImportError on this box (no python-dotenv), export_channel_history silently passed (no token). b42 HEAD-scan + b65 tripwires caught it; both healed to the repo-standard try/except pattern. 5 red -> 2 red (HEAD-scan closes with this commit)",
+  "979514a b73: document replay P&L units (0.01-lot XAUUSD, spread-free = optimistic)",
+  "32ff95f b73: replay analysis \u2014 gate validated, do NOT loosen RR to ladder",
+  "51c1ca2 b73: replay RADIN's 90-day channel history against real M5 candles",
+  "91c344a b72: add day-low diagnostic; confirms today's XAUUSD low 4365.48 (19:30 Tehran) \u2014 RADIN TP3 at 4360 never traded"
  ]
 }

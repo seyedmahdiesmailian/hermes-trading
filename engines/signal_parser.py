@@ -27,8 +27,13 @@ SYMBOL_MAP = {
     "spx500": "SPX500", "sp500": "SPX500",
 }
 
-BUY_KEYWORDS = {"buy", "long", "buy limit", "buy stop", "خرید", "لانگ", "بای", "🟢", "📈", "⬆️"}
-SELL_KEYWORDS = {"sell", "short", "sell limit", "sell stop", "فروش", "شورت", "سل", "🔴", "📉", "⬇️"}
+BUY_WORDS = {"buy", "long", "buy limit", "buy stop", "خرید", "لانگ", "بای"}
+SELL_WORDS = {"sell", "short", "sell limit", "sell stop", "فروش", "شورت", "سل"}
+DIRECTION_EMOJI_BUY = {"🟢", "📈", "⬆️"}
+DIRECTION_EMOJI_SELL = {"🔴", "📉", "⬇️"}
+
+BUY_KEYWORDS = BUY_WORDS | DIRECTION_EMOJI_BUY
+SELL_KEYWORDS = SELL_WORDS | DIRECTION_EMOJI_SELL
 
 PERSIAN_DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
 ARABIC_DIGITS = str.maketrans('٠١٢٣٤٥٦٧٨٩', '0123456789')
@@ -42,7 +47,14 @@ def normalize_digits(text: str) -> str:
 TP_PATTERNS = [
     r'(?:tp2|target2)[\s:=.]*(\d+\.?\d*)',
     r'(?:tp1|target1)[\s:=.]*(\d+\.?\d*)',
-    r'(?:tp|target|take\s*profit|تیک\s*پروفیت|تی\s*پی|تی‌پی|تی‌\s*پی|تي\s*پی|هدف|تارگت|سود)[\s:=.]*(\d+\.?\d*)',
+    # b74: the optional rung index must be consumed, not captured. On
+    # "TP1 4389\nTP2 4392" the old pattern matched "TP" then captured the
+    # digit "1" as the price, so every line-per-line ladder (goldfree,
+    # gtmofx, goldsystem, gtmo) lost its targets and was scored on TP1 only.
+    # The index is only a rung number when a full 4-digit XAUUSD price
+    # follows it — otherwise "تی پی 4380" would lose its leading digit.
+    r'(?:tp|target|take\s*profit|تیک\s*پروفیت|تی\s*پی|تی‌پی|تي\s*پی|هدف|تارگت|سود)'
+    r'\s*(?:\d\s*(?=[:=.]?\s*\d{4}))?\s*[:=.]?\s*(\d+\.?\d*)',
 ]
 
 # b72: channels post a TARGET LADDER, not one TP — "تی پی 77 ، 87 ، 97 ، 507".
@@ -184,17 +196,22 @@ def _extract_side(text: str) -> str:
         return "BUY"
     if "sellzone" in lower or "sell zone" in lower:
         return "SELL"
-    for kw in SELL_KEYWORDS:
+    # b74: emoji are decoration, not direction. Channels put 🔴 next to the
+    # STOP line of a BUY ("🔵Buy 4404/4407 / 🔴Stop 4398"), so a red circle
+    # anywhere in the message used to flip buys into sells — which produced
+    # stops on the wrong side of entry and made 32% of goldsystem legs
+    # untradeable garbage. Decide on words first; only fall back to emoji
+    # when no word carries the direction.
+    for kw in SELL_WORDS:
         if kw in lower:
             return "SELL"
-    for kw in BUY_KEYWORDS:
+    for kw in BUY_WORDS:
         if kw in lower:
             return "BUY"
-    # Fallback: check for directional arrows or emojis
-    if "🟢" in text or "📈" in text or "⬆️" in text:
-        return "BUY"
     if "🔴" in text or "📉" in text or "⬇️" in text:
         return "SELL"
+    if "🟢" in text or "📈" in text or "⬆️" in text:
+        return "BUY"
     return ""
 
 
@@ -318,6 +335,13 @@ def _resolve_ladder(sig, current_price: float, band: tuple = None):
     tps = [(expand_abbreviated_price(t, anchor,
             prefer_below=(sig.side == "SELL"), prefer_above=(sig.side == "BUY"))
             if 0 < t < 1000 else t) for t in (sig.tps_raw or [])]
+    # b74b: channels typo their far rungs — goldfree posted "TP7 39980" for a
+    # 4024 market (meant 3998). A rung an order of magnitude away from entry is
+    # a typo, not a target; left in, it made one signal read as RR 286 and
+    # swung the replay by -17,000$. Drop rungs that are not the same order of
+    # magnitude as the entry (gold has not doubled or halved in this window).
+    if entry > 0:
+        tps = [t for t in tps if t > 0 and entry / 2 <= t <= entry * 2]
     return entry, sl, tp, tp2, entries, tps
 
 
@@ -396,6 +420,13 @@ def parse_signal(text: str, current_price: float = 0.0,
     # Raw values stay raw here; _resolve_ladder expands them against the
     # ENTRY, which is the only correct anchor for abbreviated rungs.
     sig.tps_raw = _extract_tp_ladder(text)
+    # b74: a line-per-line ladder ("TP1 4389 / TP2 4392 / TP3 4395") is the
+    # same object as the comma run — several targets on one signal. When the
+    # comma pattern found nothing but TP_PATTERNS recovered 2+ distinct
+    # rungs, treat those as the ladder so it reaches sig.tps and the gate
+    # can see the real reward instead of TP1 alone.
+    if not sig.tps_raw and len(tps) > 1:
+        sig.tps_raw = list(tps)
     if sig.tps_raw:
         tps = sig.tps_raw + [t for t in tps if t not in sig.tps_raw]
     if tps:

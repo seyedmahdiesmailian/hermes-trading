@@ -125,7 +125,13 @@ def resolve_leg(candles, start_i, side, entry, sl, tps, horizon_h=48):
 
 
 def walk(candles, side, entry, sl, tps, fill_i, end_i):
-    """From the fill candle onward, first-touch of SL vs each TP rung."""
+    """From the fill candle onward, first-touch of SL vs each TP rung.
+
+    b74c: SL is tested BEFORE the rungs on every candle, including the fill
+    candle. When one bar touches both the stop and the target, OHLC cannot
+    say which came first, so this resolves the ambiguity against us — the
+    replay is pessimistic on that point, not optimistic.
+    """
     def hits_sl(c):
         return c[2] >= sl if side == 'SELL' else c[3] <= sl
 
@@ -289,6 +295,22 @@ def main():
         verdict = gate_verdict(sig, bias) if bias else {}
         legs = sig.entries or [sig.entry]
         rungs = sig.tps or ([sig.tp] if sig.tp else [])
+        # b74d: channels typo their stops — goldfree posted "BUY 4385 ...
+        # SL 4470" (meant 4370). A stop on the wrong side of entry is not a
+        # tradeable order: walk() would call it 'sl' yet book a profit,
+        # because price simply never reached the impossible level. Skip it.
+        bad_geom = [l for l in legs if (
+            (sig.side == 'BUY' and sig.sl >= l) or
+            (sig.side == 'SELL' and sig.sl <= l))]
+        if bad_geom:
+            rows.append({'date': m['date'], 'text': m['text'][:70], 'leg': 0,
+                         'skip': 'sl_wrong_side', 'side': sig.side,
+                         'entry': sig.entry, 'sl': sig.sl, 'tp1': sig.tp,
+                         'rungs': len(rungs), 'pnl_tp1': 0.0,
+                         'pnl_ladder': 0.0, 'outcome_tp1': '', 'outcome_ladder': '',
+                         'bias': bias or '', 'verdict': '', 'score': '',
+                         'rr_tp1': 0.0, 'rr_ladder': 0.0, 'mfe': 0.0, 'mae': 0.0})
+            continue
         start_i = bisect_start(candles, ts)
         for leg in legs:
             fill_i, _, end_i = find_fill(candles, start_i, sig.side, leg)

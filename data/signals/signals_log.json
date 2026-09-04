@@ -1132,5 +1132,115 @@
         ]
       }
     }
+  },
+  {
+    "timestamp": "2026-09-04T17:27:32.530152+00:00",
+    "raw_text": "[💬 از GTMoFx (goldtradermo)]\n⏩🔔   ACCOUNT MANAGEMENT PERFORMANCE 🎭\n\n➡️  PROFIT:- 1655.80$ 💶 ❤️📈📈\n\n➡️ CAPITAL:- 1000$ 💶 🎯🎯\n\n➡️ MY PROFIT SHARING:-  827.90$ 💶  🫴🫴🫴\n\nIF ANYONE INTERESTED DM US👇🔝🦁🦁\n\n\n📱@GoIdTraderInfo✅️",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 1655.8,
+      "entries": [
+        1655.8
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 1655.8,
+        "entries": [
+          1655.8
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.6,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T17:29:42.582403+00:00",
+    "raw_text": "[💬 از GTMoFx (goldtradermo)]\n⏩🔔   ACCOUNT MANAGEMENT PERFORMANCE 🎭\n\n➡️  PROFIT:- 12,610$ 💶 ❤️📈📈\n\n➡️ CAPITAL:- 10,000$ 💶 🎯🎯\n\n➡️ MY PROFIT SHARING:-  6,305$ 💶  🫴🫴🫴\n\nIF ANYONE INTERESTED DM US👇🔝🦁🦁\n\n\n📱@GoIdTraderInfo✅️",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4412.0,
+      "entries": [
+        4412.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4412.0,
+        "entries": [
+          4412.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.6,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
   }
 ]
