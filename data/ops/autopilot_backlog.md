@@ -184,6 +184,23 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       protocol, not a winner; wiring a new filter into the live funnel is a
       human decision regardless. RESULT 3: the h4pdh lane loses W3
       (0.515 vs 0.528) — lane evidence now 2-of-3. Nothing wired. See Findings.
+      Round 14 (b68n4, 2026-09-04 — b74's FOURTH DRAW, scripts/
+      b68n4_fourth_draw.py + W4 slice in b68l_windows.py + 19 tests): W4
+      (2025-07-09→2025-10-08, zero overlap asserted) settles the round-13
+      candidate. funnel_h4t_agree DIES: 0.517 (n=267) vs funnel 0.532
+      (n=340) on the SAME bars. The margin series read CHRONOLOGICALLY
+      (W4 oldest → W1 newest) is -0.015/+0.008/+0.032/+0.093 — MONOTONIC
+      in recency: the H4-state gate's edge is a property of the RECENT
+      regime, not of gold M15 (the loop's cleanest decay curve, and the
+      b74 protocol's decay-pricing question answered NO). The round-12
+      champion pdh_h4t_agree beats W4 (0.597 vs 0.532, n=82) but failed
+      W3 — 3-of-4, still not replication; the lane beats W4 (0.546) after
+      losing W3 — also 3-of-4. FOUR independent windows now put the
+      funnel at 0.524/0.521/0.528/0.532 (stable ~0.52-0.53) and NO lab
+      arm has ever cleared all of them. After 14 rounds the screening
+      question is answered: the live funnel's entry filter remains the
+      best measured thing; future rounds must justify themselves against
+      b77's decay rule before burning a draw. Nothing wired. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -335,6 +352,14 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       FAILS W3) and pdh_h4t_agree (0.657/0.927/0.505 — FAILS W3) as
       replacement candidates, both now 2-of-3; no lane clears three windows.
       Read-only.)
+      (progress 2026-09-04, round 14: W4 CLOSES THE BOOK on the current
+      decision set — funnel_h4t_agree dies on the fourth draw (0.517 vs
+      funnel 0.532), the h4pdh lane beats W4 (0.546) but is 3-of-4 after
+      losing W3, and pdh_w10 loses W4 (0.480, 2-of-4). No arm or lane
+      clears ALL FOUR independent windows, so b70's capacity question has
+      nothing left to weigh: the answer on clean windows is "no lane earns
+      a slot". The four-window funnel baseline (0.524/0.521/0.528/0.532)
+      is the bar any future lane must clear on EVERY window. Read-only.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -424,6 +449,29 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       hand-fetching, plus a tripwire test that no scripts/b*_*_confirm*.py
       fetches last-N bars without recording an overlap fact. Read-only,
       lab-only.
+- [ ] b77 CHRONOLOGICAL-DECAY TEST BEFORE SPENDING A DRAW (reusable procedure
+      from b68 round 14, 2026-09-04 — the todo round 14's Findings promised but
+      never wrote; added by the round-14 harvest run). The fourth draw killed
+      funnel_h4t_agree, and the SHAPE of the kill is the lesson: margins
+      quoted window-by-window (+0.093/+0.032/+0.008/−0.015) look like a
+      candidate slowly decaying toward the bar, but read in CHRONOLOGICAL order
+      (W4 oldest → W1 newest) they are MONOTONIC INCREASING — the edge grows
+      with recency, which means it is a property of the recent regime, not of
+      the market. A candidate like that cannot be expected to survive forward
+      out of the regime that feeds it, and no further draw can rescue it.
+      RULE: before spending a new window draw on a candidate, assemble every
+      already-measured window for that arm, sort by TIME (not by window label),
+      and fit/inspect the margin series: if the margins are monotone in
+      recency (all same-sign slope, |slope| >= 0.02R per window-step) the
+      candidate is regime-gifted — STOP, do not burn the draw, record the
+      decay curve as the verdict. The check is 5 lines over the ledger rows
+      the round already ships (see b68n4_fourth_draw.verdict()'s margin_series
+      + the chronological-monotonicity test in tests/test_b68n4_fourth_draw.py
+      for the exact shape); fold it into b74's protocol as step (0) — a
+      pre-flight, cheaper than the draw itself. Also pin: window labels are
+      NEWEST-FIRST (W1 newest), so any code that reads a "decay W1→W4" series
+      is reading time BACKWARDS — the round-14 near-miss was exactly this
+      misread. Read-only, docs/procedure + a small helper only.
 - [ ] b74 CANDIDATE PROMOTION PROTOCOL (reusable procedure from b68 round 9,
       the FIRST arm ever to pass the merit bar — the loop has never needed
       this before): a lab arm that beats the funnel on both sets is a
@@ -483,6 +531,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       and the pooled-margin trend (a gate whose edge decays to +0.008R may
       be real-but-worthless — the protocol should price the DECAY, not just
       the mean). Read-only.)
+      (progress 2026-09-04, round 14: THE DECAY QUESTION IS ANSWERED — the
+      fourth draw (W4) ran and funnel_h4t_agree DIES (0.517 vs funnel 0.532
+      on the same bars). The four margins in CHRONOLOGICAL order are
+      -0.015/+0.008/+0.032/+0.093 — a monotone ramp in RECENCY, so the
+      gate's edge is a recent-regime property, not a stable one; the
+      candidate is closed, no further protocol steps owed. pdh_h4t_agree
+      and the h4pdh lane are both 3-of-4 windows — also closed under an
+      all-windows rule. b74's remaining protocol pieces (live-gate-stack
+      filter, kill-switch streak math) have NO surviving candidate to run
+      on: every arm the loop ever produced is now screened out on >=3
+      independent windows. The protocol machinery stays for the next
+      candidate; the decay-pricing lesson is promoted to todo b77.)
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -596,6 +656,37 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-04 b68 round 14 — THE FOURTH DRAW KILLS THE CANDIDATE, AND THE
+  KILL SHAPE IS THE FINDING (scripts/b68n4_fourth_draw.py + W4 slice in
+  scripts/b68l_windows.py; 19 tests in tests/test_b68n4_fourth_draw.py).
+  Round 13's funnel_h4t_agree — the first arm ever to beat the live
+  funnel on all three independent windows — faces b74's fourth draw: W4
+  (2025-07-09→2025-10-08, 6000 M15 bars, zero overlap with cached/W1/W2/
+  W3 measured + asserted). RESULT: DIES — ladder_ts 0.517 (n=267) vs the
+  funnel's 0.532 (n=340) on the SAME bars. But the round's real output is
+  the SHAPE of the four margins. Quoted window-by-window they looked like
+  a decay W1→W4 (+0.093/+0.032/+0.008/−0.015); read in CHRONOLOGICAL
+  order (W4 oldest → W1 newest) they are MONOTONIC INCREASING: −0.015/
+  +0.008/+0.032/+0.093. The gate's edge grows with recency — it is a
+  property of the RECENT H4 regime (the loop's own cached 0.854 lesson
+  again, now at arm level), not of gold M15. That monotone curve is the
+  cleanest regime-dependence measurement the loop has ever produced and
+  it answers b74's round-13 "price the DECAY" question with a flat NO:
+  a candidate whose edge is a linear ramp in recency cannot be expected
+  to survive forward out of the regime that feeds it. SECONDARY ROWS:
+  pdh_h4t_agree (round-12 champion) BEATS W4 (0.597 vs 0.532, n=82) but
+  failed W3 — 3-of-4, not replication; its ungated control pdh_w10 loses
+  W4 (0.480) — 2-of-4; the h4pdh lane beats W4 (0.546) after losing W3 —
+  3-of-4. FOUR independent windows now bracket the funnel at 0.524/
+  0.521/0.528/0.532 — the live funnel's out-of-regime expectancy is
+  STABLE ~0.52-0.53R, and after 14 rounds NO lab arm has cleared all
+  four windows. The screening question the standing loop was created to
+  answer is now ANSWERED: the funnel's entry filter is the best measured
+  thing on this market; further single-arm rounds have low prior.
+  Nothing wired (hard rule); registry row funnel_h4t_agree carries all
+  four windows + the NOT-wired verdict. METHOD RULE → new todo b77
+  (chronological-decay test before any draw is spent).
 
 - 2026-09-04 b68 round 13 — W3 THIRD DRAW + THE H4-STATE GATE APPLIED TO
   THE FUNNEL ITSELF (scripts/b68l_windows.py W3 slice + scripts/

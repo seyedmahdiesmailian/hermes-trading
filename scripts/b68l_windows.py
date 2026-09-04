@@ -21,7 +21,12 @@ This module builds the windows the loop should have had from the start:
        draw: the round-12 champion pdh_h4t_agree replicated on W1+W2, and
        b74 requires >=2 MORE independent windows before a wiring proposal —
        W3 is the next uncontaminated slice the broker's 60000-bar history
-       can give).
+       can give);
+  W4 — the last 6000 M15 bars strictly before W3 (round 14, b74's FOURTH
+       draw: funnel_h4t_agree beat the funnel on W1/W2/W3 with margins
+       DECAYING +0.093→+0.032→+0.008, and b74's round-13 note says the
+       protocol must price the DECAY, not just the mean — W4 is the draw
+       that decides whether the candidate survives or dies).
 
 Each window ships with its H1/H4 context streams (strategy_signal needs
 80-bar H1/H4 windows up to each bar's time — the full fetched history is
@@ -56,6 +61,10 @@ OUT = os.path.join(_ROOT, "data", "backtest",
                    "b68l_independent_windows.json")
 WINDOW_BARS = 6000
 FETCH_COUNT = 60000          # broker gives 60000 M15 bars back to 2024-02
+# Ordered newest->oldest; each is 6000 M15 bars strictly before the previous.
+# W4 needs 5*6000=30000 bars before the cached set — the 60000-bar fetch
+# reaches 2024-02, so W4 (2025-07 -> 2025-10) still exists.
+WINDOW_NAMES = ("W1", "W2", "W3", "W4")
 
 
 def cached_span() -> tuple[int, int]:
@@ -65,7 +74,7 @@ def cached_span() -> tuple[int, int]:
 
 
 def build_windows(fetch: bool = True) -> dict:
-    """Slice W1/W2/W3 out of the broker's deep M15 history + H1/H4 context.
+    """Slice W1..W4 out of the broker's deep M15 history + H1/H4 context.
 
     Returns the ledger dict (also written to OUT when fetch=True).
     """
@@ -74,20 +83,19 @@ def build_windows(fetch: bool = True) -> dict:
     m15 = fetch_all_ohlc(bridge, "XAUUSD", "M15", FETCH_COUNT)
     h1 = fetch_all_ohlc(bridge, "XAUUSD", "H1", FETCH_COUNT)
     h4 = fetch_all_ohlc(bridge, "XAUUSD", "H4", FETCH_COUNT)
-    if len(m15) < 4 * WINDOW_BARS:
+    if len(m15) < (len(WINDOW_NAMES) + 1) * WINDOW_BARS:
         raise RuntimeError(f"not enough M15 history: {len(m15)} bars")
 
-    before_c = [r for r in m15 if int(r["time"]) < c0]
-    w1 = before_c[-WINDOW_BARS:]
-    w1_lo = int(w1[0]["time"])
-    before_w1 = [r for r in before_c if int(r["time"]) < w1_lo]
-    w2 = before_w1[-WINDOW_BARS:]
-    w2_lo = int(w2[0]["time"])
-    before_w2 = [r for r in before_w1 if int(r["time"]) < w2_lo]
-    w3 = before_w2[-WINDOW_BARS:]
-    if len(w3) < WINDOW_BARS:
-        raise RuntimeError(f"W3 truncated: {len(w3)} bars — broker history "
-                           f"cannot give a third independent window")
+    made: dict[str, list[dict]] = {}
+    pool = [r for r in m15 if int(r["time"]) < c0]
+    for name in WINDOW_NAMES:
+        win = pool[-WINDOW_BARS:]
+        if len(win) < WINDOW_BARS:
+            raise RuntimeError(f"{name} truncated: {len(win)} bars — broker "
+                               f"history cannot give window {name}")
+        made[name] = win
+        lo = int(win[0]["time"])
+        pool = [r for r in pool if int(r["time"]) < lo]
 
     def ctx(rows: list[dict], lo: int, hi: int) -> dict:
         """H1/H4 covering [lo - 200h, hi] so every window bar has >=80 bars
@@ -102,7 +110,6 @@ def build_windows(fetch: bool = True) -> dict:
     out: dict = {"_cached_span": [c0, c1],
                  "_cached_bars": 3000,
                  "_window_bars": WINDOW_BARS}
-    made = {"W1": w1, "W2": w2, "W3": w3}
     spans = {}
     for name, rows in made.items():
         lo, hi = int(rows[0]["time"]), int(rows[-1]["time"])
@@ -148,7 +155,7 @@ def main() -> None:
 
     def ts(t):
         return _dt.datetime.fromtimestamp(int(t), _dt.timezone.utc)
-    for name in ("W1", "W2", "W3"):
+    for name in WINDOW_NAMES:
         m = out[f"_{name}_meta"]
         print(f"{name}: {m['m15_bars']} M15 bars  "
               f"{ts(m['first'])} -> {ts(m['last'])}  "

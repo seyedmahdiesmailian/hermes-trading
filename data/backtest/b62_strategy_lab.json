@@ -473,5 +473,32 @@
   "funnel_w2_exp_R": 0.521,
   "verdict": "ADDITIVE LANE (funnel-first, H4-gated pdh on free bars): lane exp_R 0.534/0.535 vs funnel 0.524/0.521 on W1/W2 \u2014 replicates only a MARGINAL positive (< +0.05R, same shape as round 11's gated lane), dd -6.9 W1 worse / -5.7 W2 better. Feeds b70 as a marginal lane candidate; the arm's standalone replication is the interesting result, not its lane.",
   "cached_exp_R": 0.554
+ },
+ {
+  "name": "funnel_h4t_agree",
+  "trades": 267,
+  "exp_R": 0.517,
+  "WR%": 61.4,
+  "avg_win_R": 1.49,
+  "avg_loss_R": -1.03,
+  "net_R": 138.1,
+  "maxDD_R": -7.5,
+  "mean_hold_bars": 9.8,
+  "p95_hold_bars": 29,
+  "max_hold_bars": 85,
+  "holds_over_time_exit": 0,
+  "w1_exp_R": 0.617,
+  "w1_n": 203,
+  "w2_exp_R": 0.553,
+  "w2_n": 228,
+  "w3_exp_R": 0.536,
+  "w3_n": 209,
+  "w4_exp_R": 0.517,
+  "w4_n": 267,
+  "funnel_w1_exp_R": 0.524,
+  "funnel_w2_exp_R": 0.521,
+  "funnel_w3_exp_R": 0.528,
+  "funnel_w4_exp_R": 0.532,
+  "verdict": "ROUND 13/14 (funnel's OWN signals x H4-trend-state gate, b68n/b68n4): first arm ever to beat the funnel on W1/W2/W3 (0.617/0.553/0.536 vs 0.524/0.521/0.528) \u2014 DIES on b74's FOURTH draw W4 (0.517 vs 0.532 same bars, n=267/340). Margin series chronological W4->W1 = -0.015/+0.008/+0.032/+0.093: MONOTONIC in recency, i.e. the gate's edge is a property of the RECENT H4 regime, not of gold M15 \u2014 exactly the regime-interaction signature that killed round 9's champion. Selection ordering agree>cut holds on W4 (0.517 vs 0.445) but that cannot save a lost beat. NOT wired; NOT a replacement candidate; feeds b74 as the decay-pricing case study and b70 as a closed lane question. W4 leg: data/backtest/b68n4_fourth_draw.json."
  }
 ]
