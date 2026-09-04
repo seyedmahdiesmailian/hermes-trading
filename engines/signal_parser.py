@@ -54,6 +54,17 @@ ENTRY_PATTERNS = [
     r'(?:at|@\s*)[\s:=]*(\d+\.?\d*)',
 ]
 
+# b71 — multi-leg entries: channels often post a 2-step entry ("BUY 4471 /
+# MORE BUY 4465", "خرید ۸۲ و ۷۲"). The first level is the primary entry, the
+# rest are additional legs that get their own LIMIT order at their own price.
+LEG_PATTERNS = [
+    r'(?:more|add|again|2nd|second|ladder)\s*(?:buy|sell)?\s*(?:at|@|:)?\s*(\d+\.?\d*)',
+    r'(?:buy|sell)\s*(?:again|#2|2)\s*(?:at|@|:)?\s*(\d+\.?\d*)',
+    r'(?:entry|پله|ورود)\s*(?:2|۲)\s*[:=@]?\s*(\d+\.?\d*)',
+    r'(\d+\.?\d*)\s*و\s*(?:\d+\.?\d*\s*)?(?:خرید|فروش)',
+    r'و\s*(\d+\.?\d*)\s*(?:خرید|فروش)',
+]
+
 LOT_PATTERNS = [
     r'(?:lot|volume|حجم|لот)\s*[:=]?\s*(\d+\.?\d+)',
 ]
@@ -73,6 +84,7 @@ class Signal:
     symbol: str = ""
     side: str = ""  # BUY or SELL
     entry: float = 0.0
+    entries: list = field(default_factory=list)  # b71: all entry legs (primary first)
     sl: float = 0.0
     tp: float = 0.0
     tp2: float = 0.0
@@ -117,6 +129,7 @@ class Signal:
     def to_dict(self) -> dict:
         return {
             "symbol": self.symbol, "side": self.side, "entry": self.entry,
+            "entries": list(self.entries),
             "sl": self.sl, "tp": self.tp, "tp2": self.tp2, "lot": self.lot,
             "rr_ratio": self.rr_ratio or self.computed_rr,
             "order_type": self.order_type, "confidence": self.confidence,
@@ -232,6 +245,17 @@ def parse_signal(text: str, current_price: float = 0.0) -> Signal:
         sig.entry = entries[0]
         confidence += 0.15
 
+    # b71 — additional entry legs ("MORE BUY 4465", "پله 2: 4465", "۸۲ و ۷۲ خرید")
+    leg_prices = _extract_prices(text, LEG_PATTERNS)
+    _all = [sig.entry] + [p for p in leg_prices if p != sig.entry]
+    # zone form: "Buy Zone: 4465 - 4470" → both ends are entries
+    _zone = re.search(r'(?:buy|sell)\s*zone[^\d]*(\d+\.?\d*)\s*[-–—]\s*(\d+\.?\d*)',
+                      text, re.IGNORECASE)
+    if _zone:
+        _all += [float(_zone.group(1)), float(_zone.group(2))]
+    _seen_e = set()
+    sig.entries = [e for e in _all if e > 0 and not (e in _seen_e or _seen_e.add(e))]
+
     # SL
     sls = _extract_prices(text, SL_PATTERNS)
     if sls:
@@ -259,6 +283,10 @@ def parse_signal(text: str, current_price: float = 0.0) -> Signal:
     if current_price > 0:
         if 0 < sig.entry < 1000:
             sig.entry = expand_abbreviated_price(sig.entry, current_price)
+        # b71: re-sync legs after expansion; expand any abbreviated leg too
+        sig.entries = [sig.entry] + [
+            (expand_abbreviated_price(e, current_price) if 0 < e < 1000 else e)
+            for e in sig.entries if abs(e - sig.entry) > 0.01]
         if 0 < sig.sl < 1000:
             sig.sl = expand_abbreviated_price(sig.sl, current_price)
         # TP must sit on the profit side of entry: below for SELL, above for BUY
@@ -288,6 +316,10 @@ def parse_signal(text: str, current_price: float = 0.0) -> Signal:
     if sig.side == "SELL" and sig.entry > 0 and sig.sl > 0 and sig.sl < sig.entry:
         sig.warnings.append("sl_below_entry_for_sell")
         confidence -= 0.1
+
+    # b71: final sync — primary entry first, distinct legs after it
+    if sig.entry > 0:
+        sig.entries = [sig.entry] + [e for e in sig.entries if e > 0 and abs(e - sig.entry) > 0.01]
 
     sig.confidence = round(min(1.0, max(0.0, confidence)), 2)
     return sig

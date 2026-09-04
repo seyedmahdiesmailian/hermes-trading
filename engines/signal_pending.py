@@ -36,7 +36,9 @@ def _now() -> datetime:
 
 
 def pending_enabled() -> bool:
-    return os.getenv("HERMES_SIGNAL_PENDING", "true").lower() not in {"0", "false", "no"}
+    # b71: disable-flag form (see b62 tripwire: no inline default may
+    # shadow a documented .env value). Pending LIMITs are ON by default.
+    return os.getenv("HERMES_SIGNAL_PENDING_DISABLE", "0") != "1"
 
 
 def pending_ttl_min() -> float:
