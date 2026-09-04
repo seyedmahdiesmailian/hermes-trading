@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-04T21:22:35.375711+00:00",
+ "last_run_utc": "2026-09-04T22:20:03.347253+00:00",
  "recent_commits": [
+  "6b65ef1 b75: journal rows are closing DEALS, not positions \u2014 weekly report overstated trades",
   "a4ffceb report: full management-format Word report with charts + corrected P&L",
   "b9465e6 report: management-format Word version of the system state report",
   "bd19fe2 report: full system state & architecture snapshot (2026-09-04)",
-  "c32f4e8 b74g: reject non-gold instruments in the LIVE listener too",
-  "9762fae b74f: skip non-gold messages in replay + honest Hermes baseline"
+  "c32f4e8 b74g: reject non-gold instruments in the LIVE listener too"
  ]
 }

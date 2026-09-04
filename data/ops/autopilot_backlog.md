@@ -201,6 +201,17 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       question is answered: the live funnel's entry filter remains the
       best measured thing; future rounds must justify themselves against
       b77's decay rule before burning a draw. Nothing wired. See Findings.
+      Round 15 (b68o, 2026-09-05 — the one LEVEL family never measured:
+      previous-TRADING-WEEK high/low close-confirmed breakout, round 4's
+      geometry one timeframe up, justified under round 14's novelty rule):
+      REJECTED under b74's all-windows rule. pwh_break_w10 prints the best
+      cached number since round 9 (1.262, n=18) but the funnel on the SAME
+      cached bars is 0.558, and on the four independent windows it wins only
+      2-of-4 (W2 0.618 / W3 0.601 beat; W1 0.344 / W4 0.514 lose vs
+      0.524/0.532); t50 wins 3-of-4 but loses W1 badly (0.307). b77
+      pre-flight MIXED on both arms — no monotone ramp, no stable edge.
+      Regime fingerprint: the arm's direction mix FLIPS by window (cached
+      24/24 BUY, W1 39/52 SELL). Nothing wired. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -360,6 +371,19 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       nothing left to weigh: the answer on clean windows is "no lane earns
       a slot". The four-window funnel baseline (0.524/0.521/0.528/0.532)
       is the bar any future lane must clear on EVERY window. Read-only.)
+- [ ] b78 DIRECTION-MIX DISCLOSURE FOR LEVEL-BREAKOUT ARMS (reusable procedure
+      from b68 round 15, 2026-09-05): the weekly-breakout arm's BUY/SELL split
+      FLIPS between windows (cached 24/24 BUY, W1 13 BUY/39 SELL) — so a
+      single-window exp_R for any level-breakout arm is really "the number for
+      whichever way that regime broke", and two windows with the same exp_R but
+      opposite mixes are NOT the same measurement. RULE: every future round's
+      ledger must carry the probe's buy/sell split per leg (level_probe already
+      ships it — just don't drop it from the confirm JSON), and the verdict
+      text must quote the mix whenever a window's number is used as evidence;
+      an arm whose sign of edge flips with the direction mix is regime-gifted
+      even when b77's margin series says MIXED. Cheap: docs/procedure + one
+      assertion in the next round's test that every shipped leg carries
+      buy+sell>0 facts. Read-only, lab-only.
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -656,6 +680,33 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-05 b68 round 15 — THE WEEK-LEVEL BREAKOUT IS ALSO SCREENED OUT, AND
+  THE DIRECTION MIX IS A NEW REGIME FINGERPRINT (scripts/b68o_weekly_lab.py +
+  scripts/b68o_confirm_weekly.py; 24 tests in tests/test_b68o_weekly_lab.py).
+  Round 14 said future rounds must justify themselves; this one did on
+  novelty — the previous TRADING WEEK's high/low is the level every ICT desk
+  draws next to PDH/PDL and the only level family never measured. Geometry is
+  round 4's close-confirmed break lifted verbatim one timeframe up (b75: the
+  level break IS the trigger, so the geometry supplier is the fresh member).
+  RESULT: pwh_break_w10 prints cached ladder_ts 1.262 (n=18) — the best
+  cached number since round 9 — but the funnel on the SAME cached bars is
+  0.558, and the b74 all-windows rule kills it: 2-of-4 independent windows
+  (W2 0.618 / W3 0.601 beat 0.521/0.528; W1 0.344 / W4 0.514 lose
+  0.524/0.532). t50 wins 3-of-4 but loses W1 at 0.307. b77 pre-flight MIXED
+  on both arms (no monotone recency ramp, no stable edge). NEW DISCLOSURE
+  SHAPE: the arm's BUY/SELL mix flips by window — cached 24/24 BUY, W1 13
+  BUY/39 SELL — so any single-window number for a level-breakout arm is
+  really "the number for whichever way that regime broke", and the future
+  rounds should quote the mix alongside exp_R (level_probe already ships it).
+  After 15 rounds: no lab arm has ever cleared all four windows; the funnel's
+  0.52-0.53 band stands. HARVEST NOTE: this is the 6th b46-shape occurrence —
+  the previous run wrote the whole round (2 scripts + 24 tests + both ledgers)
+  and died before committing; this run verified it, fixed 2 real defects the
+  uncommitted tests exposed (harness column names dd_R/over_time_stop vs the
+  real maxDD_R/holds_over_time_exit, and verdict() reading row['dd_R'] which
+  nulled every dd in the shipped ledger), appended the two registry rows, and
+  shipped it. Nothing wired.
 
 - 2026-09-04 b68 round 14 — THE FOURTH DRAW KILLS THE CANDIDATE, AND THE
   KILL SHAPE IS THE FINDING (scripts/b68n4_fourth_draw.py + W4 slice in

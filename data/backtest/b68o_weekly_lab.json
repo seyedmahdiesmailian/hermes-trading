@@ -1,0 +1,99 @@
+{
+ "_note": "round 15 cached leg: previous-TRADING-WEEK high/low close-confirmed breakout, b71 harness, b72 anti-vacuity probe",
+ "_time_stop_bars": 144,
+ "_probe": {
+  "bars": 3000,
+  "weeks_in_dataset": 7,
+  "weeks_with_level": 5,
+  "first_week": "2026-W29",
+  "last_week": "2026-W35",
+  "signals": 24,
+  "buy": 24,
+  "sell": 0
+ },
+ "_honesty_complaints": [],
+ "pwh_break_t50": {
+  "plain": {
+   "trades": 22,
+   "exp_R": 0.067,
+   "WR%": 36.4,
+   "avg_win_R": 1.98,
+   "avg_loss_R": -1.02,
+   "net_R": 1.5,
+   "maxDD_R": -6.3,
+   "mean_hold_bars": 8.5,
+   "p95_hold_bars": 17,
+   "max_hold_bars": 40,
+   "holds_over_time_exit": 0
+  },
+  "ladder": {
+   "trades": 22,
+   "exp_R": 0.638,
+   "WR%": 59.1,
+   "avg_win_R": 1.79,
+   "avg_loss_R": -1.03,
+   "net_R": 14.0,
+   "maxDD_R": -2.1,
+   "mean_hold_bars": 4.0,
+   "p95_hold_bars": 9,
+   "max_hold_bars": 12,
+   "holds_over_time_exit": 0
+  },
+  "ladder_ts": {
+   "trades": 22,
+   "exp_R": 0.638,
+   "WR%": 59.1,
+   "avg_win_R": 1.79,
+   "avg_loss_R": -1.03,
+   "net_R": 14.0,
+   "maxDD_R": -2.1,
+   "mean_hold_bars": 4.0,
+   "p95_hold_bars": 9,
+   "max_hold_bars": 12,
+   "holds_over_time_exit": 0
+  },
+  "_time_stop_bars": 144
+ },
+ "pwh_break_w10": {
+  "plain": {
+   "trades": 16,
+   "exp_R": 0.86,
+   "WR%": 62.5,
+   "avg_win_R": 1.99,
+   "avg_loss_R": -1.02,
+   "net_R": 13.8,
+   "maxDD_R": -2.0,
+   "mean_hold_bars": 16.0,
+   "p95_hold_bars": 40,
+   "max_hold_bars": 46,
+   "holds_over_time_exit": 0
+  },
+  "ladder": {
+   "trades": 18,
+   "exp_R": 1.262,
+   "WR%": 72.2,
+   "avg_win_R": 2.14,
+   "avg_loss_R": -1.02,
+   "net_R": 22.7,
+   "maxDD_R": -2.0,
+   "mean_hold_bars": 7.9,
+   "p95_hold_bars": 18,
+   "max_hold_bars": 19,
+   "holds_over_time_exit": 0
+  },
+  "ladder_ts": {
+   "trades": 18,
+   "exp_R": 1.262,
+   "WR%": 72.2,
+   "avg_win_R": 2.14,
+   "avg_loss_R": -1.02,
+   "net_R": 22.7,
+   "maxDD_R": -2.0,
+   "mean_hold_bars": 7.9,
+   "p95_hold_bars": 18,
+   "max_hold_bars": 19,
+   "holds_over_time_exit": 0
+  },
+  "_time_stop_bars": 144
+ }
+}

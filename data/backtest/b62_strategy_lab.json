@@ -500,5 +500,109 @@
   "funnel_w3_exp_R": 0.528,
   "funnel_w4_exp_R": 0.532,
   "verdict": "ROUND 13/14 (funnel's OWN signals x H4-trend-state gate, b68n/b68n4): first arm ever to beat the funnel on W1/W2/W3 (0.617/0.553/0.536 vs 0.524/0.521/0.528) \u2014 DIES on b74's FOURTH draw W4 (0.517 vs 0.532 same bars, n=267/340). Margin series chronological W4->W1 = -0.015/+0.008/+0.032/+0.093: MONOTONIC in recency, i.e. the gate's edge is a property of the RECENT H4 regime, not of gold M15 \u2014 exactly the regime-interaction signature that killed round 9's champion. Selection ordering agree>cut holds on W4 (0.517 vs 0.445) but that cannot save a lost beat. NOT wired; NOT a replacement candidate; feeds b74 as the decay-pricing case study and b70 as a closed lane question. W4 leg: data/backtest/b68n4_fourth_draw.json."
+ },
+ {
+  "name": "pwh_break_t50",
+  "round": 15,
+  "trades": 22,
+  "exp_R": 0.638,
+  "windows": {
+   "cached": {
+    "exp_R": 0.638,
+    "n": 22,
+    "dd_R": -2.1
+   },
+   "W1": {
+    "exp_R": 0.307,
+    "n": 47,
+    "dd_R": -5.1
+   },
+   "W2": {
+    "exp_R": 0.623,
+    "n": 57,
+    "dd_R": -6.1
+   },
+   "W3": {
+    "exp_R": 0.486,
+    "n": 39,
+    "dd_R": -7.3
+   },
+   "W4": {
+    "exp_R": 0.56,
+    "n": 58,
+    "dd_R": -8.7
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.524,
+    "n": 316
+   },
+   "W2": {
+    "exp_R": 0.521,
+    "n": 315
+   },
+   "W3": {
+    "exp_R": 0.528,
+    "n": 332
+   },
+   "W4": {
+    "exp_R": 0.532,
+    "n": 340
+   }
+  },
+  "verdict": "REJECTED 2026-09-05 (b68 round 15, PWH/PWL weekly-level close-confirmed breakout, tight t50 stop, b68o): beats the funnel on 3 of 4 independent windows (W2 0.623 / W3 0.486 / W4 0.560 vs 0.521/0.528/0.532 - W3 loses) and LOSES W1 (0.307 vs 0.524); cached 0.638 informational. b74 all-windows rule FAILS; b77 pre-flight MIXED (chrono margins +0.028/-0.042/+0.102/-0.217). NOT wired. Ledger: data/backtest/b68o_weekly_confirm.json."
+ },
+ {
+  "name": "pwh_break_w10",
+  "round": 15,
+  "trades": 18,
+  "exp_R": 1.262,
+  "windows": {
+   "cached": {
+    "exp_R": 1.262,
+    "n": 18,
+    "dd_R": -2.0
+   },
+   "W1": {
+    "exp_R": 0.344,
+    "n": 40,
+    "dd_R": -5.0
+   },
+   "W2": {
+    "exp_R": 0.618,
+    "n": 47,
+    "dd_R": -3.5
+   },
+   "W3": {
+    "exp_R": 0.601,
+    "n": 31,
+    "dd_R": -6.1
+   },
+   "W4": {
+    "exp_R": 0.514,
+    "n": 50,
+    "dd_R": -7.8
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.524,
+    "n": 316
+   },
+   "W2": {
+    "exp_R": 0.521,
+    "n": 315
+   },
+   "W3": {
+    "exp_R": 0.528,
+    "n": 332
+   },
+   "W4": {
+    "exp_R": 0.532,
+    "n": 340
+   }
+  },
+  "verdict": "REJECTED 2026-09-05 (b68 round 15, PWH/PWL weekly-level breakout, w10 stop - the survivor width of round 4, one timeframe up): cached ladder_ts 1.262 (n=18, best cached number since round 9) but the funnel on the SAME cached bars is 0.558, and on the independent windows it is 2 of 4 (W2 0.618 / W3 0.601 beat; W1 0.344 / W4 0.514 lose vs 0.524/0.532). b74 all-windows rule FAILS; b77 pre-flight MIXED (chrono margins -0.018/+0.073/+0.097/-0.180 - no monotone ramp, no stable edge). Disclosure: cached leg is 24/24 BUY (one-sided regime); W1 is 39/52 SELL - the arm's direction mix flips by window, another regime fingerprint. NOT wired. Ledger: data/backtest/b68o_weekly_confirm.json."
  }
 ]
