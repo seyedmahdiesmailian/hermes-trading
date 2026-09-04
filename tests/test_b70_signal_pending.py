@@ -1,4 +1,5 @@
 """b70 — signal LIMIT orders: parked when entry not reached, filled/expired later."""
+import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 
@@ -36,10 +37,19 @@ def _cmd(side="BUY", entry=4472.0):
 
 class PendingTests(unittest.TestCase):
     def setUp(self):
-        paths.signals_dir().mkdir(parents=True, exist_ok=True)
-        if paths.pending_state().exists():
-            paths.pending_state().unlink()
+        # b71 FIX: this suite used to write straight into PRODUCTION state —
+        # paths.pending_state() resolved to the live data/signals/ tree, so a
+        # test run parked a fake ticket 9001 @ 4472.0 that the live daemon
+        # then reconciled against the real broker, found missing, and fired
+        # "⚠️ LIMIT از لیست بروکر حذف شد..." at the user. Tests must never
+        # touch live state: redirect the whole data tree to a temp dir.
+        self._tmp = tempfile.TemporaryDirectory(prefix="b70_pending_")
+        paths.set_data_root(self._tmp.name)
         signal_pending._last_check = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+    def tearDown(self):
+        paths.set_data_root(None)
+        self._tmp.cleanup()
 
     def _state(self):
         return signal_pending.load_pending()
