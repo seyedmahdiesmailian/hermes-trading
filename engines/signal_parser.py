@@ -42,7 +42,7 @@ def normalize_digits(text: str) -> str:
 TP_PATTERNS = [
     r'(?:tp2|target2)[\s:=.]*(\d+\.?\d*)',
     r'(?:tp1|target1)[\s:=.]*(\d+\.?\d*)',
-    r'(?:tp|target|take\s*profit|تیک\s*پروفیت|هدف|تارگت|سود)[\s:=.]*(\d+\.?\d*)',
+    r'(?:tp|target|take\s*profit|تیک\s*پروفیت|تی\s*پی|تی‌پی|تی‌\s*پی|تي\s*پی|هدف|تارگت|سود)[\s:=.]*(\d+\.?\d*)',
 ]
 
 SL_PATTERNS = [
