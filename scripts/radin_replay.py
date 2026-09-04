@@ -36,10 +36,9 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
-    load_dotenv(os.path.join(_ROOT, '.env'))
 except ImportError:
-    from engines.env_loader import load_env
-    load_env()
+    from env_loader import load_dotenv
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from bridge_client import BridgeClient
 from engines.signal_parser import parse_signal

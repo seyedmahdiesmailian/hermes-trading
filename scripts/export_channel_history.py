@@ -18,9 +18,9 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 try:
     from dotenv import load_dotenv
-    load_dotenv(os.path.join(_ROOT, '.env'))
 except ImportError:
-    pass
+    from env_loader import load_dotenv
+load_dotenv(os.path.join(_ROOT, '.env'))
 
 from telethon import TelegramClient
 import telethon.sync  # noqa: F401  patches TelegramClient with blocking variants
