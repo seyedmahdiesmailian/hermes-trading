@@ -594,5 +594,51 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-09-04T11:38:28.275885+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n67 و 57 خرید \nاستاپ 47\nتی پی 77 ، 87 ، 97 ، 507 ، 17",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4467.0,
+      "sl": 4447.0,
+      "tp": 4477.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_conflict",
+        "hermes_says_bearish_signal_says_buy",
+        "poor_rr_0.5"
+      ],
+      "score": 2.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4467.0,
+        "sl": 4447.0,
+        "tp": 4477.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
   }
 ]
