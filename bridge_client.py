@@ -74,3 +74,20 @@ class BridgeClient:
     def close_position(self, ticket): return self._post("/api/close", {"ticket": int(ticket)})
     def partial_close(self, ticket, percent): return self._post("/api/partial", {"ticket": int(ticket), "percent": float(percent)})
     def modify_position(self, ticket, sl=None, tp=None): return self._post("/api/modify", {"ticket": int(ticket), "sl": sl, "tp": tp})
+
+    # b70 — pending (limit) orders for signals whose entry price hasn't been reached
+    def send_pending(self, side, lot, symbol="XAUUSD", price=None, sl=None, tp=None):
+        r = self._post("/api/pending", {"type": 2 if str(side).upper() == "BUY" else 3,
+                                        "volume": float(lot), "symbol": symbol,
+                                        "price": float(price), "sl": sl, "tp": tp})
+        if r.get("ok") and r.get("order") and not r.get("ticket"):
+            r["ticket"] = int(r["order"])   # bridge returns 'order', engine reads 'ticket'
+        return r
+
+    def get_orders(self):
+        r = self._get("/api/pending")       # live bridge lists active orders here
+        if isinstance(r, dict) and "orders" in r and "data" not in r:
+            r["data"] = r["orders"]
+        return r
+
+    def cancel_order(self, ticket): return self._post("/api/cancel", {"ticket": int(ticket)})

@@ -100,6 +100,11 @@ def signals_log() -> Path:
     return signals_dir() / "signals_log.json"
 
 
+def pending_state() -> Path:
+    """b70 — tracked signal LIMIT orders awaiting their entry price."""
+    return signals_dir() / "pending_orders.json"
+
+
 def watchdog_state() -> Path:
     return plan_dir() / "watchdog_state.json"
 

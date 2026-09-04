@@ -108,6 +108,21 @@ def main():
                             f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
                             f"دلیل: {reasons}"
                         )
+                    elif verdict == 'limit_pending':
+                        send_telegram(
+                            f"🕒 LIMIT گذاشته شد (منتظر رسیدن قیمت به ورود)\n"
+                            f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
+                            f"SL: {sig.get('sl')} | TP: {sig.get('tp')} | "
+                            f"lot: {se.get('lot', '?')} | ticket: {se.get('pending_ticket')}"
+                        )
+            # b70: reconcile parked LIMIT orders (filled / expired / cancelled)
+            from engines import signal_pending
+            from engines.market_hours import is_market_open
+            from engines.kill_switch import _load_state as _ks_state
+            _ev = signal_pending.watch_pending(
+                bridge, alert=send_telegram,
+                kill_halted=bool(_ks_state().get('halted')),
+                market_open=is_market_open())
             consecutive_errors = 0
             time.sleep(2)
         except KeyboardInterrupt:

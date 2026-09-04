@@ -26,6 +26,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 __all__ = ["check_signals", "run_signal_check"]
 
 from engines import paths  # resolved at CALL time so tests can redirect the tree
+from engines import signal_pending
 
 
 def _get_env():
@@ -372,6 +373,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
 
     for sig_record in signals:
         decision = sig_record.get("decision", {})
+        _use_pending = False  # b70: set when entry not reached → LIMIT instead of market
 
         if not decision.get("trade_allowed"):
             executions.append({
@@ -405,12 +407,24 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 })
                 continue
             if entry > 0 and abs(cur - entry) > max(risk_dist * 0.5, 5.0):
-                executions.append({
-                    "signal": parsed, "verdict": "skip",
-                    "reasons": [f"stale_entry_price_moved_{abs(cur-entry):.1f}pts (current {cur})"],
-                    "executed": False,
-                })
-                continue
+                # b70: price hasn't REACHED the entry yet (BUY above entry /
+                # SELL below) and the gap is within 1R → don't throw the signal
+                # away; park a LIMIT order at the channel's entry price and
+                # wait. Price already PASSED the entry (BUY below / SELL
+                # above) → the premise is broken, keep the old skip.
+                _not_reached = ((parsed["side"] == "BUY" and cur > entry) or
+                                (parsed["side"] == "SELL" and cur < entry))
+                if (_not_reached and abs(cur - entry) <= risk_dist
+                        and signal_pending.pending_enabled()
+                        and not dry_run):
+                    _use_pending = True
+                else:
+                    executions.append({
+                        "signal": parsed, "verdict": "skip",
+                        "reasons": [f"stale_entry_price_moved_{abs(cur-entry):.1f}pts (current {cur})"],
+                        "executed": False,
+                    })
+                    continue
             # Spread gate (parity with the plan path, hermes_runtime MAX_ENTRY_SPREAD):
             # news/rollover spikes blow XAUUSD past 2.0$ (normal 0.18). Signals used
             # to enter straight into them — the plan path refuses, the signal path didn't.
@@ -508,6 +522,45 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                     float(eval_result.get("risk_usd", 0) or 0)
                     * _capped / command["lot"], 2)
             command["lot"] = _capped
+
+        result = None
+        if _use_pending:
+            # b70: vetted signal whose entry price hasn't been reached yet →
+            # park a LIMIT order at the channel's entry instead of skipping.
+            # Market-hours gate parity with execute_trade: no parking while
+            # the market is closed (stale ticks could otherwise slip through).
+            from engines.market_hours import is_market_open
+            if not is_market_open():
+                executions.append({
+                    "signal": parsed, "verdict": "skip",
+                    "reasons": ["market_closed_pending"], "executed": False,
+                })
+                continue
+            pres = signal_pending.place_signal_limit(
+                bridge, command, symbol=parsed.get("symbol", "XAUUSD"))
+            executions.append({
+                "signal": parsed,
+                "verdict": "limit_pending" if pres.get("ok") else "skip",
+                "reasons": ([] if pres.get("ok")
+                            else [f"pending_failed:{pres.get('error')}"]),
+                "executed": False,
+                "pending_ticket": pres.get("ticket"),
+                "lot": command["lot"],
+            })
+            from engines.storage import append_execution_log
+            append_execution_log(PLAN_DIR, {
+                "at": datetime.now(timezone.utc).isoformat(),
+                "source": "signal_listener", "plan_id": "signal",
+                "action": "limit_pending",
+                "side": command["side"], "lot": command["lot"],
+                "entry": command["entry"], "sl": command["sl"], "tp": command["tp"],
+                "grade": eval_result.get("grade", "signal"),
+                "risk_usd": eval_result.get("risk_usd", 0),
+                "dry_run": dry_run,
+                "result_ok": pres.get("ok", False),
+                "ticket": pres.get("ticket"),
+            })
+            continue
 
         result = execute_trade(command, bridge, dry_run=dry_run)
 
