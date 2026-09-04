@@ -118,6 +118,7 @@ DOCUMENTED_KNOBS = {
     "WIN_HOST": "backup target host override; falls back to documented HERMES_WIN_IP, last-resort default = the only bridge (offsite_backup, b62)",
     "WIN_BACKUP_DIR": "backup dir on Windows, default C:\\HermesBackups (offsite_backup)",
     "HERMES_LAN_IP": "local IP for the WinRM pull URL, default = this box (offsite_backup)",
+    "B77_PREFLIGHT_OUT": "b77 pre-flight OUTPUT-FILE redirect (state only, never code) so tests can regenerate the ledger into a temp dir (scripts/b77_decay_preflight.py, b48)",
 }
 
 

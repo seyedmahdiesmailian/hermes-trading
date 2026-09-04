@@ -1,0 +1,236 @@
+{
+ "_note": "b77 pre-flight on the shipped round-14 ledger: margin shape read CHRONOLOGICALLY (oldest window first) for every arm; the 3-window column is what round 13 knew BEFORE spending the W4 draw",
+ "four_window": {
+  "_chrono_order_oldest_first": [
+   "W4",
+   "W3",
+   "W2",
+   "W1"
+  ],
+  "_slope_min_R": 0.02,
+  "pdh_w10_control": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.052,
+    -0.158,
+    0.102,
+    0.088
+   ],
+   "slope_R_per_step": 0.0467,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "pdh_h4t_agree": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    0.065,
+    -0.023,
+    0.406,
+    0.133
+   ],
+   "slope_R_per_step": 0.0227,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "pdh_h4t_disagree": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.327,
+    -0.572,
+    0.11,
+    -0.073
+   ],
+   "slope_R_per_step": 0.0847,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "lane_funnel_then_h4pdh": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    0.014,
+    -0.013,
+    0.014,
+    0.01
+   ],
+   "slope_R_per_step": -0.0013,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "funnel_h4t_agree": {
+   "verdict": "REGIME_GIFTED",
+   "chrono_order": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.015,
+    0.008,
+    0.032,
+    0.093
+   ],
+   "slope_R_per_step": 0.036,
+   "monotone_increasing": true,
+   "monotone_decreasing": false
+  },
+  "funnel_h4t_disagree": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.087,
+    0.025,
+    -0.035,
+    -0.267
+   ],
+   "slope_R_per_step": -0.06,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  }
+ },
+ "three_window_pre_w4": {
+  "_chrono_order_oldest_first": [
+   "W3",
+   "W2",
+   "W1"
+  ],
+  "_slope_min_R": 0.02,
+  "pdh_w10_control": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.158,
+    0.102,
+    0.088
+   ],
+   "slope_R_per_step": 0.123,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "pdh_h4t_agree": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.023,
+    0.406,
+    0.133
+   ],
+   "slope_R_per_step": 0.078,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "pdh_h4t_disagree": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.572,
+    0.11,
+    -0.073
+   ],
+   "slope_R_per_step": 0.2495,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "lane_funnel_then_h4pdh": {
+   "verdict": "MIXED",
+   "chrono_order": [
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    -0.013,
+    0.014,
+    0.01
+   ],
+   "slope_R_per_step": 0.0115,
+   "monotone_increasing": false,
+   "monotone_decreasing": false
+  },
+  "funnel_h4t_agree": {
+   "verdict": "REGIME_GIFTED",
+   "chrono_order": [
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    0.008,
+    0.032,
+    0.093
+   ],
+   "slope_R_per_step": 0.0425,
+   "monotone_increasing": true,
+   "monotone_decreasing": false
+  },
+  "funnel_h4t_disagree": {
+   "verdict": "DECAYING",
+   "chrono_order": [
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "series": [
+    0.025,
+    -0.035,
+    -0.267
+   ],
+   "slope_R_per_step": -0.146,
+   "monotone_increasing": false,
+   "monotone_decreasing": true
+  }
+ },
+ "_headline": {
+  "arm": "funnel_h4t_agree",
+  "four_window_verdict": "REGIME_GIFTED",
+  "four_window_series_chrono": [
+   -0.015,
+   0.008,
+   0.032,
+   0.093
+  ],
+  "three_window_verdict_before_w4_draw": "REGIME_GIFTED",
+  "would_have_stopped_before_W4": true
+ }
+}
