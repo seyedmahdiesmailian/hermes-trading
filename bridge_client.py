@@ -68,6 +68,32 @@ class BridgeClient:
     def get_history_deals(self, symbol="XAUUSD", days=7):
         return self._get(f"/api/history/deals?symbol={urllib.parse.quote(symbol)}&days={int(days)}")
 
+    def get_price_band(self, symbol="XAUUSD", hours=24):
+        """(low, high) traded over the last `hours` H1 candles.
+
+        b72: used to disambiguate abbreviated signal prices ('24' → 4424 vs
+        4524). Returns None when the bridge is unreachable — callers must
+        treat that as 'no band', never as a reason to drop the signal.
+        """
+        try:
+            r = self.get_rates(symbol, "H1", max(6, int(hours)))
+            rows = r.get("rates") or r.get("candles") or r.get("data") or []
+            lows, highs = [], []
+            for row in rows:
+                if isinstance(row, dict):
+                    lo, hi = row.get("low"), row.get("high")
+                else:
+                    lo, hi = row[3], row[4]
+                if lo:
+                    lows.append(float(lo))
+                if hi:
+                    highs.append(float(hi))
+            if lows and highs:
+                return (min(lows), max(highs))
+        except Exception:
+            pass
+        return None
+
     # execution endpoints — used by the autonomous executor and signal listener
     def send_order(self, side, lot, symbol="XAUUSD", sl=None, tp=None):
         return self._post("/api/order", {"type": side.lower(), "volume": float(lot), "symbol": symbol, "sl": sl, "tp": tp})

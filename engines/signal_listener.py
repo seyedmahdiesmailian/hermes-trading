@@ -254,14 +254,17 @@ def check_signals(bridge=None) -> list[dict]:
 
         # Live price for abbreviated-price expansion ('76' → 4476)
         cur_price = 0.0
+        price_band = None
         try:
             if bridge is not None:
                 tick = bridge.get_tick("XAUUSD") or {}
                 cur_price = float(tick.get("ask") or tick.get("bid") or 0)
+                price_band = bridge.get_price_band("XAUUSD", hours=24)
         except Exception:
             pass
 
-        parsed = parse_signal(msg["text"], current_price=cur_price)
+        parsed = parse_signal(msg["text"], current_price=cur_price,
+                              price_band=price_band)
         if not parsed.is_valid:
             continue
 

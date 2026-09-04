@@ -640,5 +640,497 @@
         ]
       }
     }
+  },
+  {
+    "timestamp": "2026-09-04T12:46:59.046989+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\nتا 92 پیپ سود رفت ولی خب استاپ اعلام میکنیم 🔴\nدومین استاپ هفته ✅",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4392.0,
+      "entries": [
+        4392.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reason": "high_impact_news_blackout",
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false
+    }
+  },
+  {
+    "timestamp": "2026-09-04T13:12:22.620531+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n390 و 400 فروش\nاستاپ 410\nتی پی 380 ، 70 ، 60 ، 50 ، 40",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4590.0,
+      "entries": [
+        4590.0,
+        4600.0
+      ],
+      "sl": 4610.0,
+      "tp": 4580.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_aligned",
+        "poor_rr_0.5"
+      ],
+      "score": 5.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4590.0,
+        "entries": [
+          4590.0,
+          4600.0
+        ],
+        "sl": 4610.0,
+        "tp": 4580.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T13:25:07.668256+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n403 و 393 خرید\nاستاپ 383\nتی پی 413 ، 23 ، 33 ، 43 ، 53",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4703.0,
+      "entries": [
+        4703.0,
+        4693.0
+      ],
+      "sl": 4683.0,
+      "tp": 4713.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "hermes_neutral",
+        "poor_rr_0.5"
+      ],
+      "score": 3.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4703.0,
+        "entries": [
+          4703.0,
+          4693.0
+        ],
+        "sl": 4683.0,
+        "tp": 4713.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T13:29:38.691606+00:00",
+    "raw_text": "[💬 از Gold Forex Signals (free)]\nXAUUSD BUY 4386\nMORE BUY 4380\n\nTP¹ 4389\nTP² 4392\nTP³ 4395\nTP⁴ 4398\nTP⁵ 4400\nTP⁶ 4403\nTP⁷ 4416\n\n\nTP OPEN \n\n\nTP OPEN\n\nSL 4370 SCALPING",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4386.0,
+      "entries": [
+        4386.0,
+        4380.0
+      ],
+      "sl": 4370.0,
+      "tp": 4389.0,
+      "tp2": 4392.0,
+      "lot": 0.0,
+      "rr_ratio": 0.19,
+      "order_type": "market",
+      "confidence": 0.85,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "hermes_neutral",
+        "poor_rr_0.19"
+      ],
+      "score": 3.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4386.0,
+        "entries": [
+          4386.0,
+          4380.0
+        ],
+        "sl": 4370.0,
+        "tp": 4389.0,
+        "tp2": 4392.0,
+        "lot": 0.0,
+        "rr_ratio": 0.19,
+        "order_type": "market",
+        "confidence": 0.85,
+        "warnings": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T13:29:38.757467+00:00",
+    "raw_text": "[💬 از Gold Forex Signals (free)]\nGOLD BUY NOW 4386",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4386.0,
+      "entries": [
+        4386.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "order_type": "market",
+      "confidence": 0.65,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4386.0,
+        "entries": [
+          4386.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "order_type": "market",
+        "confidence": 0.65,
+        "warnings": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T13:45:19.429818+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n24 و 14 خرید\nاستاپ 4\nتی پی 34 ، 44 ، 54 ، 64 ، 74",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4424.0,
+      "entries": [
+        4424.0,
+        4414.0
+      ],
+      "sl": 4404.0,
+      "tp": 4434.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_aligned",
+        "poor_rr_0.5"
+      ],
+      "score": 5.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4424.0,
+        "entries": [
+          4424.0,
+          4414.0
+        ],
+        "sl": 4404.0,
+        "tp": 4434.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T13:49:05.540619+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\nهدف سوم تاچ شد \n300 پیپ سود 🟢",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4600.0,
+      "entries": [
+        4600.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "direction_aligned",
+        "missing_sl"
+      ],
+      "score": 4.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4600.0,
+        "entries": [
+          4600.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "order_type": "market",
+        "confidence": 0.6,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T13:49:15.372295+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\nهدف اول تاچ شد \n100 پیپ سود 🟢",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4400.0,
+      "entries": [
+        4400.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "direction_aligned",
+        "missing_sl"
+      ],
+      "score": 4.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4400.0,
+        "entries": [
+          4400.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "order_type": "market",
+        "confidence": 0.6,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T14:14:48.448337+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n34 و 24 خرید \nاستاپ 14\nتی پی 44 ، 54 ، 64 ، 74 ، 84",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4434.0,
+      "entries": [
+        4434.0,
+        4424.0
+      ],
+      "sl": 4414.0,
+      "tp": 4444.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "hermes_neutral",
+        "poor_rr_0.5"
+      ],
+      "score": 3.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4434.0,
+        "entries": [
+          4434.0,
+          4424.0
+        ],
+        "sl": 4414.0,
+        "tp": 4444.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-04T15:16:25.095256+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n42 و 32 خرید \nاستاپ 22\nتی پی 52 ، 62 ، 72 ، 82 ، 92",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4442.0,
+      "entries": [
+        4442.0,
+        4432.0
+      ],
+      "sl": 4422.0,
+      "tp": 4452.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_aligned",
+        "poor_rr_0.5"
+      ],
+      "score": 5.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4442.0,
+        "entries": [
+          4442.0,
+          4432.0
+        ],
+        "sl": 4422.0,
+        "tp": 4452.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
   }
 ]

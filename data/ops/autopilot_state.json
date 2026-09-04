@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-04T10:56:28.689247+00:00",
+ "last_run_utc": "2026-09-04T15:41:19.001647+00:00",
  "recent_commits": [
-  "3b56148 b70: signal LIMIT orders \u2014 park vetted signals at entry price, watch fills/expiry (bridge /api/pending+/api/cancel)",
-  "13dde47 signal_parser: recognize '\u062a\u06cc \u067e\u06cc' Persian TP keyword (radin 09-04 miss)",
-  "2df0993 harvest: b77 decay pre-flight gate (STEP-0, b46/b47) \u2014 engines/lab_decay.py + scripts/b77_decay_preflight.py + 21 pins; ledger reproduces byte-identically; B77_PREFLIGHT_OUT b48 seam",
-  "0f83e25 harvest: b68 round 14 (b68n4) \u2014 FOURTH DRAW kills funnel_h4t_agree, left uncommitted by the round-14 run (b46 shape, 6th occurrence): scripts/b68n4_fourth_draw.py + W4 slice in b68l_windows.py + 19 tests + ledger + registry row. VERIFIED this run: W4 zero-overlap asserted (pairwise W1-W4 all 0), W1/W2/W3 legs byte-identical to round-13 ledger, verdict table matches the write-up (agree 0.517 n=267 vs funnel 0.532 n=340 on same bars; margins chronological -0.015/+0.008/+0.032/+0.093 monotone in recency = recent-regime gift, not a property). Backlog: round-14 note + Findings entry + b70/b74 close-out notes + the b77 todo round 14 promised but never wrote (chronological-decay pre-flight, dangling reference fixed by this harvest).",
-  "eb870fd harvest: b68 round 13 (b68n) \u2014 W3 third draw + H4-state gate on the funnel's OWN entries, left uncommitted by the round-13 run (b46 shape, 5th occurrence): scripts/b68l_windows.py W3 slice + scripts/b68n_funnel_gate_w3.py + 17 tests + ledger. VERIFIED this run (W3 zero-overlap asserted; W1/W2 rows reproduce round-12 shipped numbers exactly). FINDINGS: pdh_h4t_agree FAILS W3 (0.505 vs funnel 0.528) \u2014 round-12 champion is 2-of-3, not promoted; funnel_h4t_agree is the FIRST arm to beat the funnel on ALL THREE windows (0.617/0.553/0.536 vs 0.524/0.521/0.528, n=203/228/209) but margins DECAY (+0.093->+0.032->+0.008) and selection ordering FLIPS on W3 (cut 0.553 > agree) \u2014 candidate for b74, NOT wired; h4pdh lane loses W3 (2-of-3). Backlog: round-13 note + Findings entry + b70/b74 progress notes. 660 tests green after this commit clears the b42 untracked tripwire."
+  "5d35924 b71: signal daemon logs every Telegram send (ok/msg_id) \u2014 silent SKIP with no message was undebuggable",
+  "9a86ae2 b71 fix: b70 tests use hermetic env seam (set_data_root is shadowed by the verifier's HERMES_DATA_ROOT -> state bleed between tests -> 2 red on clean checkout)",
+  "2ce88e8 b71: isolate b70 pending tests to temp data root \u2014 they were writing fake ticket 9001 @4472 into PRODUCTION pending_orders.json, which made the live daemon fire a false 'LIMIT \u062d\u0630\u0641 \u0634\u062f' alert",
+  "92f62ee b71: allowlist _deploy_pending_bridge host chain (b64 tripwire)",
+  "e304c63 b71: multi-leg signal entries (MORE BUY / '\u06f7\u06f2 \u0648 \u06f8\u06f2 \u062e\u0631\u06cc\u062f') + b62 tripwire fix \u2014 pending gate as DISABLE-flag"
  ]
 }
