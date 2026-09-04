@@ -1,9 +1,14 @@
 """b70 — signal LIMIT orders: parked when entry not reached, filled/expired later."""
-import tempfile
+import sys
 import unittest
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
-from engines import paths, signal_pending
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import hermetic
+from engines import signal_pending
 
 
 class FakeBridge:
@@ -42,14 +47,17 @@ class PendingTests(unittest.TestCase):
         # test run parked a fake ticket 9001 @ 4472.0 that the live daemon
         # then reconciled against the real broker, found missing, and fired
         # "⚠️ LIMIT از لیست بروکر حذف شد..." at the user. Tests must never
-        # touch live state: redirect the whole data tree to a temp dir.
-        self._tmp = tempfile.TemporaryDirectory(prefix="b70_pending_")
-        paths.set_data_root(self._tmp.name)
+        # touch live state. Use the STANDARD hermetic seam (env var), not
+        # paths.set_data_root(): the clean-checkout verifier exports
+        # HERMES_DATA_ROOT, which OVERRIDES set_data_root — with the override
+        # alone every test in this file shared one state file and bled into
+        # the next (pending_cap leftovers made place fail; stale tickets
+        # reported 'vanished' instead of 'ttl_cancel').
+        hermetic.use_temp_data_root()
         signal_pending._last_check = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
     def tearDown(self):
-        paths.set_data_root(None)
-        self._tmp.cleanup()
+        hermetic.release()
 
     def _state(self):
         return signal_pending.load_pending()
