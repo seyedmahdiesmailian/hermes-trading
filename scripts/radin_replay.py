@@ -29,6 +29,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -276,6 +277,28 @@ def main():
         except ValueError:
             continue
         if dt < cutoff or not is_signal(m.get('text', '')):
+            continue
+        # b74f: this replay walks XAUUSD candles, so a message that names a
+        # different instrument cannot be scored here. otsfx is ~69% FX pairs
+        # (EURUSD, NZDCHF, GBPCAD, ...) whose 5-digit prices (1.15135) the
+        # price resolver mangles into ~4301, producing TP1 distances of $0.01.
+        # Only an EXPLICIT other symbol disqualifies a message: goldsystem
+        # never writes 'XAUUSD' at all yet quotes gold prices. Match real
+        # instrument codes only — a bare [A-Z]{6} would also catch 'TARGET'.
+        CCY = ('EUR', 'GBP', 'USD', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF', 'CNY',
+               'SGD', 'TRY', 'MXN', 'ZAR', 'HKD', 'SEK', 'NOK', 'PLN', 'THB')
+        up = m['text'].upper()
+        has_gold = bool(re.search(r'\b(XAUUSD|XAU|GOLD)\b', up))
+        has_other = bool(re.search(r'\b(?:%s)(?:%s)\b' % ('|'.join(CCY), '|'.join(CCY)), up)) \
+            or bool(re.search(r'\b(USOIL|WTI|UKOIL|BRENT|BTCUSD|ETHUSD|XAGUSD'
+                              r'|NAS\d+|US\d{2,3}|GER\d{2,3}|UK\d{2,3}|JP\d{3})\b', up))
+        if has_other and not has_gold:
+            rows.append({'date': m['date'], 'text': m['text'][:70], 'leg': 0,
+                         'skip': 'other_symbol', 'side': '', 'entry': 0, 'sl': 0,
+                         'tp1': 0, 'rungs': 0, 'pnl_tp1': 0.0, 'pnl_ladder': 0.0,
+                         'outcome_tp1': '', 'outcome_ladder': '', 'bias': '',
+                         'verdict': '', 'score': '', 'rr_tp1': 0.0,
+                         'rr_ladder': 0.0, 'mfe': 0.0, 'mae': 0.0})
             continue
         ts = int(dt.timestamp())
         px, band = price_at(candles, ts)

@@ -8,7 +8,7 @@ date,text,leg,skip,side,entry,sl,tp1,rungs,pnl_tp1,pnl_ladder,outcome_tp1,outcom
 2026-06-12T06:31:04+00:00,"🪙 # BTCUSD SELL  63200
 
 
-📈 Target 1 : 62800  | Target 2 : 62400 | Targ",0,unparsed,SELL,63600.0,0.0,62800.0,3,0.0,0.0,,,,,,0.0,0.0,0.0,0.0
+📈 Target 1 : 62800  | Target 2 : 62400 | Targ",0,other_symbol,,0,0,0,0,0.0,0.0,,,,,,0.0,0.0,0.0,0.0
 2026-06-15T08:49:22+00:00,"🥇  #XAUUSD | Sell   4330.00
 
 📊 Target 1 : 4325.00 | Target 2 : 4320.00",4330.0,,SELL,4330.0,4335.0,4325.0,3,-5.0,-5.0,sl,sl_full,,,,1.0,2.2,24.13,-39.29
