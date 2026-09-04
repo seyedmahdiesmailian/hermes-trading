@@ -17,6 +17,11 @@ Pipeline
 
 Output: per-signal CSV + an aggregate summary on stdout.
 
+Units: pnl columns are raw price distance in dollars, which equals P&L at
+0.01 lot XAUUSD (1 lot = 100 oz, so 0.01 lot = 1 oz = $1 per $1.00 move).
+Scale linearly for larger size; add spread/commission separately (this
+replay is spread-free, so treat the totals as optimistic).
+
 Usage:
   python3 scripts/radin_replay.py [--days 90] [--out data/radin/replay.csv]
 """
