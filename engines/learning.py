@@ -49,13 +49,52 @@ def _load_journal() -> list[dict]:
         return list(csv.DictReader(f))
 
 
+JOURNAL_FIELDS = ['ticket', 'close_time', 'side', 'volume', 'price',
+                  'profit', 'comment', 'journaled_at', 'position_id',
+                  'commission', 'swap']
+
+
+# Columns that can be backfilled from broker deal history by ticket.
+_BACKFILLABLE = ('position_id', 'commission', 'swap')
+
+
+def _migrate_journal(journal_csv, deals_by_ticket: dict) -> None:
+    """Add missing columns to an existing journal without losing rows.
+
+    DictWriter appends by fieldnames, so writing a wider row into a narrower
+    legacy header silently misaligns every subsequent column. Rewrite the file
+    instead, backfilling position_id/commission/swap from the deal history
+    where the ticket still resolves.
+    """
+    with journal_csv.open(newline='', encoding='utf-8') as f:
+        rows = list(csv.DictReader(f))
+    for r in rows:
+        d = deals_by_ticket.get(r.get('ticket')) or {}
+        for col in _BACKFILLABLE:
+            if not (r.get(col) or '').strip():
+                r[col] = str(d.get(col, '') or '')
+    with journal_csv.open('w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=JOURNAL_FIELDS)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: r.get(k, '') for k in JOURNAL_FIELDS})
+
+
 def journal(bridge, days: int = 30) -> int:
-    """Sync closed MT5 deals into the journal CSV. Returns rows added."""
+    """Sync closed MT5 deals into the journal CSV. Returns rows added.
+
+    One row per CLOSING DEAL, which is not the same as one row per trade: a
+    position closed in three parts (partial TPs) writes three rows. Consumers
+    that report a trade count must group by `position_id` — see
+    `position_count()` below. (2026-09-04: this distinction is what made the
+    weekly report claim "34 trades" for 23 actual positions.)
+    """
     existing_keys = {(r.get('ticket'), r.get('close_time')) for r in _load_journal()}
     r = bridge.get_history_deals("XAUUSD", days)
     if not (isinstance(r, dict) and r.get('ok')):
         return 0
     deals = r.get('data', r.get('deals', [])) or []
+    deals_by_ticket = {str(d.get('ticket')): d for d in deals}
     # Map order-ticket → entry deal type, so we can record the TRADE side
     # (a BUY position is closed by a SELL deal — the closing deal type is the
     # opposite of the trade direction).
@@ -65,6 +104,7 @@ def journal(bridge, days: int = 30) -> int:
             entry_side_by_order[str(d.get('order') or d.get('ticket'))] = \
                 'BUY' if str(d.get('type')) in ('0', 'BUY') else 'SELL'
     rows = []
+    journal_csv = paths.trade_journal()
     for d in deals:
         ticket = str(d.get('ticket') or d.get('order') or '')
         close_time = str(d.get('time_done') or d.get('time') or '')
@@ -88,18 +128,95 @@ def journal(bridge, days: int = 30) -> int:
             'profit': d.get('profit', ''),
             'comment': (d.get('comment') or '')[:40],
             'journaled_at': datetime.now(timezone.utc).isoformat(),
+            'position_id': str(d.get('position_id') or ''),
+            'commission': d.get('commission', ''),
+            'swap': d.get('swap', ''),
         })
+    journal_csv.parent.mkdir(parents=True, exist_ok=True)
+    _ensure_journal_schema(journal_csv, deals_by_ticket)
     if not rows:
         return 0
-    journal_csv = paths.trade_journal()
-    new_file = not journal_csv.exists()
-    journal_csv.parent.mkdir(parents=True, exist_ok=True)
     with journal_csv.open('a', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
-        if new_file:
+        w = csv.DictWriter(f, fieldnames=JOURNAL_FIELDS)
+        if not journal_csv.exists() or journal_csv.stat().st_size == 0:
             w.writeheader()
         w.writerows(rows)
     return len(rows)
+
+
+def _ensure_journal_schema(journal_csv, deals_by_ticket: dict) -> None:
+    """Migrate a legacy journal file to the current column set, in place.
+
+    Re-runs whenever any backfillable column is missing from the header, so
+    adding a field later (e.g. commission) still heals existing files.
+    """
+    if not journal_csv.exists():
+        return
+    with journal_csv.open(encoding='utf-8') as f:
+        header = f.readline()
+    if all(col in header for col in JOURNAL_FIELDS):
+        return
+    _migrate_journal(journal_csv, deals_by_ticket)
+
+
+def position_count(rows: list[dict]) -> int:
+    """Distinct trades represented by journal rows.
+
+    Journal rows are per closing deal, so a position closed in parts yields
+    several rows. Rows with no position_id (legacy, un-backfillable) each count
+    as their own position — that is the conservative reading.
+    """
+    seen = set()
+    n = 0
+    for r in rows:
+        pid = str(r.get('position_id') or '').strip()
+        if not pid:
+            n += 1
+            continue
+        if pid not in seen:
+            seen.add(pid)
+            n += 1
+    return n
+
+
+def group_positions(rows: list[dict]) -> dict[str, dict]:
+    """Aggregate journal rows into per-position results.
+
+    Returns {position_id: {profit, volume, close_time, side, legs}}. Positions
+    are keyed by position_id; legacy rows without one fall back to their own
+    ticket so they stay distinct.
+    """
+    out: dict[str, dict] = {}
+    for r in rows:
+        key = str(r.get('position_id') or '').strip() or f"t:{r.get('ticket')}"
+        try:
+            profit = float(r.get('profit') or 0)
+        except (TypeError, ValueError):
+            profit = 0.0
+        try:
+            ct = float(r.get('close_time') or 0)
+        except (TypeError, ValueError):
+            ct = 0.0
+        def _num(col):
+            try:
+                return float(r.get(col) or 0)
+            except (TypeError, ValueError):
+                return 0.0
+
+        g = out.setdefault(key, {'profit': 0.0, 'net': 0.0, 'volume': 0.0,
+                                 'close_time': 0.0, 'side': r.get('side', ''),
+                                 'legs': 0})
+        g['profit'] += profit
+        # Net = gross P&L + commission + swap. Legacy rows may lack these
+        # columns until migrated, in which case net == gross.
+        g['net'] += profit + _num('commission') + _num('swap')
+        try:
+            g['volume'] = max(g['volume'], float(r.get('volume') or 0))
+        except (TypeError, ValueError):
+            pass
+        g['close_time'] = max(g['close_time'], ct)
+        g['legs'] += 1
+    return out
 
 
 # ── 2. Analysis ───────────────────────────────────────────────────────────

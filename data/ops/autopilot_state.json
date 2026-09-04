@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-04T17:54:36.990549+00:00",
+ "last_run_utc": "2026-09-04T21:22:35.375711+00:00",
  "recent_commits": [
-  "a6b6f88 b74: three more parser bugs found by auditing all 7 signal channels",
-  "cdd894c autopilot heal: b73 shipped two scripts with a broken env bootstrap (from engines.env_loader import load_env \u2014 module does not exist, real one is root env_loader.py with load_dotenv); radin_replay died on ImportError on this box (no python-dotenv), export_channel_history silently passed (no token). b42 HEAD-scan + b65 tripwires caught it; both healed to the repo-standard try/except pattern. 5 red -> 2 red (HEAD-scan closes with this commit)",
-  "979514a b73: document replay P&L units (0.01-lot XAUUSD, spread-free = optimistic)",
-  "32ff95f b73: replay analysis \u2014 gate validated, do NOT loosen RR to ladder",
-  "51c1ca2 b73: replay RADIN's 90-day channel history against real M5 candles"
+  "a4ffceb report: full management-format Word report with charts + corrected P&L",
+  "b9465e6 report: management-format Word version of the system state report",
+  "bd19fe2 report: full system state & architecture snapshot (2026-09-04)",
+  "c32f4e8 b74g: reject non-gold instruments in the LIVE listener too",
+  "9762fae b74f: skip non-gold messages in replay + honest Hermes baseline"
  ]
 }

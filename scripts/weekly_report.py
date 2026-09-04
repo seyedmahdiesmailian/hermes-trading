@@ -41,6 +41,10 @@ def main():
     lines = []
 
     # ── journal (closed trades) ────────────────────────────────────────
+    # Journal rows are per CLOSING DEAL. A position closed in parts (partial
+    # TPs) writes several rows, so counting rows overstates the trade count.
+    # Group by position_id first — this reported "34 trades" for 23 positions
+    # until 2026-09-04.
     rows = []
     try:
         with open(os.path.join(_ROOT, 'data/xau_plan/trade_journal.csv')) as f:
@@ -48,10 +52,19 @@ def main():
     except Exception as e:
         lines.append(f"⚠️ ژورنال خوانده نشد: {e}")
 
+    try:
+        from engines.learning import group_positions
+        positions = list(group_positions(rows).values())
+    except Exception:
+        positions = [{'net': r.get('profit'), 'close_time': r.get('close_time'),
+                      'volume': r.get('volume')} for r in rows]
+
     def stats(subset):
         if not subset:
             return None
-        p = [float(r['profit']) for r in subset if r.get('profit')]
+        # 'net' = gross profit + commission + swap (see learning.group_positions)
+        p = [float(r['net']) for r in subset if r.get('net') is not None
+             and str(r.get('net')) != '']
         w = [x for x in p if x > 0]
         l = [x for x in p if x <= 0]
         return dict(n=len(p), total=sum(p), wins=len(w), losses=len(l),
@@ -60,8 +73,8 @@ def main():
                     avg_l=statistics.mean(l) if l else 0,
                     best=max(p), worst=min(p))
 
-    week = [r for r in rows if now - float(r['close_time']) <= WEEK_S]
-    sw, sa = stats(week), stats(rows)
+    week = [r for r in positions if now - float(r['close_time'] or 0) <= WEEK_S]
+    sw, sa = stats(week), stats(positions)
 
     # ── live bridge state ──────────────────────────────────────────────
     # Documented precedence (b52/b63): explicit HERMES_BRIDGE_URL >
