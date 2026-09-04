@@ -190,6 +190,34 @@ def _extract_symbol(text: str) -> str:
     return ""
 
 
+CCY = ('EUR', 'GBP', 'USD', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF', 'CNY',
+       'SGD', 'TRY', 'MXN', 'ZAR', 'HKD', 'SEK', 'NOK', 'PLN', 'THB')
+_OTHER_INSTRUMENT_RE = re.compile(
+    r'\b(?:%s)(?:%s)\b' % ('|'.join(CCY), '|'.join(CCY)))
+_OTHER_NON_FX_RE = re.compile(
+    r'\b(USOIL|WTI|UKOIL|BRENT|BTCUSD|ETHUSD|XAGUSD'
+    r'|NAS\d+|US\d{2,3}|GER\d{2,3}|UK\d{2,3}|JP\d{3})\b')
+_GOLD_RE = re.compile(r'\b(XAUUSD|XAU|GOLD)\b')
+
+
+def names_other_instrument(text: str) -> bool:
+    """b74g: True when a message explicitly names an instrument that is NOT gold.
+
+    The live trader executes XAUUSD only, and a 5-digit FX price (1.15135) gets
+    mangled by the price resolver into something like 4301 — which then looks
+    like a valid gold signal with a $0.01 target. otsfx is ~69% FX pairs, so
+    this is not hypothetical.
+
+    Only an EXPLICIT other symbol disqualifies a message: goldsystem never
+    writes 'XAUUSD' at all yet quotes gold prices. A message that names gold
+    alongside another instrument stays (multi-instrument posts).
+    """
+    up = (text or '').upper()
+    if _GOLD_RE.search(up):
+        return False
+    return bool(_OTHER_INSTRUMENT_RE.search(up) or _OTHER_NON_FX_RE.search(up))
+
+
 def _extract_side(text: str) -> str:
     lower = text.lower()
     if "buyzone" in lower or "buy zone" in lower:

@@ -117,5 +117,19 @@ class TestB74LinePerLineLadder(unittest.TestCase):
                          'BUY')
 
 
+    def test_non_gold_instrument_is_rejected(self):
+        """b74g: otsfx posts FX pairs; their 5-digit prices get resolved
+        into plausible-looking GOLD numbers (1.15135 -> 4301)."""
+        from engines.signal_parser import names_other_instrument
+        self.assertTrue(names_other_instrument('SELL NZDCHF 0.5480 SL 0.5510'))
+        self.assertTrue(names_other_instrument('USOIL 62.5 target 58'))
+        self.assertFalse(names_other_instrument('XAUUSD BUY 4400 SL 4390'))
+        self.assertFalse(names_other_instrument('Gold buy now 4469'))
+        # goldsystem never names a symbol at all — must stay eligible
+        self.assertFalse(names_other_instrument('🔵Buy 4404/4407\n🔴Stop 4398'))
+        # a multi-instrument post that DOES name gold stays eligible
+        self.assertFalse(names_other_instrument('XAUUSD 4400 + EURUSD 1.15'))
+
+
 if __name__ == '__main__':
     unittest.main()

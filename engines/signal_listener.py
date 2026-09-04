@@ -233,7 +233,7 @@ def is_likely_signal(text: str) -> bool:
 
 def check_signals(bridge=None) -> list[dict]:
     """Main entry: check for new signal messages, parse and evaluate them."""
-    from engines.signal_parser import parse_signal
+    from engines.signal_parser import parse_signal, names_other_instrument
     from engines.signal_decision import evaluate_signal
 
     messages = fetch_new_messages()
@@ -250,6 +250,12 @@ def check_signals(bridge=None) -> list[dict]:
         if _age > 600:
             continue
         if not is_likely_signal(msg["text"]):
+            continue
+        # b74g: the forwarder dumps all 7 channels into one group, and some of
+        # them (otsfx is ~69%) post FX pairs. A 5-digit FX price gets resolved
+        # into a plausible-looking gold number, so this must be rejected on the
+        # TEXT, before any gold price logic touches it.
+        if names_other_instrument(msg["text"]):
             continue
 
         # Live price for abbreviated-price expansion ('76' → 4476)
