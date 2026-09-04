@@ -145,6 +145,28 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       n=95/100) — first replicated out-of-regime arm in the loop's history;
       its gated lane replicates only a MARGINAL positive (< +0.05R).
       Nothing wired; b70/b74 notes updated. See Findings.
+      Round 12 (b68m, 2026-09-04 — shipped via STEP-0 harvest: the previous run
+      wrote the whole round and died before committing, b46 shape; verified +
+      pinned this run by 24 tests in tests/test_b68m_htf_pdh_lab.py): PDH
+      geometry x HIGHER-TIMEFRAME TREND-STATE oracle (EMA50 level+slope on
+      H1/H4, only FULLY CLOSED HTF bars read — stricter than the funnel's own
+      convention). FIRST arm in loop history to satisfy ALL THREE replication
+      conditions on the b68l windows: pdh_h4t_agree beats the funnel on BOTH
+      independent windows (0.657 W1 / 0.927 W2 vs 0.524/0.521), beats its own
+      ungated control on both (0.612/0.623), and keeps agree>cut ordering on
+      both (cut 0.451/0.631) — the exact check round 9's dayext gate failed.
+      H1's gate is ~90% vacuous (measured + recorded so nobody quotes it as a
+      filter); H4's is 0.54-0.61 with a real disagree cut; agree-subset state
+      age median >=9 H4 bars proves a slow STATE, not an event in disguise
+      (b75 rule-6 probe); stretch delta gated-vs-control <= +0.04 ATR — the
+      lift is informational, round 10's chase tax absent. HONEST DISCLOSURE:
+      on the IN-SAMPLE cached leg the selection ordering FLIPS (disagree 1.237
+      n=11 > agree 0.641) — per b76 the cached regime is exactly what cannot
+      be trusted, and the flip is pinned by a test so it can't be quietly
+      dropped. Lane replicates only a MARGINAL positive (0.534/0.535 vs
+      0.524/0.521, < +0.05R — same shape as round 11's lane). NOT wired:
+      n=55/63 and TWO windows; promotion requires b74's >=3-window
+      replication + live gate stack + kill-switch streak math. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -273,6 +295,17 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       W1/W2 lanes (cached + W1 + W2, not cached + one contaminated fresh)
       before any capacity conclusion; the round 5-10 lane numbers quoted
       above are contaminated-fresh artefacts and must not be reused.)
+      (progress 2026-09-04, round 12 harvest: the H4-gated pdh lane
+      (data/backtest/b68m_htf_pdh_confirm.json) is the second
+      replicated-positive lane on clean windows — exp_R 0.534/0.535 vs
+      funnel 0.524/0.521 on W1/W2, margin < +0.05R on both, dd mixed (worse
+      W1, better W2). Same MARGINAL shape as round 11's lane, so two
+      independent gated lanes now agree the lane delta is small; the
+      interesting result is the ARM's standalone replication (0.657/0.927),
+      which belongs to b74, not to a lane slot. b70's decision set on clean
+      windows: ungated pdh_w10 (0.612/0.623) and pdh_h4t_agree (0.657/0.927)
+      as REPLACEMENT candidates vs the funnel's 0.524/0.521, lanes marginal.
+      Read-only.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -397,6 +430,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       kill-switch streak math on funnel+lane jointly, (d) >=3 windows so
       N-1-of-N has teeth. The next candidate that passes the merit bar gets
       run through this, not through a contaminated last-6000 fetch.)
+      (progress 2026-09-04, round 12 harvest: THERE IS NOW A CANDIDATE WORTH
+      RUNNING — pdh_h4t_agree is the first arm to clear steps (1)-lite: two
+      independent windows, beats the funnel on both (0.657/0.927 vs
+      0.524/0.521), beats its control on both, selection ordering stable out-
+      of-regime (round 9's killer check passed). Still missing before any
+      wiring proposal: a THIRD window (W3 = 6000 bars before W2 — the broker
+      history reaches 2024-02, so it exists), the pooled-n >=100 check
+      (55+63=118 already clears it), the live-gate-stack filter, and the
+      kill-switch streak math. b74 proper is now the highest-value lab item
+      in the queue.)
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -510,6 +553,40 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-04 b68 round 12 — COMBINATION: PDH breakout x HTF-trend STATE
+  oracle (scripts/b68m_htf_pdh_lab.py + b68m_htf_pdh_confirm.py; 24 tests in
+  tests/test_b68m_htf_pdh_lab.py). SHIPPED VIA STEP-0 HARVEST: the previous
+  run wrote the whole round (2 scripts + test + 2 ledgers + registry rows) and
+  died before committing — the b46 shape for the fourth time; this run
+  verified the ledgers against the scripts' own claims, added the backlog
+  round-12 note + this Findings entry, and shipped it as its own harvest
+  commit. THE FIRST ARM TO PASS FULL REPLICATION: pdh_h4t_agree (round-4's
+  replicated pdh_w10 geometry, unchanged, gated on the H4 EMA50 trend STATE —
+  only FULLY CLOSED H4 bars read, no lookahead) beats the funnel's ladder_ts
+  on BOTH truly independent windows (0.657 W1 n=55 / 0.927 W2 n=63 vs funnel
+  0.524/0.521 on the SAME bars), beats its own ungated control on both
+  (0.612/0.623 — the gate adds, it is not "pdh again"), and keeps
+  agree > disagree ordering on BOTH windows (cut 0.451 n=31 / 0.631 n=23) —
+  the exact test round 9's dayext champion failed when its selection flipped
+  sign between regimes. b72/b73/b75 probes all clean: H4 gate_share 0.54-0.61
+  (a real filter; H1's 0.88-0.91 is nearly vacuous and is RECORDED so nobody
+  quotes H1 as a filter), agree-subset state-age median 9-18 H4 bars (a slow
+  STATE, not an event in disguise — b75 rule-6), stretch delta gated−control
+  ≤ +0.04 ATR (informational lift, round 10's 4-ATR chase tax absent).
+  HONEST FLIP DISCLOSED: on the IN-SAMPLE cached leg the ordering inverts
+  (disagree 1.237 n=11 > agree 0.641) — b76 says the cached regime is exactly
+  what cannot be trusted; the flip is pinned by a test so the write-up can
+  never quietly drop the row. LANE (funnel-first, H4-gated pdh on free bars)
+  replicates only a MARGINAL positive: 0.534/0.535 vs 0.524/0.521 (< +0.05R,
+  dd worse on W1 −6.9 vs −6.1, better on W2 −5.7 vs −8.0) — b70 weighs it as
+  marginal, like round 11's lane, NOT as a headline. NOT WIRED (hard rule):
+  n=55/63 is 17-20% of the funnel's sample and two windows is b74's floor,
+  not its >=3-window + live-gate-stack + kill-switch-streak protocol. METHOD
+  NOTE: the round's own cached-leg funnel row (0.558 via the b71 harness on
+  the same 3000 bars) vs the 0.854 quoted in the b68 header since round 1 —
+  the 0.854 came from the b61 arm grid, not the harness; another reason the
+  cached bar is informational only. See b70/b74 progress notes.
 
 - 2026-09-04 b68 round 11 — METHODOLOGY: THE MERIT BAR WAS NEVER
   OUT-OF-SAMPLE (scripts/b68l_windows.py + b68l_confirm_independent.py;
