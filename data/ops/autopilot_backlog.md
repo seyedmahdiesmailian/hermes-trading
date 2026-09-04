@@ -112,6 +112,22 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       4-12% of the funnel's and it is ONE fresh set — promotion requires the
       b74 replication (cached + >=2 more independent fresh windows, live
       gate stack, kill-switch streaks) which folds into b70. See Findings.
+      Round 10 (b68r10, 2026-09-04 — the REVERSED pairing of round 9: dayext
+      geometry gated on a same-day PD-break oracle, b71 harness + b72/b73
+      playbook): REJECTED as replacement — cached ladder_ts 0.369 (n=222) vs
+      funnel 0.854, fresh 0.371 (n=461) vs funnel 0.590 on the SAME bars. The
+      gate LIFTS its control on both sets (0.327->0.369, 0.316->0.371) and the
+      opposite-path cut (day extended one way, last PD break the other) is the
+      WORST variant on both sets (0.151/0.108) — selection is real in BOTH
+      directions of this pairing, so the dayext<->PD-level agreement signal is
+      a genuine property, not a subset fluke. But the lane is NEGATIVE (exp_R
+      0.471 < 0.590, dd -12.6 vs -5.0) and the stretch probe explains why:
+      agree entries sit ~4 ATR from the broken level (the extension trigger
+      prints HOURS after the break — a chase tax), vs round 9's 0.56 ATR where
+      the geometry IS the fresh break. METHOD RULE (new todo b75): in a
+      combination, the GEOMETRY supplier should be the FRESHER event of the
+      pair; gating a lagging confirmation on its own leading signal buys a
+      lift in R but pays it in stretch. Nothing wired. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -220,6 +236,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       gated-pdh(dayext) > nr7 0.620 > funnel 0.590 > pdh 0.576 > gated-pdh
       (squeeze) 0.580-flat > dayext 0.410 — but this is ONE fresh set on a
       39-trade arm; b74 (replication) gates any promotion. Read-only.)
+      (progress 2026-09-04, round 10: a SEVENTH lane — the REVERSED pairing
+      (dayext geometry gated on same-day PD-break agree, data/backtest/
+      b68k_pdh_dayext_confirm.json) — is NEGATIVE: lane exp_R 0.471 < funnel
+      0.590, dd_R -12.6 vs -5.0 despite +208 extra trades. The gate lifted
+      its own control on both sets (0.327->0.369 cached, 0.316->0.371 fresh)
+      yet the lane still dilutes — the arm fires on 461 gated signals (1.4x
+      the funnel's 323), so slot crowding (round 6's rule) dominates the
+      quality lift. Decision set unchanged: gated-pdh(dayext) and raw nr7
+      remain the only positive lanes; dayext-based lanes stay dropped whether
+      gated or not. Read-only.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -251,6 +277,36 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       stretch_probe() already exists in scripts/b68i_confirm_squeeze_pdh.py;
       fold it into the b72 playbook checklist on the next combination round.
       Read-only, docs/procedure only.
+      (update 2026-09-04, round 10: the rule REFINED by the reversed pairing.
+      Round 9 confirmed (a): path-gated level geometry lifted hard (0.627 ->
+      0.924) with clean stretch (0.564 vs 0.558 ATR). Round 10 ran the mirror
+      — level-gated PATH geometry — and the gate lifted its control on BOTH
+      sets (0.327->0.369, 0.316->0.371, disagree arm worst on both) yet the
+      arm stayed 2.3x below the funnel and its lane negative. The stretch
+      probe says why the lift is small: agree entries sat 4.0 ATR from the
+      broken level (the extension trigger prints HOURS after the break) vs
+      round 9's 0.56 ATR. So (a) is necessary but not sufficient — the
+      pairing must also pick the RIGHT member as geometry supplier: the
+      FRESHER event of the pair (the one whose signal bar IS the trigger)
+      should carry the stop, and the background state should be the oracle.
+      Splitting {level, path} by freshness, not just type -> new todo b75.)
+- [ ] b75 GEOMETRY-FRESHNESS RULE FOR COMBINATION ROUNDS (reusable procedure
+      from b68 round 10, 2026-09-04): both directions of the dayext<->PD-level
+      pairing now have data. Forward (round 9: level geometry, path oracle):
+      lift +0.30R, stretch 0.56 ATR, merit bar PASSED. Reversed (round 10:
+      path geometry, level oracle): lift +0.04R, stretch 4.0 ATR, rejected.
+      Same two ingredients, same pure-intersection discipline — the ONLY
+      difference is which event carries the stop. RULE: in a combination arm,
+      the geometry supplier must be the FRESHER event (the one whose signal
+      bar is the trigger itself); gating a lagging confirmation on its own
+      leading signal buys a real but small R lift and pays for it in stretch
+      (chase tax) and slot crowding. CHECK before writing a round: measure
+      the oracle's typical LAG from the geometry's trigger bar (count of bars
+      between the oracle event and the geometry signal bar); if the median
+      lag > ~8 bars (2h on M15) the pairing is probably reversed and should
+      be flipped. Cheap to apply: the lag counter is a 5-line loop over the
+      same scan gate_probe() already does; fold it into the b72 checklist as
+      rule (6) on the next combination round. Read-only, docs/procedure only.
 - [ ] b74 CANDIDATE PROMOTION PROTOCOL (reusable procedure from b68 round 9,
       the FIRST arm ever to pass the merit bar — the loop has never needed
       this before): a lab arm that beats the funnel on both sets is a
@@ -385,6 +441,40 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-04 b68 round 10 — COMBINATION (REVERSED pairing): day-extension
+  continuation geometry x same-day PD-break direction oracle
+  (scripts/b68k_pdh_dayext_lab.py + b68k_confirm_pdh_dayext.py; b72 playbook,
+  4th pairing; the mirror of round 9 — same two ingredients, roles flipped:
+  dayext_cont_a10 supplies the geometry unchanged, the last close-confirmed
+  break of the previous day's extreme WITHIN today is the oracle). REJECTED
+  as replacement: cached ladder_ts 0.369 (n=222) vs funnel 0.854, fresh 0.371
+  (n=461) vs funnel 0.590 on the SAME bars. But the round produces three real
+  findings. (1) SELECTION IS SYMMETRIC: the gate lifts its control in BOTH
+  directions of the pairing (round 9: 0.627->0.924; round 10: 0.327->0.369
+  cached, 0.316->0.371 fresh) and in both directions the cut it drops is the
+  WORST arm (round 9 complement 0.398/0.467; round 10 disagree 0.151/0.108 —
+  a day that extended one way while the last level break went the other is
+  the weakest continuation in the family). Dayext<->PD-level agreement is a
+  genuine property of gold M15, not a subset fluke of one pairing. (2) THE
+  LIFT DEPENDS ON WHICH MEMBER CARRIES THE STOP: forward pairing lifted
+  +0.30R, reversed +0.04R — the stretch probe measures the cost: reversed
+  agree entries sit 4.01 ATR from the broken level (median 2.92; the
+  extension trigger prints HOURS after the break, so the entry chases),
+  forward entries sat 0.56 ATR (the break IS the trigger). -> new todo b75
+  (geometry-freshness rule). (3) LANE #7 NEGATIVE: funnel-first + gated
+  dayext on free bars, fresh: n 531 vs 323, tot_R 250.2 vs 190.6 (+31%) but
+  exp_R 0.471 < 0.590 and dd_R -12.6 vs -5.0 — a quality lift that survives
+  gating cannot beat slot crowding when the arm still fires 1.4x the funnel's
+  frequency (round 6's rule holds for gated variants too). b70 decision set
+  unchanged: gated-pdh(dayext) and raw nr7 remain the only positive lanes.
+  Nothing wired live. 19 tests (tests/test_b68k_pdh_dayext_lab.py) pin the
+  pure-intersection contract, the EXACT-PARTITION property of the three cuts
+  (agree XOR disagree XOR notyet over the dayext set — new probe shape this
+  round), the no-lookahead oracle with its broken-level carriage, the
+  round-6 control reproduction (0.327 n=407), both-sets selection ordering,
+  and the shipped fresh verdicts (merit bar fails both sets; lane negative
+  on R and DD; stretch > 2 ATR chase tax). 603 green.
 
 - 2026-09-04 b68 round 9 — COMBINATION: PDH breakout x day-extension agreement
   (scripts/b68j_dayext_pdh_lab.py + b68j_confirm_dayext_pdh.py; b72 playbook,

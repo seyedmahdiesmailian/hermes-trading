@@ -1,9 +1,9 @@
 {
-  "day": "2026-09-03",
-  "starting_balance": 4982.77,
-  "daily_pnl": 206.57,
+  "day": "2026-09-04",
+  "starting_balance": 5186.04,
+  "daily_pnl": 0.0,
   "loss_streak": 0,
-  "trades_today": 5,
+  "trades_today": 0,
   "last_closed_ticket": 99301256,
   "recent_closed": [
     {
