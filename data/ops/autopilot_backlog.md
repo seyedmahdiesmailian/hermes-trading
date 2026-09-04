@@ -128,6 +128,23 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       combination, the GEOMETRY supplier should be the FRESHER event of the
       pair; gating a lagging confirmation on its own leading signal buys a
       lift in R but pays it in stretch. Nothing wired. See Findings.
+      Round 11 (b68l, 2026-09-04 — METHODOLOGY round, harvested from the
+      previous run's uncommitted work + pinned with 19 tests this run):
+      the last-6000 "fresh" set used by rounds 1-10 CONTAINS ALL 3000
+      cached bars (measured overlap = 3000/3000) — the merit bar was never
+      out-of-sample. Re-measured the whole b70 decision set on two windows
+      that exclude the cached regime (W1 2026-04-14→07-15, W2 2026-01-12→
+      04-14, zero overlap with cached and each other, b71 harness, funnel
+      re-measured on the SAME bars: 0.524/0.521 — the 0.854 cached bar is
+      confirmed regime-inflated). RESULT: round 9's champion FAILS
+      replication (0.928 W1 vs 0.447 W2) and its gate's selection FLIPS
+      SIGN between windows (complement 0.415→0.743 vs agree 0.928→0.447)
+      — the dayext gate is a regime interaction, not a property; nr7 loses
+      both windows (0.437/0.390). The UNGATED pdh control (round 4) is the
+      ONLY arm beating the funnel on both independent windows (0.612/0.623,
+      n=95/100) — first replicated out-of-regime arm in the loop's history;
+      its gated lane replicates only a MARGINAL positive (< +0.05R).
+      Nothing wired; b70/b74 notes updated. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -246,6 +263,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       quality lift. Decision set unchanged: gated-pdh(dayext) and raw nr7
       remain the only positive lanes; dayext-based lanes stay dropped whether
       gated or not. Read-only.)
+      (progress 2026-09-04, round 11 — THE DATA MOVED UNDER THIS ITEM: the
+      b68l re-measure on truly independent windows (see Findings) shows the
+      contaminated "fresh" set inflated most lane evidence. On W1/W2 the
+      gated-pdh(dayext) lane replicates only a MARGINAL positive (< +0.05R
+      vs funnel on both windows, DD no better on W2), nr7's arm loses both
+      windows standalone, and the UNGATED pdh_w10 is the only arm beating
+      the funnel on both windows. b70's decision set must be RE-SCORED on
+      W1/W2 lanes (cached + W1 + W2, not cached + one contaminated fresh)
+      before any capacity conclusion; the round 5-10 lane numbers quoted
+      above are contaminated-fresh artefacts and must not be reused.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -300,13 +327,41 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       the geometry supplier must be the FRESHER event (the one whose signal
       bar is the trigger itself); gating a lagging confirmation on its own
       leading signal buys a real but small R lift and pays for it in stretch
-      (chase tax) and slot crowding. CHECK before writing a round: measure
+      (chase tax) and slot crowding.
+      (CAVEAT 2026-09-04, round 11: the dayext<->PD-level "genuine property"
+      premise behind this rule is DOWNGRADED — on truly independent windows
+      the gate's agree-vs-complement ordering FLIPS SIGN between regimes
+      (0.928>0.415 on W1, 0.447<0.743 on W2). The freshness/stretch mechanics
+      still measure real chase costs, but the dayext gate must not be
+      trusted as a stable direction oracle in future rounds.)
+      CHECK before writing a round: measure
       the oracle's typical LAG from the geometry's trigger bar (count of bars
       between the oracle event and the geometry signal bar); if the median
       lag > ~8 bars (2h on M15) the pairing is probably reversed and should
       be flipped. Cheap to apply: the lag counter is a 5-line loop over the
       same scan gate_probe() already does; fold it into the b72 checklist as
       rule (6) on the next combination round. Read-only, docs/procedure only.
+- [ ] b76 CONFIRM SETS MUST PROVE INDEPENDENCE (reusable procedure from b68
+      round 11, 2026-09-04 — the loop's biggest methodology finding: rounds
+      1-10's "fresh" confirm set was the last 6000 M15 bars, which contains
+      100% of the 3000 cached bars, so the merit bar's "beat the funnel on
+      BOTH sets" was a set vs its own superset for ten rounds and produced
+      at least one false champion). RULE: any confirm/backtest script that
+      fetches "the last N bars" must (a) compute the overlap with every
+      in-sample set it is compared against, (b) record the number in the
+      shipped ledger, and (c) either assert it is ZERO or label the set
+      in-sample in the ledger so no reader can quote it as out-of-sample.
+      The reusable builder is scripts/b68l_windows.py (deep fetch ->
+      strictly-before slicing -> H1/H4 context padding -> overlap facts
+      recorded); the reusable verdict rule is
+      b68l_confirm_independent.verdict() (PASS = beats the funnel's
+      ladder_ts on the SAME bars in >=N-1 of N windows; None/tie never
+      beats). Cheapest real fix: a shared helper engines/lab_windows.py
+      exposing independent_window(cached_path, n, before_ts) +
+      overlap_with(rows, span) that every future confirm calls instead of
+      hand-fetching, plus a tripwire test that no scripts/b*_*_confirm*.py
+      fetches last-N bars without recording an overlap fact. Read-only,
+      lab-only.
 - [ ] b74 CANDIDATE PROMOTION PROTOCOL (reusable procedure from b68 round 9,
       the FIRST arm ever to pass the merit bar — the loop has never needed
       this before): a lab arm that beats the funnel on both sets is a
@@ -328,6 +383,20 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       n clears 100. Cheap: the machinery (indexed/backtest_ohlc/lane_sim/
       stretch_probe) already exists in b68j/b68i/b70. Read-only; wiring
       stays a human decision per the b68 merit bar.
+      (progress 2026-09-04, round 11: HALF OF THIS PROTOCOL IS NOW BUILT AND
+      IT ALREADY KILLED THE ONLY CANDIDATE. scripts/b68l_windows.py is the
+      reusable independent-window builder (W1/W2, zero overlap asserted +
+      recorded, H1/H4 context padded) and b68l_confirm_independent.verdict()
+      is the replication rule (PASS = beats the funnel's ladder_ts on the
+      SAME bars in BOTH windows; None exp_R and ties never beat — pinned on
+      synthetic ledgers by tests/test_b68l_independent.py). Running it on
+      round 9's champion: FAILS (0.928 W1 / 0.447 W2). What is still missing
+      for b74 proper: (a) a CLI taking arm name + N windows instead of the
+      hardcoded round-11 arm list, (b) the live-gate-stack filter (DEFCON/
+      session/cooldown/news) applied on top of the lab signal, (c) the
+      kill-switch streak math on funnel+lane jointly, (d) >=3 windows so
+      N-1-of-N has teeth. The next candidate that passes the merit bar gets
+      run through this, not through a contaminated last-6000 fetch.)
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -441,6 +510,54 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-04 b68 round 11 — METHODOLOGY: THE MERIT BAR WAS NEVER
+  OUT-OF-SAMPLE (scripts/b68l_windows.py + b68l_confirm_independent.py;
+  harvested from the previous run's uncommitted work per b47, pinned this
+  run by 19 tests in tests/test_b68l_independent.py). Rounds 1-10 fetched
+  "the last 6000 M15 bars" as the FRESH confirm set. Measured: the cached
+  3000-bar set (2026-07-15→08-28) sits at the END of the broker's M15
+  history, so the last 6000 bars contain ALL 3000 cached bars — overlap
+  3000/3000. Every "beat the funnel on BOTH sets" verdict for ten rounds
+  compared a set against its own superset; the "fresh" number was the same
+  July-August regime plus 3000 extra bars. This round fixes the
+  MEASUREMENT, not the strategy: W1 = 6000 bars 2026-04-14→07-15 (ends
+  where cached begins), W2 = 6000 bars 2026-01-12→04-14, both asserted
+  zero-overlap with cached and each other (facts recorded in the JSON,
+  pinned by tests), H1/H4 context padded 200h so the funnel never starves.
+  The whole b70 decision set re-run through the b71 harness with the funnel
+  measured on the SAME bars per window (round-4 rule). FINDING 0 — the
+  baseline itself: the funnel scores 0.524 (W1) / 0.521 (W2) vs its cached
+  0.854; the 0.854 bar was regime-inflated, and the two independent windows
+  agree with each other closely. FINDING 1 — round 9's champion (pdh x
+  dayext, the ONLY arm ever to pass the merit bar) FAILS replication:
+  ladder_ts 0.928 on W1 (n=38) but 0.447 on W2 (n=38) vs funnel 0.521 —
+  it beats the funnel in exactly one of two out-of-regime windows, i.e.
+  the cached+contaminated-fresh pass was regime luck. b74's replication
+  requirement just earned its keep. FINDING 2 — the gate's SELECTION FLIPS
+  SIGN between regimes: agree > complement on W1 (0.928 vs 0.415) but
+  agree < complement on W2 (0.447 vs 0.743, n=60/63 — real samples both
+  sides). Round 9's complement probe "proved selection is real"; out-of-
+  regime it proves the opposite. The dayext<->PD-level agreement is a
+  REGIME INTERACTION, not a property of gold M15 — rounds 9+10's
+  "selection is symmetric" conclusion is downgraded. FINDING 3 — the
+  UNGATED pdh control (round 4's pdh_w10) is the ONLY arm that beats the
+  funnel on BOTH independent windows (0.612 vs 0.524, 0.623 vs 0.521,
+  n=95/100): the loop's first genuinely replicated arm, and the gate that
+  "lifted" it in round 9 actually made it regime-fragile. FINDING 4 —
+  nr7 loses both windows standalone (0.437/0.390, n≈480): its round-5
+  "strongest lane" status was also contamination. The gated lane
+  (funnel-first + gated pdh on free bars) replicates only a MARGINAL
+  positive (0.559/0.534 vs 0.524/0.521, < +0.05R/trade, DD no better on
+  W2) — b70 must weigh it as marginal, not as round 9's headline. METHOD
+  RULE (new todo b76): every confirm script that fetches "the last N bars"
+  must assert its overlap with the cached set is ZERO (or record the
+  measured overlap in the ledger and name the set as in-sample); the
+  b68l_windows builder is the reusable pattern. Nothing wired live; the
+  funnel stays. 19 tests pin window integrity (incl. the 3000/3000
+  contamination fact), the harness contract on both windows, all four
+  verdicts with sample sizes, and verdict()'s replication rule on synthetic
+  ledgers (None exp_R never beats, tie never beats).
 
 - 2026-09-04 b68 round 10 — COMBINATION (REVERSED pairing): day-extension
   continuation geometry x same-day PD-break direction oracle
