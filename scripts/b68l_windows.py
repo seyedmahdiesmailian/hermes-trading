@@ -16,7 +16,12 @@ This module builds the windows the loop should have had from the start:
 
   W1 — the last 6000 M15 bars STRICTLY BEFORE the cached set's first bar;
   W2 — the last 6000 M15 bars strictly before W1 (a second independent
-       window, so b74's ">=2 more independent windows" has its second draw).
+       window, so b74's ">=2 more independent windows" has its second draw);
+  W3 — the last 6000 M15 bars strictly before W2 (round 13, b74's THIRD
+       draw: the round-12 champion pdh_h4t_agree replicated on W1+W2, and
+       b74 requires >=2 MORE independent windows before a wiring proposal —
+       W3 is the next uncontaminated slice the broker's 60000-bar history
+       can give).
 
 Each window ships with its H1/H4 context streams (strategy_signal needs
 80-bar H1/H4 windows up to each bar's time — the full fetched history is
@@ -60,7 +65,7 @@ def cached_span() -> tuple[int, int]:
 
 
 def build_windows(fetch: bool = True) -> dict:
-    """Slice W1/W2 out of the broker's deep M15 history + H1/H4 context.
+    """Slice W1/W2/W3 out of the broker's deep M15 history + H1/H4 context.
 
     Returns the ledger dict (also written to OUT when fetch=True).
     """
@@ -69,7 +74,7 @@ def build_windows(fetch: bool = True) -> dict:
     m15 = fetch_all_ohlc(bridge, "XAUUSD", "M15", FETCH_COUNT)
     h1 = fetch_all_ohlc(bridge, "XAUUSD", "H1", FETCH_COUNT)
     h4 = fetch_all_ohlc(bridge, "XAUUSD", "H4", FETCH_COUNT)
-    if len(m15) < 3 * WINDOW_BARS:
+    if len(m15) < 4 * WINDOW_BARS:
         raise RuntimeError(f"not enough M15 history: {len(m15)} bars")
 
     before_c = [r for r in m15 if int(r["time"]) < c0]
@@ -77,6 +82,12 @@ def build_windows(fetch: bool = True) -> dict:
     w1_lo = int(w1[0]["time"])
     before_w1 = [r for r in before_c if int(r["time"]) < w1_lo]
     w2 = before_w1[-WINDOW_BARS:]
+    w2_lo = int(w2[0]["time"])
+    before_w2 = [r for r in before_w1 if int(r["time"]) < w2_lo]
+    w3 = before_w2[-WINDOW_BARS:]
+    if len(w3) < WINDOW_BARS:
+        raise RuntimeError(f"W3 truncated: {len(w3)} bars — broker history "
+                           f"cannot give a third independent window")
 
     def ctx(rows: list[dict], lo: int, hi: int) -> dict:
         """H1/H4 covering [lo - 200h, hi] so every window bar has >=80 bars
@@ -88,11 +99,10 @@ def build_windows(fetch: bool = True) -> dict:
                        if lo - pad <= int(r["time"]) <= hi]}
 
     src = {"M15": m15, "H1": h1, "H4": h4}
-    cached_times = set(range(0, 0))   # placeholder replaced below
     out: dict = {"_cached_span": [c0, c1],
                  "_cached_bars": 3000,
                  "_window_bars": WINDOW_BARS}
-    made = {"W1": w1, "W2": w2}
+    made = {"W1": w1, "W2": w2, "W3": w3}
     spans = {}
     for name, rows in made.items():
         lo, hi = int(rows[0]["time"]), int(rows[-1]["time"])
@@ -104,10 +114,18 @@ def build_windows(fetch: bool = True) -> dict:
             "overlap_with_cached": sum(
                 1 for r in rows if c0 <= int(r["time"]) <= c1),
         }
-    # cross-window overlap (W2 must end before W1 starts by construction)
-    out["_W1_W2_overlap"] = sum(
-        1 for r in made["W1"] if int(r["time"]) in
-        set(int(x["time"]) for x in made["W2"]))
+    # cross-window overlap (each window must end before the previous one
+    # starts by construction — measured, not assumed, for every pair).
+    # _W1_W2_overlap keeps its founding name (pinned by round-11 tests).
+    names = list(made)
+    for a in range(len(names)):
+        for b in range(a + 1, len(names)):
+            ta = {int(x["time"]) for x in made[names[a]]}
+            ov = sum(1 for r in made[names[b]] if int(r["time"]) in ta)
+            if (names[a], names[b]) == ("W1", "W2"):
+                out["_W1_W2_overlap"] = ov
+            else:
+                out[f"_{names[a]}_{names[b]}_overlap"] = ov
     # THE contamination fact, measured not asserted-from-memory:
     last6000 = m15[-WINDOW_BARS:]
     out["_last6000_overlap_with_cached"] = sum(
@@ -130,12 +148,14 @@ def main() -> None:
 
     def ts(t):
         return _dt.datetime.fromtimestamp(int(t), _dt.timezone.utc)
-    for name in ("W1", "W2"):
+    for name in ("W1", "W2", "W3"):
         m = out[f"_{name}_meta"]
         print(f"{name}: {m['m15_bars']} M15 bars  "
               f"{ts(m['first'])} -> {ts(m['last'])}  "
               f"overlap_with_cached={m['overlap_with_cached']}")
-    print("W1∩W2 overlap:", out["_W1_W2_overlap"])
+    for k in sorted(out):
+        if k.endswith("_overlap") and not k.startswith("_last"):
+            print(f"{k}:", out[k])
     print("last-6000 (old 'fresh') ∩ cached:",
           out["_last6000_overlap_with_cached"], "/ 3000 cached bars")
     print("saved:", os.path.abspath(OUT),

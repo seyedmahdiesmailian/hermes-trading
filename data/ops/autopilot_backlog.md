@@ -167,6 +167,23 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       0.524/0.521, < +0.05R — same shape as round 11's lane). NOT wired:
       n=55/63 and TWO windows; promotion requires b74's >=3-window
       replication + live gate stack + kill-switch streak math. See Findings.
+      Round 13 (b68n, 2026-09-04 — SHIPPED VIA STEP-0 HARVEST: the previous run
+      wrote the whole round — W3 window builder + b68n lab + 17 tests + ledger —
+      and died before committing, b46 shape 5th occurrence; verified this run):
+      W3 (2025-10-08→2026-01-12, 6000 bars, zero overlap asserted) spends b74's
+      THIRD DRAW on the round-12 champion and, for the first time, gates the
+      FUNNEL's own entries on the H4-trend state. RESULT 1: pdh_h4t_agree FAILS
+      W3 (0.505 vs funnel 0.528 on the same bars) — the round-12 champion is
+      2-of-3 windows, NOT promoted; its control pdh_w10 collapses harder
+      (0.370), so the gate still lifts pdh on W3 but not above the funnel.
+      RESULT 2: funnel_h4t_agree is the FIRST arm to beat the funnel on ALL
+      THREE independent windows (0.617/0.553/0.536 vs 0.524/0.521/0.528,
+      n=203/228/209) — but the margins SHRINK (0.093→0.032→0.008) and the
+      selection ordering FLIPS on W3 (cut 0.553 > agree 0.536, the exact check
+      that killed round 9's champion), so it is a candidate for the b74
+      protocol, not a winner; wiring a new filter into the live funnel is a
+      human decision regardless. RESULT 3: the h4pdh lane loses W3
+      (0.515 vs 0.528) — lane evidence now 2-of-3. Nothing wired. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -306,6 +323,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       windows: ungated pdh_w10 (0.612/0.623) and pdh_h4t_agree (0.657/0.927)
       as REPLACEMENT candidates vs the funnel's 0.524/0.521, lanes marginal.
       Read-only.)
+      (progress 2026-09-04, round 13 harvest: W3 KEEPS LANE EVIDENCE WEAK —
+      the h4pdh lane (funnel-first + gated pdh on free bars) LOSES W3
+      (0.515 vs funnel 0.528 on the same bars, data/backtest/
+      b68n_funnel_gate_w3.json) after marginal positives on W1/W2: lane
+      evidence is now 2-of-3 windows and below b74's replication bar. The
+      round's only three-window positive is funnel_h4t_agree — a REPLACEMENT
+      FILTER question (cut the funnel's disagreeing entries), not a lane, and
+      its W3 margin is +0.008R with the selection ordering flipped. b70's
+      clean-window decision set shrinks to: pdh_w10 (0.612/0.623/0.370 —
+      FAILS W3) and pdh_h4t_agree (0.657/0.927/0.505 — FAILS W3) as
+      replacement candidates, both now 2-of-3; no lane clears three windows.
+      Read-only.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -440,6 +469,20 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       (55+63=118 already clears it), the live-gate-stack filter, and the
       kill-switch streak math. b74 proper is now the highest-value lab item
       in the queue.)
+      (progress 2026-09-04, round 13 harvest: THE THIRD DRAW RAN AND KILLED
+      THE CHAMPION — pdh_h4t_agree fails W3 (0.505 vs funnel 0.528, n=74):
+      2-of-3 windows is NOT replication, b74's >=3-window rule just earned
+      its keep a second time (it also killed round 9's champion). The new
+      candidate from this round is funnel_h4t_agree — the funnel's own
+      signals gated on the H4 state — the FIRST arm to beat the funnel on
+      all three windows (0.617/0.553/0.536 vs 0.524/0.521/0.528, pooled
+      n=540), but with shrinking margins (+0.093→+0.032→+0.008) and the
+      agree-vs-cut ordering FLIPPED on W3 (the round-9 killer check). It
+      enters b74's protocol as the top candidate: a 4th window if the broker
+      history gives one, the live-gate-stack filter, kill-switch streak math,
+      and the pooled-margin trend (a gate whose edge decays to +0.008R may
+      be real-but-worthless — the protocol should price the DECAY, not just
+      the mean). Read-only.)
 - [x] b69 DEAD LAB ARM: b63's `compression` arm fired 0 trades on both cached 3000
       M15 and the b63b fresh set (data/backtest/b63_smc_rtm_lab.json shows
       trades:0 for plain AND ladder) — its "(hi-lo) > 0.9*ATR(50)" tightness gate
@@ -553,6 +596,44 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-04 b68 round 13 — W3 THIRD DRAW + THE H4-STATE GATE APPLIED TO
+  THE FUNNEL ITSELF (scripts/b68l_windows.py W3 slice + scripts/
+  b68n_funnel_gate_w3.py; 17 tests in tests/test_b68n_funnel_gate_w3.py).
+  SHIPPED VIA STEP-0 HARVEST: the previous run wrote the whole round and died
+  before committing (b46 shape, 5th occurrence); this run verified the ledger
+  against the scripts' claims (W3 meta zero-overlap asserted; cross-round
+  continuity: round 13's W1/W2 funnel + pdh rows reproduce round 12's shipped
+  numbers exactly — pinned by a test), added the round-13 backlog note, the
+  b70/b74 progress notes and this entry. FINDING 1 — the round-12 champion
+  FAILS its third draw: pdh_h4t_agree ladder_ts 0.505 (n=74) vs funnel 0.528
+  on the SAME W3 bars (2025-10-08→2026-01-12), after 0.657/0.927 on W1/W2.
+  Two windows was b74's floor, not its finish line; the arm is 2-of-3 and
+  stays a lab row. Its ungated control collapses harder (0.370), so the H4
+  gate still LIFTS pdh on W3 (+0.135R) — the gate is not fake, the funnel
+  bar is what it cannot clear. FINDING 2 — the round's real candidate:
+  gating the FUNNEL's own signals on the H4-trend state (funnel_h4t_agree,
+  never measured before — round 12 only ever gated pdh) is the FIRST arm in
+  loop history to beat the funnel on ALL THREE independent windows: 0.617 vs
+  0.524 (W1), 0.553 vs 0.521 (W2), 0.536 vs 0.528 (W3), n=203/228/209 — a
+  real subset (gate_share 0.68-0.77, cut_share 0.13-0.21, state-age median
+  11-17 H4 bars: a slow STATE, b75 rule 6). BUT the margins SHRINK window by
+  window (+0.093 → +0.032 → +0.008) and the SELECTION ORDERING FLIPS on W3
+  (disagree cut 0.553 > agree 0.536) — the exact regime-flip signature that
+  killed round 9's champion on b68l. On cached (in-sample) the flip is also
+  there (cut 0.687 > agree 0.57). So the honest read: the agree subset is
+  >= the funnel on every window, but the gate's DISAGREE-CUTS-losers story
+  only holds out-of-regime on W1/W2, not W3. NOT wired (hard rule): a
+  funnel-entry filter change is a live-gate-stack decision, needs the full
+  b74 protocol (live gates, kill-switch streak math, a 4th window if the
+  broker history can give one) and stays a human decision. FINDING 3 — the
+  h4pdh additive lane loses W3 too (0.515 vs 0.528, 2-of-3): b70's clean-
+  window lane evidence weakens further; the only lane-shaped positive left
+  across all three windows is the funnel-gate itself (which is a REPLACEMENT
+  filter question, not a lane). METHOD NOTE: three independent windows now
+  agree the funnel scores ~0.52-0.53 ladder_ts out-of-regime (0.524/0.521/
+  0.528) — the cached 0.854/0.558 bar is confirmed regime-inflated for the
+  third time. See b70/b74 progress notes.
 
 - 2026-09-04 b68 round 12 — COMBINATION: PDH breakout x HTF-trend STATE
   oracle (scripts/b68m_htf_pdh_lab.py + b68m_htf_pdh_confirm.py; 24 tests in
