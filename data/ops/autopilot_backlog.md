@@ -532,7 +532,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       corrected verdict under the SAME replication rule as the components
       (b74's all-windows rule applies to lanes too). Cheap here (~4 min for
       5 legs x 5 rows); the wrong alternative was a published wrong answer.
-- [ ] b84 MEASURE THE GATE, NOT JUST THE ARM (reusable procedure from b68
+- [x] b84 MEASURE THE GATE, NOT JUST THE ARM (reusable procedure from b68
       round 18, 2026-09-05): every live FILTER (grade gate, min_rr, DEFCON,
       cooldown) must eventually be measured as BOOKS — run the funnel's own
       kept population and dropped population each as a standalone book
@@ -551,6 +551,33 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       read-only. Next filter due: min_rr=1.5 (b80 measured rr 1.549-1.552
       at the funnel's own entries — the gate is nearly never-binding there,
       so the book measurement may be cheap and could retire a dead knob).
+      DONE 2026-09-05 (shipped in 5679746, tick harvested by the 12:35 run —
+      b84_rr_gate_books.py + 12 tests + ledger): min_rr=1.5 is a NO-OP on
+      the funnel's own book (0 dropped trades on all 5 legs) because
+      _reanchor_blueprint manufactures every rr at floor+0.05 (spike
+      1.547-1.554, share>=0.997 inside the band on all windows) — the gate
+      checks its own builder's output, a tautology not a filter; the real
+      risk is the CLIFF: learning.py's first +0.25 step (1.75) kills
+      98.9-100% of entries on all 4 windows (-257.3R given up, 3 trades
+      left, pays 2-of-4 only) — knob stays (never weaken), but any future
+      adaptive-floor proposal must clear this ledger first.
+- [ ] b85d FIXTURE-COMPLETENESS RULE FOR SUBPROCESS TESTS (reusable procedure
+      from the 12:35 run, 2026-09-05): a test that runs a repo script in a
+      THROWAWAY fixture dir (copy of the script + symlinked engines) inherits
+      the script's whole import surface — including fallback imports like
+      `from env_loader import load_dotenv` that only fire on hosts WITHOUT
+      python-dotenv. b85's fixture copied the script but not env_loader.py,
+      so the child died at import (rc=1) whenever the suite ran under a
+      python WITHOUT dotenv (system python3): 2 tests red in the working
+      tree, while the same suite under the Hermes venv (has dotenv) is
+      green — a HOST-DEPENDENT test, invisible to whoever runs it from the
+      venv. RULE: when a test shells out to a repo script, copy (or
+      symlink) EVERY module the script's import fallbacks can reach — the
+      fixture must be complete for the WORST host, not the author's; and
+      when a failure appears in one runner and not another, diff the
+      interpreters (venv vs system) before suspecting the code. Fixed by
+      shipping env_loader.py into the fixture (tests/test_b85_report_
+      attribution.py). Small, tests-only.
 - [ ] b79 GATE FIRE-RATE STABILITY PRE-FLIGHT (reusable procedure promised
       by b68 round 16's Findings, 2026-09-05; first metric measured in round
       17): before spending four b74 draws on a gated arm, measure the

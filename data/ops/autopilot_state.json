@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-05T11:43:29.118328+00:00",
+ "last_run_utc": "2026-09-05T15:35:34.224294+00:00",
  "recent_commits": [
+  "e5e44c4 autopilot: b85c \u2014 route the backlog-dirty check through engines/dirty_work (b46 single-seam rule) via new is_path_dirty()",
+  "25b305e autopilot: b85b \u2014 CLI startup noise hijacked the narrative (503 hidden behind English warning); backlog 'not yet committed' note now checks git state, not this run's commits",
   "686d9ff autopilot: b85 follow-up \u2014 a missing autopilot.log is 'no marker', not a broken check (clean-checkout self-check died on FileNotFoundError)",
   "5679746 autopilot: b85 report attributed commits by diff range, not by time \u2014 a manual fix between runs was credited to a run that committed nothing",
-  "a082b56 autopilot: b68 round 18 (b68r) grade ladder measured as books - B gate CONFIRMED 4-of-4 selection + 8-of-8 side cells, ungated earns +29..57R total (marginal C trade +0.21..0.37R, worse DD); A>B flip is a W4-SELL direction cell, B->A tightening gives up -261.7R NOT proposed; new todo b84",
-  "ce6e3be harvest: b81 lane re-score vs corrected b80 bar (left uncommitted by the previous run, b46 shape 8th occurrence)",
-  "d2ef6ae autopilot: rc=143 (external SIGTERM during provider stall) is a cutoff, not a crash"
+  "a082b56 autopilot: b68 round 18 (b68r) grade ladder measured as books - B gate CONFIRMED 4-of-4 selection + 8-of-8 side cells, ungated earns +29..57R total (marginal C trade +0.21..0.37R, worse DD); A>B flip is a W4-SELL direction cell, B->A tightening gives up -261.7R NOT proposed; new todo b84"
  ]
 }

@@ -149,6 +149,11 @@ class ReportRendering(unittest.TestCase):
         import shutil
         shutil.copy(REPO / 'scripts' / 'autopilot_report.py',
                     work / 'scripts' / 'autopilot_report.py')
+        # b85d: the script's dotenv fallback imports `env_loader` from the
+        # REPO ROOT, and the child's sys.path[0] is this throwaway root — so
+        # the fixture must carry that file too, or the child dies at import
+        # (returncode 1) on any host without python-dotenv installed.
+        shutil.copy(REPO / 'env_loader.py', work / 'env_loader.py')
         # b85b: the backlog starts BANKED with zero ticks; the tick is added
         # later and either committed (banked) or left dirty (working tree
         # only) — the note must follow the file's real git state.
