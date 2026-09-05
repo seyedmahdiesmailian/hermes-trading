@@ -135,10 +135,12 @@ if other_commits:
     lines += [f'· {c[:110]}' for c in other_commits]
 
 if done_now > prev.get('done', done_now):
-    # b85: progress counted from the WORKING TREE. If this run never
-    # committed, the tick exists only on disk (the harvester will land it) —
-    # say so instead of implying it is banked.
-    note = '' if new_commits else ' <i>(هنوز ثبت نشده — دور بعد)</i>'
+    # b85: a tick counted from the WORKING TREE is only banked once it is
+    # committed. b85b: check the file against git, not against THIS run's
+    # commits — the 15:13 report said 'هنوز ثبت نشده' about a tick that a
+    # manual commit had already banked minutes earlier.
+    dirty = git('status', '--porcelain', '--', str(BACKLOG))
+    note = '' if not dirty else ' <i>(هنوز ثبت نشده — دور بعد)</i>'
     lines.append(f'📋 بک‌لاگ: {prev.get("done", "?")} ← {done_now} '
                  f'آیتم انجام‌شده{note}')
 

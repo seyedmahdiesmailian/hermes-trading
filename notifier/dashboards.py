@@ -362,9 +362,16 @@ def _autopilot_narrative(max_chars: int = 700) -> str:
         return ''
     body = parts[-2].split('=== autopilot run start ===')[-1]
     lines = [l.strip() for l in body.splitlines() if l.strip()]
+    # b85b: the fleet-restart breadcrumb is CLI-startup NOISE, not the run's
+    # story. It used to inflate `keep` past the <=2 threshold, so the 503
+    # fallback never fired and the raw English warning was forwarded to the
+    # ops chat as if it were the agent's Persian narrative.
+    _NOISE = ('A previous `hermes update`', 'Gateways may still be serving',
+              'Run `hermes update` or')
     keep = [l for l in lines
             if not l.startswith('2026-') and 'report sent' not in l
-            and 'nothing to report' not in l and 'autopilot run' not in l]
+            and 'nothing to report' not in l and 'autopilot run' not in l
+            and not any(n in l for n in _NOISE)]
     text = ' '.join(keep)
     if 'API call failed' in text and len(keep) <= 2:
         why = '503' if '503' in text else ('429' if '429' in text else 'خطا')

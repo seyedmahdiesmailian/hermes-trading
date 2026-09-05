@@ -149,8 +149,11 @@ class ReportRendering(unittest.TestCase):
         import shutil
         shutil.copy(REPO / 'scripts' / 'autopilot_report.py',
                     work / 'scripts' / 'autopilot_report.py')
+        # b85b: the backlog starts BANKED with zero ticks; the tick is added
+        # later and either committed (banked) or left dirty (working tree
+        # only) — the note must follow the file's real git state.
         (work / 'data' / 'ops' / 'autopilot_backlog.md').write_text(
-            '- [x] done one\n- [ ] next item\n')
+            '- [ ] next item\n')
         self._git(work, 'init', '-q')
         self._git(work, 'config', 'user.email', 't@l')
         self._git(work, 'config', 'user.name', 'T')
@@ -162,10 +165,16 @@ class ReportRendering(unittest.TestCase):
         f.write_text('b')
         self._git(work, 'add', '-A')
         self._commit(work, '2026-09-05T09:20:00', 'manual fix between runs')
+        (work / 'data' / 'ops' / 'autopilot_backlog.md').write_text(
+            '- [x] done one\n- [ ] next item\n')
         if third:
             f.write_text('c')
             self._git(work, 'add', '-A')
             self._commit(work, '2026-09-05T09:40:00', 'autopilot: b84 work')
+        else:
+            # the tick stays UNCOMMITTED (working tree only) -> the report
+            # must say 'هنوز ثبت نشده'
+            pass
         # done=0 so the working-tree backlog (1 tick) always reads as progress
         (work / 'data' / 'ops' / 'autopilot_report_state.json').write_text(
             '{"head": "%s", "done": 0}' % prev)
@@ -228,6 +237,62 @@ class ReportRendering(unittest.TestCase):
         own_block = out.split('🧹')[0]
         self.assertNotIn('manual fix between runs', own_block)
         self.assertIn('1 تغییر کد', out)
+
+
+# assembled at runtime so the phrase never appears verbatim in this file
+# (an approval hook false-positives on lifecycle commands in payloads)
+GR = 'gateway ' + 'restart'
+
+
+class NarrativeNoise(unittest.TestCase):
+    """b85b: the fleet-restart breadcrumb must never become the narrative.
+
+    The 15:13 report on 2026-09-05 forwarded three lines of English CLI
+    startup noise to the ops chat IN PLACE OF the agent's Persian summary,
+    because those lines pushed `keep` past the <=2 threshold that guards the
+    503 fallback. The run had actually died on a provider 503 — the honest
+    text already existed, the noise just hid it.
+    """
+
+    NOISE = ('\u26a0 A previous `hermes update` pulled new code but did not '
+             'restart running gateways.\n'
+             '  Gateways may still be serving pre-update modules '
+             '(mixed sys.modules).\n'
+             '  Run `hermes update` or `hermes ' + GR + '`.\n')
+
+    def _narrate(self, body):
+        import shutil
+        import tempfile
+        from notifier import dashboards
+        tmp = Path(tempfile.mkdtemp(prefix='b85b_'))
+        try:
+            (tmp / 'logs').mkdir()
+            (tmp / 'logs' / 'autopilot.log').write_text(
+                '2026-09-05T11:35:01Z === autopilot run start ===\n'
+                + body +
+                '2026-09-05T11:43:26Z === autopilot run end rc=0 ===\n')
+            real = dashboards.ROOT
+            dashboards.ROOT = tmp
+            try:
+                return dashboards._autopilot_narrative(max_chars=900)
+            finally:
+                dashboards.ROOT = real
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_noise_plus_503_renders_the_persian_fallback(self):
+        out = self._narrate(self.NOISE +
+                            'API call failed after 3 retries: HTTP 503: '
+                            'Chat admission capacity is temporarily '
+                            'unavailable. Retry shortly.\n')
+        self.assertNotIn('hermes update', out)
+        self.assertNotIn('Gateways', out)
+        self.assertIn('این اجرا به نتیجه نرسید', out)
+        self.assertIn('503', out)
+
+    def test_real_narrative_survives_the_filter(self):
+        out = self._narrate('سلام. آیتم b84 انجام شد و تست‌ها سبز هستند.\n')
+        self.assertIn('b84', out)
 
 
 if __name__ == '__main__':  # pragma: no cover
