@@ -604,5 +604,129 @@
    }
   },
   "verdict": "REJECTED 2026-09-05 (b68 round 15, PWH/PWL weekly-level breakout, w10 stop - the survivor width of round 4, one timeframe up): cached ladder_ts 1.262 (n=18, best cached number since round 9) but the funnel on the SAME cached bars is 0.558, and on the independent windows it is 2 of 4 (W2 0.618 / W3 0.601 beat; W1 0.344 / W4 0.514 lose vs 0.524/0.532). b74 all-windows rule FAILS; b77 pre-flight MIXED (chrono margins -0.018/+0.073/+0.097/-0.180 - no monotone ramp, no stable edge). Disclosure: cached leg is 24/24 BUY (one-sided regime); W1 is 39/52 SELL - the arm's direction mix flips by window, another regime fingerprint. NOT wired. Ledger: data/backtest/b68o_weekly_confirm.json."
+ },
+ {
+  "name": "pdh_runway",
+  "round": 16,
+  "windows": {
+   "cached": {
+    "exp_R": 0.757,
+    "n": 24,
+    "dd_R": -3.1,
+    "buy": 12,
+    "sell": 12
+   },
+   "W1": {
+    "exp_R": 0.831,
+    "n": 59,
+    "dd_R": -3.1,
+    "buy": 25,
+    "sell": 34
+   },
+   "W2": {
+    "exp_R": 0.729,
+    "n": 45,
+    "dd_R": -5.1,
+    "buy": 20,
+    "sell": 25
+   },
+   "W3": {
+    "exp_R": -0.085,
+    "n": 48,
+    "dd_R": -12.2,
+    "buy": 20,
+    "sell": 28
+   },
+   "W4": {
+    "exp_R": 0.424,
+    "n": 33,
+    "dd_R": -6.2,
+    "buy": 18,
+    "sell": 15
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.524,
+    "n": 316
+   },
+   "W2": {
+    "exp_R": 0.521,
+    "n": 315
+   },
+   "W3": {
+    "exp_R": 0.528,
+    "n": 332
+   },
+   "W4": {
+    "exp_R": 0.532,
+    "n": 340
+   }
+  },
+  "trades": 24,
+  "exp_R": 0.757,
+  "verdict": "REJECTED 2026-09-05 (b68 round 16, PDH/PDL close-confirmed breakout GATED on weekly RUNWAY - >=1.0*ATR room to the previous trading week's extreme in trade direction; pdh geometry UNCHANGED, b68p): the gate LIFTS its own control on the two windows where the week had room (W1 0.831 vs control 0.612, cached 0.757 vs 0.627) but the arm FAILS the b74 all-windows rule 2-of-4 (W1/W2 beat funnel 0.524/0.521; W3 -0.085 / W4 0.424 lose 0.528/0.532). The round's REAL finding is the SELECTION FLIP: runway>no_runway holds on exactly ONE of four windows (W1 0.831>0.383); on W2/W3/W4 the DROPPED set is the BETTER trades (W3 cut 0.812 vs agree -0.085) - the same sign-flip that killed round 9's dayext champion, so the weekly-runway gate is a regime interaction, not a property. Stretch probe: gated-vs-control <= +0.11 ATR except W4 (+0.107) - informational, no chase tax (b75 clean). b77 pre-flight MIXED (chrono margins -0.108/-0.613/+0.208/+0.307). b78 mix: agree arm is two-sided on every window (e.g. W1 25B/34S) while the CUT set is one-sided per regime (cached 19B/0S, W3 32B/2S, W4 62B/12S) - the no-runway trades are mostly the late-in-the-week chase of an already-extended week, and whether that hurts depends on which way the week broke. Lane funnel+runway 2-of-4 (0.546/0.543 beat, 0.485/0.519 lose), margin <+0.05R - feeds b70 as a marginal lane, nothing earned a slot. NOT wired. Ledger: data/backtest/b68p_runway_confirm.json."
+ },
+ {
+  "name": "pdh_no_runway",
+  "round": 16,
+  "windows": {
+   "cached": {
+    "exp_R": 0.561,
+    "n": 19,
+    "dd_R": -5.1,
+    "buy": 19,
+    "sell": 0
+   },
+   "W1": {
+    "exp_R": 0.383,
+    "n": 25,
+    "dd_R": -4.0,
+    "buy": 5,
+    "sell": 20
+   },
+   "W2": {
+    "exp_R": 0.968,
+    "n": 42,
+    "dd_R": -4.0,
+    "buy": 23,
+    "sell": 19
+   },
+   "W3": {
+    "exp_R": 0.812,
+    "n": 34,
+    "dd_R": -7.6,
+    "buy": 32,
+    "sell": 2
+   },
+   "W4": {
+    "exp_R": 0.577,
+    "n": 74,
+    "dd_R": -10.2,
+    "buy": 62,
+    "sell": 12
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.524,
+    "n": 316
+   },
+   "W2": {
+    "exp_R": 0.521,
+    "n": 315
+   },
+   "W3": {
+    "exp_R": 0.528,
+    "n": 332
+   },
+   "W4": {
+    "exp_R": 0.532,
+    "n": 340
+   }
+  },
+  "trades": 19,
+  "exp_R": 0.561,
+  "verdict": "COMPLEMENT arm of round 16 (what the weekly-runway gate DROPS; b68p): 0.561 cached / 0.383 W1 / 0.968 W2 / 0.812 W3 / 0.577 W4 vs funnel 0.524/0.521/0.528/0.532 - beats the funnel on 3 of 4 windows, MORE than the gated arm it is the complement of, and its direction mix is one-sided per regime (W3 32B/2S, W4 62B/12S). Kept in the registry as the selection-ordering evidence: a gate whose complement outperforms it in 3 regimes is regime-gifted, not an edge. NOT wired."
  }
 ]

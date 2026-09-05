@@ -212,6 +212,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       pre-flight MIXED on both arms — no monotone ramp, no stable edge.
       Regime fingerprint: the arm's direction mix FLIPS by window (cached
       24/24 BUY, W1 39/52 SELL). Nothing wired. See Findings.
+      Round 16 (b68p, 2026-09-05 — weekly level as ORACLE not geometry:
+      pdh_break_w10 gated on >=1.0*ATR RUNWAY to the previous trading
+      week's extreme in trade direction; first round run under b78's mix
+      disclosure from the start): REJECTED 2-of-4 windows (W1 0.831 / W2
+      0.729 beat funnel 0.524/0.521; W3 -0.085 / W4 0.424 lose 0.528/0.532)
+      and the gate's SELECTION ORDERING FLIPS — runway>no_runway holds on
+      exactly ONE of four windows (the round-9 killer check, now pinned by
+      a test); the DROPPED set out-earns the kept set on W2/W3/W4. Stretch
+      clean (informational, no chase tax); b77 MIXED; lane 2-of-4 marginal
+      (<+0.05R) — feeds b70, nothing earned a slot. b78 itself IMPLEMENTED
+      this round (mix ships per arm per leg in the confirm ledger + the
+      registry rows + 3 pinning tests) and marked done. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -371,7 +383,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       nothing left to weigh: the answer on clean windows is "no lane earns
       a slot". The four-window funnel baseline (0.524/0.521/0.528/0.532)
       is the bar any future lane must clear on EVERY window. Read-only.)
-- [ ] b78 DIRECTION-MIX DISCLOSURE FOR LEVEL-BREAKOUT ARMS (reusable procedure
+- [x] b78 DIRECTION-MIX DISCLOSURE FOR LEVEL-BREAKOUT ARMS (reusable procedure
       from b68 round 15, 2026-09-05): the weekly-breakout arm's BUY/SELL split
       FLIPS between windows (cached 24/24 BUY, W1 13 BUY/39 SELL) — so a
       single-window exp_R for any level-breakout arm is really "the number for
@@ -384,6 +396,19 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       even when b77's margin series says MIXED. Cheap: docs/procedure + one
       assertion in the next round's test that every shipped leg carries
       buy+sell>0 facts. Read-only, lab-only.
+      (done 2026-09-05 via b68 round 16: implemented as a STRUCTURE, not a
+      convention — scripts/b68p_confirm_runway.py side_mix() re-runs each arm
+      through the b71 exit grid and records the BUY/SELL split of the TRADES
+      it actually takes (slot occupancy can change the mix, so raw-signal
+      counts would lie) into every arm row of every leg; the verdict block
+      carries buy/sell per arm per window; the registry rows carry the mix per
+      leg; and tests/test_b68p_runway_lab.py pins it three ways —
+      buy+sell==trades and >0 for every arm×leg in the shipped ledger, the
+      mix present in the verdict cells, and the mix present in the registry
+      windows. The round also PROVED the disclosure earns its keep: the
+      no_runway complement is one-sided per regime (W3 32B/2S, W4 62B/12S)
+      while the gated arm is two-sided everywhere — invisible without the mix,
+      and it is exactly why the gate's flip reads as regime-gifted.)
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -680,6 +705,46 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-05 b68 round 16 — THE WEEKLY-RUNWAY GATE IS THE LOOP'S CLEANEST
+  SELECTION FLIP: THE ORACLE'S FIRE RATE IS ITSELF REGIME-GIFTED (scripts/
+  b68p_runway_lab.py + scripts/b68p_confirm_runway.py; 20 tests in
+  tests/test_b68p_runway_lab.py). Candidate: round 4's pdh_break_w10 (the
+  only arm ever replicated 2-of-2 on clean windows) gated on a NEW oracle
+  type — the previous trading week's extreme as BACKGROUND STATE (does the
+  entry have >=1.0*ATR room to the weekly high/low in trade direction?),
+  pure intersection, geometry unchanged, zero-lag by construction (b73/
+  b75-clean: stretch delta <= +0.11 ATR on every window). RESULT: 2-of-4
+  windows (W1 0.831 / W2 0.729 beat funnel 0.524/0.521; W3 -0.085 / W4
+  0.424 lose 0.528/0.532) — b74 all-windows rule FAILS. But the round's
+  real output is the SHAPE of the failure: the gate's SELECTION ORDERING
+  (agree > complement, the check that killed round 9's champion) holds on
+  exactly ONE of four windows. On W2/W3/W4 the DROPPED set out-earns the
+  kept set — W3 keeps 48 trades at -0.085R while cutting 34 trades worth
+  +0.812R. WHY: the room distribution is a regime proxy, not a stable
+  property — median room-to-weekly-extreme is +6.46 ATR on W1 (young week,
+  trend just starting) and -0.79 ATR on W4 (the week had already run), and
+  the gate's pass-rate swings 36%-68% across windows (W4 50/138, W2 57/116,
+  W1 75/111); in a regime where
+  every day-break is late-in-the-week, "no runway" selects the STRONGEST
+  continuation trades (the week is being extended BY those breaks). b78
+  (implemented as a structure this round — side_mix() ships the BUY/SELL
+  mix of actual trades for every arm on every leg) makes the mechanism
+  visible: the complement arm is one-sided per regime (W3 32B/2S, W4
+  62B/12S, cached 19B/0S) — the no-runway trades are the late chase of an
+  already-extended week, and whether chasing an extension pays depends on
+  which way that week broke. Lane funnel+runway: 2-of-4 (0.546/0.543 beat,
+  0.485/0.519 lose), margin <+0.05R — b70's answer unchanged. b77
+  pre-flight MIXED on agree and complement alike. After 16 rounds: no lab
+  arm has cleared all four windows; the funnel's 0.52-0.53 band stands;
+  the level-as-oracle family is now screened too. METHOD RULE -> new todo
+  b79 (gate fire-rate stability pre-flight: measure the oracle's PASS RATE
+  per window BEFORE its R — an oracle whose pass-rate or threshold-crossing
+  median swings by regime cannot produce a regime-independent selection,
+  and this round could have been closed on that 5-line probe alone).
+  Nothing wired (hard rule). Registry rows pdh_runway + pdh_no_runway carry
+  the five-leg numbers + the mix. Ledger: data/backtest/
+  b68p_runway_confirm.json.
 
 - 2026-09-05 b68 round 15 — THE WEEK-LEVEL BREAKOUT IS ALSO SCREENED OUT, AND
   THE DIRECTION MIX IS A NEW REGIME FINGERPRINT (scripts/b68o_weekly_lab.py +
