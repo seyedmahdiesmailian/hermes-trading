@@ -88,7 +88,18 @@ except Exception as e:
 lines = [f'🤖 <b>گزارش اتوپایلوت هرمس</b>',
          datetime.now(TEHRAN).strftime('%A · %H:%M تهران'), '']
 
-if rc != 0:
+if rc == 124:
+    # timeout, not a crash: the run was cut off by the hard ceiling. If it
+    # committed its work, the step still counts as delivered — say so.
+    if new_commits:
+        lines.append('⏱️ <b>این اجرا به سقف زمانی خورد و قطع شد، '
+                     'اما کارش کامیت شده بود (زیانی در میان '
+                     'نیست)</b>')
+    else:
+        lines.append('⏱️ <b>این اجرا به سقف زمانی خورد و قطع شد — '
+                     'بیرون از این اجرا چیزی ثبت نشد؛ '
+                     'آیتم در نوبت می‌ماند</b>')
+elif rc != 0:
     lines.append(f'🔴 <b>این اجرا با خطا تمام شد (کد {rc})</b>')
 
 if narrative:

@@ -98,6 +98,11 @@ HARD RULES (violating any = revert everything):
 - Keep changes small, tested, committed. If an item cannot be finished in this
   run, leave it todo and add a progress note under it instead.
 
+TIME BUDGET: this run is hard-killed at 55 minutes (rc=124). Check the clock
+(date -u) as you go; at ~42 minutes elapsed STOP starting new analysis and
+wrap up: commit, verify_head, final report. A finished small step beats an
+abandoned big one.
+
 FINAL OUTPUT: your last message MUST be a Persian (Farsi) management report,
 plain prose (no English, no markdown headers). Structure it as:
 ۱) چه کاری انجام شد — آیتم بک‌لاگ و خلاصهٔ تغییر (فایل‌ها/تست‌ها/کامیت)
@@ -116,7 +121,7 @@ if [ -n "$HARVEST" ]; then
 
 $PROMPT"
 fi
-timeout 2700 "$HERMES_BIN" -z "$PROMPT" --cli >> "$LOG" 2>&1
+timeout 3300 "$HERMES_BIN" -z "$PROMPT" --cli >> "$LOG" 2>&1
 RC=$?
 
 echo "$(date -u +%FT%TZ) === autopilot run end rc=$RC ===" >> "$LOG"
