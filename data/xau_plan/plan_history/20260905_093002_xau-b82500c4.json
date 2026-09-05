@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-d956a51b",
+  "plan_id": "xau-b82500c4",
   "symbol": "XAUUSD",
   "bias": "neutral",
   "session": "london",
@@ -41,12 +41,12 @@
     },
     "regime": "range",
     "smc_confidence": 0.0,
-    "smc_poi": "C",
+    "smc_poi": "B",
     "smc_signal": "wait"
   },
-  "created_at": "2026-09-05T09:30:02.669275+00:00",
-  "expires_at": "2026-09-05T21:30:02.669275+00:00",
-  "next_reassessment": "2026-09-05T09:35:02.669275+00:00",
+  "created_at": "2026-09-05T09:15:02.483293+00:00",
+  "expires_at": "2026-09-05T21:15:02.483293+00:00",
+  "next_reassessment": "2026-09-05T09:20:02.483293+00:00",
   "context": {
     "m5_last": 4431.72,
     "h1_last": 4431.72,
@@ -568,18 +568,18 @@
         "swing_low": 4365.48
       },
       "killzone": {
-        "session": "dead",
-        "weight": 0.0
+        "session": "london",
+        "weight": 1.0
       },
       "bias": "bullish",
-      "confidence": 0.07038288288288287,
+      "confidence": 0.07040270346381301,
       "signal": "wait",
       "signal_confidence": 0.0,
-      "poi": "C",
+      "poi": "B",
       "swing_high": 4490.81,
       "swing_low": 4365.48,
       "last_price": 4431.72,
-      "smc_weight": 0.5,
+      "smc_weight": 1.0,
       "h1_structure": {
         "phase": "range",
         "confidence": 0.0
@@ -867,16 +867,16 @@
       "smc_source": {
         "bias": "bullish",
         "signal": "wait",
-        "confidence": 0.07038288288288287,
-        "weight": 0.5,
-        "poi": "C",
+        "confidence": 0.07040270346381301,
+        "weight": 1.0,
+        "poi": "B",
         "market_structure": {
           "phase": "bos_bearish",
           "confidence": 0.011933174224061337
         },
         "killzone": {
-          "session": "dead",
-          "weight": 0.0
+          "session": "london",
+          "weight": 1.0
         }
       }
     },

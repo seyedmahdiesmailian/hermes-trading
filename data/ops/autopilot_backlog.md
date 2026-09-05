@@ -425,6 +425,78 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       no_runway complement is one-sided per regime (W3 32B/2S, W4 62B/12S)
       while the gated arm is two-sided everywhere — invisible without the mix,
       and it is exactly why the gate's flip reads as regime-gifted.)
+- [x] b81 RE-SCORE THE b70 LANE DECISION SET AGAINST THE CORRECTED (b80) BAR
+      (follow-up to b80, 2026-09-05): b81's OWN premise was wrong and that is
+      the finding: the note said the lane arms are "unaffected by the fix",
+      but every shipped lane row is `funnel(row) or arm(row)` — the lane's
+      PRIMARY signal source is the funnel's own A/B/C-graded signals, so the
+      lanes carried the same C-grade trades the live executor rejects.
+      Re-reading the ledgers against b80's gradeB column would have corrected
+      one side of the comparison and left the other broken, so b81 RE-MEASURED
+      all four lanes under the live gate on cached+W1..W4
+      (scripts/b81_lane_rescore.py -> data/backtest/b81_lane_rescore.json,
+      both conventions per leg; the ungraded re-measure reproduces all 16
+      shipped ledger rows EXACTLY, which is the integrity proof). Result: the
+      gate lifts each pdh-family lane by +0.13..+0.26R, the same order as the
+      funnel's own lift, so the corrected verdict is 2-of-4
+      (gated_pdh_dayext), 3-of-4 (h4pdh), 2-of-4 (runway), 0-of-4 (nr7htf) —
+      NO lane clears b74's all-windows rule, and the best margin anywhere is
+      +0.061R. b70's standing answer ("no lane earns a slot") is now settled
+      on the corrected bar, and nr7htf is the clean illustration of the trap:
+      it adds +46..+67 net_R on all four windows with a positive marginal
+      trade, yet loses exp_R everywhere — volume is not quality. 17 tests in
+      tests/test_b81_lane_rescore.py pin the reproduction, the corrected
+      verdict, the premise-falsifying lift, and the net_R trap. Nothing wired.
+      See Findings.
+      [original note, superseded above:] b70's lane numbers were all produced by
+      `run_arm()` WITHOUT the live grade gate, so every lane-vs-funnel
+      comparison in that item compared a GRADED lane against an UNGRADED
+      funnel. The lane arms (pdh/nr7 variants, all grade "B") are unaffected
+      by the fix, but the funnel they are measured against moves from
+      0.521-0.532 to 0.662-0.767 on W1-W4 — so the two lanes b70 still calls
+      positive (gated-pdh(dayext) and raw nr7) are almost certainly negative
+      on clean windows, and b70's standing answer ("no lane earns a slot")
+      becomes firmer, not weaker. Do this WITHOUT new compute: the lane rows
+      are already shipped in data/backtest/b68{l,m,n,n4,p,q}_*.json — read
+      them, compare against data/backtest/b80_gate_parity.json's gradeB
+      column, and rewrite b70's decision set. Read-only, lab-only.
+- [ ] b82 PARITY TRIPWIRE: THE LAB HARNESS MUST NOT BE ALLOWED TO DRIFT FROM
+      run_backtest AGAIN (reusable procedure from b80, 2026-09-05): b80 was
+      the second measurement-parity bug in this lab (b71 was the first — the
+      missing time exit). Both were silent because the harness re-declared its
+      own gate constants instead of deriving them from the canonical runner.
+      Fix as structure: add a test that asserts engines/lab_harness.py's
+      measurement defaults (SPREAD, MIN_RR policy, LIVE_MIN_RR, LIVE_MIN_GRADE,
+      LADDER keys, derived time exit) are EXACTLY the defaults of
+      engines.backtest_real.run_backtest's signature — inspect.signature on
+      both, compare parameter by parameter, and FAIL with a named diff if any
+      default diverges. That turns the whole class of bug into a red test the
+      next time someone adds a gate to live and forgets the lab. Small,
+      tests-only.
+- [ ] b83 COMPOSITE-SIGNAL PARITY RULE: A FIX TO A COMPONENT MUST RE-PRICE ANY
+      MEASUREMENT THAT EMBEDS IT (reusable procedure from b81, 2026-09-05):
+      when a measurement bug is found in a component (b80: the funnel baseline
+      lacked the live grade gate), the follow-up work must NOT assume that
+      other rows built from that component are unaffected. Any composite
+      signal — `funnel(row) or arm(row)`, a lane, a blended score, an
+      ensemble — INHERITS the component's bug in proportion to how often that
+      component supplies the trade. b81's own founding note made exactly this
+      mistake ("the lane arms are all grade B, so they are unaffected") and
+      the shipped lane rows turned out to be inflated by +0.13..+0.26R, the
+      same order as the funnel's own lift, because a lane is funnel-FIRST.
+      PROCEDURE: (1) grep the ledgers/scripts for every consumer of the buggy
+      component, not just the ones that call it directly — look for the
+      composition operator, not the name; (2) for each consumer, ask what
+      fraction of its trades the component supplies (a lane at ~90% funnel
+      share is the funnel with a sticker); (3) re-MEASURE under the fix rather
+      than re-READING the old rows against the new bar — a one-sided
+      correction produces a confident wrong verdict; (4) prove the re-measure
+      is honest by reproducing the OLD row exactly with the OLD convention
+      (b81 does this for 16/16 legs and pins it in a test), so a changed
+      verdict can only come from the fix, never from drift; (5) state the
+      corrected verdict under the SAME replication rule as the components
+      (b74's all-windows rule applies to lanes too). Cheap here (~4 min for
+      5 legs x 5 rows); the wrong alternative was a published wrong answer.
 - [ ] b79 GATE FIRE-RATE STABILITY PRE-FLIGHT (reusable procedure promised
       by b68 round 16's Findings, 2026-09-05; first metric measured in round
       17): before spending four b74 draws on a gated arm, measure the
@@ -739,6 +811,71 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-05 b81 — THE LANES WERE INFLATED BY THE SAME BUG AS THE FUNNEL, AND
+  THE CORRECTED BAR SETTLES b70 AGAINST EVERY LANE
+  (scripts/b81_lane_rescore.py + data/backtest/b81_lane_rescore.json + 17 tests
+  in tests/test_b81_lane_rescore.py). b81's founding note said the lane arms
+  were "unaffected" by b80 because lab arms all declare grade "B". WRONG, and
+  the reason is structural: a lane is `funnel(row) or arm(row)`, so the
+  funnel's own A/B/C-graded signals are the lane's PRIMARY source — the lane
+  inherited the C-grade trades the live executor rejects. Re-reading the
+  shipped ledgers against b80's gradeB column (the item's own instruction)
+  would have corrected one side of the comparison and left the other broken, so
+  this item RE-MEASURED instead: all four lanes, both conventions
+  (min_grade=None / min_grade=live), on cached+W1..W4, same bars/harness/
+  ladder. INTEGRITY: the ungraded re-measure reproduces all 16 shipped ledger
+  rows exactly, and the ungraded funnel reproduces b80's nogates column on
+  every leg — the lane closures are verbatim, nothing was retuned.
+  NUMBERS: the gate lifts a pdh-family lane by +0.13..+0.26R exp_R — the same
+  order as the funnel's own lift (within 0.10R of it on every window), which is
+  what "the lane IS mostly the funnel" looks like measured. Corrected verdict
+  under b74's all-windows rule: gated_pdh_dayext 2-of-4, h4pdh 3-of-4 (loses
+  W3 by -0.05R), runway 2-of-4, nr7htf 0-of-4. NO lane replicates; the largest
+  margin anywhere is +0.061R (runway/W1). b70's standing answer — no lane earns
+  the slot — is now settled on a clean bar rather than merely un-beaten.
+  THE TRAP nr7htf exposes: it adds +46..+67 net_R on ALL FOUR windows and its
+  marginal trade is positive everywhere (+0.13..+0.20R), yet it loses exp_R on
+  all four. A capacity question asked on tot_R alone votes YES on a lane the
+  per-trade question rejects; quote exp_R and net_R together, never one.
+  Also cleaned: a detached worktree leaked in /tmp by a killed verify_head run
+  (b50's cleanup test was red repo-wide because of it) — `git worktree remove
+  --force` + `prune`. Nothing wired; no gate touched.
+
+- 2026-09-05 b80 — THE LAB'S FUNNEL BASELINE WAS MEASURED WITHOUT A LIVE GATE:
+  THE MERIT BAR WAS TOO SOFT, AND THE FUNNEL IS BETTER THAN 17 ROUNDS BELIEVED
+  (engines/lab_harness.py + scripts/b80_gate_parity.py +
+  data/backtest/b80_gate_parity.json + 6 tests in tests/test_b80_gate_parity.py).
+  Root cause: `run_arm()` passed only `min_rr` to `backtest_ohlc` and never
+  `min_grade`, while the canonical live-parity runner
+  `engines.backtest_real.run_backtest` defaults to `min_grade="B", min_rr=1.5`.
+  The funnel emits 58-67% C-grade signals per window (cached 542/848, W1
+  893/1429, W2 1021/1544, W3 1030/1767, W4 1167/1745) that the LIVE executor
+  rejects at auto_executor Check 6 — so every round's CURRENT_FUNNEL baseline
+  was a funnel-minus-one-gate, measured ~0.15-0.24R too LOW. Lab arms all
+  self-declare grade "B", which is why the gap was invisible: the gate is a
+  no-op for an arm and a majority filter for the funnel.
+  CORRECTED BAR (b60 ladder + live time exit, exp_R): cached 0.558→0.796,
+  W1 0.524→0.676, W2 0.521→0.662, W3 0.528→0.767, W4 0.532→0.745. Trade
+  counts roughly halve (W1 316→174, W2 315→165, W3 332→190, W4 340→166) and
+  maxDD improves on every window (W3 -9.6→-5.1, W2 -8.0→-5.1).
+  SECOND FINDING — the RR gate is REDUNDANT for the funnel: 0 signals below
+  MIN_RISK_REWARD=1.5 on all five legs (the blueprint floors RR at 1.55), so
+  gradeB and gradeB_rr15 are identical everywhere. Pinned by a test so a
+  future funnel change that breaks the redundancy is noticed.
+  CONSEQUENCE FOR THE LOOP — re-scored every arm in every shipped confirm
+  ledger against the corrected bar (arms are unaffected by the fix, only the
+  bar moved): NO arm beats it on ANY of the four independent windows at the
+  ≥0.05R level with usable n. The best per window are pdh_runway W1 0.831
+  (+0.155, n=59) and W2 0.729 (+0.067), pdh_no_runway W2 0.968 / W3 0.812 —
+  all the same arms that failed replication on the OTHER windows, so no
+  promotion is implied; but the round-14 conclusion "no lab arm has ever
+  cleared all four windows" is now much stronger, and the funnel's own
+  four-window stability is 0.662-0.796, not 0.521-0.532. The loop's standing
+  verdict — the live entry filter is the best measured thing — was understated.
+  Nothing wired; no gate weakened (the fix only ADDS a live gate to a
+  measurement). Any historical round whose arm beat the funnel by <0.25R must
+  be re-read against the corrected bar before its numbers are reused.
 
 - 2026-09-05 b68 round 17 — SELECTION WITHOUT A REPLICATING LIFT IS NOT AN
   EDGE: THE H4 GATE RANKS NR7 TRADES PERFECTLY AND STILL LOSES (scripts/
