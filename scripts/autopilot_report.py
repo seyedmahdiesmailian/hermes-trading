@@ -88,15 +88,19 @@ except Exception as e:
 lines = [f'🤖 <b>گزارش اتوپایلوت هرمس</b>',
          datetime.now(TEHRAN).strftime('%A · %H:%M تهران'), '']
 
-if rc == 124:
-    # timeout, not a crash: the run was cut off by the hard ceiling. If it
-    # committed its work, the step still counts as delivered — say so.
+if rc in (124, 143):
+    # Neither is a crash: 124 = our own hard ceiling; 143 = SIGTERM from
+    # OUTSIDE (the agent harness's stale-stream guard during a provider/
+    # network stall — seen once, 2026-09-05, mid Telegram outage). If the
+    # run committed its work before dying, the step still counts.
+    why = ('به سقف زمانی خورد' if rc == 124
+           else 'سیگنال حذف (SIGTERM) از بیرون گرفت')
     if new_commits:
-        lines.append('⏱️ <b>این اجرا به سقف زمانی خورد و قطع شد، '
+        lines.append(f'⏱️ <b>این اجرا {why} و قطع شد، '
                      'اما کارش کامیت شده بود (زیانی در میان '
                      'نیست)</b>')
     else:
-        lines.append('⏱️ <b>این اجرا به سقف زمانی خورد و قطع شد — '
+        lines.append(f'⏱️ <b>این اجرا {why} و قطع شد — '
                      'بیرون از این اجرا چیزی ثبت نشد؛ '
                      'آیتم در نوبت می‌ماند</b>')
 elif rc != 0:
