@@ -728,5 +728,129 @@
   "trades": 19,
   "exp_R": 0.561,
   "verdict": "COMPLEMENT arm of round 16 (what the weekly-runway gate DROPS; b68p): 0.561 cached / 0.383 W1 / 0.968 W2 / 0.812 W3 / 0.577 W4 vs funnel 0.524/0.521/0.528/0.532 - beats the funnel on 3 of 4 windows, MORE than the gated arm it is the complement of, and its direction mix is one-sided per regime (W3 32B/2S, W4 62B/12S). Kept in the registry as the selection-ordering evidence: a gate whose complement outperforms it in 3 regimes is regime-gifted, not an edge. NOT wired."
+ },
+ {
+  "name": "nr7_h4t_agree",
+  "round": 17,
+  "windows": {
+   "cached": {
+    "exp_R": 0.679,
+    "n": 101,
+    "dd_R": -6.2,
+    "buy": 87,
+    "sell": 14
+   },
+   "W1": {
+    "exp_R": 0.437,
+    "n": 289,
+    "dd_R": -7.1,
+    "buy": 63,
+    "sell": 226
+   },
+   "W2": {
+    "exp_R": 0.469,
+    "n": 288,
+    "dd_R": -10.6,
+    "buy": 163,
+    "sell": 125
+   },
+   "W3": {
+    "exp_R": 0.471,
+    "n": 306,
+    "dd_R": -14.1,
+    "buy": 194,
+    "sell": 112
+   },
+   "W4": {
+    "exp_R": 0.586,
+    "n": 287,
+    "dd_R": -6.2,
+    "buy": 228,
+    "sell": 59
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.524,
+    "n": 316
+   },
+   "W2": {
+    "exp_R": 0.521,
+    "n": 315
+   },
+   "W3": {
+    "exp_R": 0.528,
+    "n": 332
+   },
+   "W4": {
+    "exp_R": 0.532,
+    "n": 340
+   }
+  },
+  "trades": 101,
+  "exp_R": 0.679,
+  "verdict": "REJECTED 2026-09-05 (b68 round 17, NR7 compression breakout GATED on the H4 EMA trend state - the last unmeasured pairing of the loop's two strongest survivors; nr7 geometry UNCHANGED, oracle verbatim from round 12, b68q): the arm FAILS the b74 all-windows rule 1-of-4 (only W4 0.586 beats funnel 0.532; W1 0.437 / W2 0.469 / W3 0.471 lose 0.524/0.521/0.528; cached 0.679 informational). The gate's SELECTION ORDERING is the loop's most consistent: agree > disagree on ALL FOUR independent windows (the check that killed rounds 9/13/16) - the H4 state genuinely ranks nr7 trades - but the LIFT does not replicate: control 0.437->0.437 (W1 tie), 0.390->0.469 (W2), 0.533->0.471 (W3 LOWER), 0.542->0.586 (W4); b77 MIXED. The arm's frequency (n~290-306 per window, ~90% of the funnel's) is the lane killer: lane exp_R 0.459/0.519/0.537/0.550 vs funnel 0.524/0.521/0.528/0.532 = 2-of-4 and every margin <+0.05R except W3 (+0.009). Stretch flat (<=0.02 ATR, pure intersection by construction). b78 mix: the agree arm is one-sided in 3 of 5 legs (cached 87B/14S, W1 63B/226S, W4 228B/59S) - the gate IS a direction filter, so its exp_R is the number for whichever way the regime ran. NOT wired. Ledger: data/backtest/b68q_nr7htf_confirm.json."
+ },
+ {
+  "name": "nr7_h4t_disagree",
+  "round": 17,
+  "windows": {
+   "cached": {
+    "exp_R": 0.453,
+    "n": 117,
+    "dd_R": -5.1,
+    "buy": 18,
+    "sell": 99
+   },
+   "W1": {
+    "exp_R": 0.367,
+    "n": 289,
+    "dd_R": -11.7,
+    "buy": 210,
+    "sell": 79
+   },
+   "W2": {
+    "exp_R": 0.323,
+    "n": 290,
+    "dd_R": -9.6,
+    "buy": 118,
+    "sell": 172
+   },
+   "W3": {
+    "exp_R": 0.43,
+    "n": 297,
+    "dd_R": -8.1,
+    "buy": 113,
+    "sell": 184
+   },
+   "W4": {
+    "exp_R": 0.293,
+    "n": 259,
+    "dd_R": -13.8,
+    "buy": 56,
+    "sell": 203
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.524,
+    "n": 316
+   },
+   "W2": {
+    "exp_R": 0.521,
+    "n": 315
+   },
+   "W3": {
+    "exp_R": 0.528,
+    "n": 332
+   },
+   "W4": {
+    "exp_R": 0.532,
+    "n": 340
+   }
+  },
+  "trades": 117,
+  "exp_R": 0.453,
+  "verdict": "COMPLEMENT arm of round 17 (what the H4 gate DROPS; b68q): 0.453 cached / 0.367 W1 / 0.323 W2 / 0.430 W3 / 0.293 W4 - below the gated arm on every leg, the loop's cleanest selection-ordering evidence (4-of-4 windows), yet the arm it ranks under still loses the merit bar: selection without a replicating LIFT is not an edge. Kept as evidence, not a candidate. NOT wired."
  }
 ]

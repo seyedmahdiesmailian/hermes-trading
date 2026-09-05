@@ -224,6 +224,22 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       (<+0.05R) — feeds b70, nothing earned a slot. b78 itself IMPLEMENTED
       this round (mix ships per arm per leg in the confirm ledger + the
       registry rows + 3 pinning tests) and marked done. See Findings.
+      Round 17 (b68q, 2026-09-05 — the last unmeasured pairing of the
+      loop's two strongest survivors: nr7 compression breakout (round 5,
+      best additive lane) x the H4 trend-state oracle (round 12, the only
+      gate that lifted its control on both independent windows); nr7
+      geometry UNCHANGED, oracle verbatim from b68m, pure intersection):
+      REJECTED 1-of-4 windows (only W4 0.586 beats funnel 0.532; W1 0.437
+      / W2 0.469 / W3 0.471 lose 0.524/0.521/0.528; cached 0.679
+      informational). The gate's SELECTION ORDERING is the loop's most
+      consistent — agree > disagree on ALL FOUR independent windows, the
+      check that killed rounds 9/13/16 — yet the LIFT does not replicate
+      (W1 tie, W3 LOWER; b77 MIXED): the H4 state genuinely ranks nr7
+      trades, ranking just isn't worth 0.05R here. Frequency is the lane
+      killer: n~290-306/window (~90% of the funnel's) → lane 2-of-4,
+      every margin <+0.05R. b78 mix: agree arm one-sided in 3 of 5 legs —
+      the gate IS a direction filter. Stretch flat (<=0.02 ATR). Nothing
+      wired. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -409,6 +425,24 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       no_runway complement is one-sided per regime (W3 32B/2S, W4 62B/12S)
       while the gated arm is two-sided everywhere — invisible without the mix,
       and it is exactly why the gate's flip reads as regime-gifted.)
+- [ ] b79 GATE FIRE-RATE STABILITY PRE-FLIGHT (reusable procedure promised
+      by b68 round 16's Findings, 2026-09-05; first metric measured in round
+      17): before spending four b74 draws on a gated arm, measure the
+      oracle's PASS RATE per window (gate_share in the probe block) and the
+      median threshold-crossing age of the kept subset. An oracle whose
+      pass-rate swings by regime (round 16's weekly-runway: 36%-68%) cannot
+      produce a regime-independent selection — close the round on the probe
+      alone. ROUND 17 CALIBRATION: the H4 gate's pass rate is the loop's
+      most stable (0.433/0.451/0.461/0.462) and its selection ordering is
+      the loop's cleanest (4-of-4 agree>cut) — and the arm STILL failed the
+      merit bar 1-of-4 (lift over control replicated only 2-of-4). So b79
+      is a NECESSARY-not-sufficient screen: a stable fire rate rules out
+      regime-gifted selection, it does not promise a replicating LIFT; the
+      lift-vs-control test (already in every confirm ledger) stays the
+      binding check. Implement as structure: add a pass-rate-swing column
+      (max-min gate_share across legs) to the verdict block in
+      scripts/b68*_confirm_*.py and a pre-flight FAIL line in the round
+      summary when swing > 20 points. Small, lab-only, read-only.
 - [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
@@ -705,6 +739,44 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-05 b68 round 17 — SELECTION WITHOUT A REPLICATING LIFT IS NOT AN
+  EDGE: THE H4 GATE RANKS NR7 TRADES PERFECTLY AND STILL LOSES (scripts/
+  b68q_nr7htf_lab.py + scripts/b68q_confirm_nr7htf.py; 22 tests in
+  tests/test_b68q_nr7htf_lab.py). Candidate: the last unmeasured pairing of
+  the loop's two strongest survivors — round 5's nr7 compression-breakout
+  geometry (the best additive lane ever measured) x round 12's H4 trend-state
+  oracle (the only gate that lifted its control on BOTH independent windows),
+  pure intersection, geometry unchanged, oracle verbatim from b68m. RESULT:
+  REJECTED 1-of-4 windows (W4 0.586 beats funnel 0.532; W1 0.437 / W2 0.469 /
+  W3 0.471 lose 0.524/0.521/0.528; cached 0.679 informational). The round's
+  real output is the DISSOCIATION between ordering and lift: the gate's
+  agree>disagree selection ordering holds on ALL FOUR independent windows —
+  the single most consistent selection in 17 rounds, the exact check that
+  killed rounds 9/13/16 — and the complement is uniformly bad (0.367/0.323/
+  0.430/0.293, below funnel everywhere). Yet the arm still fails the merit
+  bar, because the LIFT over the ungated control replicates only 2-of-4 (W1
+  tie 0.437->0.437, W3 LOWER 0.533->0.471; b77 MIXED). A gate can rank a
+  population correctly and still add nothing: nr7's own spread between its
+  best and worst subsets is ~0.1R, while the funnel-vs-nr7 gap is ~0.1R the
+  OTHER way — perfect sorting of a population that starts 0.05-0.1R behind
+  ends 0.05-0.1R behind. Frequency is the second killer: the H4 gate on nr7
+  keeps ~45% of signals (n~290-306/window, ~90% of the funnel's own), so the
+  lane dilutes to 2-of-4 with every margin <+0.05R. b78 mix disclosure: the
+  agree arm is one-sided in 3 of 5 legs (cached 87B/14S, W1 63B/226S, W4
+  228B/59S) — an H4-trend gate IS a direction filter, so its exp_R is the
+  number for whichever way the regime ran; the two-sided legs (W2 163B/125S)
+  are exactly the windows where the gate's lift was real. Stretch flat
+  (<=0.02 ATR every window — pure intersection by construction, b75-clean).
+  Gate pass-rate probe (b79's metric, measured here for the first time):
+  0.433/0.451/0.461/0.462 across W1-W4 — the most STABLE fire rate of any
+  oracle in the loop (weekly-runway swung 36-68%), which is consistent with
+  round 12's finding that the H4 state is the cleanest oracle — and it shows
+  b79 is a NECESSARY-not-sufficient screen: a stable pass rate cannot
+  guarantee a replicating lift. After 17 rounds: no lab arm has cleared all
+  four windows; the funnel's 0.52-0.53 band stands; the two-survivor
+  combination space is now exhausted (pdh x dayext r9, pdh x squeeze r8,
+  pdh x h4t r12, funnel x h4t r13/14, pdh x runway r16, nr7 x h4t r17).
 
 - 2026-09-05 b68 round 16 — THE WEEKLY-RUNWAY GATE IS THE LOOP'S CLEANEST
   SELECTION FLIP: THE ORACLE'S FIRE RATE IS ITSELF REGIME-GIFTED (scripts/
