@@ -89,6 +89,30 @@ def _porcelain_entries(root: Path) -> list[tuple[str, str]] | None:
     return out
 
 
+def is_path_dirty(rel: str | Path, root: str | Path | None = None) -> bool:
+    """Is this one file currently uncommitted (modified/staged/untracked)?
+
+    The canonical single-seam answer for callers that must not hand-parse
+    git status themselves (b46 rule). Unlike scan() this ignores mtime —
+    it asks only 'is it dirty', never 'is it abandoned'.
+
+    False on any failure: not a repo, git missing, timeout. A display
+    reader must never break its caller (same posture as scan()).
+    """
+    root = Path(root) if root else paths.get_data_root()
+    entries = _porcelain_entries(root)
+    if not entries:
+        return False
+    try:
+        want = str(Path(rel).resolve().relative_to(Path(root).resolve()))
+    except Exception as e:
+        # b49: a path that cannot be placed inside the repo is a wiring bug,
+        # not a clean tree — never let 'broken' read as 'nothing dirty'.
+        selfcheck.fail('dirty_work is_path_dirty', e)
+        return False
+    return any(path == want for _status, path in entries)
+
+
 def scan(root: str | Path | None = None, *, now: datetime | None = None,
          alert_minutes: int = DIRTY_ALERT_MINUTES) -> dict | None:
     """{'files':[{path,status,age_min}], 'count', 'max_age_min'} or None.

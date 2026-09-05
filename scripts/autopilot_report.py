@@ -35,7 +35,7 @@ import os
 load_dotenv(ROOT / '.env')
 
 # b49: leaf seam imported outside the guard blocks (os/sys only).
-from engines import selfcheck
+from engines import dirty_work, selfcheck
 from engines.autopilot_report_lib import classify_commits, run_start_from_log
 
 _SELFCHECK = selfcheck.enabled()
@@ -139,8 +139,8 @@ if done_now > prev.get('done', done_now):
     # committed. b85b: check the file against git, not against THIS run's
     # commits — the 15:13 report said 'هنوز ثبت نشده' about a tick that a
     # manual commit had already banked minutes earlier.
-    dirty = git('status', '--porcelain', '--', str(BACKLOG))
-    note = '' if not dirty else ' <i>(هنوز ثبت نشده — دور بعد)</i>'
+    note = (' <i>(هنوز ثبت نشده — دور بعد)</i>'
+            if dirty_work.is_path_dirty(BACKLOG, root=ROOT) else '')
     lines.append(f'📋 بک‌لاگ: {prev.get("done", "?")} ← {done_now} '
                  f'آیتم انجام‌شده{note}')
 

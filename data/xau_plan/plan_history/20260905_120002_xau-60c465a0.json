@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-db68d0af",
+  "plan_id": "xau-60c465a0",
   "symbol": "XAUUSD",
   "bias": "neutral",
   "session": "london",
@@ -41,12 +41,12 @@
     },
     "regime": "range",
     "smc_confidence": 0.0,
-    "smc_poi": "B",
+    "smc_poi": "C",
     "smc_signal": "wait"
   },
-  "created_at": "2026-09-05T12:15:02.137904+00:00",
-  "expires_at": "2026-09-06T00:15:02.137904+00:00",
-  "next_reassessment": "2026-09-05T12:20:02.137904+00:00",
+  "created_at": "2026-09-05T11:45:02.038584+00:00",
+  "expires_at": "2026-09-05T23:45:02.038584+00:00",
+  "next_reassessment": "2026-09-05T11:50:02.038584+00:00",
   "context": {
     "m5_last": 4431.72,
     "h1_last": 4431.72,
@@ -568,18 +568,18 @@
         "swing_low": 4365.48
       },
       "killzone": {
-        "session": "newyork",
-        "weight": 1.0
+        "session": "dead",
+        "weight": 0.0
       },
       "bias": "bullish",
-      "confidence": 0.07040270346381301,
+      "confidence": 0.07038288288288287,
       "signal": "wait",
       "signal_confidence": 0.0,
-      "poi": "B",
+      "poi": "C",
       "swing_high": 4490.81,
       "swing_low": 4365.48,
       "last_price": 4431.72,
-      "smc_weight": 1.0,
+      "smc_weight": 0.5,
       "h1_structure": {
         "phase": "range",
         "confidence": 0.0
@@ -867,21 +867,21 @@
       "smc_source": {
         "bias": "bullish",
         "signal": "wait",
-        "confidence": 0.07040270346381301,
-        "weight": 1.0,
-        "poi": "B",
+        "confidence": 0.07038288288288287,
+        "weight": 0.5,
+        "poi": "C",
         "market_structure": {
           "phase": "bos_bearish",
           "confidence": 0.011933174224061337
         },
         "killzone": {
-          "session": "newyork",
-          "weight": 1.0
+          "session": "dead",
+          "weight": 0.0
         }
       }
     },
     "macro": {
-      "timestamp": "2026-09-05T12:00:02.468394+00:00",
+      "timestamp": "2026-09-05T11:30:02.194862+00:00",
       "dxy": {
         "change_pct": 0.026,
         "direction": "up",
@@ -943,9 +943,9 @@
         "upcoming_events": 0,
         "strict_high_count": 0,
         "window_hours": 24,
-        "fetched_at": "2026-09-05T12:00:02.599232+00:00"
+        "fetched_at": "2026-09-05T11:30:02.405926+00:00"
       },
-      "_fetched_at": 1788609602.5998688
+      "_fetched_at": 1788607802.4065166
     }
   }
 }
