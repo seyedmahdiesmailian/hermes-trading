@@ -79,7 +79,10 @@ if prev.get('head') and head != prev['head']:
     raw = git('log', f"{prev['head']}..HEAD", '--format=%ct\x1f%s')
     started = None
     try:
-        started = run_start_from_log(LOG.read_text(errors='replace'))
+        # a MISSING log is normal (fresh checkout, rotation) — that is 'no
+        # marker', not a broken check. Only a real read error is loud.
+        if LOG.exists():
+            started = run_start_from_log(LOG.read_text(errors='replace'))
     except Exception as e:
         selfcheck.fail('run start log read', e)
     new_commits, other_commits = classify_commits(raw, started)

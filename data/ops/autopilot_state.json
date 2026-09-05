@@ -1,5 +1,5 @@
 {
- "last_run_utc": "2026-09-05T10:22:36.582471+00:00",
+ "last_run_utc": "2026-09-05T11:01:37.659716+00:00",
  "recent_commits": [
   "a082b56 autopilot: b68 round 18 (b68r) grade ladder measured as books - B gate CONFIRMED 4-of-4 selection + 8-of-8 side cells, ungated earns +29..57R total (marginal C trade +0.21..0.37R, worse DD); A>B flip is a W4-SELL direction cell, B->A tightening gives up -261.7R NOT proposed; new todo b84",
   "ce6e3be harvest: b81 lane re-score vs corrected b80 bar (left uncommitted by the previous run, b46 shape 8th occurrence)",
