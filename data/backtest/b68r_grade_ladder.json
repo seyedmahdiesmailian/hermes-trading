@@ -1,0 +1,1866 @@
+{
+ "_note": "b68 round 18: the funnel's own grade ladder measured as separate books (A/B/C) plus the gate counterfactuals (gateA/gateB=live/gateC=ungated) on cached+W1..W4 under the b71 harness with the b80 live gate imported. Read-only; no gate changed; a tightening here is a PROPOSAL only.",
+ "_live_min_grade": "B",
+ "_harness": "b71 (plain/ladder/ladder_ts, live spread 0.20, live 36h time exit) + b80 grade gate + b78 mix + b77 chrono read + b74 all-windows rule",
+ "cached": {
+  "_bars": 3000,
+  "_first": 1784109600,
+  "_last": 1787960700,
+  "_signals": 848,
+  "_atr_mean": 8.374,
+  "_signal_grade_mix": {
+   "A": 84,
+   "B": 222,
+   "C": 542
+  },
+  "book_A": {
+   "plain": {
+    "trades": 43,
+    "exp_R": 0.316,
+    "net_R": 13.6,
+    "WR%": 53.5,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 12.5
+   },
+   "ladder": {
+    "trades": 51,
+    "exp_R": 0.588,
+    "net_R": 30.0,
+    "WR%": 66.7,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.0
+   },
+   "ladder_ts": {
+    "trades": 51,
+    "exp_R": 0.588,
+    "net_R": 30.0,
+    "WR%": 66.7,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.0
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 31,
+    "sell": 20,
+    "trades": 51
+   }
+  },
+  "book_B": {
+   "plain": {
+    "trades": 65,
+    "exp_R": 0.382,
+    "net_R": 24.8,
+    "WR%": 55.4,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 19.4
+   },
+   "ladder": {
+    "trades": 79,
+    "exp_R": 0.845,
+    "net_R": 66.7,
+    "WR%": 74.7,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 10.9
+   },
+   "ladder_ts": {
+    "trades": 79,
+    "exp_R": 0.845,
+    "net_R": 66.7,
+    "WR%": 74.7,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 10.9
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 46,
+    "sell": 33,
+    "trades": 79
+   }
+  },
+  "book_C": {
+   "plain": {
+    "trades": 89,
+    "exp_R": 0.131,
+    "net_R": 11.6,
+    "WR%": 44.9,
+    "maxDD_R": -4.6,
+    "mean_hold_bars": 16.6
+   },
+   "ladder": {
+    "trades": 124,
+    "exp_R": 0.47,
+    "net_R": 58.2,
+    "WR%": 58.9,
+    "maxDD_R": -3.9,
+    "mean_hold_bars": 10.9
+   },
+   "ladder_ts": {
+    "trades": 124,
+    "exp_R": 0.47,
+    "net_R": 58.2,
+    "WR%": 58.9,
+    "maxDD_R": -3.9,
+    "mean_hold_bars": 10.9
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 73,
+    "sell": 51,
+    "trades": 124
+   }
+  },
+  "gateA": {
+   "plain": {
+    "trades": 43,
+    "exp_R": 0.316,
+    "net_R": 13.6,
+    "WR%": 53.5,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 12.5
+   },
+   "ladder": {
+    "trades": 51,
+    "exp_R": 0.588,
+    "net_R": 30.0,
+    "WR%": 66.7,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.0
+   },
+   "ladder_ts": {
+    "trades": 51,
+    "exp_R": 0.588,
+    "net_R": 30.0,
+    "WR%": 66.7,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.0
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 31,
+    "sell": 20,
+    "trades": 51
+   }
+  },
+  "gateB": {
+   "plain": {
+    "trades": 74,
+    "exp_R": 0.35,
+    "net_R": 25.9,
+    "WR%": 54.1,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 18.2
+   },
+   "ladder": {
+    "trades": 99,
+    "exp_R": 0.796,
+    "net_R": 78.8,
+    "WR%": 73.7,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 9.7
+   },
+   "ladder_ts": {
+    "trades": 99,
+    "exp_R": 0.796,
+    "net_R": 78.8,
+    "WR%": 73.7,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 9.7
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 62,
+    "sell": 37,
+    "trades": 99
+   }
+  },
+  "gateC_ungated": {
+   "plain": {
+    "trades": 115,
+    "exp_R": 0.305,
+    "net_R": 35.1,
+    "WR%": 52.2,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 14.9
+   },
+   "ladder": {
+    "trades": 166,
+    "exp_R": 0.558,
+    "net_R": 92.7,
+    "WR%": 63.9,
+    "maxDD_R": -3.3,
+    "mean_hold_bars": 9.7
+   },
+   "ladder_ts": {
+    "trades": 166,
+    "exp_R": 0.558,
+    "net_R": 92.7,
+    "WR%": 63.9,
+    "maxDD_R": -3.3,
+    "mean_hold_bars": 9.7
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 100,
+    "sell": 66,
+    "trades": 166
+   }
+  },
+  "_side_split": {
+   "A_buy": {
+    "trades": 31,
+    "exp_R": 0.686,
+    "WR%": 71.0,
+    "avg_win_R": 1.38,
+    "avg_loss_R": -1.01,
+    "net_R": 21.3,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 7.5,
+    "p95_hold_bars": 16,
+    "max_hold_bars": 42,
+    "holds_over_time_exit": 0
+   },
+   "A_sell": {
+    "trades": 20,
+    "exp_R": 0.436,
+    "WR%": 60.0,
+    "avg_win_R": 1.4,
+    "avg_loss_R": -1.01,
+    "net_R": 8.7,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 11.3,
+    "p95_hold_bars": 27,
+    "max_hold_bars": 30,
+    "holds_over_time_exit": 0
+   },
+   "B_buy": {
+    "trades": 46,
+    "exp_R": 0.841,
+    "WR%": 73.9,
+    "avg_win_R": 1.5,
+    "avg_loss_R": -1.01,
+    "net_R": 38.7,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 10.7,
+    "p95_hold_bars": 30,
+    "max_hold_bars": 45,
+    "holds_over_time_exit": 0
+   },
+   "B_sell": {
+    "trades": 33,
+    "exp_R": 0.849,
+    "WR%": 75.8,
+    "avg_win_R": 1.45,
+    "avg_loss_R": -1.01,
+    "net_R": 28.0,
+    "maxDD_R": -1.0,
+    "mean_hold_bars": 11.3,
+    "p95_hold_bars": 29,
+    "max_hold_bars": 90,
+    "holds_over_time_exit": 0
+   },
+   "C_buy": {
+    "trades": 75,
+    "exp_R": 0.558,
+    "WR%": 61.3,
+    "avg_win_R": 1.55,
+    "avg_loss_R": -1.01,
+    "net_R": 41.9,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 11.7,
+    "p95_hold_bars": 37,
+    "max_hold_bars": 127,
+    "holds_over_time_exit": 0
+   },
+   "C_sell": {
+    "trades": 51,
+    "exp_R": 0.336,
+    "WR%": 54.9,
+    "avg_win_R": 1.45,
+    "avg_loss_R": -1.01,
+    "net_R": 17.1,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.9,
+    "p95_hold_bars": 21,
+    "max_hold_bars": 89,
+    "holds_over_time_exit": 0
+   }
+  },
+  "_ladder": {
+   "A_minus_B_exp_R": -0.257,
+   "B_minus_C_exp_R": 0.375,
+   "A_over_B_selection": false,
+   "B_over_C_selection": true,
+   "tighten_d_exp_R": -0.208,
+   "tighten_d_net_R": -48.8,
+   "tighten_d_trades": -48,
+   "tighten_d_dd_R": -2.0,
+   "tighten_kept_share": 0.515,
+   "loosen_d_exp_R": -0.238,
+   "loosen_d_net_R": 13.9,
+   "loosen_d_trades": 67,
+   "loosen_d_dd_R": -1.3,
+   "loosen_marginal_R_per_extra_trade": 0.207,
+   "tighten_marginal_R_per_dropped_trade": 1.017
+  }
+ },
+ "W1": {
+  "_bars": 6000,
+  "_first": 1776187800,
+  "_last": 1784108700,
+  "_signals": 1429,
+  "_atr_mean": 9.444,
+  "_signal_grade_mix": {
+   "A": 145,
+   "B": 391,
+   "C": 893
+  },
+  "book_A": {
+   "plain": {
+    "trades": 60,
+    "exp_R": 0.238,
+    "net_R": 14.3,
+    "WR%": 48.3,
+    "maxDD_R": -4.5,
+    "mean_hold_bars": 20.0
+   },
+   "ladder": {
+    "trades": 74,
+    "exp_R": 0.811,
+    "net_R": 60.0,
+    "WR%": 71.6,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.3
+   },
+   "ladder_ts": {
+    "trades": 74,
+    "exp_R": 0.811,
+    "net_R": 60.0,
+    "WR%": 71.6,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.3
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 24,
+    "sell": 50,
+    "trades": 74
+   }
+  },
+  "book_B": {
+   "plain": {
+    "trades": 110,
+    "exp_R": 0.129,
+    "net_R": 14.2,
+    "WR%": 44.5,
+    "maxDD_R": -9.0,
+    "mean_hold_bars": 14.4
+   },
+   "ladder": {
+    "trades": 139,
+    "exp_R": 0.581,
+    "net_R": 80.7,
+    "WR%": 62.6,
+    "maxDD_R": -4.9,
+    "mean_hold_bars": 8.9
+   },
+   "ladder_ts": {
+    "trades": 139,
+    "exp_R": 0.581,
+    "net_R": 80.7,
+    "WR%": 62.6,
+    "maxDD_R": -4.9,
+    "mean_hold_bars": 8.9
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 38,
+    "sell": 101,
+    "trades": 139
+   }
+  },
+  "book_C": {
+   "plain": {
+    "trades": 186,
+    "exp_R": -0.052,
+    "net_R": -9.7,
+    "WR%": 37.6,
+    "maxDD_R": -15.1,
+    "mean_hold_bars": 15.2
+   },
+   "ladder": {
+    "trades": 263,
+    "exp_R": 0.406,
+    "net_R": 106.9,
+    "WR%": 55.9,
+    "maxDD_R": -8.2,
+    "mean_hold_bars": 9.1
+   },
+   "ladder_ts": {
+    "trades": 263,
+    "exp_R": 0.406,
+    "net_R": 106.9,
+    "WR%": 55.9,
+    "maxDD_R": -8.2,
+    "mean_hold_bars": 9.1
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 90,
+    "sell": 173,
+    "trades": 263
+   }
+  },
+  "gateA": {
+   "plain": {
+    "trades": 60,
+    "exp_R": 0.238,
+    "net_R": 14.3,
+    "WR%": 48.3,
+    "maxDD_R": -4.5,
+    "mean_hold_bars": 20.0
+   },
+   "ladder": {
+    "trades": 74,
+    "exp_R": 0.811,
+    "net_R": 60.0,
+    "WR%": 71.6,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.3
+   },
+   "ladder_ts": {
+    "trades": 74,
+    "exp_R": 0.811,
+    "net_R": 60.0,
+    "WR%": 71.6,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.3
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 24,
+    "sell": 50,
+    "trades": 74
+   }
+  },
+  "gateB": {
+   "plain": {
+    "trades": 125,
+    "exp_R": 0.282,
+    "net_R": 35.2,
+    "WR%": 50.4,
+    "maxDD_R": -7.6,
+    "mean_hold_bars": 16.2
+   },
+   "ladder": {
+    "trades": 174,
+    "exp_R": 0.676,
+    "net_R": 117.6,
+    "WR%": 66.1,
+    "maxDD_R": -4.9,
+    "mean_hold_bars": 8.7
+   },
+   "ladder_ts": {
+    "trades": 174,
+    "exp_R": 0.676,
+    "net_R": 117.6,
+    "WR%": 66.1,
+    "maxDD_R": -4.9,
+    "mean_hold_bars": 8.7
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 49,
+    "sell": 125,
+    "trades": 174
+   }
+  },
+  "gateC_ungated": {
+   "plain": {
+    "trades": 203,
+    "exp_R": 0.096,
+    "net_R": 19.4,
+    "WR%": 43.3,
+    "maxDD_R": -9.7,
+    "mean_hold_bars": 16.8
+   },
+   "ladder": {
+    "trades": 316,
+    "exp_R": 0.524,
+    "net_R": 165.6,
+    "WR%": 60.8,
+    "maxDD_R": -6.1,
+    "mean_hold_bars": 9.0
+   },
+   "ladder_ts": {
+    "trades": 316,
+    "exp_R": 0.524,
+    "net_R": 165.6,
+    "WR%": 60.8,
+    "maxDD_R": -6.1,
+    "mean_hold_bars": 9.0
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 104,
+    "sell": 212,
+    "trades": 316
+   }
+  },
+  "_side_split": {
+   "A_buy": {
+    "trades": 24,
+    "exp_R": 0.714,
+    "WR%": 70.8,
+    "avg_win_R": 1.42,
+    "avg_loss_R": -1.01,
+    "net_R": 17.1,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 10.0,
+    "p95_hold_bars": 26,
+    "max_hold_bars": 44,
+    "holds_over_time_exit": 0
+   },
+   "A_sell": {
+    "trades": 50,
+    "exp_R": 0.857,
+    "WR%": 72.0,
+    "avg_win_R": 1.56,
+    "avg_loss_R": -0.94,
+    "net_R": 42.9,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.0,
+    "p95_hold_bars": 17,
+    "max_hold_bars": 48,
+    "holds_over_time_exit": 0
+   },
+   "B_buy": {
+    "trades": 38,
+    "exp_R": 0.393,
+    "WR%": 57.9,
+    "avg_win_R": 1.42,
+    "avg_loss_R": -1.01,
+    "net_R": 15.0,
+    "maxDD_R": -5.4,
+    "mean_hold_bars": 7.4,
+    "p95_hold_bars": 13,
+    "max_hold_bars": 21,
+    "holds_over_time_exit": 0
+   },
+   "B_sell": {
+    "trades": 101,
+    "exp_R": 0.651,
+    "WR%": 64.4,
+    "avg_win_R": 1.56,
+    "avg_loss_R": -1.0,
+    "net_R": 65.8,
+    "maxDD_R": -2.5,
+    "mean_hold_bars": 9.4,
+    "p95_hold_bars": 33,
+    "max_hold_bars": 49,
+    "holds_over_time_exit": 0
+   },
+   "C_buy": {
+    "trades": 90,
+    "exp_R": 0.244,
+    "WR%": 48.9,
+    "avg_win_R": 1.56,
+    "avg_loss_R": -1.02,
+    "net_R": 22.0,
+    "maxDD_R": -10.2,
+    "mean_hold_bars": 9.0,
+    "p95_hold_bars": 34,
+    "max_hold_bars": 63,
+    "holds_over_time_exit": 0
+   },
+   "C_sell": {
+    "trades": 173,
+    "exp_R": 0.491,
+    "WR%": 59.5,
+    "avg_win_R": 1.51,
+    "avg_loss_R": -1.0,
+    "net_R": 84.9,
+    "maxDD_R": -4.9,
+    "mean_hold_bars": 9.2,
+    "p95_hold_bars": 25,
+    "max_hold_bars": 42,
+    "holds_over_time_exit": 0
+   }
+  },
+  "_ladder": {
+   "A_minus_B_exp_R": 0.23,
+   "B_minus_C_exp_R": 0.175,
+   "A_over_B_selection": true,
+   "B_over_C_selection": true,
+   "tighten_d_exp_R": 0.135,
+   "tighten_d_net_R": -57.6,
+   "tighten_d_trades": -100,
+   "tighten_d_dd_R": 0.9,
+   "tighten_kept_share": 0.425,
+   "loosen_d_exp_R": -0.152,
+   "loosen_d_net_R": 48.0,
+   "loosen_d_trades": 142,
+   "loosen_d_dd_R": -1.2,
+   "loosen_marginal_R_per_extra_trade": 0.338,
+   "tighten_marginal_R_per_dropped_trade": 0.576
+  }
+ },
+ "W2": {
+  "_bars": 6000,
+  "_first": 1768203000,
+  "_last": 1776186900,
+  "_signals": 1544,
+  "_atr_mean": 16.332,
+  "_signal_grade_mix": {
+   "A": 138,
+   "B": 385,
+   "C": 1021
+  },
+  "book_A": {
+   "plain": {
+    "trades": 73,
+    "exp_R": 0.285,
+    "net_R": 20.8,
+    "WR%": 50.7,
+    "maxDD_R": -6.5,
+    "mean_hold_bars": 16.8
+   },
+   "ladder": {
+    "trades": 81,
+    "exp_R": 0.74,
+    "net_R": 59.9,
+    "WR%": 66.7,
+    "maxDD_R": -5.0,
+    "mean_hold_bars": 11.7
+   },
+   "ladder_ts": {
+    "trades": 81,
+    "exp_R": 0.74,
+    "net_R": 59.9,
+    "WR%": 66.7,
+    "maxDD_R": -5.0,
+    "mean_hold_bars": 11.7
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 42,
+    "sell": 39,
+    "trades": 81
+   }
+  },
+  "book_B": {
+   "plain": {
+    "trades": 103,
+    "exp_R": 0.271,
+    "net_R": 27.9,
+    "WR%": 50.5,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 18.3
+   },
+   "ladder": {
+    "trades": 134,
+    "exp_R": 0.706,
+    "net_R": 94.6,
+    "WR%": 67.9,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 10.4
+   },
+   "ladder_ts": {
+    "trades": 134,
+    "exp_R": 0.706,
+    "net_R": 94.6,
+    "WR%": 67.9,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 10.4
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 80,
+    "sell": 54,
+    "trades": 134
+   }
+  },
+  "book_C": {
+   "plain": {
+    "trades": 181,
+    "exp_R": 0.034,
+    "net_R": 6.1,
+    "WR%": 40.9,
+    "maxDD_R": -16.1,
+    "mean_hold_bars": 17.2
+   },
+   "ladder": {
+    "trades": 255,
+    "exp_R": 0.431,
+    "net_R": 110.0,
+    "WR%": 56.5,
+    "maxDD_R": -9.1,
+    "mean_hold_bars": 10.4
+   },
+   "ladder_ts": {
+    "trades": 255,
+    "exp_R": 0.431,
+    "net_R": 110.0,
+    "WR%": 56.5,
+    "maxDD_R": -9.1,
+    "mean_hold_bars": 10.4
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 154,
+    "sell": 101,
+    "trades": 255
+   }
+  },
+  "gateA": {
+   "plain": {
+    "trades": 73,
+    "exp_R": 0.285,
+    "net_R": 20.8,
+    "WR%": 50.7,
+    "maxDD_R": -6.5,
+    "mean_hold_bars": 16.8
+   },
+   "ladder": {
+    "trades": 81,
+    "exp_R": 0.74,
+    "net_R": 59.9,
+    "WR%": 66.7,
+    "maxDD_R": -5.0,
+    "mean_hold_bars": 11.7
+   },
+   "ladder_ts": {
+    "trades": 81,
+    "exp_R": 0.74,
+    "net_R": 59.9,
+    "WR%": 66.7,
+    "maxDD_R": -5.0,
+    "mean_hold_bars": 11.7
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 42,
+    "sell": 39,
+    "trades": 81
+   }
+  },
+  "gateB": {
+   "plain": {
+    "trades": 135,
+    "exp_R": 0.214,
+    "net_R": 28.9,
+    "WR%": 48.1,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 17.0
+   },
+   "ladder": {
+    "trades": 165,
+    "exp_R": 0.662,
+    "net_R": 109.3,
+    "WR%": 64.8,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 11.2
+   },
+   "ladder_ts": {
+    "trades": 165,
+    "exp_R": 0.662,
+    "net_R": 109.3,
+    "WR%": 64.8,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 11.2
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 91,
+    "sell": 74,
+    "trades": 165
+   }
+  },
+  "gateC_ungated": {
+   "plain": {
+    "trades": 219,
+    "exp_R": 0.109,
+    "net_R": 24.0,
+    "WR%": 43.8,
+    "maxDD_R": -13.5,
+    "mean_hold_bars": 16.6
+   },
+   "ladder": {
+    "trades": 315,
+    "exp_R": 0.521,
+    "net_R": 164.2,
+    "WR%": 59.4,
+    "maxDD_R": -8.0,
+    "mean_hold_bars": 10.1
+   },
+   "ladder_ts": {
+    "trades": 315,
+    "exp_R": 0.521,
+    "net_R": 164.2,
+    "WR%": 59.4,
+    "maxDD_R": -8.0,
+    "mean_hold_bars": 10.1
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 178,
+    "sell": 137,
+    "trades": 315
+   }
+  },
+  "_side_split": {
+   "A_buy": {
+    "trades": 42,
+    "exp_R": 0.677,
+    "WR%": 66.7,
+    "avg_win_R": 1.52,
+    "avg_loss_R": -1.01,
+    "net_R": 28.4,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 14.0,
+    "p95_hold_bars": 28,
+    "max_hold_bars": 101,
+    "holds_over_time_exit": 0
+   },
+   "A_sell": {
+    "trades": 39,
+    "exp_R": 0.807,
+    "WR%": 66.7,
+    "avg_win_R": 1.71,
+    "avg_loss_R": -1.0,
+    "net_R": 31.5,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 9.1,
+    "p95_hold_bars": 21,
+    "max_hold_bars": 78,
+    "holds_over_time_exit": 0
+   },
+   "B_buy": {
+    "trades": 81,
+    "exp_R": 0.711,
+    "WR%": 67.9,
+    "avg_win_R": 1.52,
+    "avg_loss_R": -1.01,
+    "net_R": 57.6,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 11.8,
+    "p95_hold_bars": 34,
+    "max_hold_bars": 56,
+    "holds_over_time_exit": 0
+   },
+   "B_sell": {
+    "trades": 54,
+    "exp_R": 0.715,
+    "WR%": 68.5,
+    "avg_win_R": 1.51,
+    "avg_loss_R": -1.01,
+    "net_R": 38.6,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 8.3,
+    "p95_hold_bars": 21,
+    "max_hold_bars": 32,
+    "holds_over_time_exit": 0
+   },
+   "C_buy": {
+    "trades": 158,
+    "exp_R": 0.402,
+    "WR%": 55.7,
+    "avg_win_R": 1.53,
+    "avg_loss_R": -1.01,
+    "net_R": 63.6,
+    "maxDD_R": -8.1,
+    "mean_hold_bars": 9.9,
+    "p95_hold_bars": 27,
+    "max_hold_bars": 82,
+    "holds_over_time_exit": 0
+   },
+   "C_sell": {
+    "trades": 103,
+    "exp_R": 0.478,
+    "WR%": 58.3,
+    "avg_win_R": 1.54,
+    "avg_loss_R": -1.01,
+    "net_R": 49.3,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 10.8,
+    "p95_hold_bars": 30,
+    "max_hold_bars": 76,
+    "holds_over_time_exit": 0
+   }
+  },
+  "_ladder": {
+   "A_minus_B_exp_R": 0.034,
+   "B_minus_C_exp_R": 0.275,
+   "A_over_B_selection": true,
+   "B_over_C_selection": true,
+   "tighten_d_exp_R": 0.078,
+   "tighten_d_net_R": -49.4,
+   "tighten_d_trades": -84,
+   "tighten_d_dd_R": 0.1,
+   "tighten_kept_share": 0.491,
+   "loosen_d_exp_R": -0.141,
+   "loosen_d_net_R": 54.9,
+   "loosen_d_trades": 150,
+   "loosen_d_dd_R": -2.9,
+   "loosen_marginal_R_per_extra_trade": 0.366,
+   "tighten_marginal_R_per_dropped_trade": 0.588
+  }
+ },
+ "W3": {
+  "_bars": 6000,
+  "_first": 1759932900,
+  "_last": 1768202100,
+  "_signals": 1767,
+  "_atr_mean": 8.798,
+  "_signal_grade_mix": {
+   "A": 147,
+   "B": 590,
+   "C": 1030
+  },
+  "book_A": {
+   "plain": {
+    "trades": 74,
+    "exp_R": 0.297,
+    "net_R": 22.0,
+    "WR%": 51.4,
+    "maxDD_R": -10.1,
+    "mean_hold_bars": 20.8
+   },
+   "ladder": {
+    "trades": 82,
+    "exp_R": 0.853,
+    "net_R": 69.9,
+    "WR%": 74.4,
+    "maxDD_R": -3.7,
+    "mean_hold_bars": 11.7
+   },
+   "ladder_ts": {
+    "trades": 82,
+    "exp_R": 0.853,
+    "net_R": 69.9,
+    "WR%": 74.4,
+    "maxDD_R": -3.7,
+    "mean_hold_bars": 11.7
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 48,
+    "sell": 34,
+    "trades": 82
+   }
+  },
+  "book_B": {
+   "plain": {
+    "trades": 130,
+    "exp_R": 0.209,
+    "net_R": 27.2,
+    "WR%": 47.7,
+    "maxDD_R": -9.1,
+    "mean_hold_bars": 19.9
+   },
+   "ladder": {
+    "trades": 170,
+    "exp_R": 0.729,
+    "net_R": 123.9,
+    "WR%": 68.2,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 10.4
+   },
+   "ladder_ts": {
+    "trades": 170,
+    "exp_R": 0.729,
+    "net_R": 123.9,
+    "WR%": 68.2,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 10.4
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 104,
+    "sell": 66,
+    "trades": 170
+   }
+  },
+  "book_C": {
+   "plain": {
+    "trades": 195,
+    "exp_R": 0.034,
+    "net_R": 6.7,
+    "WR%": 41.0,
+    "maxDD_R": -19.3,
+    "mean_hold_bars": 15.7
+   },
+   "ladder": {
+    "trades": 273,
+    "exp_R": 0.408,
+    "net_R": 111.4,
+    "WR%": 56.0,
+    "maxDD_R": -10.2,
+    "mean_hold_bars": 9.6
+   },
+   "ladder_ts": {
+    "trades": 273,
+    "exp_R": 0.408,
+    "net_R": 111.4,
+    "WR%": 56.0,
+    "maxDD_R": -10.2,
+    "mean_hold_bars": 9.6
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 163,
+    "sell": 110,
+    "trades": 273
+   }
+  },
+  "gateA": {
+   "plain": {
+    "trades": 74,
+    "exp_R": 0.297,
+    "net_R": 22.0,
+    "WR%": 51.4,
+    "maxDD_R": -10.1,
+    "mean_hold_bars": 20.8
+   },
+   "ladder": {
+    "trades": 82,
+    "exp_R": 0.853,
+    "net_R": 69.9,
+    "WR%": 74.4,
+    "maxDD_R": -3.7,
+    "mean_hold_bars": 11.7
+   },
+   "ladder_ts": {
+    "trades": 82,
+    "exp_R": 0.853,
+    "net_R": 69.9,
+    "WR%": 74.4,
+    "maxDD_R": -3.7,
+    "mean_hold_bars": 11.7
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 48,
+    "sell": 34,
+    "trades": 82
+   }
+  },
+  "gateB": {
+   "plain": {
+    "trades": 142,
+    "exp_R": 0.214,
+    "net_R": 30.4,
+    "WR%": 47.9,
+    "maxDD_R": -9.1,
+    "mean_hold_bars": 20.3
+   },
+   "ladder": {
+    "trades": 190,
+    "exp_R": 0.767,
+    "net_R": 145.7,
+    "WR%": 70.0,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 10.9
+   },
+   "ladder_ts": {
+    "trades": 190,
+    "exp_R": 0.767,
+    "net_R": 145.7,
+    "WR%": 70.0,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 10.9
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 113,
+    "sell": 77,
+    "trades": 190
+   }
+  },
+  "gateC_ungated": {
+   "plain": {
+    "trades": 211,
+    "exp_R": 0.114,
+    "net_R": 24.0,
+    "WR%": 44.1,
+    "maxDD_R": -18.7,
+    "mean_hold_bars": 18.5
+   },
+   "ladder": {
+    "trades": 332,
+    "exp_R": 0.528,
+    "net_R": 175.2,
+    "WR%": 61.1,
+    "maxDD_R": -9.6,
+    "mean_hold_bars": 10.0
+   },
+   "ladder_ts": {
+    "trades": 332,
+    "exp_R": 0.528,
+    "net_R": 175.2,
+    "WR%": 61.1,
+    "maxDD_R": -9.6,
+    "mean_hold_bars": 10.0
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 189,
+    "sell": 143,
+    "trades": 332
+   }
+  },
+  "_side_split": {
+   "A_buy": {
+    "trades": 48,
+    "exp_R": 0.879,
+    "WR%": 75.0,
+    "avg_win_R": 1.51,
+    "avg_loss_R": -1.02,
+    "net_R": 42.2,
+    "maxDD_R": -2.7,
+    "mean_hold_bars": 10.5,
+    "p95_hold_bars": 27,
+    "max_hold_bars": 51,
+    "holds_over_time_exit": 0
+   },
+   "A_sell": {
+    "trades": 34,
+    "exp_R": 0.815,
+    "WR%": 73.5,
+    "avg_win_R": 1.47,
+    "avg_loss_R": -1.01,
+    "net_R": 27.7,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 13.2,
+    "p95_hold_bars": 57,
+    "max_hold_bars": 76,
+    "holds_over_time_exit": 0
+   },
+   "B_buy": {
+    "trades": 104,
+    "exp_R": 0.811,
+    "WR%": 71.2,
+    "avg_win_R": 1.54,
+    "avg_loss_R": -0.99,
+    "net_R": 84.3,
+    "maxDD_R": -3.1,
+    "mean_hold_bars": 10.9,
+    "p95_hold_bars": 28,
+    "max_hold_bars": 77,
+    "holds_over_time_exit": 0
+   },
+   "B_sell": {
+    "trades": 66,
+    "exp_R": 0.599,
+    "WR%": 63.6,
+    "avg_win_R": 1.52,
+    "avg_loss_R": -1.01,
+    "net_R": 39.5,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.6,
+    "p95_hold_bars": 23,
+    "max_hold_bars": 46,
+    "holds_over_time_exit": 0
+   },
+   "C_buy": {
+    "trades": 164,
+    "exp_R": 0.511,
+    "WR%": 58.5,
+    "avg_win_R": 1.59,
+    "avg_loss_R": -1.01,
+    "net_R": 83.8,
+    "maxDD_R": -4.9,
+    "mean_hold_bars": 9.9,
+    "p95_hold_bars": 25,
+    "max_hold_bars": 63,
+    "holds_over_time_exit": 0
+   },
+   "C_sell": {
+    "trades": 112,
+    "exp_R": 0.258,
+    "WR%": 52.7,
+    "avg_win_R": 1.4,
+    "avg_loss_R": -1.02,
+    "net_R": 28.9,
+    "maxDD_R": -7.7,
+    "mean_hold_bars": 9.4,
+    "p95_hold_bars": 25,
+    "max_hold_bars": 67,
+    "holds_over_time_exit": 0
+   }
+  },
+  "_ladder": {
+   "A_minus_B_exp_R": 0.124,
+   "B_minus_C_exp_R": 0.321,
+   "A_over_B_selection": true,
+   "B_over_C_selection": true,
+   "tighten_d_exp_R": 0.086,
+   "tighten_d_net_R": -75.8,
+   "tighten_d_trades": -108,
+   "tighten_d_dd_R": 1.4,
+   "tighten_kept_share": 0.432,
+   "loosen_d_exp_R": -0.239,
+   "loosen_d_net_R": 29.5,
+   "loosen_d_trades": 142,
+   "loosen_d_dd_R": -4.5,
+   "loosen_marginal_R_per_extra_trade": 0.208,
+   "tighten_marginal_R_per_dropped_trade": 0.702
+  }
+ },
+ "W4": {
+  "_bars": 6000,
+  "_first": 1752043500,
+  "_last": 1759932000,
+  "_signals": 1745,
+  "_atr_mean": 4.287,
+  "_signal_grade_mix": {
+   "A": 139,
+   "B": 439,
+   "C": 1167
+  },
+  "book_A": {
+   "plain": {
+    "trades": 66,
+    "exp_R": 0.173,
+    "net_R": 11.4,
+    "WR%": 47.0,
+    "maxDD_R": -7.3,
+    "mean_hold_bars": 22.2
+   },
+   "ladder": {
+    "trades": 76,
+    "exp_R": 0.588,
+    "net_R": 44.7,
+    "WR%": 64.5,
+    "maxDD_R": -3.1,
+    "mean_hold_bars": 10.8
+   },
+   "ladder_ts": {
+    "trades": 76,
+    "exp_R": 0.588,
+    "net_R": 44.7,
+    "WR%": 64.5,
+    "maxDD_R": -3.1,
+    "mean_hold_bars": 10.8
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 58,
+    "sell": 18,
+    "trades": 76
+   }
+  },
+  "book_B": {
+   "plain": {
+    "trades": 107,
+    "exp_R": 0.334,
+    "net_R": 35.7,
+    "WR%": 53.3,
+    "maxDD_R": -5.2,
+    "mean_hold_bars": 23.5
+   },
+   "ladder": {
+    "trades": 141,
+    "exp_R": 0.754,
+    "net_R": 106.3,
+    "WR%": 70.2,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 12.2
+   },
+   "ladder_ts": {
+    "trades": 141,
+    "exp_R": 0.754,
+    "net_R": 106.3,
+    "WR%": 70.2,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 12.2
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 101,
+    "sell": 40,
+    "trades": 141
+   }
+  },
+  "book_C": {
+   "plain": {
+    "trades": 199,
+    "exp_R": 0.075,
+    "net_R": 15.0,
+    "WR%": 43.2,
+    "maxDD_R": -21.7,
+    "mean_hold_bars": 18.0
+   },
+   "ladder": {
+    "trades": 295,
+    "exp_R": 0.482,
+    "net_R": 142.1,
+    "WR%": 60.7,
+    "maxDD_R": -6.8,
+    "mean_hold_bars": 10.1
+   },
+   "ladder_ts": {
+    "trades": 295,
+    "exp_R": 0.482,
+    "net_R": 142.1,
+    "WR%": 60.7,
+    "maxDD_R": -6.8,
+    "mean_hold_bars": 10.1
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 213,
+    "sell": 82,
+    "trades": 295
+   }
+  },
+  "gateA": {
+   "plain": {
+    "trades": 66,
+    "exp_R": 0.173,
+    "net_R": 11.4,
+    "WR%": 47.0,
+    "maxDD_R": -7.3,
+    "mean_hold_bars": 22.2
+   },
+   "ladder": {
+    "trades": 76,
+    "exp_R": 0.588,
+    "net_R": 44.7,
+    "WR%": 64.5,
+    "maxDD_R": -3.1,
+    "mean_hold_bars": 10.8
+   },
+   "ladder_ts": {
+    "trades": 76,
+    "exp_R": 0.588,
+    "net_R": 44.7,
+    "WR%": 64.5,
+    "maxDD_R": -3.1,
+    "mean_hold_bars": 10.8
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 58,
+    "sell": 18,
+    "trades": 76
+   }
+  },
+  "gateB": {
+   "plain": {
+    "trades": 118,
+    "exp_R": 0.295,
+    "net_R": 34.8,
+    "WR%": 51.7,
+    "maxDD_R": -5.1,
+    "mean_hold_bars": 24.7
+   },
+   "ladder": {
+    "trades": 166,
+    "exp_R": 0.745,
+    "net_R": 123.6,
+    "WR%": 69.9,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 12.1
+   },
+   "ladder_ts": {
+    "trades": 166,
+    "exp_R": 0.745,
+    "net_R": 123.6,
+    "WR%": 69.9,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 12.1
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 119,
+    "sell": 47,
+    "trades": 166
+   }
+  },
+  "gateC_ungated": {
+   "plain": {
+    "trades": 216,
+    "exp_R": 0.093,
+    "net_R": 20.2,
+    "WR%": 44.0,
+    "maxDD_R": -21.2,
+    "mean_hold_bars": 19.3
+   },
+   "ladder": {
+    "trades": 340,
+    "exp_R": 0.532,
+    "net_R": 181.0,
+    "WR%": 62.6,
+    "maxDD_R": -5.4,
+    "mean_hold_bars": 10.3
+   },
+   "ladder_ts": {
+    "trades": 340,
+    "exp_R": 0.532,
+    "net_R": 181.0,
+    "WR%": 62.6,
+    "maxDD_R": -5.4,
+    "mean_hold_bars": 10.3
+   },
+   "_time_stop_bars": 144,
+   "_mix": {
+    "buy": 242,
+    "sell": 98,
+    "trades": 340
+   }
+  },
+  "_side_split": {
+   "A_buy": {
+    "trades": 58,
+    "exp_R": 0.745,
+    "WR%": 70.7,
+    "avg_win_R": 1.48,
+    "avg_loss_R": -1.02,
+    "net_R": 43.2,
+    "maxDD_R": -3.1,
+    "mean_hold_bars": 10.9,
+    "p95_hold_bars": 28,
+    "max_hold_bars": 39,
+    "holds_over_time_exit": 0
+   },
+   "A_sell": {
+    "trades": 18,
+    "exp_R": 0.085,
+    "WR%": 44.4,
+    "avg_win_R": 1.48,
+    "avg_loss_R": -1.03,
+    "net_R": 1.5,
+    "maxDD_R": -5.4,
+    "mean_hold_bars": 10.2,
+    "p95_hold_bars": 37,
+    "max_hold_bars": 53,
+    "holds_over_time_exit": 0
+   },
+   "B_buy": {
+    "trades": 101,
+    "exp_R": 0.762,
+    "WR%": 69.3,
+    "avg_win_R": 1.55,
+    "avg_loss_R": -1.02,
+    "net_R": 77.0,
+    "maxDD_R": -4.1,
+    "mean_hold_bars": 12.4,
+    "p95_hold_bars": 32,
+    "max_hold_bars": 112,
+    "holds_over_time_exit": 0
+   },
+   "B_sell": {
+    "trades": 40,
+    "exp_R": 0.734,
+    "WR%": 72.5,
+    "avg_win_R": 1.41,
+    "avg_loss_R": -1.04,
+    "net_R": 29.4,
+    "maxDD_R": -1.0,
+    "mean_hold_bars": 11.6,
+    "p95_hold_bars": 26,
+    "max_hold_bars": 80,
+    "holds_over_time_exit": 0
+   },
+   "C_buy": {
+    "trades": 217,
+    "exp_R": 0.494,
+    "WR%": 60.4,
+    "avg_win_R": 1.49,
+    "avg_loss_R": -1.03,
+    "net_R": 107.1,
+    "maxDD_R": -11.4,
+    "mean_hold_bars": 9.6,
+    "p95_hold_bars": 32,
+    "max_hold_bars": 81,
+    "holds_over_time_exit": 0
+   },
+   "C_sell": {
+    "trades": 83,
+    "exp_R": 0.45,
+    "WR%": 61.4,
+    "avg_win_R": 1.38,
+    "avg_loss_R": -1.03,
+    "net_R": 37.3,
+    "maxDD_R": -5.2,
+    "mean_hold_bars": 11.2,
+    "p95_hold_bars": 30,
+    "max_hold_bars": 85,
+    "holds_over_time_exit": 0
+   }
+  },
+  "_ladder": {
+   "A_minus_B_exp_R": -0.166,
+   "B_minus_C_exp_R": 0.272,
+   "A_over_B_selection": false,
+   "B_over_C_selection": true,
+   "tighten_d_exp_R": -0.157,
+   "tighten_d_net_R": -78.9,
+   "tighten_d_trades": -90,
+   "tighten_d_dd_R": 1.0,
+   "tighten_kept_share": 0.458,
+   "loosen_d_exp_R": -0.213,
+   "loosen_d_net_R": 57.4,
+   "loosen_d_trades": 174,
+   "loosen_d_dd_R": -1.3,
+   "loosen_marginal_R_per_extra_trade": 0.33,
+   "tighten_marginal_R_per_dropped_trade": 0.877
+  }
+ },
+ "_verdict": {
+  "A_vs_B": {
+   "windows_holding": 3,
+   "of": 4,
+   "replicated_all_windows": false,
+   "chronological_margins": [
+    -0.166,
+    0.124,
+    0.034,
+    0.23
+   ],
+   "per_window": [
+    {
+     "window": "W4",
+     "holds": false,
+     "margin_exp_R": -0.166
+    },
+    {
+     "window": "W3",
+     "holds": true,
+     "margin_exp_R": 0.124
+    },
+    {
+     "window": "W2",
+     "holds": true,
+     "margin_exp_R": 0.034
+    },
+    {
+     "window": "W1",
+     "holds": true,
+     "margin_exp_R": 0.23
+    }
+   ]
+  },
+  "B_vs_C": {
+   "windows_holding": 4,
+   "of": 4,
+   "replicated_all_windows": true,
+   "chronological_margins": [
+    0.272,
+    0.321,
+    0.275,
+    0.175
+   ],
+   "per_window": [
+    {
+     "window": "W4",
+     "holds": true,
+     "margin_exp_R": 0.272
+    },
+    {
+     "window": "W3",
+     "holds": true,
+     "margin_exp_R": 0.321
+    },
+    {
+     "window": "W2",
+     "holds": true,
+     "margin_exp_R": 0.275
+    },
+    {
+     "window": "W1",
+     "holds": true,
+     "margin_exp_R": 0.175
+    }
+   ]
+  },
+  "tighten_B_to_A": {
+   "windows_paying": 3,
+   "of": 4,
+   "replicated_all_windows": false,
+   "chronological_d_exp_R": [
+    -0.157,
+    0.086,
+    0.078,
+    0.135
+   ],
+   "total_net_R_given_up": -261.7,
+   "total_trades_given_up": -382,
+   "per_window": [
+    {
+     "window": "W4",
+     "gateA_exp_R": 0.588,
+     "gateB_exp_R": 0.745,
+     "d_exp_R": -0.157,
+     "d_net_R": -78.9,
+     "d_trades": -90,
+     "d_dd_R": 1.0,
+     "kept_share": 0.458,
+     "pays": false
+    },
+    {
+     "window": "W3",
+     "gateA_exp_R": 0.853,
+     "gateB_exp_R": 0.767,
+     "d_exp_R": 0.086,
+     "d_net_R": -75.8,
+     "d_trades": -108,
+     "d_dd_R": 1.4,
+     "kept_share": 0.432,
+     "pays": true
+    },
+    {
+     "window": "W2",
+     "gateA_exp_R": 0.74,
+     "gateB_exp_R": 0.662,
+     "d_exp_R": 0.078,
+     "d_net_R": -49.4,
+     "d_trades": -84,
+     "d_dd_R": 0.1,
+     "kept_share": 0.491,
+     "pays": true
+    },
+    {
+     "window": "W1",
+     "gateA_exp_R": 0.811,
+     "gateB_exp_R": 0.676,
+     "d_exp_R": 0.135,
+     "d_net_R": -57.6,
+     "d_trades": -100,
+     "d_dd_R": 0.9,
+     "kept_share": 0.425,
+     "pays": true
+    }
+   ]
+  },
+  "live_gate_C_out": {
+   "windows_where_C_loses": 4,
+   "of": 4,
+   "chronological_B_minus_C": [
+    0.272,
+    0.321,
+    0.275,
+    0.175
+   ]
+  },
+  "live_gate_C_total_R": {
+   "windows_where_ungated_earns_more_net_R": 4,
+   "of": 4,
+   "chronological_loosen_d_net_R": [
+    57.4,
+    29.5,
+    54.9,
+    48.0
+   ],
+   "chronological_marginal_R_per_extra_trade": [
+    0.33,
+    0.208,
+    0.366,
+    0.338
+   ],
+   "chronological_loosen_d_dd_R": [
+    -1.3,
+    -4.5,
+    -2.9,
+    -1.2
+   ]
+  },
+  "grade_by_side": {
+   "A": {
+    "W4": {
+     "buy": 0.745,
+     "sell": 0.085
+    },
+    "W3": {
+     "buy": 0.879,
+     "sell": 0.815
+    },
+    "W2": {
+     "buy": 0.677,
+     "sell": 0.807
+    },
+    "W1": {
+     "buy": 0.714,
+     "sell": 0.857
+    },
+    "n_by_window": {
+     "W4": {
+      "buy": 58,
+      "sell": 18
+     },
+     "W3": {
+      "buy": 48,
+      "sell": 34
+     },
+     "W2": {
+      "buy": 42,
+      "sell": 39
+     },
+     "W1": {
+      "buy": 24,
+      "sell": 50
+     }
+    }
+   },
+   "B": {
+    "W4": {
+     "buy": 0.762,
+     "sell": 0.734
+    },
+    "W3": {
+     "buy": 0.811,
+     "sell": 0.599
+    },
+    "W2": {
+     "buy": 0.711,
+     "sell": 0.715
+    },
+    "W1": {
+     "buy": 0.393,
+     "sell": 0.651
+    },
+    "n_by_window": {
+     "W4": {
+      "buy": 101,
+      "sell": 40
+     },
+     "W3": {
+      "buy": 104,
+      "sell": 66
+     },
+     "W2": {
+      "buy": 81,
+      "sell": 54
+     },
+     "W1": {
+      "buy": 38,
+      "sell": 101
+     }
+    }
+   },
+   "C": {
+    "W4": {
+     "buy": 0.494,
+     "sell": 0.45
+    },
+    "W3": {
+     "buy": 0.511,
+     "sell": 0.258
+    },
+    "W2": {
+     "buy": 0.402,
+     "sell": 0.478
+    },
+    "W1": {
+     "buy": 0.244,
+     "sell": 0.491
+    },
+    "n_by_window": {
+     "W4": {
+      "buy": 217,
+      "sell": 83
+     },
+     "W3": {
+      "buy": 164,
+      "sell": 112
+     },
+     "W2": {
+      "buy": 158,
+      "sell": 103
+     },
+     "W1": {
+      "buy": 90,
+      "sell": 173
+     }
+    }
+   }
+  },
+  "mix": {
+   "cached": {
+    "book_A": {
+     "buy": 31,
+     "sell": 20,
+     "trades": 51
+    },
+    "book_B": {
+     "buy": 46,
+     "sell": 33,
+     "trades": 79
+    },
+    "book_C": {
+     "buy": 73,
+     "sell": 51,
+     "trades": 124
+    }
+   },
+   "W1": {
+    "book_A": {
+     "buy": 24,
+     "sell": 50,
+     "trades": 74
+    },
+    "book_B": {
+     "buy": 38,
+     "sell": 101,
+     "trades": 139
+    },
+    "book_C": {
+     "buy": 90,
+     "sell": 173,
+     "trades": 263
+    }
+   },
+   "W2": {
+    "book_A": {
+     "buy": 42,
+     "sell": 39,
+     "trades": 81
+    },
+    "book_B": {
+     "buy": 80,
+     "sell": 54,
+     "trades": 134
+    },
+    "book_C": {
+     "buy": 154,
+     "sell": 101,
+     "trades": 255
+    }
+   },
+   "W3": {
+    "book_A": {
+     "buy": 48,
+     "sell": 34,
+     "trades": 82
+    },
+    "book_B": {
+     "buy": 104,
+     "sell": 66,
+     "trades": 170
+    },
+    "book_C": {
+     "buy": 163,
+     "sell": 110,
+     "trades": 273
+    }
+   },
+   "W4": {
+    "book_A": {
+     "buy": 58,
+     "sell": 18,
+     "trades": 76
+    },
+    "book_B": {
+     "buy": 101,
+     "sell": 40,
+     "trades": 141
+    },
+    "book_C": {
+     "buy": 213,
+     "sell": 82,
+     "trades": 295
+    }
+   }
+  }
+ }
+}

@@ -240,6 +240,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       every margin <+0.05R. b78 mix: agree arm one-sided in 3 of 5 legs —
       the gate IS a direction filter. Stretch flat (<=0.02 ATR). Nothing
       wired. See Findings.
+      Round 18 (b68r, 2026-09-05 — the ladder ITSELF as the object, no new
+      arm: the funnel's A/B/C grade populations measured as three books on
+      the corrected b80 bar, cached+W1..W4, live ladder+time exit): the live
+      min_grade=B gate is CONFIRMED on selection (B>C on exp_R 4-of-4
+      windows AND all 8 window x side cells — the cliff is at B) but the
+      ungated book earns MORE total net_R on all four windows (+29..+57R;
+      the dropped C-book's marginal trade is +0.21..+0.37R, positive but
+      below the kept bar, and its DD is worse everywhere) — both prices now
+      on record, gate unchanged. A>B replicates only 3-of-4 (W4 -0.166R) and
+      the side-split proves the flip is a DIRECTION cell (A-SELL W4 0.085),
+      not a rung property; tightening B->A gives up -261.7R — NOT proposed.
+      13 tests pin reproduction vs b80 + both verdicts. See Findings.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -497,6 +509,25 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       corrected verdict under the SAME replication rule as the components
       (b74's all-windows rule applies to lanes too). Cheap here (~4 min for
       5 legs x 5 rows); the wrong alternative was a published wrong answer.
+- [ ] b84 MEASURE THE GATE, NOT JUST THE ARM (reusable procedure from b68
+      round 18, 2026-09-05): every live FILTER (grade gate, min_rr, DEFCON,
+      cooldown) must eventually be measured as BOOKS — run the funnel's own
+      kept population and dropped population each as a standalone book
+      through the live-parity harness on cached+W1..W4 — and reported on
+      BOTH R axes (exp_R per trade AND total net_R + DD), because round 18
+      proved one filter can win 4-of-4 on selection while losing 4-of-4 on
+      volume (+29..+57R given up by min_grade=B; marginal trade
+      +0.21..+0.37R). A filter whose dropped book's marginal trade is
+      NEGATIVE everywhere is a true cliff (B/C: 8-of-8 window x side cells);
+      one whose flip is confined to a single grade x side cell is a
+      DIRECTION artifact, not a rung property (A/B on W4 sell) — never
+      tighten a gate off a cached-leg or single-cell number. Reuse
+      scripts/b68r_grade_ladder_lab.py's book_fn/side_mix/_side_split
+      structure; pin reproduction against the shipped parity ledger
+      (b80_gate_parity.json) as the round's first test. Small, lab-only,
+      read-only. Next filter due: min_rr=1.5 (b80 measured rr 1.549-1.552
+      at the funnel's own entries — the gate is nearly never-binding there,
+      so the book measurement may be cheap and could retire a dead knob).
 - [ ] b79 GATE FIRE-RATE STABILITY PRE-FLIGHT (reusable procedure promised
       by b68 round 16's Findings, 2026-09-05; first metric measured in round
       17): before spending four b74 draws on a gated arm, measure the
@@ -914,6 +945,40 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
   four windows; the funnel's 0.52-0.53 band stands; the two-survivor
   combination space is now exhausted (pdh x dayext r9, pdh x squeeze r8,
   pdh x h4t r12, funnel x h4t r13/14, pdh x runway r16, nr7 x h4t r17).
+
+- 2026-09-05 b68 round 18 — THE GRADE LADDER MEASURED AS BOOKS: THE LIVE B
+  GATE IS CONFIRMED ON SELECTION AND CONTRADICTED ON VOLUME, IN THE SAME
+  LEDGER (scripts/b68r_grade_ladder_lab.py; 13 tests in
+  tests/test_b68r_grade_ladder.py; ledger data/backtest/b68r_grade_ladder.json).
+  No new arm and no new gate this round — the OBJECT was the funnel's own
+  grade ladder (A/B/C), which 18 rounds of comparisons quote but nobody had
+  ever measured as three books on the corrected (b80) bar. Each grade
+  population was run through the live-parity harness (b80's funnel_signals
+  reused verbatim per b83, ladder + live time exit, cached+W1..W4, one slot
+  per book). REPRODUCTION first: the B book equals b80's shipped gradeB
+  funnel column to 3 decimals on all 5 legs (99/174/165/190/166 trades,
+  0.796/0.676/0.662/0.767/0.745 exp_R) — the capture is the same machine.
+  FINDING 1 (the gate stands): B > C on exp_R on ALL FOUR independent
+  windows (+0.272/+0.321/+0.275/+0.175 chronological W4->W1) and on ALL
+  EIGHT window x side cells — min_grade=B stays, the cliff is at B.
+  FINDING 2 (the honest counterweight, b81's both-axes rule): the UNGATED
+  book earns MORE total net_R on all four windows (+57.4/+29.5/+54.9/+48.0)
+  because the dropped C trades are not garbage — their marginal trade is
+  +0.33/+0.21/+0.37/+0.34R, positive everywhere but below the kept book's
+  bar, and the ungated DD is WORSE on every window (-6.8..-10.2 vs
+  -2.0..-4.9). The gate buys quality-per-trade and DD with volume; that is
+  a policy choice the live config already made, now with both prices on
+  record. FINDING 3 (b78's mix question answered): A > B replicates only
+  3-of-4 (W4 -0.166R), and the side-split shows the flip is a DIRECTION
+  cell, not a rung property — A-SELL on W4 is the weak book (0.085 vs
+  A-BUY 0.745 there), while A beats B on both sides of the newest window.
+  Tightening the live gate B->A would give up -261.7R of net across the
+  four windows (3-of-4 windows pay, the oldest draw doesn't): NOT proposed,
+  and pinned as not-universal so a future run cannot re-propose it from the
+  cached leg alone. Regime note: the legs span a 4x ATR swing (W4 mean TR
+  4.3 -> W2 16.3), so "rung X always ranks" was never going to survive;
+  only the B/C cliff did. Nothing wired, no gate weakened, no live module
+  touches the lab (pinned).
 
 - 2026-09-05 b68 round 16 — THE WEEKLY-RUNWAY GATE IS THE LOOP'S CLEANEST
   SELECTION FLIP: THE ORACLE'S FIRE RATE IS ITSELF REGIME-GIFTED (scripts/

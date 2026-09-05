@@ -852,5 +852,191 @@
   "trades": 117,
   "exp_R": 0.453,
   "verdict": "COMPLEMENT arm of round 17 (what the H4 gate DROPS; b68q): 0.453 cached / 0.367 W1 / 0.323 W2 / 0.430 W3 / 0.293 W4 - below the gated arm on every leg, the loop's cleanest selection-ordering evidence (4-of-4 windows), yet the arm it ranks under still loses the merit bar: selection without a replicating LIFT is not an edge. Kept as evidence, not a candidate. NOT wired."
+ },
+ {
+  "name": "grade_book_A",
+  "round": 18,
+  "windows": {
+   "cached": {
+    "exp_R": 0.588,
+    "n": 51,
+    "dd_R": -4.0,
+    "buy": 31,
+    "sell": 20
+   },
+   "W1": {
+    "exp_R": 0.811,
+    "n": 74,
+    "dd_R": -4.0,
+    "buy": 24,
+    "sell": 50
+   },
+   "W2": {
+    "exp_R": 0.74,
+    "n": 81,
+    "dd_R": -5.0,
+    "buy": 42,
+    "sell": 39
+   },
+   "W3": {
+    "exp_R": 0.853,
+    "n": 82,
+    "dd_R": -3.7,
+    "buy": 48,
+    "sell": 34
+   },
+   "W4": {
+    "exp_R": 0.588,
+    "n": 76,
+    "dd_R": -3.1,
+    "buy": 58,
+    "sell": 18
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.676,
+    "n": 174
+   },
+   "W2": {
+    "exp_R": 0.662,
+    "n": 165
+   },
+   "W3": {
+    "exp_R": 0.767,
+    "n": 190
+   },
+   "W4": {
+    "exp_R": 0.745,
+    "n": 166
+   }
+  },
+  "trades": 51,
+  "exp_R": 0.588,
+  "verdict": "GRADE BOOK A (round 18, b68r: the funnel's own A-rung population as a book, corrected b80 bar): 0.588 cached / 0.811 W1 / 0.740 W2 / 0.853 W3 / 0.588 W4, n 51-82. Beats the live gate book on 3-of-4 windows but LOSES W4 (-0.166R) and the side-split shows the flip is a DIRECTION cell (A-SELL W4 0.085 vs A-BUY 0.745), not a rung property. Tightening the live gate B->A gives up -261.7R total net on the four windows \u2014 NOT proposed (pinned in tests/test_b68r_grade_ladder.py)."
+ },
+ {
+  "name": "grade_book_B",
+  "round": 18,
+  "windows": {
+   "cached": {
+    "exp_R": 0.845,
+    "n": 79,
+    "dd_R": -2.0,
+    "buy": 46,
+    "sell": 33
+   },
+   "W1": {
+    "exp_R": 0.581,
+    "n": 139,
+    "dd_R": -4.9,
+    "buy": 38,
+    "sell": 101
+   },
+   "W2": {
+    "exp_R": 0.706,
+    "n": 134,
+    "dd_R": -4.1,
+    "buy": 80,
+    "sell": 54
+   },
+   "W3": {
+    "exp_R": 0.729,
+    "n": 170,
+    "dd_R": -4.1,
+    "buy": 104,
+    "sell": 66
+   },
+   "W4": {
+    "exp_R": 0.754,
+    "n": 141,
+    "dd_R": -4.1,
+    "buy": 101,
+    "sell": 40
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.676,
+    "n": 174
+   },
+   "W2": {
+    "exp_R": 0.662,
+    "n": 165
+   },
+   "W3": {
+    "exp_R": 0.767,
+    "n": 190
+   },
+   "W4": {
+    "exp_R": 0.745,
+    "n": 166
+   }
+  },
+  "trades": 79,
+  "exp_R": 0.845,
+  "verdict": "GRADE BOOK B = the LIVE funnel as measured by this lab (round 18, b68r): 0.796/0.676/0.662/0.767/0.745 \u2014 reproduces b80's shipped gradeB column exactly on all 5 legs (integrity pin). This is the reference book every future arm must beat."
+ },
+ {
+  "name": "grade_book_C",
+  "round": 18,
+  "windows": {
+   "cached": {
+    "exp_R": 0.47,
+    "n": 124,
+    "dd_R": -3.9,
+    "buy": 73,
+    "sell": 51
+   },
+   "W1": {
+    "exp_R": 0.406,
+    "n": 263,
+    "dd_R": -8.2,
+    "buy": 90,
+    "sell": 173
+   },
+   "W2": {
+    "exp_R": 0.431,
+    "n": 255,
+    "dd_R": -9.1,
+    "buy": 154,
+    "sell": 101
+   },
+   "W3": {
+    "exp_R": 0.408,
+    "n": 273,
+    "dd_R": -10.2,
+    "buy": 163,
+    "sell": 110
+   },
+   "W4": {
+    "exp_R": 0.482,
+    "n": 295,
+    "dd_R": -6.8,
+    "buy": 213,
+    "sell": 82
+   }
+  },
+  "funnel_windows": {
+   "W1": {
+    "exp_R": 0.676,
+    "n": 174
+   },
+   "W2": {
+    "exp_R": 0.662,
+    "n": 165
+   },
+   "W3": {
+    "exp_R": 0.767,
+    "n": 190
+   },
+   "W4": {
+    "exp_R": 0.745,
+    "n": 166
+   }
+  },
+  "trades": 124,
+  "exp_R": 0.47,
+  "verdict": "GRADE BOOK C (round 18, b68r: what the live min_grade=B gate DROPS): 0.470 cached / 0.406 W1 / 0.431 W2 / 0.408 W3 / 0.482 W4, n 124-295. Loses to book B on exp_R on ALL FOUR windows AND all 8 window x side cells \u2014 the B/C cliff is the loop's only universal rung ordering, so min_grade=B stands. Honest counterweight: the ungated book earns +29..+57R MORE total net_R on every window (marginal trade +0.21..+0.37R) with worse DD (-6.8..-10.2 vs -2.0..-4.9): the gate buys quality and DD with volume; both prices now on record."
  }
 ]
