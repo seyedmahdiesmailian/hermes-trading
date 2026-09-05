@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-05T03:20:02.759549+00:00",
+ "last_run_utc": "2026-09-05T04:44:51.709278+00:00",
  "recent_commits": [
+  "80c9319 report: rewrite intro doc around the AUTO TRADER (user: v1 was signal-heavy and scattered)",
+  "20a0564 harvest: b79 GATE FIRE-RATE STABILITY PRE-FLIGHT (left uncommitted by the round-17 run, b46 shape 7th occurrence)",
   "52a74de report: project introduction doc for non-expert readers (capability-focused)",
   "ac18329 autopilot: b68 round 17 (b68q) nr7 x H4-trend gate - REJECTED 1-of-4; selection ordering 4-of-4 but lift doesn't replicate; b79 todo added",
-  "6cdb316 autopilot: harvest b68 round 16 (b68p weekly-runway gate on pdh) - REJECTED 2-of-4, b78 mix disclosure shipped",
-  "3f3dc79 autopilot: b68 round 15 harvest+finish - PWH/PWL weekly-level breakout REJECTED (2-of-4 windows, b74 all-windows rule); fixed harness column names + verdict dd reader, shipped registry rows + Findings, new todo b78",
-  "6b65ef1 b75: journal rows are closing DEALS, not positions \u2014 weekly report overstated trades"
+  "6cdb316 autopilot: harvest b68 round 16 (b68p weekly-runway gate on pdh) - REJECTED 2-of-4, b78 mix disclosure shipped"
  ]
 }

@@ -43,6 +43,14 @@ from engines.trade_management import _partial_close_fraction
 SPREAD = 0.20                 # XAUUSD demo round-trip cost (live assumption)
 MIN_RR = 0.0                  # lab arms measure raw expectancy; live gate 6
                               # belongs to the funnel, not to an arm
+# b80 PARITY FIX: the funnel baseline was measured with MIN_RR only, so it
+# silently traded every C-grade setup the LIVE executor rejects (auto_executor
+# Check 6). The canonical reference is engines.backtest_real.run_backtest,
+# whose own defaults are min_grade="B", min_rr=1.5 — the lab harness had
+# drifted from it. These are IMPORTED from the live modules, never restated,
+# so a live gate change moves the lab bar automatically.
+from engines.auto_executor import MIN_RISK_REWARD as LIVE_MIN_RR, \
+    MIN_SETUP_GRADE as LIVE_MIN_GRADE
 LADDER = dict(                # the live b60 exit ladder, verbatim
     partial_tp1_share=0.5,
     tp1_position=0.50,
@@ -114,6 +122,7 @@ def r_stats(res: dict, time_stop_bars: int = 0) -> dict:
 def run_arm(rows: list[dict],
             signal_fn: Callable[[dict], dict | None],
             *, spread: float = SPREAD, min_rr: float = MIN_RR,
+            min_grade: str | None = LIVE_MIN_GRADE,
             extra_modes: tuple[tuple[str, dict], ...] = (),
             diagnose_zero: bool = True) -> dict:
     """Measure ONE arm three ways: plain / ladder / ladder_ts (+ extras).
@@ -121,17 +130,26 @@ def run_arm(rows: list[dict],
     `ladder_ts` is the honest headline: the live exit ladder AND the live time
     exit. An arm whose natural hold is longer than the time exit loses its
     headline number under this row — that is the whole point.
+
+    b80: `min_grade` defaults to the LIVE gate (MIN_SETUP_GRADE, imported).
+    Every lab arm declares grade "B", so for an arm this is a no-op; for the
+    FUNNEL baseline it is not — the funnel emits 58-67% C-grade signals that
+    the live executor rejects, and without this the baseline was measured
+    ~0.15-0.24R too LOW, i.e. the merit bar every round has been clearing was
+    softer than live. Pass min_grade=None only to reproduce the old numbers.
     """
     ts = live_time_stop_bars(rows)
     out: dict[str, dict] = {}
     for label, kw in (("plain", {}), ("ladder", dict(LADDER)),
                       ("ladder_ts", dict(LADDER, time_stop_bars=ts)),
                       *extra_modes):
-        res = backtest_ohlc(rows, signal_fn, min_rr=min_rr, spread=spread, **kw)
+        res = backtest_ohlc(rows, signal_fn, min_rr=min_rr, spread=spread,
+                            min_grade=min_grade, **kw)
         out[label] = r_stats(res, time_stop_bars=ts)
     out["_time_stop_bars"] = ts
     if out["ladder"]["trades"] == 0 and diagnose_zero:
-        out["zero_reason"] = diagnose(rows, signal_fn, min_rr=min_rr)["verdict"]
+        out["zero_reason"] = diagnose(rows, signal_fn, min_rr=min_rr,
+                                      min_grade=min_grade)["verdict"]
     return out
 
 
