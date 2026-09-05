@@ -36,6 +36,7 @@ load_dotenv(ROOT / '.env')
 
 # b49: leaf seam imported outside the guard blocks (os/sys only).
 from engines import selfcheck
+from engines.autopilot_report_lib import classify_commits, run_start_from_log
 
 _SELFCHECK = selfcheck.enabled()
 
@@ -44,6 +45,8 @@ BACKLOG = ROOT / 'data/ops/autopilot_backlog.md'
 rc = int(sys.argv[1]) if len(sys.argv) > 1 and not sys.argv[1].startswith('-') else 0
 TEHRAN = timezone(timedelta(hours=3, minutes=30))
 
+
+LOG = ROOT / 'logs/autopilot.log'  # b85: run-start markers
 
 def git(*args):
     try:
@@ -71,10 +74,16 @@ if BACKLOG.exists():
     m = re.search(r'^- \[ \] (.+)$', txt, re.M)
     first_todo = (m.group(1)[:150] if m else '')
 
-new_commits = []
+new_commits, other_commits = [], []
 if prev.get('head') and head != prev['head']:
-    log = git('log', '--oneline', f"{prev['head']}..HEAD", '--format=%s')
-    new_commits = [l for l in log.splitlines() if l][:6]
+    raw = git('log', f"{prev['head']}..HEAD", '--format=%ct\x1f%s')
+    started = None
+    try:
+        started = run_start_from_log(LOG.read_text(errors='replace'))
+    except Exception as e:
+        selfcheck.fail('run start log read', e)
+    new_commits, other_commits = classify_commits(raw, started)
+    new_commits, other_commits = new_commits[:6], other_commits[:4]
 
 # the agent's own Persian narrative of this run (from autopilot.log)
 narrative = ''
@@ -116,8 +125,19 @@ elif new_commits:
 if new_commits:
     lines.append(f'📌 {len(new_commits)} تغییر کد کامیت و روی گیت‌هاب ثبت شد')
 
+if other_commits:
+    # b85: commits made OUTSIDE this run window (a manual fix between two
+    # runs) are reported as such — never as this run's achievement.
+    lines.append('🧹 ثبت‌شده بیرون از این اجرا (دستی/سایر):')
+    lines += [f'· {c[:110]}' for c in other_commits]
+
 if done_now > prev.get('done', done_now):
-    lines.append(f'📋 بک‌لاگ: {prev.get("done", "?")} ← {done_now} آیتم انجام‌شده')
+    # b85: progress counted from the WORKING TREE. If this run never
+    # committed, the tick exists only on disk (the harvester will land it) —
+    # say so instead of implying it is banked.
+    note = '' if new_commits else ' <i>(هنوز ثبت نشده — دور بعد)</i>'
+    lines.append(f'📋 بک‌لاگ: {prev.get("done", "?")} ← {done_now} '
+                 f'آیتم انجام‌شده{note}')
 
 if first_todo:
     lines.append(f'➡️ در نوبت بعدی: {first_todo[:130]}')

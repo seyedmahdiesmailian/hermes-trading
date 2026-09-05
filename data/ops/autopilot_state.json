@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-05T09:30:03.015157+00:00",
+ "last_run_utc": "2026-09-05T10:22:36.582471+00:00",
  "recent_commits": [
+  "a082b56 autopilot: b68 round 18 (b68r) grade ladder measured as books - B gate CONFIRMED 4-of-4 selection + 8-of-8 side cells, ungated earns +29..57R total (marginal C trade +0.21..0.37R, worse DD); A>B flip is a W4-SELL direction cell, B->A tightening gives up -261.7R NOT proposed; new todo b84",
+  "ce6e3be harvest: b81 lane re-score vs corrected b80 bar (left uncommitted by the previous run, b46 shape 8th occurrence)",
   "d2ef6ae autopilot: rc=143 (external SIGTERM during provider stall) is a cutoff, not a crash",
   "6e2d7f2 autopilot: b80 lab harness applies the LIVE grade gate to the funnel baseline",
-  "e635e39 autopilot: rc=124 is a timeout, not a crash \u2014 stop paging it as a red error",
-  "80c9319 report: rewrite intro doc around the AUTO TRADER (user: v1 was signal-heavy and scattered)",
-  "20a0564 harvest: b79 GATE FIRE-RATE STABILITY PRE-FLIGHT (left uncommitted by the round-17 run, b46 shape 7th occurrence)"
+  "e635e39 autopilot: rc=124 is a timeout, not a crash \u2014 stop paging it as a red error"
  ]
 }

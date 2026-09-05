@@ -437,6 +437,29 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       no_runway complement is one-sided per regime (W3 32B/2S, W4 62B/12S)
       while the gated arm is two-sided everywhere — invisible without the mix,
       and it is exactly why the gate's flip reads as regime-gifted.)
+- [x] b85 AUTOPILOT REPORT: ATTRIBUTE COMMITS BY TIME, NOT BY AUTHOR
+      (2026-09-05, from the user's 'این خطا مال چیه' on the 13:00 report):
+      that report was false in three of its lines. A run hit the 55-minute
+      ceiling (rc=124) having committed NOTHING; the report diffed
+      prev_head..HEAD, found one commit — a MANUAL fix made at 11:53, between
+      two runs — and printed '⏱️ ... اما کارش کامیت شده بود', '🛠 تغییرات این
+      اجرا' and '📌 1 تغییر کد کامیت ... ثبت شد'. The operator was told a lost
+      step was safe when the step had never existed. Fix: pure helpers in
+      engines/autopilot_report_lib.py (run_start_from_log reads the LAST UTC
+      'run start' marker from logs/autopilot.log; classify_commits splits
+      %ct\x1f%s lines into this-run vs other by commit time, falling back to
+      the old behaviour when no marker exists); scripts/autopilot_report.py
+      now keys the ⏱️ 'work was committed' claim, the 🛠 block and the 📌 count
+      off THIS RUN's commits only, and lists the rest under '🧹 ثبت‌شده بیرون
+      از این اجرا'. Also: the 📋 backlog tick is counted from the working tree,
+      so when nothing was committed it now says '(هنوز ثبت نشده — دور بعد)'
+      instead of implying it is banked. Pinned by
+      tests/test_b85_report_attribution.py (14 tests: marker parsing, boundary,
+      mixed window, unparsable time, plus two end-to-end renders on a
+      throwaway repo with controlled GIT_AUTHOR_DATE — the exact 13:00 shape
+      must NOT claim committed work, and a real in-run commit still must).
+      Lesson for any future report generator: a diff range is not an
+      attribution; state WHO/WHEN did the work or say nothing.
 - [x] b81 RE-SCORE THE b70 LANE DECISION SET AGAINST THE CORRECTED (b80) BAR
       (follow-up to b80, 2026-09-05): b81's OWN premise was wrong and that is
       the finding: the note said the lane arms are "unaffected by the fix",
