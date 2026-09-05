@@ -51,6 +51,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 
 from engines import lab_harness as lh              # noqa: E402
+from engines import lab_fire_rate as lf            # noqa: E402  (b79)
 from engines.backtest_real import strategy_signal  # noqa: E402
 from scripts import b68l_windows as wl             # noqa: E402
 from scripts import b68m_htf_pdh_lab as mm         # noqa: E402
@@ -118,8 +119,12 @@ def main():
     print("##### W4 #####", flush=True)
     led[W4] = measure_window("W4", wins[W4])
     led["_verdict"] = verdict(led)
+    led["_b79_preflight"] = {o: lf.preflight(led, ["W1", "W2", "W3", "W4"], o)
+                             for o in ("h4_pdh", "h4_funnel")}
     print("=== VERDICT ===")
     print(json.dumps(led["_verdict"], indent=1))
+    print("=== b79 FIRE-RATE PRE-FLIGHT ===")
+    print(json.dumps(led["_b79_preflight"], indent=1))
     json.dump(led, open(OUT, "w"), indent=1)
     print("saved:", os.path.abspath(OUT))
 

@@ -273,7 +273,10 @@ class TestReadOnlyIsolation(unittest.TestCase):
                       for fn in files if fn.endswith(".py")])
         offenders = []
         for p in targets:
-            if os.path.basename(p) == "lab_decay.py":
+            # lab_* modules are the RESEARCH family (lab_harness, lab_decay,
+            # lab_fire_rate...): they may share code with each other — the
+            # contract this pins is that the LIVE path never touches them.
+            if os.path.basename(p).startswith("lab_"):
                 continue
             for node in ast.walk(ast.parse(open(p).read(), filename=p)):
                 if isinstance(node, ast.Import) and any(

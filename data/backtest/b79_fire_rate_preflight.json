@@ -1,0 +1,291 @@
+{
+ "_note": "b79 pre-flight on every shipped probe ledger: oracle pass-rate series read CHRONOLOGICALLY (oldest window first, b77 rule); UNSTABLE = close the round on the probe alone; STABLE = necessary-not-sufficient, the b74 lift test still decides",
+ "ledgers": {
+  "b68m_htf_pdh_confirm:h1": {
+   "_chrono_order_oldest_first": [
+    "W2",
+    "W1"
+   ],
+   "_swing_fail_points": 20.0,
+   "series": {
+    "W2": {
+     "rate": 0.881,
+     "kind": "gate_share",
+     "median_age": 30.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W1": {
+     "rate": 0.912,
+     "kind": "gate_share",
+     "median_age": 15.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    }
+   },
+   "verdict": "INSUFFICIENT",
+   "reason": "2 legs with a parseable pass rate \u2014 a 2-point line is not a curve (b77 lesson)"
+  },
+  "b68m_htf_pdh_confirm:h4": {
+   "_chrono_order_oldest_first": [
+    "W2",
+    "W1"
+   ],
+   "_swing_fail_points": 20.0,
+   "series": {
+    "W2": {
+     "rate": 0.612,
+     "kind": "gate_share",
+     "median_age": 9.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W1": {
+     "rate": 0.6,
+     "kind": "gate_share",
+     "median_age": 10.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    }
+   },
+   "verdict": "INSUFFICIENT",
+   "reason": "2 legs with a parseable pass rate \u2014 a 2-point line is not a curve (b77 lesson)"
+  },
+  "b68n4_fourth_draw:h4_pdh": {
+   "_chrono_order_oldest_first": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "_swing_fail_points": 20.0,
+   "series": {
+    "W4": {
+     "rate": 0.615,
+     "kind": "gate_share",
+     "median_age": 38.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W3": {
+     "rate": 0.634,
+     "kind": "gate_share",
+     "median_age": 12.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W2": {
+     "rate": 0.612,
+     "kind": "gate_share",
+     "median_age": 9.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W1": {
+     "rate": 0.6,
+     "kind": "gate_share",
+     "median_age": 10.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    }
+   },
+   "swing_basis": "percentage points (probability rate)",
+   "swing_points": 3.4,
+   "min_rate": 0.6,
+   "max_rate": 0.634,
+   "median_age_series": {
+    "W4": 38.0,
+    "W3": 12.0,
+    "W2": 9.0,
+    "W1": 10.0
+   },
+   "median_age_field": "agree_state_age_median_htf_bars",
+   "median_age_sign_flip": false,
+   "verdict": "STABLE",
+   "reason": "fire rate regime-independent enough to spend a draw; round 17 proved this is NECESSARY-not-sufficient \u2014 the lift-vs-control test (b74) still decides"
+  },
+  "b68n4_fourth_draw:h4_funnel": {
+   "_chrono_order_oldest_first": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "_swing_fail_points": 20.0,
+   "series": {
+    "W4": {
+     "rate": 0.796,
+     "kind": "gate_share",
+     "median_age": 42.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W3": {
+     "rate": 0.677,
+     "kind": "gate_share",
+     "median_age": 17.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W2": {
+     "rate": 0.769,
+     "kind": "gate_share",
+     "median_age": 14.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W1": {
+     "rate": 0.714,
+     "kind": "gate_share",
+     "median_age": 11.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    }
+   },
+   "swing_basis": "percentage points (probability rate)",
+   "swing_points": 11.9,
+   "min_rate": 0.677,
+   "max_rate": 0.796,
+   "median_age_series": {
+    "W4": 42.0,
+    "W3": 17.0,
+    "W2": 14.0,
+    "W1": 11.0
+   },
+   "median_age_field": "agree_state_age_median_htf_bars",
+   "median_age_sign_flip": false,
+   "verdict": "STABLE",
+   "reason": "fire rate regime-independent enough to spend a draw; round 17 proved this is NECESSARY-not-sufficient \u2014 the lift-vs-control test (b74) still decides"
+  },
+  "b68o_weekly_confirm": {
+   "_chrono_order_oldest_first": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "_swing_fail_points": 20.0,
+   "series": {
+    "W4": {
+     "rate": 4.9167,
+     "kind": "signals_per_week"
+    },
+    "W3": {
+     "rate": 4.0,
+     "kind": "signals_per_week"
+    },
+    "W2": {
+     "rate": 5.1667,
+     "kind": "signals_per_week"
+    },
+    "W1": {
+     "rate": 4.3333,
+     "kind": "signals_per_week"
+    }
+   },
+   "swing_basis": "relative % of mean (count rate)",
+   "swing_points": 25.3,
+   "min_rate": 4.0,
+   "max_rate": 5.1667,
+   "median_age_sign_flip": false,
+   "verdict": "UNSTABLE",
+   "reason": "pass-rate swing 25.3 pts \u2014 the oracle's fire rate is itself regime-gifted; b79 says close the round on the probe alone (do NOT spend a draw)"
+  },
+  "b68p_runway_confirm": {
+   "_chrono_order_oldest_first": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "_swing_fail_points": 20.0,
+   "series": {
+    "W4": {
+     "rate": 0.3623,
+     "kind": "runway",
+     "median_age": -0.79,
+     "median_age_field": "room_median"
+    },
+    "W3": {
+     "rate": 0.6281,
+     "kind": "runway",
+     "median_age": 2.65,
+     "median_age_field": "room_median"
+    },
+    "W2": {
+     "rate": 0.4914,
+     "kind": "runway",
+     "median_age": 0.81,
+     "median_age_field": "room_median"
+    },
+    "W1": {
+     "rate": 0.6757,
+     "kind": "runway",
+     "median_age": 6.46,
+     "median_age_field": "room_median"
+    }
+   },
+   "swing_basis": "percentage points (probability rate)",
+   "swing_points": 31.3,
+   "min_rate": 0.3623,
+   "max_rate": 0.6757,
+   "median_age_series": {
+    "W4": -0.79,
+    "W3": 2.65,
+    "W2": 0.81,
+    "W1": 6.46
+   },
+   "median_age_field": "room_median",
+   "median_age_sign_flip": true,
+   "verdict": "UNSTABLE",
+   "reason": "pass-rate swing 31.3 pts, plus median-age sign flip \u2014 the oracle's fire rate is itself regime-gifted; b79 says close the round on the probe alone (do NOT spend a draw)"
+  },
+  "b68q_nr7htf_confirm": {
+   "_chrono_order_oldest_first": [
+    "W4",
+    "W3",
+    "W2",
+    "W1"
+   ],
+   "_swing_fail_points": 20.0,
+   "series": {
+    "W4": {
+     "rate": 0.462,
+     "kind": "gate_share",
+     "median_age": 41.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W3": {
+     "rate": 0.461,
+     "kind": "gate_share",
+     "median_age": 19.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W2": {
+     "rate": 0.451,
+     "kind": "gate_share",
+     "median_age": 17.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    },
+    "W1": {
+     "rate": 0.433,
+     "kind": "gate_share",
+     "median_age": 14.0,
+     "median_age_field": "agree_state_age_median_htf_bars"
+    }
+   },
+   "swing_basis": "percentage points (probability rate)",
+   "swing_points": 2.9,
+   "min_rate": 0.433,
+   "max_rate": 0.462,
+   "median_age_series": {
+    "W4": 41.0,
+    "W3": 19.0,
+    "W2": 17.0,
+    "W1": 14.0
+   },
+   "median_age_field": "agree_state_age_median_htf_bars",
+   "median_age_sign_flip": false,
+   "verdict": "STABLE",
+   "reason": "fire rate regime-independent enough to spend a draw; round 17 proved this is NECESSARY-not-sufficient \u2014 the lift-vs-control test (b74) still decides"
+  }
+ },
+ "_headline": {
+  "round16_runway_gate_verdict": "UNSTABLE",
+  "round16_swing_points": 31.3,
+  "round16_median_age_sign_flip": true,
+  "round16_would_have_closed_on_probe_alone": true,
+  "round17_h4_gate_verdict": "STABLE",
+  "round17_swing_points": 2.9,
+  "round17_stable_yet_arm_failed_merit_bar": true,
+  "round12_two_windows_verdict": "INSUFFICIENT"
+ }
+}
