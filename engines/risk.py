@@ -43,6 +43,22 @@ def compute_performance_state(current: dict, today: str, balance: float, closed_
             "loss_streak": 0,
             "trades_today": entries_today,
             "last_closed_ticket": state.get("last_closed_ticket"),
+            # b88 FIX 2026-09-05: this branch used to return WITHOUT
+            # `recent_closed`, so the FIRST cycle of every new UTC day handed
+            # DEFCON an empty deal window -> total 0 -> GREEN by construction,
+            # whatever the previous day did. DEFCON is the only live gate whose
+            # input is the book's own history, and it was blind exactly on the
+            # cycle where "you are bleeding, do not open today's first trade"
+            # is worth the most. Carrying the window through the rollover is
+            # STRICTLY tightening: daily_pnl is 0.0 here so RED (which needs
+            # daily_pnl < 0) still cannot fire, and YELLOW only halves risk —
+            # no gate gets looser. loss_streak stays reset on purpose: it also
+            # feeds check_kill_switch and assess_account_policy, so carrying it
+            # across days would silently change the kill switch's meaning
+            # (multi-day streaks) — that is a human decision, not a side
+            # effect of this fix. Same expression as the branch below, so the
+            # rollover state equals what the next cycle computes from the feed.
+            "recent_closed": (closed_trades or [])[-10:],
         }
 
     last_closed_ticket = state.get("last_closed_ticket")

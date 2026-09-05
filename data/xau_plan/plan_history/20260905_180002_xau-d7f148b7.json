@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-483e230e",
+  "plan_id": "xau-d7f148b7",
   "symbol": "XAUUSD",
   "bias": "neutral",
   "session": "newyork",
@@ -44,9 +44,9 @@
     "smc_poi": "C",
     "smc_signal": "wait"
   },
-  "created_at": "2026-09-05T18:15:02.485420+00:00",
-  "expires_at": "2026-09-06T06:15:02.485420+00:00",
-  "next_reassessment": "2026-09-05T18:20:02.485420+00:00",
+  "created_at": "2026-09-05T17:45:03.018945+00:00",
+  "expires_at": "2026-09-06T05:45:03.018945+00:00",
+  "next_reassessment": "2026-09-05T17:50:03.018945+00:00",
   "context": {
     "m5_last": 4431.72,
     "h1_last": 4431.72,
@@ -839,9 +839,9 @@
         "fake_level": null
       },
       "silver_bullet": {
-        "active": true,
-        "window": "pm",
-        "label": "Silver Bullet PM (2-3 NY)"
+        "active": false,
+        "window": null,
+        "label": null
       },
       "session_liquidity": {
         "session": "asia",
@@ -881,7 +881,7 @@
       }
     },
     "macro": {
-      "timestamp": "2026-09-05T18:15:02.697155+00:00",
+      "timestamp": "2026-09-05T17:45:03.254227+00:00",
       "dxy": {
         "change_pct": 0.026,
         "direction": "up",
@@ -943,9 +943,9 @@
         "upcoming_events": 0,
         "strict_high_count": 0,
         "window_hours": 24,
-        "fetched_at": "2026-09-05T18:15:02.831110+00:00"
+        "fetched_at": "2026-09-05T17:45:03.388226+00:00"
       },
-      "_fetched_at": 1788632102.8317332
+      "_fetched_at": 1788630303.3889163
     }
   }
 }

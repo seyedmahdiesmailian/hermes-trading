@@ -30,7 +30,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
 ## Active
-- [ ] b68 STRATEGY LAB CONTINUOUS LOOP (user standing order 2026-09-03: "keep searching strategies/analysis methods, pick the best, test, bring into the real structure"). Each run: (a) pick ONE new candidate method not yet in data/backtest/b62_strategy_lab.json (sources: quant literature, ICT/SMC concepts not yet measured, session/volatility patterns; web search is low-signal — prefer implementing from the concept definition), (b) implement it as a standalone signal_fn in scripts/b62_strategy_lab.py style (indexed() adapter, ATR-based geometry, grade B), (c) run through engines.backtest.backtest_ohlc on the CACHED dataset (data/backtest/ab_aggressive_data.json, 3000 M15 bars) with spread 0.20 AND with the live b60 ladder (partial_share_fn=_partial_close_fraction, tp1_position=0.50, trail_after_partial=0.5), (d) append the row to data/backtest/b62_strategy_lab.json, (e) MERIT BAR: only propose wiring into the live funnel if exp_R beats the current funnel's 0.854R/trade (b61 best arm) on BOTH the cached set and one fresh fetch; otherwise record the rejection in ## Findings with numbers. NEVER weaken existing gates to make a new arm look better; the funnel stays the exit manager. Baseline table so far (exp_R, cached M15): funnel b60 0.854 | asia_break 0.18 | ema_pullback 0.114 | bb_bounce 0.035 | donchian -0.013 | sweep_rev -0.004 | fvg_retest -0.020 | ny_orb -0.098 | rsi_rev -0.226 | vwap_fade 0.380 (ladder; fresh-set 0.436 vs funnel 0.576 — REJECTED 2026-09-03, see Findings). SMC/RTM round (b63/b63b, 2026-09-03): turtle_soup 0.508 cached / 0.469 fresh, eqh_sweep 0.085 / 0.638, ote 0.62 / 0.299, breaker 0.008 / 0.113, ob_first_retest 0.978 (n=3) / 0.483 (n=6), sweep_choch_ob 1.702 (n=2) / 1.066 (n=4) — none beat the funnel on BOTH sets with a usable n; funnel stays. Momentum round (b68r2, 2026-09-03): atr_expand_all 0.362 / fresh 0.443, atr_expand_lny 0.344 / 0.432 — REJECTED, loses on both sets (see Findings). HTF-trend+pullback round (b68r3, 2026-09-03): htf_pull_50 0.271 / fresh 0.317, htf_pull_618 0.194 / fresh 0.346 — REJECTED, loses on both sets (see Findings).
+- [x] b68 STRATEGY LAB CONTINUOUS LOOP (user standing order 2026-09-03: "keep searching strategies/analysis methods, pick the best, test, bring into the real structure"). Each run: (a) pick ONE new candidate method not yet in data/backtest/b62_strategy_lab.json (sources: quant literature, ICT/SMC concepts not yet measured, session/volatility patterns; web search is low-signal — prefer implementing from the concept definition), (b) implement it as a standalone signal_fn in scripts/b62_strategy_lab.py style (indexed() adapter, ATR-based geometry, grade B), (c) run through engines.backtest.backtest_ohlc on the CACHED dataset (data/backtest/ab_aggressive_data.json, 3000 M15 bars) with spread 0.20 AND with the live b60 ladder (partial_share_fn=_partial_close_fraction, tp1_position=0.50, trail_after_partial=0.5), (d) append the row to data/backtest/b62_strategy_lab.json, (e) MERIT BAR: only propose wiring into the live funnel if exp_R beats the current funnel's 0.854R/trade (b61 best arm) on BOTH the cached set and one fresh fetch; otherwise record the rejection in ## Findings with numbers. NEVER weaken existing gates to make a new arm look better; the funnel stays the exit manager. Baseline table so far (exp_R, cached M15): funnel b60 0.854 | asia_break 0.18 | ema_pullback 0.114 | bb_bounce 0.035 | donchian -0.013 | sweep_rev -0.004 | fvg_retest -0.020 | ny_orb -0.098 | rsi_rev -0.226 | vwap_fade 0.380 (ladder; fresh-set 0.436 vs funnel 0.576 — REJECTED 2026-09-03, see Findings). SMC/RTM round (b63/b63b, 2026-09-03): turtle_soup 0.508 cached / 0.469 fresh, eqh_sweep 0.085 / 0.638, ote 0.62 / 0.299, breaker 0.008 / 0.113, ob_first_retest 0.978 (n=3) / 0.483 (n=6), sweep_choch_ob 1.702 (n=2) / 1.066 (n=4) — none beat the funnel on BOTH sets with a usable n; funnel stays. Momentum round (b68r2, 2026-09-03): atr_expand_all 0.362 / fresh 0.443, atr_expand_lny 0.344 / 0.432 — REJECTED, loses on both sets (see Findings). HTF-trend+pullback round (b68r3, 2026-09-03): htf_pull_50 0.271 / fresh 0.317, htf_pull_618 0.194 / fresh 0.346 — REJECTED, loses on both sets (see Findings).
       (progress 2026-09-03, rounds 1+2 done: vwap_fade and atr_expand tested+rejected
       (Findings). Round 4 (b68e, PDH/PDL breakout) done this run: REJECTED as a
       replacement (loses cached 0.627 vs 0.854) but the FIRST arm to beat the funnel on
@@ -278,6 +278,52 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       INTEGRITY: gate_conf_0.35 reproduces b80's gradeB_rr15 exactly on all
       5 legs (b83), and the live population is a subset of the never-kill
       population on every leg. 15 tests. See Findings.
+       Round 20 (b88, 2026-09-05 — b87's named next gate: DEFCON, the ONLY live
+       gate whose input is the book's own past trades, so this round audited the
+       INPUT before pricing the rule). FINDING 1 (real defect, FIXED in
+       engines/risk.compute_performance_state): the new-day branch returned a
+       state dict WITHOUT `recent_closed`, so the first evaluation cycle of every
+       UTC day handed DEFCON an empty window at loss_streak=0/daily_pnl=0.0 ->
+       GREEN BY CONSTRUCTION, whatever yesterday did. Measured blast radius: 122
+       of 259 first-entry-of-day cycles (cached+W1..W4) sat at an invented level —
+       107 should have been YELLOW, 15 RED. Fix carries the window through the
+       rollover; it is STRICTLY tightening (daily_pnl is 0.0 on that cycle so RED
+       cannot fire, YELLOW only halves risk), and loss_streak stays reset on
+       purpose because it also feeds check_kill_switch. FINDING 2 (measured, NOT
+       changed — a human decision): the docstring says "last 10 closed trades",
+       the code takes the last 10 DEALS from a feed that includes opening deals,
+       so the window holds ~5 exits and RED's `total>=5` sits exactly on that
+       halving; the corrected window would move W1 from GREEN 90/YELLOW 72 to
+       GREEN 11/YELLOW 148 — a global tightening, so it is a PROPOSAL (new todo
+       b89), not a side effect. FINDING 3 (the b87 template applied honestly):
+       DEFCON BINDS (6-12 RED, 40-80 YELLOW per leg of 99-190 trades) and is NOT
+       redundant — 44 of 45 RED entries sit below CONSECUTIVE_LOSSES_LIMIT=4
+       where the kill switch is silent — but it does not EARN its cost as a
+       filter: the dropped book earns 0.51-1.23R vs the kept book's 0.66-0.76R on
+       4 of 5 legs. Kept anyway (hard rule: never weaken a gate; a trip wire that
+       costs foregone R buys tail protection, not mean R). FINDING 4: no adaptive
+       path touches it (learning.py's changes dict never carries a DEFCON key).
+       METHOD BUG caught in this round's own replay: folding trades in ENTRY
+       order handed DEFCON a future loss (lookahead in the feedback loop); the
+       replay now folds in EXIT order against a chronological deal feed, per b77.
+       INTEGRITY: defcon_off reproduces b80's gradeB_rr15 exactly on all 5 legs
+       (b83), and the ledger stamps the sha256 of engines/risk.py it was built
+       against so a stale ledger cannot pass as current. 22 tests in
+       tests/test_b88_defcon_books.py; full numbers in
+       data/backtest/b88_defcon_books.json + logs/b88_run_chrono.log.
+- [ ] b89 DEFCON WINDOW: DEALS vs TRADES — HUMAN DECISION (found by b88,
+       2026-09-05, NOT applied by autopilot). engines/risk.compute_performance_state
+       documents `recent_closed` as "last 10 closed trades" but slices the last 10
+       DEALS from a feed that also contains opening deals (entry==0), so DEFCON's
+       window holds ~5 closed trades and RED's `total>=5` trigger sits exactly on
+       that halving. b88 measured the corrected (closing-deals-only) window: the
+       level mix moves from GREEN 90/YELLOW 72/RED 12 to GREEN 11/YELLOW 148/RED 15
+       on W1 — a GLOBAL TIGHTENING of the only feedback-loop gate, which is a gate
+       change and therefore out of autopilot scope (hard rule). Decide one: (a) fix
+       the slice to match the docstring and re-price the funnel under it, or (b) fix
+       the docstring to match the code and record that RED is reachable only because
+       of the deal-level slice. Either way add a test pinning the window's exit count
+       so the two cannot drift again.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
