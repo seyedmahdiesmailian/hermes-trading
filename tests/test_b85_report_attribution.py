@@ -300,5 +300,32 @@ class NarrativeNoise(unittest.TestCase):
         self.assertIn('b84', out)
 
 
+class NarrativeEscape(unittest.TestCase):
+    """b90: the agent's narrative is free text with raw '<'/'&' in it
+    ('smc_conf < 0.35' killed a real report with Telegram HTTP 400).
+    _autopilot_narrative must return HTML-safe text."""
+
+    def test_angle_brackets_are_escaped(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / 'logs').mkdir()
+            (root / 'logs' / 'autopilot.log').write_text(
+                '2026-09-05T16:35:01Z === autopilot run start ===\n'
+                'منطق `regime==range و bias!=neutral و smc_conf < 0.35` را '
+                'روی کشیده و A & B را تست کرد\n'
+                '2026-09-05T17:21:05Z === autopilot run end rc=0 ===\n')
+            from notifier import dashboards as d
+            real = d.ROOT
+            d.ROOT = root
+            try:
+                out = d._autopilot_narrative(max_chars=900)
+            finally:
+                d.ROOT = real
+        self.assertNotIn('< ', out)
+        self.assertIn('&lt;', out)
+        self.assertIn('&amp;', out)
+
+
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

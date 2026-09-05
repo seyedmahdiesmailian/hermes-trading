@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-8bc46eaf",
+  "plan_id": "xau-222d7f99",
   "symbol": "XAUUSD",
   "bias": "neutral",
   "session": "newyork",
@@ -44,9 +44,9 @@
     "smc_poi": "C",
     "smc_signal": "wait"
   },
-  "created_at": "2026-09-05T21:00:02.259053+00:00",
-  "expires_at": "2026-09-06T09:00:02.259053+00:00",
-  "next_reassessment": "2026-09-05T21:05:02.259053+00:00",
+  "created_at": "2026-09-05T18:26:11.727226+00:00",
+  "expires_at": "2026-09-06T06:26:11.727226+00:00",
+  "next_reassessment": "2026-09-05T18:31:11.727226+00:00",
   "context": {
     "m5_last": 4431.72,
     "h1_last": 4431.72,
@@ -839,9 +839,9 @@
         "fake_level": null
       },
       "silver_bullet": {
-        "active": false,
-        "window": null,
-        "label": null
+        "active": true,
+        "window": "pm",
+        "label": "Silver Bullet PM (2-3 NY)"
       },
       "session_liquidity": {
         "session": "asia",
@@ -879,73 +879,6 @@
           "weight": 0.0
         }
       }
-    },
-    "macro": {
-      "timestamp": "2026-09-05T20:45:03.342114+00:00",
-      "dxy": {
-        "change_pct": 0.026,
-        "direction": "up",
-        "available": true,
-        "source": "synthetic"
-      },
-      "silver": {
-        "available": false
-      },
-      "risk_sentiment": {
-        "available": false
-      },
-      "tick_volume": {
-        "volume_ratio": 0.35,
-        "is_high_volume": false,
-        "is_low_volume": true,
-        "available": true
-      },
-      "higher_tf": {
-        "h4": {
-          "price": 4431.72,
-          "high_20": 4510.89,
-          "low_20": 4282.51,
-          "pos_in_range": 0.65,
-          "zone": "equilibrium",
-          "sma10": 4458.77,
-          "trend": "bearish"
-        },
-        "d1": {
-          "price": 4431.72,
-          "high_20": 4697.2,
-          "low_20": 4282.51,
-          "pos_in_range": 0.36,
-          "zone": "equilibrium",
-          "sma10": 4502.91,
-          "trend": "bearish"
-        },
-        "w1": {
-          "price": 4431.72,
-          "high_20": 4443.47,
-          "low_20": 4411.85,
-          "pos_in_range": 0.63,
-          "zone": "equilibrium",
-          "sma10": 4430.73,
-          "trend": "bullish"
-        }
-      },
-      "verdict": {
-        "verdict": "none",
-        "score_long": 0,
-        "score_short": 1,
-        "macro_conflicting": false
-      },
-      "calendar": {
-        "source": "forexfactory",
-        "high_impact": [],
-        "medium_impact": [],
-        "total_events": 114,
-        "upcoming_events": 0,
-        "strict_high_count": 0,
-        "window_hours": 24,
-        "fetched_at": "2026-09-05T20:45:04.403940+00:00"
-      },
-      "_fetched_at": 1788641104.4045842
     }
   }
 }

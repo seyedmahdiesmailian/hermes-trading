@@ -23,6 +23,23 @@ DEFCON levels (legacy rules, kept identical):
     RED    — closed >= 5 AND sl_dominant AND daily_pnl < 0
              → no new entries, manage existing only
 
+UNITS (b89, 2026-09-05 — this is what actually runs): the window handed to
+`classified` is `performance_state['recent_closed']`, which engines/risk.py
+builds as `(closed_trades or [])[-10:]` straight off the bridge history-deals
+feed. `closed`/`total` above are therefore counts of DEALS in the window, not of
+trades, and `sl_ratio`'s denominator includes the feed's OPENING deals
+(entry==0, profit 0.0). A full window is 10 deals ≈ 5 round trips, so RED's
+`closed >= 5` is 5 DEALS and `sl_ratio >= 0.5` in a full alternating window
+means EVERY exit was a stop-loss (5/10 = 0.5; one non-SL exit → 0.4 → GREEN).
+The legacy prose ("half the closed trades died at SL") describes a
+closing-deals-only window; switching the slice to match it would TIGHTEN this
+gate globally (measured in data/backtest/b88_defcon_books.json: W1 GREEN 90 → 11)
+and is deliberately NOT done — it is a human decision (todo b89, option (a)).
+The contract is pinned by tests/test_b89_window_contract.py +
+data/backtest/b89_window_contract.json; engines/risk.py is deliberately NOT
+edited, because its sha256 is stamped by b88's ledger and a comment-only change
+would invalidate a ~50-minute measurement.
+
 Legacy key insight kept: managed exits that consistently lose money
 (managed_win_ratio <= 0.3 AND managed_total_pnl < 0) → disable runners
 even if DEFCON is still green.
@@ -51,7 +68,17 @@ def classify_exit(comment: str, profit: float) -> str:
 
 
 def classify_exits(deals: list[dict]) -> list[dict]:
-    """Attach exit_type to each closed deal (entry deals filtered upstream)."""
+    """Attach exit_type to each deal.
+
+    WARNING (b89): the live caller (auto_executor Check 6.6) passes
+    performance_state['recent_closed'] straight through, and that window is the
+    last 10 DEALS of the bridge history feed — OPENING deals (entry==0, profit
+    0.0, comment 'Hermes') are NOT filtered upstream. They classify as
+    'unknown' (profit 0.0) and still count in analyze_exits' `total`, which is
+    why `total`/`sl_ratio` are deal-based. The docstring's old "(entry deals
+    filtered upstream)" described the legacy snapshot_closed_deals() caller,
+    not this one.
+    """
     out = []
     for d in deals:
         profit = float(d.get("profit", 0) or 0)
@@ -97,10 +124,13 @@ def compute_insights(
     stats = analyze_exits(classified or [])
     total = stats.get("total", 0)
 
-    # RED: enough recent trades, SL-dominated, and losing day
+    # RED: enough recent DEALS in the window (>=5, opens included), SL-dominated
+    # (sl_ratio over ALL deals >= 0.5), and a losing day. In a full alternating
+    # 10-deal window that is every exit at SL — see the module UNITS note.
     if total >= 5 and stats.get("sl_dominant") and daily_pnl < 0:
         defcon = "RED"
-    # YELLOW: 2+ straight losses, or half the closed trades died at SL
+    # YELLOW: 2+ straight losses, or >= half the window's DEALS died at SL
+    # (needs >=3 deals, so >=2 SL closes in a 4-deal window).
     elif loss_streak >= 2 or (stats.get("sl_ratio", 0) >= 0.5 and total >= 3):
         defcon = "YELLOW"
     else:

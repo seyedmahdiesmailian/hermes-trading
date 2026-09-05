@@ -1,0 +1,174 @@
+{
+ "_risk_code_sha": "8ff8a62b0017",
+ "_defcon_code_sha": "9b857f7bd9d0",
+ "_built_at": "2026-09-05T18:58:08.467583+00:00",
+ "_note": "b89 option (b): DEFCON's window is 10 DEALS (opening deals included), so every count in engines/defcon.py is a DEAL count and sl_ratio's denominator includes opens. This ledger is the reachability table that statement rests on, produced by the live classifier. Zero behaviour change; option (a) \u2014 slicing closing deals only \u2014 stays a human decision, priced in b88.",
+ "_contract": {
+  "window_deals_literal": 10,
+  "source": "engines/risk.compute_performance_state -> [-10:] of the bridge history-deals feed",
+  "red_precondition_deals": 5,
+  "yellow_sl_arm_precondition_deals": 3,
+  "sl_ratio_threshold": 0.5,
+  "ratio_denominator": "all deals in the window (opens included)"
+ },
+ "_harness": "live engines.risk + engines.defcon, imported not restated; exhaustive enumeration over (window length, opens, closes, SL count) shapes, not a sample",
+ "producer_window_shape": [
+  {
+   "feed_trips": 1,
+   "window_deals": 2,
+   "window_opens": 1,
+   "window_exits": 1
+  },
+  {
+   "feed_trips": 2,
+   "window_deals": 4,
+   "window_opens": 2,
+   "window_exits": 2
+  },
+  {
+   "feed_trips": 3,
+   "window_deals": 6,
+   "window_opens": 3,
+   "window_exits": 3
+  },
+  {
+   "feed_trips": 5,
+   "window_deals": 10,
+   "window_opens": 5,
+   "window_exits": 5
+  },
+  {
+   "feed_trips": 8,
+   "window_deals": 10,
+   "window_opens": 5,
+   "window_exits": 5
+  },
+  {
+   "feed_trips": 20,
+   "window_deals": 10,
+   "window_opens": 5,
+   "window_exits": 5
+  }
+ ],
+ "reachability_by_window_length": {
+  "1": {
+   "min_sl_for_RED": null,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 0,
+   "RED_needs_every_exit_SL_in_alternating_book": false
+  },
+  "2": {
+   "min_sl_for_RED": null,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 1,
+   "RED_needs_every_exit_SL_in_alternating_book": false
+  },
+  "3": {
+   "min_sl_for_RED": null,
+   "min_sl_for_YELLOW": 2,
+   "exits_in_alternating_book": 1,
+   "RED_needs_every_exit_SL_in_alternating_book": false
+  },
+  "4": {
+   "min_sl_for_RED": null,
+   "min_sl_for_YELLOW": 2,
+   "exits_in_alternating_book": 2,
+   "RED_needs_every_exit_SL_in_alternating_book": false
+  },
+  "5": {
+   "min_sl_for_RED": 3,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 2,
+   "RED_needs_every_exit_SL_in_alternating_book": false
+  },
+  "6": {
+   "min_sl_for_RED": 3,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 3,
+   "RED_needs_every_exit_SL_in_alternating_book": true
+  },
+  "7": {
+   "min_sl_for_RED": 4,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 3,
+   "RED_needs_every_exit_SL_in_alternating_book": false
+  },
+  "8": {
+   "min_sl_for_RED": 4,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 4,
+   "RED_needs_every_exit_SL_in_alternating_book": true
+  },
+  "9": {
+   "min_sl_for_RED": 5,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 4,
+   "RED_needs_every_exit_SL_in_alternating_book": false
+  },
+  "10": {
+   "min_sl_for_RED": 5,
+   "min_sl_for_YELLOW": null,
+   "exits_in_alternating_book": 5,
+   "RED_needs_every_exit_SL_in_alternating_book": true
+  }
+ },
+ "dilution_probe": [
+  {
+   "extra_non_sl_exits_in_window": 0,
+   "total": 10,
+   "sl_count": 5,
+   "sl_ratio": 0.5,
+   "level": "RED"
+  },
+  {
+   "extra_non_sl_exits_in_window": 1,
+   "total": 10,
+   "sl_count": 5,
+   "sl_ratio": 0.5,
+   "level": "RED"
+  },
+  {
+   "extra_non_sl_exits_in_window": 2,
+   "total": 10,
+   "sl_count": 4,
+   "sl_ratio": 0.4,
+   "level": "GREEN"
+  },
+  {
+   "extra_non_sl_exits_in_window": 3,
+   "total": 10,
+   "sl_count": 4,
+   "sl_ratio": 0.4,
+   "level": "GREEN"
+  }
+ ],
+ "streak_neutrality": {
+  "feed": "4 round trips, all closed at SL (8 deals: 4 opens + 4 closes)",
+  "loss_streak": 4,
+  "daily_pnl": -40.0,
+  "expected_streak": 4,
+  "opening_deals_neutral": true
+ },
+ "live_window": {
+  "present": true,
+  "day": "2026-09-05",
+  "window_deals": 10,
+  "window_opens": 5,
+  "window_exits": 5,
+  "exit_type_mix": {
+   "unknown": 5,
+   "managed": 4,
+   "sl": 1
+  },
+  "total_as_defcon_sees_it": 10,
+  "sl_ratio": 0.1,
+  "defcon_level_now": "GREEN",
+  "sl_still_needed_for_RED": 4
+ },
+ "shape_rows": 285,
+ "level_tally": {
+  "GREEN": 199,
+  "YELLOW": 9,
+  "RED": 77
+ }
+}

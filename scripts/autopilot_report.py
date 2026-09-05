@@ -17,6 +17,7 @@ report" can never mean "the git call is broken". Self-check mode also
 suppresses the Telegram send AND the STATE write: probing the machinery
 must not consume the pending report or page the ops chat.
 """
+import html
 import json
 import re
 import subprocess
@@ -118,12 +119,18 @@ if rc in (124, 143):
 elif rc != 0:
     lines.append(f'🔴 <b>این اجرا با خطا تمام شد (کد {rc})</b>')
 
+# b90: the narrative, commit subjects and backlog text are AGENT-authored —
+# a raw '<' in one of them (e.g. 'smc_conf < 0.35') makes Telegram's HTML
+# parser reject the whole message with 400 and the report is lost. Escape
+# every free-text insertion; only our own tags stay live.
+# b90: narrative is escaped at its source (_autopilot_narrative) — do not
+# double-escape here; commit subjects and backlog text are escaped below.
 if narrative:
     lines.append(narrative)
     lines.append('')
 elif new_commits:
     lines.append('🛠 <b>تغییرات این اجرا:</b>')
-    lines += [f'· {c[:110]}' for c in new_commits]
+    lines += [f'· {html.escape(c[:110])}' for c in new_commits]
 
 if new_commits:
     lines.append(f'📌 {len(new_commits)} تغییر کد کامیت و روی گیت‌هاب ثبت شد')
@@ -132,7 +139,7 @@ if other_commits:
     # b85: commits made OUTSIDE this run window (a manual fix between two
     # runs) are reported as such — never as this run's achievement.
     lines.append('🧹 ثبت‌شده بیرون از این اجرا (دستی/سایر):')
-    lines += [f'· {c[:110]}' for c in other_commits]
+    lines += [f'· {html.escape(c[:110])}' for c in other_commits]
 
 if done_now > prev.get('done', done_now):
     # b85: a tick counted from the WORKING TREE is only banked once it is
@@ -145,7 +152,7 @@ if done_now > prev.get('done', done_now):
                  f'آیتم انجام‌شده{note}')
 
 if first_todo:
-    lines.append(f'➡️ در نوبت بعدی: {first_todo[:130]}')
+    lines.append(f'➡️ در نوبت بعدی: {html.escape(first_todo[:130])}')
 
 if not new_commits and done_now == prev.get('done', done_now) and rc == 0:
     print('nothing to report')

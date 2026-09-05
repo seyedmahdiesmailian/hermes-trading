@@ -381,7 +381,13 @@ def _autopilot_narrative(max_chars: int = 700) -> str:
     text = re.sub(r'`([^`]*)`', r'\1', text)
     text = re.sub(r'\*\*([^*]*)\*\*', r'\1', text)
     text = re.sub(r'\s+', ' ', text).strip()
-    return text[:max_chars] + ('…' if len(text) > max_chars else '')
+    text = text[:max_chars] + ('…' if len(text) > max_chars else '')
+    # b90: this is agent-authored free text consumed by HTML-mode Telegram
+    # (report AND panel). A raw '<' (e.g. 'smc_conf < 0.35') made Telegram
+    # reject the whole message with 400 and the report was lost. Escape at
+    # the source so every consumer is safe by construction.
+    import html as _html
+    return _html.escape(text)
 
 
 def _autopilot_paused() -> str | None:
@@ -604,7 +610,9 @@ def ops_auto() -> tuple[str, list]:
         lines.append(nar)
     if bl['todo']:
         lines.append(_sec('🔜 در نوبت'))
-        lines.append('· ' + bl['todo'][0][:150])
+        # b90: backlog text is agent-authored too — same 400 risk
+        import html as _html
+        lines.append('· ' + _html.escape(bl['todo'][0][:150]))
     kb = [[_btn('📜 بک‌لاگ کامل', 'ops:auto:backlog'), _btn('🔨 تغییرات کد', 'ops:auto:commits')]]
     if paused:
         kb.append([_btn('▶️ ازسرگیری اتوپایلوت', 'ops:ask:auto:resume')])
