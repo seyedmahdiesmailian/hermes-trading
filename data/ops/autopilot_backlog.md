@@ -252,6 +252,56 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       the side-split proves the flip is a DIRECTION cell (A-SELL W4 0.085),
       not a rung property; tightening B->A gives up -261.7R — NOT proposed.
       13 tests pin reproduction vs b80 + both verdicts. See Findings.
+      Round 19 (b86, 2026-09-05 — b84's named next filter, measured as books
+      rather than a new arm: the range-kill confidence gate, regime==range &
+      bias!=neutral & smc_conf < 0.35 -> neutral, live literal in
+      hermes_runtime.build_live_plan, backtest twin strategy_signal
+      (range_kill_conf=...)). RESULT 1: the gate is a NO-OP at the live
+      threshold — 0 signals killed on 5-of-5 legs, dropped book empty
+      everywhere, and the trade book is BYTE-IDENTICAL across the whole
+      threshold ladder 0.0 never-kill .. 0.99 always-kill (cached 0.796/99,
+      W1 0.676/174, W2 0.662/165, W3 0.767/190, W4 0.745/166 at every t).
+      RESULT 2 (the real finding): at full power it removes 462-988 signals
+      per leg (49-57% of the raw population) and EVERY killable signal is
+      C-grade — the population MIN_SETUP_GRADE='B' already rejects — so its
+      live-gated book is 0 trades on all five legs; it only trades when the
+      grade gate is removed (117-274 trades, exp_R 0.341-0.452). The rule is
+      FULLY SHADOWED by the grade gate: it can never be the reason a live
+      trade is skipped. RESULT 3: it is directionally RIGHT — the shadowed
+      book earns below the funnel on every leg (cached included), so the
+      intent is sound, the placement is redundant. RESULT 4 (b84 contrast):
+      min_rr had a reachable cliff (learning steps +0.25); this knob has NO
+      adaptive path at all — 0.35 is a literal, learning.py cannot touch it,
+      so the no-op is permanent until a human edits. Nothing wired, nothing
+      removed (hard rule: never weaken a gate — deleting a redundant gate is
+      a human decision, and it is the only thing this round could propose).
+      INTEGRITY: gate_conf_0.35 reproduces b80's gradeB_rr15 exactly on all
+      5 legs (b83), and the live population is a subset of the never-kill
+      population on every leg. 15 tests. See Findings.
+- [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
+      NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
+      b84's template (kept book vs dropped book vs the counterfactual knob
+      position) proves whether a gate BINDS. It cannot prove whether a gate
+      MATTERS: a gate can fire constantly on a population that a DIFFERENT
+      live gate already rejects, and read as an active risk control while
+      never once being the reason a trade was skipped. b86 caught exactly
+      that on range-kill: 49-57% of raw signals are killable at the ceiling,
+      100% of them C-grade, live-gated book 0 trades on 5-of-5 legs. RULE:
+      for every filter, add the REDUNDANCY row — take the population the
+      gate can kill at full power, classify it by the OTHER live gates' own
+      verdicts (grade, rr, DEFCON, cooldown, market hours), and run it as a
+      book twice: once under the live gate stack (what the executor would
+      actually trade) and once with only THIS gate removed. If the live-stack
+      book is empty on every leg while the single-removal book trades, the
+      gate is shadowed and its protection is being provided by something
+      else; say so in the ledger and never propose deleting it on that basis
+      (a shadow is also a backstop if the shadowing gate ever moves). Also
+      record REACHABILITY next to it — whether any adaptive path (learning.py)
+      can move the knob at all — because a no-op that can never be tightened
+      is dead code with a risk vocabulary, and a no-op that CAN be tightened
+      is the b84 cliff hazard. Cheap: one extra book pair per filter on the
+      existing legs. Remaining queue in b84's order: DEFCON, cooldown,
+      market-hours (each gets the bind test if unmeasured, then this one).
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -892,6 +942,35 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+
+- 2026-09-05 b86 (b68 round 19) — THE RANGE-KILL GATE IS A NO-OP AT LIVE AND
+  FULLY SHADOWED BY THE GRADE GATE AT FULL POWER
+  (scripts/b86_range_kill_books.py + data/backtest/b86_range_kill_books.json +
+  15 tests in tests/test_b86_range_kill_books.py). b84's template applied to
+  the filter it named next: `regime==range and bias!=neutral and smc_conf <
+  0.35 -> bias=neutral` (hermes_runtime.build_live_plan literal; backtest twin
+  strategy_signal(range_kill_conf=...), the only funnel parameter ever made
+  A/B-able — scripts/ab_range_kill.py, 2026-08 — and never measured in R).
+  BIND TEST: 0 signals killed at 0.35 on 5-of-5 legs; the trade book is
+  byte-identical across the whole ladder 0.0/0.35/0.5/0.7/0.99 (cached
+  0.796/99, W1 0.676/174, W2 0.662/165, W3 0.767/190, W4 0.745/166 — kill_share
+  0.0 at every t on every leg). SHADOW TEST (b86's own question, new todo
+  b87): at the practical ceiling 0.99 the rule removes 462/739/837/858/988
+  signals (49-57% of the raw population) and the killed grade mix is
+  {'C': 100%} on EVERY leg — the population MIN_SETUP_GRADE='B' already
+  rejects — so the killed book run under the live gates is 0 trades on all
+  five legs, while the same book UNGATED trades 117-274 times at exp_R
+  0.341-0.452, below the funnel's own 0.524-0.796 on the same bars everywhere.
+  The gate aims at the worst book in the system and never gets to shoot: the
+  protection operators attribute to range-kill is actually provided by the
+  grade gate. REACHABILITY (b84 contrast): min_rr's cliff was reachable by
+  learning.py's +0.25 steps; this knob has NO adaptive path — learning
+  adjusts min_rr/min_grade/risk_mult only — so the no-op is permanent until a
+  human edits the literal. Nothing wired, nothing removed: deleting a shadow
+  is a human decision (and a shadow is a backstop if the grade gate ever
+  moves). INTEGRITY (b83): gate_conf_0.35 reproduces b80's gradeB_rr15
+  exactly on all 5 legs; live population ⊆ never-kill population on every
+  leg; time exit derived (144 M15 bars), not hardcoded.
 
 - 2026-09-05 b81 — THE LANES WERE INFLATED BY THE SAME BUG AS THE FUNNEL, AND
   THE CORRECTED BAR SETTLES b70 AGAINST EVERY LANE
