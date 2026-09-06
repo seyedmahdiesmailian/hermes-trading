@@ -330,6 +330,53 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
        in an alternating book; RED needs EVERY exit an SL; dilution is
        one-directional (deal slice is HARDER than the docstring's trade slice,
        never looser), so option (a) stays a human decision.
+- [x] b93 MEASURE THE MEDIUM BEFORE THE GATE (reusable procedure from b92,
+      2026-09-06): b84's book template (kept vs dropped population on
+      cached+W1..W4) silently assumes the dataset can REPRESENT the gate's
+      population. It cannot for any CLOCK-domain gate: the backtest fetch is
+      weekday-only (0 Sunday bars in all 5 legs, b92), so post-open cooldown,
+      restart cooldown and market-hours all read "0 kills" for a reason that
+      says nothing about the gate. RULE: before running a bind test, print the
+      medium's coverage of the gate's population (bars per weekday, per hour,
+      per regime) and if it is zero, switch domains — analytic reach (share of
+      trading time), the LIVE record (plan_history cycle stamps for restart
+      arms; execution_log/plan_history for market-hours blocks), and the
+      shadow probe (evaluate the OTHER time gates at the exact minutes this
+      one protects). Never report a clock-domain "0 kills" as b86's no-op.
+      FIRST APPLICATION (cheap, mostly pre-computed by b92): market-hours —
+      the last item in b84's queue. Its population is Sat/Sun/Fri-after-22
+      bars: zero in every dataset, so the book verdict is pre-decided; the
+      honest rows are (a) the live record — how many master cycles ran while
+      market_hours blocked (plan_history created_at weekday/hour histogram),
+      (b) the shadow row — cooldown's window is a strict SUBSET of
+      market_hours' OPEN period (b92 probed it: market_hours allows Sun
+      23:00-23:14), so the two time gates are DISJOINT, neither shadows the
+      other, and together they tile the calendar, and (c) reachability —
+      is_market_open's boundaries are literals, learning cannot move them.
+      Ship as scripts/b93_market_hours_gate.py reusing b92's domain skeleton.
+      DONE 2026-09-06: THE MEDIUM IS FRAME-SHIFTED, NOT EMPTY — dataset bar
+      stamps are broker SERVER time (~UTC+3, offset from broker_clock.json),
+      proven by the daily-halt hour (00 naive / 21 true) and the weekly gap
+      (Mon 01 naive / Sun 22 true); b92's "0 Sunday bars" was a frame artifact,
+      the Sunday bars exist (48-111 per leg). market_hours live fire-rate
+      282/771 distinct cycles (Fri/Sat/Sun only); shadow grid DISJOINT from
+      cooldown; ESCALATED (b89 class, NOT applied): gate literals Sun 23:00/
+      Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
+      PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
+      data/backtest/b93_market_hours_gate.json + 16 tests.
+- [ ] b94 LOCATION-DEPENDENT TEST TRIPWIRE (from b91b, 2026-09-06): the b91
+      parse test asserted `assertFalse(main['detached'])` about the checkout
+      it runs in — true in the main worktree, FALSE inside b50's nested
+      detached verification worktree, so the freshly harvested HEAD was stamped
+      BROKEN by verify_head.sh and only the push gate's age window saved cron.
+      RULE: any test that inspects git state must assert against git's OWN
+      answer for the current checkout (symbolic-ref, rev-parse --git-common-dir),
+      never against a property assumed from the author's working directory —
+      b50 guarantees the suite runs in at least TWO different checkout shapes.
+      Implement as structure: a grep-tripwire test that fails any tests/*.py
+      which reads `git worktree list` / `symbolic-ref` / `rev-parse --git-dir`
+      and compares to a hardcoded literal instead of a live probe, plus audit
+      the existing worktree tests (b50, b91) against it. Small, tests-only.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
@@ -354,6 +401,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       is the b84 cliff hazard. Cheap: one extra book pair per filter on the
       existing legs. Remaining queue in b84's order: DEFCON, cooldown,
       market-hours (each gets the bind test if unmeasured, then this one).
+      PROGRESS 2026-09-06: DEFCON done (b88). COOLDOWN done (b92,
+      scripts/b92_cooldown_gate.py + data/backtest/b92_cooldown_gate.json +
+      11 tests) — and it produced a NEW verdict class: the gate lives in the
+      CLOCK domain, not the book domain. All 5 legs have ZERO Sunday bars
+      (datasets are weekday-only), so the post-open window contains 0 funnel
+      signals and the b84 book template CANNOT price this gate — "0 kills"
+      here is a measurement-medium artifact, not b86's no-op. Measured in the
+      domains that can see it instead: live master-cycle log (1 restart arm in
+      1542 cycles / 8 days — the b30 fix holds), analytic reach (0.21% of
+      trading time), shadow row (market_hours ALLOWS Sun 23:00-23:14 →
+      cooldown is the ONLY gate on its window, the opposite of range-kill),
+      reachability (learning cannot move either knob). Remaining: market-hours.
 - [x] b71 LAB HARNESS: every arm must be re-measured under the LIVE time_exit
       (reusable procedure from b68 round 6). The round-6 level-anchored arm printed
       exp_R +1.096 — the best number any lab arm has ever produced — and it was an
@@ -995,6 +1054,26 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
 
 ## Findings
 
+- 2026-09-06 b92 (b87 queue item 3) — THE COOLDOWN GATE CANNOT BE MEASURED AS
+  A BOOK: IT LIVES IN THE CLOCK DOMAIN (scripts/b92_cooldown_gate.py +
+  data/backtest/b92_cooldown_gate.json + 11 tests). b84's template (kept vs
+  dropped book on cached+W1..W4) assumes the gate's population exists inside
+  the dataset. For cooldown it does not: every leg is weekday-only (0 Sunday
+  bars in 21k bars total), so the post-open window (Sun 23:00->23:15 UTC)
+  holds ZERO funnel signals on 5-of-5 legs. Reading that as "no-op" — b86's
+  verdict for range-kill — would be a measurement-medium artifact: the harness
+  is blind, the gate is not. The honest rows are in the other three domains:
+  BIND-in-clock (analytic reach: 15 min/week = 0.21% of the 117 h session),
+  LIVE RECORD (plan_history created_at: 1542 cycles over 8 days, exactly ONE
+  gap >= 30 min -> the restart guard armed once — the b30 fix holds in the
+  field, vs 100% arming before it), SHADOW (b87's question, answered by
+  probing market_hours at Sun 23:00-23:14: it ALLOWS every minute of the
+  window, so cooldown is the ONLY gate on its window — the exact opposite of
+  range-kill's full shadowing by MIN_SETUP_GRADE), REACHABILITY (learning.py
+  moves min_rr/min_grade/risk_mult only; both cooldown constants are literals,
+  operator-only like b86's knob). Verdict: gate stays, untouched (hard rule);
+  what changed is the METHOD — a gate's bind test must first check that the
+  measurement medium can represent the gate's population at all.
 - 2026-09-05 b86 (b68 round 19) — THE RANGE-KILL GATE IS A NO-OP AT LIVE AND
   FULLY SHADOWED BY THE GRADE GATE AT FULL POWER
   (scripts/b86_range_kill_books.py + data/backtest/b86_range_kill_books.json +

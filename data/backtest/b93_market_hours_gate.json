@@ -1,0 +1,378 @@
+{
+ "_note": "b93 (first application of b92's rule): the market_hours gate measured in its own domain, and the MEDIUM audited before the gate. Bar stamps in the cached datasets are broker SERVER time (~UTC+3), not UTC \u2014 every clock-domain book row is reported in both frames. Read-only; nothing wired; no gate moved.",
+ "_live_gates": {
+  "market_hours": "engines/market_hours.py literals",
+  "post_open_cooldown_min": 15,
+  "restart_cooldown_min": 5
+ },
+ "cached": {
+  "frame": {
+   "offset_sec_used": 10797.1,
+   "naive_frame": {
+    "weekday_hist": {
+     "Mon": 552,
+     "Tue": 552,
+     "Wed": 608,
+     "Thu": 644,
+     "Fri": 644
+    },
+    "sunday_bars": 0,
+    "zero_hours": [
+     0
+    ],
+    "weekly_gap": {
+     "gap_hours": 49.25,
+     "last_before": "2026-07-17T23:45:00+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2026-07-20T01:00:00+00:00",
+     "first_after_dow": "Mon"
+    }
+   },
+   "true_frame": {
+    "weekday_hist": {
+     "Mon": 552,
+     "Tue": 552,
+     "Wed": 616,
+     "Thu": 644,
+     "Fri": 588,
+     "Sun": 48
+    },
+    "sunday_bars": 48,
+    "zero_hours": [
+     21
+    ],
+    "weekly_gap": {
+     "gap_hours": 49.25,
+     "last_before": "2026-07-17T20:45:02.900000+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2026-07-19T22:00:02.900000+00:00",
+     "first_after_dow": "Sun"
+    }
+   }
+  },
+  "population": {
+   "bars": 3000,
+   "blocked_bars_naive_frame": 56,
+   "blocked_bars_true_frame": 24,
+   "naive_kills_that_were_actually_open": 56,
+   "actually_closed_bars_the_naive_frame_misses": 24,
+   "frames_agree": false
+  }
+ },
+ "W1": {
+  "frame": {
+   "offset_sec_used": 10797.1,
+   "naive_frame": {
+    "weekday_hist": {
+     "Mon": 1186,
+     "Tue": 1222,
+     "Wed": 1232,
+     "Thu": 1196,
+     "Fri": 1164
+    },
+    "sunday_bars": 0,
+    "zero_hours": [
+     0
+    ],
+    "weekly_gap": {
+     "gap_hours": 53.25,
+     "last_before": "2026-06-19T19:45:00+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2026-06-22T01:00:00+00:00",
+     "first_after_dow": "Mon"
+    }
+   },
+   "true_frame": {
+    "weekday_hist": {
+     "Mon": 1186,
+     "Tue": 1230,
+     "Wed": 1224,
+     "Thu": 1196,
+     "Fri": 1060,
+     "Sun": 104
+    },
+    "sunday_bars": 104,
+    "zero_hours": [
+     21
+    ],
+    "weekly_gap": {
+     "gap_hours": 53.25,
+     "last_before": "2026-06-19T16:45:02.900000+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2026-06-21T22:00:02.900000+00:00",
+     "first_after_dow": "Sun"
+    }
+   }
+  },
+  "population": {
+   "bars": 6000,
+   "blocked_bars_naive_frame": 88,
+   "blocked_bars_true_frame": 52,
+   "naive_kills_that_were_actually_open": 88,
+   "actually_closed_bars_the_naive_frame_misses": 52,
+   "frames_agree": false
+  }
+ },
+ "W2": {
+  "frame": {
+   "offset_sec_used": 10797.1,
+   "naive_frame": {
+    "weekday_hist": {
+     "Mon": 1242,
+     "Tue": 1262,
+     "Wed": 1196,
+     "Thu": 1196,
+     "Fri": 1104
+    },
+    "sunday_bars": 0,
+    "zero_hours": [
+     0
+    ],
+    "weekly_gap": {
+     "gap_hours": 73.25,
+     "last_before": "2026-04-02T23:45:00+00:00",
+     "last_before_dow": "Thu",
+     "first_after": "2026-04-06T01:00:00+00:00",
+     "first_after_dow": "Mon"
+    }
+   },
+   "true_frame": {
+    "weekday_hist": {
+     "Mon": 1250,
+     "Tue": 1254,
+     "Wed": 1196,
+     "Thu": 1188,
+     "Fri": 1008,
+     "Sun": 104
+    },
+    "sunday_bars": 104,
+    "zero_hours": [
+     21
+    ],
+    "weekly_gap": {
+     "gap_hours": 73.25,
+     "last_before": "2026-04-02T20:45:02.900000+00:00",
+     "last_before_dow": "Thu",
+     "first_after": "2026-04-05T22:00:02.900000+00:00",
+     "first_after_dow": "Sun"
+    }
+   }
+  },
+  "population": {
+   "bars": 6000,
+   "blocked_bars_naive_frame": 96,
+   "blocked_bars_true_frame": 52,
+   "naive_kills_that_were_actually_open": 96,
+   "actually_closed_bars_the_naive_frame_misses": 52,
+   "frames_agree": false
+  }
+ },
+ "W3": {
+  "frame": {
+   "offset_sec_used": 10797.1,
+   "naive_frame": {
+    "weekday_hist": {
+     "Mon": 1221,
+     "Tue": 1196,
+     "Wed": 1218,
+     "Thu": 1094,
+     "Fri": 1271
+    },
+    "sunday_bars": 0,
+    "zero_hours": [
+     0
+    ],
+    "weekly_gap": {
+     "gap_hours": 51.5,
+     "last_before": "2025-11-28T21:30:00+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2025-12-01T01:00:00+00:00",
+     "first_after_dow": "Mon"
+    }
+   },
+   "true_frame": {
+    "weekday_hist": {
+     "Mon": 1214,
+     "Tue": 1196,
+     "Wed": 1210,
+     "Thu": 1102,
+     "Fri": 1167,
+     "Sun": 111
+    },
+    "sunday_bars": 111,
+    "zero_hours": [
+     21
+    ],
+    "weekly_gap": {
+     "gap_hours": 51.5,
+     "last_before": "2025-11-28T18:30:02.900000+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2025-11-30T22:00:02.900000+00:00",
+     "first_after_dow": "Sun"
+    }
+   }
+  },
+  "population": {
+   "bars": 6000,
+   "blocked_bars_naive_frame": 104,
+   "blocked_bars_true_frame": 55,
+   "naive_kills_that_were_actually_open": 104,
+   "actually_closed_bars_the_naive_frame_misses": 55,
+   "frames_agree": false
+  }
+ },
+ "W4": {
+  "frame": {
+   "offset_sec_used": 10797.1,
+   "naive_frame": {
+    "weekday_hist": {
+     "Mon": 1186,
+     "Tue": 1196,
+     "Wed": 1226,
+     "Thu": 1196,
+     "Fri": 1196
+    },
+    "sunday_bars": 0,
+    "zero_hours": [
+     0
+    ],
+    "weekly_gap": {
+     "gap_hours": 49.25,
+     "last_before": "2025-07-11T23:45:00+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2025-07-14T01:00:00+00:00",
+     "first_after_dow": "Mon"
+    }
+   },
+   "true_frame": {
+    "weekday_hist": {
+     "Mon": 1186,
+     "Tue": 1196,
+     "Wed": 1226,
+     "Thu": 1196,
+     "Fri": 1092,
+     "Sun": 104
+    },
+    "sunday_bars": 104,
+    "zero_hours": [
+     21
+    ],
+    "weekly_gap": {
+     "gap_hours": 49.25,
+     "last_before": "2025-07-11T20:45:02.900000+00:00",
+     "last_before_dow": "Fri",
+     "first_after": "2025-07-13T22:00:02.900000+00:00",
+     "first_after_dow": "Sun"
+    }
+   }
+  },
+  "population": {
+   "bars": 6000,
+   "blocked_bars_naive_frame": 104,
+   "blocked_bars_true_frame": 52,
+   "naive_kills_that_were_actually_open": 104,
+   "actually_closed_bars_the_naive_frame_misses": 52,
+   "frames_agree": false
+  }
+ },
+ "live_record": {
+  "cycles": 771,
+  "first": "2026-08-29T09:45:01.795384+00:00",
+  "last": "2026-09-06T06:15:02.277928+00:00",
+  "span_days": 7.85,
+  "cycles_blocked_by_market_hours": 282,
+  "share_of_cycles_blocked": 0.3658,
+  "blocked_by_weekday": {
+   "Fri": 8,
+   "Sat": 145,
+   "Sun": 129
+  },
+  "blocked_fri_after_22": 8,
+  "blocked_sat": 145,
+  "blocked_sun": 129,
+  "note": "a blocked cycle is one that reached the executor and was rejected with reason=market_closed; the gate is the only thing standing between those cycles and order attempts into a closed market (broker retcode 10018). cycles = DISTINCT created_at values (finalised plans are rewritten under a new filename with the same stamp)"
+ },
+ "shadow": {
+  "minute_grid_week": {
+   "both_gates_block": 0,
+   "only_market_hours": 2940,
+   "only_cooldown": 15,
+   "neither": 7125
+  },
+  "probe_post_open_window": [
+   {
+    "at": "2026-08-30T23:00:00+00:00",
+    "market_hours_allows": true,
+    "cooldown_blocks": true
+   },
+   {
+    "at": "2026-08-30T23:05:00+00:00",
+    "market_hours_allows": true,
+    "cooldown_blocks": true
+   },
+   {
+    "at": "2026-08-30T23:10:00+00:00",
+    "market_hours_allows": true,
+    "cooldown_blocks": true
+   },
+   {
+    "at": "2026-08-30T23:14:00+00:00",
+    "market_hours_allows": true,
+    "cooldown_blocks": true
+   },
+   {
+    "at": "2026-08-30T23:15:00+00:00",
+    "market_hours_allows": true,
+    "cooldown_blocks": false
+   }
+  ],
+  "verdict": "DISJOINT \u2014 cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar"
+ },
+ "reachability": {
+  "learning_changes_keys": [],
+  "learning_can_move_market_hours": false,
+  "boundaries": {
+   "saturday": "closed",
+   "sunday_open_utc": "23:00",
+   "friday_close_utc": "22:00"
+  },
+  "note": "the boundaries are literals inside engines/market_hours.is_market_open; learning.py moves min_rr/min_grade/risk_mult only (operator-only reach, same class as b86's range-kill and b92's cooldown)"
+ },
+ "boundary_vs_reality": {
+  "sessions_found": 7,
+  "first_bar_of_week_true_utc": [
+   "2026-07-19T22:00:02.900000+00:00",
+   "2026-07-26T22:00:02.900000+00:00",
+   "2026-08-02T22:00:02.900000+00:00",
+   "2026-08-09T22:00:02.900000+00:00",
+   "2026-08-16T22:00:02.900000+00:00",
+   "2026-08-23T22:00:02.900000+00:00"
+  ],
+  "last_bar_of_week_true_utc": [
+   "2026-07-17T20:45:02.900000+00:00",
+   "2026-07-24T20:45:02.900000+00:00",
+   "2026-07-31T20:45:02.900000+00:00",
+   "2026-08-07T20:45:02.900000+00:00",
+   "2026-08-14T20:45:02.900000+00:00",
+   "2026-08-21T20:45:02.900000+00:00"
+  ],
+  "inferred_weekly_open_utc": "Sun 22:00",
+  "inferred_weekly_close_utc": "Fri 21:00",
+  "gate_literals": "open Sun 23:00 UTC / close Fri 22:00 UTC",
+  "conservative_at_open_min": 60,
+  "permissive_at_close_min": 60,
+  "note": "inferred from the last bar before / first bar after each weekly gap, de-rotated by the published broker offset; the gate blocks ~1 h of REAL open market on Sunday (safe, costs opportunity) and allows ~1 h before the REAL Friday close (the 10018 window). NOT applied \u2014 a boundary move is a gate change and out of autopilot scope."
+ },
+ "_verdict": {
+  "medium_is_utc": false,
+  "blocked_bars_naive_frame_total": 448,
+  "blocked_bars_true_frame_total": 235,
+  "book_can_price_this_gate": false,
+  "book_verdict": "INVERTED POPULATION \u2014 the naive frame's kills are open-market bars and its zero-Sunday reading hides the truly closed ones; a book number here is meaningless in either frame, which is exactly what b93's rule is for (and it retroactively voids b92's '0 Sunday bars' as a coverage statement: the bars exist, the frame hid them)",
+  "live_fire_rate": "282/771 cycles",
+  "shadow_verdict": "DISJOINT \u2014 cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar",
+  "adaptive_reachable": false,
+  "boundary_mismatch": "gate Sun 23:00/Fri 22:00 vs broker Sun 22:00/Fri 21:00",
+  "action": "ESCALATE as human decision (b89 class): the Friday literal is ~1 h looser than the broker's real close. Autopilot changes nothing."
+ }
+}
