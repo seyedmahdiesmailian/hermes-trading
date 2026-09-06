@@ -364,19 +364,6 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b94 LOCATION-DEPENDENT TEST TRIPWIRE (from b91b, 2026-09-06): the b91
-      parse test asserted `assertFalse(main['detached'])` about the checkout
-      it runs in — true in the main worktree, FALSE inside b50's nested
-      detached verification worktree, so the freshly harvested HEAD was stamped
-      BROKEN by verify_head.sh and only the push gate's age window saved cron.
-      RULE: any test that inspects git state must assert against git's OWN
-      answer for the current checkout (symbolic-ref, rev-parse --git-common-dir),
-      never against a property assumed from the author's working directory —
-      b50 guarantees the suite runs in at least TWO different checkout shapes.
-      Implement as structure: a grep-tripwire test that fails any tests/*.py
-      which reads `git worktree list` / `symbolic-ref` / `rev-parse --git-dir`
-      and compares to a hardcoded literal instead of a live probe, plus audit
-      the existing worktree tests (b50, b91) against it. Small, tests-only.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
@@ -1765,6 +1752,26 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
   plus 2 regression tests (76 green).
 
 ## Done
+- [x] 2026-09-06 b94 LOCATION-DEPENDENT TEST TRIPWIRE: tests/test_b94_
+      location_dependent_tripwire.py — an AST scan (not grep: the b91 shape
+      hides inside `main = next(w for w in wts ...)` dataflow that grep
+      cannot bind) over every tests/*.py that fails any assertion comparing
+      a git-CHECKOUT-STATE value (detached/bare/gitdir/commondir keys of a
+      parsed worktree listing, or the direct result of a subprocess probe
+      asking git symbolic-ref/--git-dir/worktree) to a hardcoded literal or
+      bare truthiness — including plain `assert x['detached']`. Probe names
+      are traced through assignments and helper-function bodies, so
+      `assertFalse(_checkout_is_detached())` is caught as hardcoding the
+      answer the probe exists to discover. Derived claims are deliberately
+      SPARED (len(listing)==1 in b50's leak test, state-key vs live-probe
+      equality = the FIXED shape). Audit result: b50 and b91 are clean
+      today (pinned by name so a refactor back into the shape fails loudly),
+      and the whole 71-file suite has ZERO other offenders — the b91b fix
+      was the last instance. Scan pinned against REAL history: 937e82f's
+      copy of the b91 test must produce the exact `assertFalse(main[
+      'detached'])` hit (b41 discipline; worktrees share the object store
+      so `git show` reads identically from any checkout shape). 6 tests,
+      979 green, live cycle OK (no_trade).
 - [x] 2026-08-30 Spread/slippage sensitivity: edge is cost-INSENSITIVE — spread is a
       linear per-trade tax (entry/exit geometry unchanged), measured on the 13 cached
       robustness windows via run_backtest(spread_override=...): gross 0.00 → +1112.95,

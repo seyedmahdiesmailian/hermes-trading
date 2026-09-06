@@ -881,7 +881,7 @@
       }
     },
     "macro": {
-      "timestamp": "2026-09-06T07:02:17.655121+00:00",
+      "timestamp": "2026-09-06T06:45:04.596255+00:00",
       "dxy": {
         "change_pct": 0.026,
         "direction": "up",
@@ -943,9 +943,9 @@
         "upcoming_events": 0,
         "strict_high_count": 0,
         "window_hours": 24,
-        "fetched_at": "2026-09-06T07:02:17.862503+00:00"
+        "fetched_at": "2026-09-06T06:45:04.785579+00:00"
       },
-      "_fetched_at": 1788678137.8631868
+      "_fetched_at": 1788677104.786233
     }
   }
 }

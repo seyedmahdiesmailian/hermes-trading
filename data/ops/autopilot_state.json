@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-06T05:09:45.077623+00:00",
+ "last_run_utc": "2026-09-06T06:30:03.071984+00:00",
  "recent_commits": [
+  "462e90d autopilot: b93 measure the medium before the gate \u2014 datasets are broker-server-time, market_hours live-record + boundary escalation",
+  "b70bc77 harvest: b92 cooldown-gate measurement (left uncommitted by the 04:35 run) \u2014 gate is in a different domain than the book: post-open window unmeasurable on weekday-only datasets, restart guard arms 1x in live record, NOT shadowed",
   "8788cfb autopilot: b91b \u2014 the b91 parse test assumed it runs in the MAIN checkout, so inside b50's nested detached worktree assertFalse(detached) went RED and verify_head stamped HEAD 937e82f BROKEN; now the parser is asserted against git's own symbolic-ref answer (location-independent, the very property b50 exists to protect)",
   "937e82f harvest: b91 orphan-worktree self-heal in head_verify (killed run left a registered worktree that prune cannot see, poisoning every later suite) + b46 seam scoped to git-status lines w/ anti-vacuity test + b89 backlog mark + runtime data",
-  "5c17f28 autopilot: b90 \u2014 Telegram 400 killed the 21:13 report: agent narrative/backlog free text with a raw '<' was inserted unescaped into an HTML-mode message (escape at source + commit subjects + todo; +escape test)",
-  "d0a7122 autopilot: b88 (b68 r20) DEFCON as books + rollover blind-cycle fix",
-  "5e5841a autopilot: b86 (b68 round 19) \u2014 range-kill gate measured as books: no-op at live 0.35 (0 kills, flat book across the whole 0.0-0.99 ladder on 5 legs) and FULLY SHADOWED by MIN_SETUP_GRADE (100% of killable signals are C-grade; live-gated book 0 trades, ungated 0.34-0.45R below the funnel); knob has no adaptive path at all. +15 tests, new todo b87 (gate-shadowing test)"
+  "5c17f28 autopilot: b90 \u2014 Telegram 400 killed the 21:13 report: agent narrative/backlog free text with a raw '<' was inserted unescaped into an HTML-mode message (escape at source + commit subjects + todo; +escape test)"
  ]
 }
