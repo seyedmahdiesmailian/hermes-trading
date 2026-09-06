@@ -59,11 +59,6 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       decision-set arms (pdh/nr7/dayext/h4t lanes) on the SAME windows through
       the corrected engine; re-derive the merit bar; re-decide b70. NO live
       change until the honest numbers are in — this is analysis, not wiring.
-- [ ] b105 TRADER CODE REVIEW — trade_management.py vs LIVE JOURNAL: read the
-      SL/BE/trail/TP ladder code line by line; for every branch, find deals in
-      the live journal (data/storage) that exercised it; flag any branch that
-      never fired or fired wrong (e.g. BE move before min-profit, trail that
-      can cut a winner early). Fix defects with unit tests; NO gate loosening.
 - [ ] b106 TRADER CODE REVIEW — signal_parser.py vs signal_decision.py: the
       parser's fields vs what the decision layer actually consumes; find
       silently-dropped fields (parsed but never used) and used-but-never-set
@@ -2067,6 +2062,15 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   plus 2 regression tests (76 green).
 
 ## Done
+- [x] 2026-09-06 b105 TRADER CODE REVIEW — trade_management.py vs LIVE JOURNAL:
+      ladder branches walked against the journal + watchdog log; FOUND A CORE
+      BACKTEST PARITY DEFECT — engines/backtest.py booked the post-TP1 runner at
+      FULL size on top of the realized partial, and a share>=1.0 TP1 close (the
+      live balanced/weak lane) left a phantom runner that also blocked real
+      entries. Fixed (runner scaled by 1-share; share>=1.0 closes at TP1, frees
+      slot); funnel exp_R on cached M15 0.766 -> 0.285 (live journal realizes
+      0.10R — corrected engine is much closer); 9 new tests, 1069 green, live
+      cycle OK. Consequence filed as b108 (re-measure merit bar + b70 set).
 - [x] 2026-09-06 b96 B50 LEAK TEST MADE CONCURRENCY-SAFE (owner-attributed
       count): tests/test_b50_suite_is_location_independent.py's
       test_worktree_is_cleaned_up_after_verification asserted
