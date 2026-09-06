@@ -33,6 +33,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import unittest
 from pathlib import Path
 
@@ -43,6 +44,9 @@ sys.path.insert(0, str(REPO / 'tests'))  # `import hermetic` must not depend
 
 import hermetic  # noqa: E402
 from engines import head_verify  # noqa: E402
+# b96: reuse b91's real-worktree fixture builders (cross-test imports are an
+# established shape here — b37/b64/b66/b92 do the same).
+from test_b91_stale_worktree import _cleanup, _dead_pid, _make_leftover  # noqa: E402
 
 TESTS_DIR = REPO / 'tests'
 PROD_ROOT = '/home/ai/hermes-trading'
@@ -122,6 +126,58 @@ def _binding_lines(src: str) -> list:
             else repr(node.value)[:80]
         hits.append((node.lineno, line))
     return sorted(set(hits))
+
+
+def _main_worktree(repo=None):
+    """Path of the MAIN worktree (owner of the shared .git dir), derived
+    from git itself — location-independent (b50/b94 rule: never assume
+    which checkout shape the suite runs in; inside a nested verification
+    worktree, REPO is NOT the main one)."""
+    repo = Path(repo) if repo else REPO
+    r = subprocess.run(['git', 'rev-parse', '--path-format=absolute',
+                        '--git-common-dir'],
+                       cwd=str(repo), capture_output=True, text=True)
+    cd = (r.stdout or '').strip().rstrip('/')
+    if not cd:
+        return None
+    if cd.endswith('/.git'):
+        cd = cd[:-len('/.git')]
+    return str(Path(cd).resolve())
+
+
+def _unowned_leftovers(repo=None):
+    """Registered worktrees that are NOT this checkout, NOT the main
+    worktree, and NOT owned by a LIVE verifier (b96).
+
+    The old leak test asserted `len(git worktree list) == 1`. That races
+    legitimate concurrency: b91's own contract is that a concurrent
+    verification (cron's b51 start-heal vs the agent's step 4b) is a
+    SUPPORTED shape whose worktree the sweep deliberately KEEPS — so a
+    2-line listing while another verifier is mid-run is not a leak, and
+    the 2026-09-06 b94 run proved it: a background suite overlapped a
+    verify_head.sh and went RED on a healthy repo.
+
+    The honest question is not "how many worktrees exist" but "did a
+    verifier fail to clean up after ITSELF". A leftover is attributable:
+    verify_ref stamps owner.pid in the temp dir BEFORE registering the
+    worktree (b91), so owner_state() separates 'alive' (someone is
+    verifying RIGHT NOW — spare it) from dead/unknown (the b91 incident
+    shape — a real leak, still counted). Non-prefixed foreign worktrees
+    are counted too, exactly as the old test counted them.
+    """
+    repo = Path(repo) if repo else REPO
+    main = _main_worktree(repo)
+    leftovers = []
+    for wt in head_verify.list_worktrees(repo):
+        p = wt.get('path') or ''
+        if p == str(repo) or (main and str(Path(p).resolve()) == main):
+            continue
+        if head_verify.WORKTREE_PREFIX in p:
+            base = os.path.dirname(p.rstrip('/'))
+            if head_verify.owner_state(base) == 'alive':
+                continue
+        leftovers.append(p)
+    return leftovers
 
 
 def _parent_map(tree):
@@ -345,12 +401,91 @@ class FullSuiteInsideHead(unittest.TestCase):
     def test_worktree_is_cleaned_up_after_verification(self):
         """A verifier that leaks worktrees eventually breaks the repo
         (git worktree add refuses, disk fills). Checked against the class-
-        level verification above — no second full-suite run."""
+        level verification above — no second full-suite run.
+
+        b96: the old shape (`len(listing) == 1`) counted EVERY registered
+        worktree as a leak, which races legitimate concurrency — b91's
+        contract explicitly KEEPS a live-owner worktree (cron's b51
+        start-heal vs the agent's step 4b), and on 2026-09-06 a background
+        suite overlapped a verify_head.sh and this test went RED on a
+        healthy repo. The claim is now owner-attributed: only leftovers
+        whose creator is NOT alive count (see _unowned_leftovers)."""
+        leftovers = _unowned_leftovers()
+        if leftovers:
+            # b96 race, other direction: a CONCURRENT verifier may have
+            # registered its worktree between our listing and its owner
+            # cleanup (dir gone -> owner 'unknown'). A real leak is
+            # permanent, so re-confirm after a beat before going RED.
+            time.sleep(2.0)
+            leftovers = _unowned_leftovers()
+        self.assertEqual(len(leftovers), 0,
+                         'verification left worktrees behind: '
+                         + '; '.join(leftovers))
         listing = subprocess.run(['git', 'worktree', 'list'], cwd=str(REPO),
                                  capture_output=True, text=True).stdout
-        self.assertEqual(len(listing.strip().splitlines()), 1,
-                         'verification left worktrees behind: ' + listing)
         self.assertIn(str(REPO), listing)
+
+
+class LeakTestIsConcurrencySafe(unittest.TestCase):
+    """b96: the leak claim must be owner-attributed, not a line count.
+
+    The 2026-09-06 incident: a background suite run overlapped a
+    verify_head.sh; the old `len(worktree list) == 1` saw the OTHER
+    verifier's live /tmp/hermes_headverify_* checkout and went RED on a
+    healthy repo — while b91's contract explicitly KEEPS a live-owner
+    worktree (concurrency is supported). These tests pin both directions
+    with the real-worktree fixture shape b91 already builds: an alive
+    owner is spare (and the old assertion would have failed on the same
+    state), a dead/unknown owner is still a leak."""
+
+    def test_alive_owner_worktree_is_not_a_leak(self):
+        base, wt = _make_leftover(pid_text=str(os.getpid()), mtime_age=5)
+        try:
+            # the exact state the b96 flake hit: 2 registered worktrees,
+            # one owned by a LIVE verifier
+            listing = subprocess.run(
+                ['git', 'worktree', 'list'], cwd=str(REPO),
+                capture_output=True, text=True).stdout
+            self.assertGreater(len(listing.strip().splitlines()), 1,
+                               'fixture did not create the concurrency '
+                               'shape — this test would pass vacuously')
+            self.assertNotIn(str(wt), _unowned_leftovers(),
+                             'a live verifier is being counted as a leak — '
+                             'the b96 flake is back')
+        finally:
+            _cleanup(base, wt)
+
+    def test_dead_owner_leftover_is_still_a_leak(self):
+        """ANTI-VACUITY: the fix must not have become `assert [] == []`.
+        The b91 incident shape (killed run, owner.pid dead) must count."""
+        base, wt = _make_leftover(pid_text=str(_dead_pid()), mtime_age=5)
+        try:
+            self.assertIn(str(wt), _unowned_leftovers(),
+                          'dead-owner leftovers no longer counted — the '
+                          'leak test verifies nothing')
+        finally:
+            _cleanup(base, wt)
+
+    def test_unknown_owner_leftover_is_counted(self):
+        """No owner.pid (pre-b91 or hand-made): conservative — count it,
+        exactly like the old line-count did."""
+        base, wt = _make_leftover(pid_text=None, mtime_age=5)
+        try:
+            self.assertIn(str(wt), _unowned_leftovers())
+        finally:
+            _cleanup(base, wt)
+
+    def test_main_worktree_is_never_a_leftover(self):
+        """Location-independent (b94 rule): the exclusion is derived from
+        git's own answer (--git-common-dir), never from the author's cwd —
+        inside a nested verification worktree REPO is NOT the main tree,
+        and the main tree must still be spared there."""
+        main = _main_worktree()
+        paths = [w['path'] for w in head_verify.list_worktrees(REPO)]
+        self.assertIn(main, paths,
+                      '_main_worktree() disagrees with git worktree list')
+        self.assertNotIn(main, _unowned_leftovers())
+        self.assertNotIn(str(REPO), _unowned_leftovers())
 
 
 class VerifierScriptIsWired(unittest.TestCase):

@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-2c8d0b88",
+  "plan_id": "xau-81a36d6e",
   "symbol": "XAUUSD",
   "bias": "neutral",
   "session": "london",
@@ -44,9 +44,9 @@
     "smc_poi": "B",
     "smc_signal": "wait"
   },
-  "created_at": "2026-09-06T08:55:03.849356+00:00",
-  "expires_at": "2026-09-06T20:55:03.849356+00:00",
-  "next_reassessment": "2026-09-06T09:00:03.849356+00:00",
+  "created_at": "2026-09-06T08:30:02.276588+00:00",
+  "expires_at": "2026-09-06T20:30:02.276588+00:00",
+  "next_reassessment": "2026-09-06T08:35:02.276588+00:00",
   "context": {
     "m5_last": 4431.72,
     "h1_last": 4431.72,
@@ -881,7 +881,7 @@
       }
     },
     "macro": {
-      "timestamp": "2026-09-06T08:45:02.601019+00:00",
+      "timestamp": "2026-09-06T08:15:02.384937+00:00",
       "dxy": {
         "change_pct": 0.026,
         "direction": "up",
@@ -943,9 +943,9 @@
         "upcoming_events": 0,
         "strict_high_count": 0,
         "window_hours": 24,
-        "fetched_at": "2026-09-06T08:45:02.684783+00:00"
+        "fetched_at": "2026-09-06T08:15:02.552820+00:00"
       },
-      "_fetched_at": 1788684302.6850772
+      "_fetched_at": 1788682502.5534115
     }
   }
 }

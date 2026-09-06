@@ -364,20 +364,6 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b96 B50 LEAK TEST FLAKES UNDER CONCURRENT VERIFIERS (found 2026-09-06,
-      b94 run): test_worktree_is_cleaned_up_after_verification asserts
-      `git worktree list` has exactly ONE line — but b91's own docstring
-      says concurrent verifications are a supported shape (cron's b51
-      start-heal vs the agent's step 4b), and the sweep deliberately KEEPS
-      a live-owner worktree. This run hit it for real: a background suite
-      run overlapped a verify_head.sh, the leak test saw the other
-      verifier's live /tmp/hermes_headverify_* checkout and went RED while
-      the repo was actually fine (both verifiers cleaned up; final HEAD
-      verified OK 979/979). Fix: the leak test must count only worktrees
-      NOT owned by a live pid (owner_state from head_verify is the exact
-      tool), so it detects real leaks without racing legitimate
-      concurrency; pin with the synthetic alive-owner shape b91 already
-      builds. Small, tests-only.
 - [ ] b97 B95 RESIDUAL BLIND SPOT: PROBES IN NON-TEST HELPER MODULES
       (from b95, 2026-09-06): the sibling resolution (seed 2) only walks
       modules named test_* living in tests/. A checkout-state probe with a
@@ -389,6 +375,31 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       ImportFrom module reachable from tests/ on sys.path (hermetic.py
       first), and reuse sibling_probes() there; keep the vocabulary seed as
       the unresolvable-source fallback. Small, tests-only.
+- [ ] b98 SHARED-STATE COUNT CLAIMS MUST BE OWNER-ATTRIBUTED (reusable
+      procedure from b96, 2026-09-06): a test that asserts a COUNT of
+      shared, mutable state (`len(git worktree list) == 1`, `len(listdir
+      of a lock/tmp dir) == N`) is a flake whenever the repo supports a
+      concurrent actor — b94's tripwire deliberately SPARED the derived
+      `len(...)==1` shape as location-independent, and it was still wrong:
+      location-independence fixes WHERE the suite runs, not WHO ELSE is
+      running. RULE: before asserting a count of shared state, ask "can a
+      supported concurrent process legitimately change this number?" If
+      yes: (1) attribute the claim — count only entries the test's own
+      process tree can prove it left behind (b96: owner.pid +
+      head_verify.owner_state, the same tool the sweep uses, so test and
+      sweeper agree on what "orphan" means); (2) derive every exclusion
+      from git's/OS's own answer (b94 rule — --git-common-dir for the main
+      worktree, never the author's cwd); (3) close the OPPOSITE race (an
+      entry appearing mid-check) by re-confirming after a short beat
+      before going RED — a real leak is permanent, a concurrent one is
+      transient; (4) pin BOTH directions with the fixture builders the
+      production-side sweeper already uses (alive owner spared AND the old
+      assertion provably fails on the same state; dead owner still
+      counts) so the fix cannot silently become `assert [] == []`. Cheap
+      audit next run: grep tests/ for assertEqual(len(...)) over anything
+      not built by the test itself (repo listings, /tmp, process tables)
+      — b96's sweep found this file is the only remaining instance today,
+      so this is a tripwire-candidate rule, not a queue of victims.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
@@ -1777,6 +1788,27 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
   plus 2 regression tests (76 green).
 
 ## Done
+- [x] 2026-09-06 b96 B50 LEAK TEST MADE CONCURRENCY-SAFE (owner-attributed
+      count): tests/test_b50_suite_is_location_independent.py's
+      test_worktree_is_cleaned_up_after_verification asserted
+      `len(git worktree list) == 1` — a claim about SHARED repo state that
+      any legitimate concurrent verifier invalidates (b91's contract KEEPS a
+      live-owner worktree; the 2026-09-06 b94 run went RED on a healthy repo
+      when a background suite overlapped a verify_head.sh). New shape:
+      _unowned_leftovers() lists worktrees through head_verify's own parser
+      and spares (a) this checkout, (b) the MAIN worktree derived from git's
+      own `rev-parse --git-common-dir` answer — never from the author's cwd,
+      because inside a nested verification REPO is not the main tree (b94
+      rule), and (c) any prefixed leftover whose owner.pid is ALIVE
+      (owner_state, the exact tool b91 built for the sweep). Dead/unknown
+      owners still count, so the b91 incident shape stays detected; the test
+      re-confirms after 2s before going RED, closing the opposite race (a
+      verifier registering mid-check). 4 new tests (LeakTestIsConcurrencySafe)
+      pin BOTH directions with b91's real-worktree fixture builders — alive
+      owner spared while the OLD assertion provably fails on the same state
+      (anti-vacuity assert inside the test), dead owner counted, unknown
+      owner counted, main tree never a leftover — 993 green, live cycle OK
+      (no_trade). Reusable rule filed as todo b98.
 - [x] 2026-09-06 b95 CROSS-MODULE PROBE RESOLUTION IN THE b94 TRIPWIRE:
       scan() now seeds the probes set from imports — (1) any imported name
       matching the probe-shape vocabulary (detach/bare/gitdir/commondir/
