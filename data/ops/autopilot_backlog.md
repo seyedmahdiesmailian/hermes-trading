@@ -364,7 +364,29 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b102 DELIBERATE NON-WIDENINGS MUST BE PINNED AS TESTS, NOT COMMIT
+- [ ] b103 PROSE-AUDIT HYGIENE: MERGE WRAPPED COMMENT LINES, LET NEGATION
+      WIN, SCAN COMMIT MESSAGES TOO (reusable procedure from b102,
+      2026-09-06): any future tripwire that reads ENGLISH PROSE for a policy
+      claim (not code structure) inherits three bugs b102 hit while measuring
+      its own predicate, each pinned by a test in
+      tests/test_b102_nonwidening_pins.py. (1) MERGE BEFORE SENTENCING — a
+      claim wrapped across two '#' lines strands the item number in one half
+      and the verb in the other and the claim VANISHES (b102's first version
+      missed one of its four live claims this way); consecutive comment lines
+      must join into one block before splitting on sentence ends. (2) A
+      'HISTORY/SHIPPED' SPARE MUST NOT BE A BARE SUBSTRING — 'deliberately
+      not widened in this commit' CONTAINS 'widened in', so the naive
+      shipped-check made the audit blind to the exact shape it was written to
+      catch; require the shipping evidence to NAME the item ('widened in
+      b100') and let a negated widening verb always win. (3) THE MEDIA UNDER
+      AUDIT MUST INCLUDE GIT HISTORY — b99 parked b100 in its COMMIT MESSAGE
+      only, so a code-prose-only scan reports a clean repo while the rule is
+      being violated; replay `git log --format=%H%x01%B` over a bounded window
+      and check each claim against the CURRENT test-method names. General
+      lesson for every prose audit: before trusting a green result, ask which
+      media it reads and whether a wrapped or negated phrasing can hide the
+      claim.
+- [x] b102 DELIBERATE NON-WIDENINGS MUST BE PINNED AS TESTS, NOT COMMIT
       MESSAGES (reusable procedure from b100, 2026-09-06): when a widening
       is measured free but deliberately NOT shipped (scope discipline —
       one widening per commit), the decision lives nowhere unless a test
@@ -377,6 +399,27 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       in either direction. Cheap audit next tripwire round: grep the
       b94-file docstrings for 'filed as bNN' / 'deliberately NOT' and
       check each one has a matching named test.
+      DONE 2026-09-06: shipped as tests/test_b102_nonwidening_pins.py — an
+      AST+prose audit over tests/, scripts/, engines/ and root (257 files,
+      self-excluded like b94 excludes itself, floor test proves the scan
+      scans) that binds every live non-widening claim to a test method whose
+      NAME carries the item, plus the backlog-side check that each parked
+      widening todo says "edited, not deleted". MEASURED AUDIT RESULT: 4 live
+      code-prose claims (all b94's b101 sentences) + 2 commit-message claims
+      (b100's b101 note, b99's b100 note) — ALL already pinned, so the rule
+      ships green on day one and the audit is a tripwire, not a queue of
+      victims (b98's shape). Two scope decisions recorded by measurement:
+      'deliberately NOT edited' (b89's engines/risk.py note) is a file-scope
+      statement already pinned by b88's byte-identity test, NOT a parked
+      widening — dropped from the verb list after it fired on correct prose;
+      and the history-spare must name the item, because 'not widened in this
+      commit' contains 'widened in' (a real false-negative caught by replaying
+      b99's actual commit message — pinned by
+      test_negated_widening_is_a_claim_even_when_it_reads_like_history). The
+      commit-message replay (last 100 messages vs CURRENT test names) is the
+      piece that makes the rule enforce the "not commit messages" half.
+      Hygiene lessons filed as new todo b103. 16 new tests, 1026 green, live
+      cycle OK.
 - [ ] b101 PLAIN-ASSERT IDENTITY SIBLING (from b100, 2026-09-06): b100
       widened the self.assert* identity family (assertIs/assertIsNot/
       assertIsNone/assertIsNotNone) but deliberately did NOT flip the
