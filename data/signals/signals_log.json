@@ -1242,5 +1242,56 @@
         ]
       }
     }
+  },
+  {
+    "timestamp": "2026-09-06T18:59:18.760717+00:00",
+    "raw_text": "[💬 از Gold Trader Mo (GTMO)]\n⚠️MARKET OPEN TONIGHT🌛 IMMEDIATELY BOOK YOUR SLOT FOR ACCOUNT MANAGEMENT LIMIT AVAILABLE ⏳⤵️\n\n\n➡️IF ANYONE REALLY WANTS TO GROW 📈TRADING ACCOUNT AND WANT PROFIT AND GOOD RETURNS ON DAILY BASIS 📈💰\n\n• SO DON'T FORGET TO JOIN OUR ACCOUNT MANAGEMENT SERVICE ⚠️\n\nIMMEDIATELY BOOK YOUR SLOT ⬇️\n\n✔️**FOREX EXPERT TEAM** 👈\n\n• In Account Management We work with proper market knowledge and sureshot strategy and using proper risk management 🧠🛡️\n\n• 50:50 Sharing Work Daily Basis ⏳",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4450.0,
+      "entries": [
+        4450.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.65,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4450.0,
+        "entries": [
+          4450.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.65,
+        "warnings": []
+      }
+    }
   }
 ]

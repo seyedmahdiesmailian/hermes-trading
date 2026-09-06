@@ -47,6 +47,18 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b108 TRADER RESEARCH — RE-MEASURE THE FUNNEL + b68 MERIT BAR UNDER THE
+      b105-CORRECTED ENGINE. b105 found engines/backtest.py double-counted the
+      runner leg (full-size runner booked on top of the realized partial) and
+      kept a phantom position alive after a share>=1.0 TP1 close (blocking real
+      entries). Fixed + pinned by tests/test_b105_partial_parity.py. On the
+      cached 3000 M15 funnel the corrected exp_R is 0.285 (was 0.766), net 463
+      (was 1266) — the 0.854R merit bar every b68 round compared against was
+      inflated by this bug, and because the inflation tracks TP1-hit-rate it
+      was NOT neutral across arms. Re-run the funnel baseline AND the b70
+      decision-set arms (pdh/nr7/dayext/h4t lanes) on the SAME windows through
+      the corrected engine; re-derive the merit bar; re-decide b70. NO live
+      change until the honest numbers are in — this is analysis, not wiring.
 - [ ] b105 TRADER CODE REVIEW — trade_management.py vs LIVE JOURNAL: read the
       SL/BE/trail/TP ladder code line by line; for every branch, find deals in
       the live journal (data/storage) that exercised it; flag any branch that

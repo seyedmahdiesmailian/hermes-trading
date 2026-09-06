@@ -45,11 +45,19 @@ def backtest_ohlc(
     def _close(t: dict, exit_price: float, index: int, reason: str):
         nonlocal equity, wins, losses, scratches
         side = t["side"]
+        # b105 PARITY FIX: the runner leg is only (1 - partial_taken) of the
+        # position. The old code booked it at FULL size on top of the realized
+        # partial — with the live b55/b60 ladder (share = 1.0, close the WHOLE
+        # ticket at TP1) that double-counted every TP1 winner: realized 1R plus
+        # a phantom full-size runner to the final TP. Repro: entry 100/SL 98/
+        # TP 104, TP1 102, runner reaches 104 → live nets 2.0 (1R), the old
+        # engine printed 6.0 (3R).
         # MT5 candles are bid-based: BUY enters at ask (entry + spread), exits at
         # bid; SELL enters at bid, exits at ask (exit + spread). Either way the
         # round trip costs exactly one spread — paid once, not twice.
-        pnl = (exit_price - t["entry"] - spread) if side == "BUY" \
-            else (t["entry"] - exit_price - spread)
+        remaining = round(1.0 - float(t.get("partial_taken") or 0.0), 9)
+        pnl = ((exit_price - t["entry"] - spread) if side == "BUY"
+               else (t["entry"] - exit_price - spread)) * remaining
         net = round(pnl + (t["realized"] or 0.0), 6)
         equity = round(equity + net, 6)
         if reason == "be" and abs(net) <= max(spread, 1e-9):
@@ -110,6 +118,22 @@ def backtest_ohlc(
                                         else (t["entry"] - tp1)) * share - spread * share
                                 t["realized"] = round(part, 6)
                                 t["partial_taken"] = share
+                                # b105 PARITY FIX (part 2 of the same defect):
+                                # share >= 1.0 is not a partial at all. Live
+                                # routes close_fraction>=1.0 to
+                                # bridge.close_position (auto_executor, MT5
+                                # rejects a 100% partial with retcode 10026),
+                                # so the TICKET IS GONE at TP1 — no BE move to
+                                # ride, no trail, no final TP, and the single
+                                # position slot is FREE from this bar on. The
+                                # old engine kept a phantom full-size runner
+                                # alive for bars on, which (a) blocked real
+                                # entries the live system would have taken and
+                                # (b) fed the double-count in _close.
+                                if share >= 1.0:
+                                    _close(t, tp1, index, "tp1_full")
+                                    open_trade = None
+                                    continue
                                 t["be_moved"] = True
                                 t["sl"] = t["entry"]  # live: partial comes with BE move
                     # 4) plain BE move — effective from next bar
