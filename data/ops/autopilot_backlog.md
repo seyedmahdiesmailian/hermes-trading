@@ -47,7 +47,35 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b108 TRADER RESEARCH — RE-MEASURE THE FUNNEL + b68 MERIT BAR UNDER THE
+- [ ] b109 TRADER CODE REVIEW — THE BACKTEST'S "LIVE" LADDER IS A CONSTANT:
+      engines/backtest.py's trade dict does not satisfy
+      trade_management._partial_close_fraction's contract (found by b108,
+      2026-09-06, pinned by tests/test_b109_share_fn_contract.py — EDIT those
+      tests, do not delete them, when this ships). lab_harness.LADDER passes
+      the REAL live function and backtest.py's b55 comment claims it does so
+      "so it can read grade AND momentum/rr/structure from it" — it cannot:
+      live reads setup_grade/momentum_strength/rr_remaining/structure_state,
+      the backtest dict supplies grade/style/entry/sl/tp/... and NONE of the
+      four. rr_remaining therefore defaults to 0.0, which trips the
+      `rr_remaining <= 1.2` branch unconditionally, so the function returns
+      (1.0, 'weak_full_exit_at_tp1') on EVERY call — measured: 935/935 calls
+      on the cached funnel, including all 84 A-grade signals. WHY NO NUMBER
+      MOVED YET: live's weak AND balanced lanes both return 1.0, and the only
+      lane that returns 0.3 (strong-runner: grade A + momentum>=0.8 + rr>=2 +
+      healthy) has never fired live (0 occurrences in data/ or logs/, matching
+      b55's note), so the constant currently agrees with live by luck, not by
+      construction. DO NOT "fix" it by passing the fields through without a
+      re-measurement: the A-grade book would start carrying a 0.3 runner leg
+      the funnel has never been scored with, invalidating b80/b81/b108. Plan:
+      (1) make strategy_signal emit the four live fields from the SAME plan
+      quality dict hermes_runtime reads (trend_strength/alignment), so the
+      backtest trade dict is built from live semantics, not a lookalike;
+      (2) re-run the b108 funnel + lane set and report the A-grade delta;
+      (3) only then decide whether the strong-runner lane is worth modelling
+      at all — if it has never fired live in 17+ positions, the honest fix may
+      be to DELETE the 0.3 branch from live rather than teach the backtest to
+      simulate it (a human gate decision, b89 class).
+- [x] b108 TRADER RESEARCH — RE-MEASURE THE FUNNEL + b68 MERIT BAR UNDER THE
       b105-CORRECTED ENGINE. b105 found engines/backtest.py double-counted the
       runner leg (full-size runner booked on top of the realized partial) and
       kept a phantom position alive after a share>=1.0 TP1 close (blocking real
@@ -59,6 +87,25 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       decision-set arms (pdh/nr7/dayext/h4t lanes) on the SAME windows through
       the corrected engine; re-derive the merit bar; re-decide b70. NO live
       change until the honest numbers are in — this is analysis, not wiring.
+      DONE 2026-09-06 (scripts/b108_rescore_corrected.py re-runs b81's
+      measure_leg/verdict VERBATIM on cached+W1..W4; ledger
+      data/backtest/b108_rescore_corrected.json; 22 tests in
+      tests/test_b108_rescore_corrected.py): THE FUNNEL IS WORTH LESS THAN HALF
+      OF WHAT WE QUOTED — graded exp_R cached 0.796->0.285, W1 0.676->0.202,
+      W2 0.662->0.206, W3 0.767->0.227, W4 0.745->0.222 (net_R 2.5-3.2x lower,
+      DD WORSE on 4/5 legs, +5..+16 trades from the freed slot); the new merit
+      bar is ~0.20-0.23R on independent windows, 0.285 cached. THE CORRECTION
+      IS NOT NEUTRAL, CONFIRMED: nr7htf's margin over the funnel shifts +0.045
+      to +0.093R on ALL FOUR windows (one-sided = systematic), the pdh family
+      shifts are mixed-sign and smaller; lane_h4pdh's W4 flips from a win
+      (+0.019R) to a loss (-0.002R) on the correction alone. B70 RE-DECIDED:
+      windows_beaten fall 2->1 (gated_pdh_dayext), 3->2 (h4pdh), 2->1
+      (runway), 0->0 (nr7htf) — no lane replicates, and nr7htf now LOSES net_R
+      on W1/W2 too (b81's trap got worse). Every remaining lane margin is
+      <=0.05R. b70's standing answer ("no lane earns a slot") stands on honest
+      numbers, and the side-finding b109 (the ladder's live share fn is fed a
+      dict that cannot satisfy its contract — constant 1.0) was filed from the
+      same read-through.
 - [ ] b106 TRADER CODE REVIEW — signal_parser.py vs signal_decision.py: the
       parser's fields vs what the decision layer actually consumes; find
       silently-dropped fields (parsed but never used) and used-but-never-set
@@ -1302,6 +1349,44 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+- 2026-09-06 b108 — THE FUNNEL BASELINE AND THE b70 LANE SET, RE-MEASURED UNDER
+  THE b105-CORRECTED ENGINE (scripts/b108_rescore_corrected.py +
+  data/backtest/b108_rescore_corrected.json + 22 tests in
+  tests/test_b108_rescore_corrected.py). b108 re-runs b81's measurement
+  VERBATIM — b81.measure_leg/verdict/lane closures IMPORTED, not restated — on
+  the same bars, same harness, same ladder, same live grade gate; only the
+  engine changed (runner leg scaled by 1-partial_taken; share>=1.0 closes at
+  TP1 and frees the slot). FINDING 1 — THE BAR HALVED AND MORE: graded funnel
+  exp_R cached 0.796->0.285, W1 0.676->0.202, W2 0.662->0.206, W3 0.767->0.227,
+  W4 0.745->0.222; net_R collapses 2.5-3.2x; DD gets WORSE on 4 of 5 legs (W3
+  -5.1 -> -7.6) because the phantom runner used to paper over drawdowns; the
+  freed slot admits +5..+16 real entries per leg. The honest merit bar is
+  ~0.20-0.23R on independent windows (0.285 cached), not 0.854R and not
+  0.52-0.53R. FINDING 2 — THE INFLATION WAS NOT NEUTRAL, as b105 predicted:
+  lane-relative margin shift (d_lane_exp_R minus d_funnel_exp_R) is POSITIVE on
+  all four windows for lane_nr7htf (W1 +0.071 / W2 +0.045 / W3 +0.093 /
+  W4 +0.052 — its arm hits TP1 less often than the funnel, so the funnel lost
+  more), while the pdh
+  family's shifts are mixed-sign and smaller (|max| 0.032). A neutral bug
+  cannot produce a one-sided shift, so every arm-vs-arm margin printed before
+  b105 is contaminated by the arms' differing TP1-hit profiles. FINDING 3 —
+  ONE DECISION-RELEVANT FLIP: lane_h4pdh's W4 comparison moves from a win
+  (+0.019R) to a loss (-0.002R) purely because of the correction. FINDING 4 —
+  B70 RE-DECIDED, ANSWER UNCHANGED BUT FIRMER: windows_beaten on exp_R fall
+  2->1 (gated_pdh_dayext), 3->2 (h4pdh), 2->1 (runway), 0->0 (nr7htf); no lane
+  replicates on all four windows under either engine, every surviving margin is
+  <=0.05R, and nr7htf's net_R trap got worse — it now SUBTRACTS net_R on W1
+  (-9.7R) and W2 (-4.9R) where b81 had it adding on all four. FINDING 5 (side
+  finding, filed as b109): reading the ladder call path exposed that
+  lab_harness feeds the REAL _partial_close_fraction a dict that cannot satisfy
+  its contract (live reads setup_grade/momentum_strength/rr_remaining/
+  structure_state; the backtest dict supplies none of them), so rr_remaining
+  defaults 0.0 and the function returns (1.0, weak_full_exit_at_tp1) on 935/935
+  calls — the "live-parity ladder" is a constant that agrees with live only
+  because the strong-runner lane has never fired. INTEGRITY: this ledger's
+  old_* columns equal the shipped b81 ledger cell-for-cell (pinned), and the
+  cached funnel cell equals b105's own independently-measured 0.285/110.
+  Nothing wired, nothing weakened; the numbers only got more honest.
 - 2026-09-06 b103 — SHARED PROSE-AUDIT LAYER (tests/prose_audit.py +
   tests/test_b103_prose_audit.py; b102 refactored into its first consumer).
   SHIPPED VIA STEP-0 HARVEST (b46 shape): the previous run wrote the layer, its
