@@ -1,9 +1,9 @@
 {
- "sha": "5c17f28fabf2af6389d8268d0833dab010ccdd72",
+ "sha": "937e82f2fddca93d343545bf5921fc0c88cd1fca",
  "ref": "HEAD",
- "verdict": "OK",
- "at": "2026-09-05T21:04:20Z",
- "tests": 935,
- "seconds": 135.2,
+ "verdict": "BROKEN",
+ "at": "2026-09-06T04:46:38Z",
+ "tests": 946,
+ "seconds": 138.0,
  "note": ""
 }

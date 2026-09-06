@@ -85,13 +85,29 @@ def _dead_pid():
     return p.pid
 
 
+def _checkout_is_detached():
+    """git's OWN answer for this checkout: symbolic-ref fails on a detached HEAD.
+
+    b91b: the parse test must not ASSUME it runs in the main checkout. b50 made
+    the suite run inside a clean detached worktree of HEAD, so from there REPO
+    *is* a detached worktree and a hardcoded assertFalse(detached) goes red —
+    the exact location-dependence b50 exists to eliminate, reproduced by the
+    b91 test itself (verify_head.sh caught it: HEAD stamped BROKEN).
+    """
+    r = subprocess.run(['git', 'symbolic-ref', '-q', '--short', 'HEAD'],
+                       cwd=str(REPO), capture_output=True, text=True)
+    return r.returncode != 0
+
+
 class TestParsing(unittest.TestCase):
     def test_list_worktrees_reads_porcelain(self):
         wts = head_verify.list_worktrees(REPO)
         paths = [w['path'] for w in wts]
         self.assertIn(str(REPO), paths)
         main = next(w for w in wts if w['path'] == str(REPO))
-        self.assertFalse(main['detached'])
+        # location-independent: the parser must agree with git, whether this
+        # checkout is the main one (attached) or a verifier's worktree (detached)
+        self.assertEqual(main['detached'], _checkout_is_detached())
         self.assertEqual(main['head'], _sha())
 
     def test_owner_state_three_signatures(self):
