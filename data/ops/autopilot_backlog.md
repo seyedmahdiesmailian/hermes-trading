@@ -364,7 +364,18 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b97 B95 RESIDUAL BLIND SPOT: PROBES IN NON-TEST HELPER MODULES
+- [ ] b99 PROBE-RESULT COMPARED TO AN EMPTY CONTAINER LITERAL (from b97,
+      2026-09-06): the b94 scan's _scalar() accepts None/bool/int/float/str/
+      bytes, so `assertEqual(list_worktrees(REPO), [])` (or == (), == {}) —
+      hardcoding "no worktrees"/"no output" as the answer a live probe exists
+      to discover — is NOT flagged, while `assertFalse(probe())` is. The
+      shape exists in the wild (b96's OLD leak test asserted a COUNT of the
+      shared listing; the empty-container sibling is the same disease).
+      Measured 2026-09-06: extending _scalar to EMPTY container constants
+      flags ZERO offenders in the current 73-file suite, so it is a free
+      widening — ship it with 2-3 synthetic pins (empty list/tuple/dict
+      caught, non-empty list spared) plus the repo-wide-clean pin.
+- [x] b97 B95 RESIDUAL BLIND SPOT: PROBES IN NON-TEST HELPER MODULES
       (from b95, 2026-09-06): the sibling resolution (seed 2) only walks
       modules named test_* living in tests/. A checkout-state probe with a
       NON-vocabulary name (e.g. `def _shape()` wrapping symbolic-ref) that
@@ -375,6 +386,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       ImportFrom module reachable from tests/ on sys.path (hermetic.py
       first), and reuse sibling_probes() there; keep the vocabulary seed as
       the unresolvable-source fallback. Small, tests-only.
+      DONE 2026-09-06: resolve_src() walks tests/, repo root, and scripts/
+      (the roots the suite sys.path-inserts) for ANY dotted module; seed (2)
+      now imports only names the module EXPOSES at top level
+      (exported_probes) — without that filter the widening would seed a
+      consumer with head_verify's LOCALS ('r','add','rm' trace as state
+      calls inside its functions) and light up unrelated tests. The
+      per-loader memo made the sweep 61s -> 3.8s (27748 -> 78 loader calls).
+      6 new tests (TestNonTestHelperModules) + repo-wide-clean pin; widened
+      scan flags ZERO existing offenders. New todo b99 (empty-container
+      literal sibling of the same disease).
 - [ ] b98 SHARED-STATE COUNT CLAIMS MUST BE OWNER-ATTRIBUTED (reusable
       procedure from b96, 2026-09-06): a test that asserts a COUNT of
       shared, mutable state (`len(git worktree list) == 1`, `len(listdir

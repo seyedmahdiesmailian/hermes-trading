@@ -35,6 +35,19 @@ two ways — (1) any imported name matching the checkout-state vocabulary, and
 (2) any imported name that the SIBLING module's own traced set contains
 (resolved through an injectable loader, cycle-guarded).
 
+b97 (2026-09-06): the sibling resolution only walked modules named test_*
+inside tests/. A checkout-state probe with a NON-vocabulary name living in a
+shared helper (tests/hermetic.py, a future tests/_gitutil.py, or a scripts/
+or engines/ module) and imported into a test slipped past BOTH seeds. The
+loader now resolves ANY dotted module name the way Python would from the
+paths the suite actually sys.path-inserts (tests/, repo root, scripts/), and
+_imported_probe_names walks every ImportFrom/Import through it — the
+vocabulary seed stays as the fallback for unresolvable sources. To keep the
+widening from seeding a production module's LOCAL variable names (head_verify
+traces 'r', 'add', 'rm' inside its own functions) into a consumer's probes
+set, only names the module EXPOSES at its top level are imported
+(exported_probes).
+
 DELIBERATE NON-HITS (pinned by tests so the scan stays honest in BOTH
 directions):
   * `assertEqual(main['detached'], _checkout_is_detached())` — state key vs
@@ -177,33 +190,144 @@ def _trace_local_probes(tree) -> set:
     return probes
 
 
-def _default_loader(mod_name: str):
-    p = TESTS_DIR / (mod_name + '.py')
-    return p.read_text(encoding='utf-8') if p.exists() else None
+# b97: the roots the suite actually puts on sys.path (every test module does
+# sys.path.insert for REPO, most also for REPO/tests, b47-style ones for
+# REPO/scripts). A helper imported by a test can only live on one of these.
+# (b97 also retired b95's tests/-only _default_loader: the widened resolver
+# below is a superset of it, and dead helpers are exactly what this repo's
+# audits remove.)
+MODULE_ROOTS = (TESTS_DIR, REPO, REPO / 'scripts')
+
+
+def resolve_src(mod_name: str):
+    """b97: resolve ANY dotted module name the way Python would from
+    MODULE_ROOTS (tests/, repo root, scripts/). Returns None when nothing
+    there can answer (stdlib, third-party, moved module) — the vocabulary
+    seed then covers the name as the unresolvable-source fallback."""
+    parts = mod_name.split('.')
+    for root in MODULE_ROOTS:
+        try:
+            cand = root.joinpath(*parts).with_suffix('.py')
+            if cand.is_file():
+                return cand.read_text(encoding='utf-8')
+            pkg = root.joinpath(*parts) / '__init__.py'
+            if pkg.is_file():
+                return pkg.read_text(encoding='utf-8')
+        except OSError:
+            continue
+    return None
+
+
+def _top_level_names(tree) -> set:
+    """Names an `import *`/`from m import name` can actually bind: module
+    level defs, assignments, and imported aliases."""
+    out = set()
+    for n in tree.body:
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            out.add(n.name)
+        elif isinstance(n, ast.Assign):
+            for t in n.targets:
+                if isinstance(t, ast.Name):
+                    out.add(t.id)
+        elif isinstance(n, (ast.Import, ast.ImportFrom)):
+            for a in n.names:
+                if a.name != '*':
+                    out.add(a.asname or a.name)
+    return out
+
+
+def _module_src(mod_name: str, loader):
+    """Source of a module through `loader`, memoized ON the loader object.
+    The b97 widening walks the whole import graph for every test file, and
+    the same production module (hermes_runtime, head_verify...) is reached
+    thousands of times; without this the repo-wide sweep costs ~60s of
+    re-reads and re-parses. Keying the cache to the loader object (not to a
+    global name table) keeps an injected test loader from ever sharing an
+    entry with the real resolver."""
+    cache = getattr(loader, '_b97_src_cache', None)
+    if cache is None:
+        cache = {}
+        try:
+            loader._b97_src_cache = cache
+        except (AttributeError, TypeError):
+            pass
+    if mod_name in cache:
+        return cache[mod_name]
+    src = loader(mod_name)
+    cache[mod_name] = src
+    return src
+
+
+def _module_tree(mod_name: str, loader):
+    """(src, parsed tree or None) — parse once per module per loader."""
+    src = _module_src(mod_name, loader)
+    if src is None:
+        return None, None
+    cache = getattr(loader, '_b97_tree_cache', None)
+    if cache is None:
+        cache = {}
+        try:
+            loader._b97_tree_cache = cache
+        except (AttributeError, TypeError):
+            pass
+    if mod_name not in cache:
+        try:
+            cache[mod_name] = ast.parse(src)
+        except SyntaxError:
+            cache[mod_name] = None
+    return src, cache[mod_name]
+
+
+def exported_probes(mod_name: str, loader, seen=frozenset()) -> set:
+    """b97: the probes a module EXPOSES — its traced set intersected with
+    its top-level names. Without the filter, widening the loader would seed
+    a consumer with a production module's LOCAL variables (head_verify's
+    functions trace 'r', 'add', 'rm' as state-call results): a test that
+    happens to reuse such a common name would light up. Exposure is what an
+    import can bind, so it is the honest boundary."""
+    tree = _module_tree(mod_name, loader)[1]
+    if tree is None:
+        return set()
+    return sibling_probes(mod_name, loader, seen) & _top_level_names(tree)
 
 
 def sibling_probes(mod_name: str, loader, seen=frozenset()) -> set:
     """The full traced-probe set of a sibling module, computed with the SAME
-    rules (local dataflow + its own imports), cycle-guarded."""
+    rules (local dataflow + its own imports), cycle-guarded. Memoized on
+    (loader, module, seen) — `seen` is part of the key because the cycle
+    guard legitimately truncates the walk differently per call site."""
     if mod_name in seen:
         return set()
-    src = loader(mod_name)
-    if src is None:
-        return set()
-    try:
-        tree = ast.parse(src)
-    except SyntaxError:
-        return set()
-    probes = _trace_local_probes(tree)
-    probes |= _imported_probe_names(tree, loader, seen | {mod_name})
+    cache = getattr(loader, '_b97_sib_cache', None)
+    if cache is None:
+        cache = {}
+        try:
+            loader._b97_sib_cache = cache
+        except (AttributeError, TypeError):
+            pass
+    key = (mod_name, seen)
+    if key in cache:
+        return cache[key]
+    tree = _module_tree(mod_name, loader)[1]
+    if tree is None:
+        probes = set()
+    else:
+        probes = _trace_local_probes(tree)
+        probes |= _imported_probe_names(tree, loader, seen | {mod_name})
+    if len(cache) < 100000:
+        cache[key] = probes
     return probes
 
 
 def _imported_probe_names(tree, loader, seen) -> set:
     """b95: probes that ARRIVE from another module. Two seeds:
     (1) any imported name matching the probe-shape vocabulary, and
-    (2) any name imported from a sibling test module that the SIBLING's own
-        traced set contains (resolved recursively through `loader`)."""
+    (2) any name imported from a module whose OWN traced set contains it
+        (resolved recursively through `loader`).
+    b97: seed (2) no longer requires a test_* name or the tests/ folder —
+    ANY module resolvable on the suite's sys.path roots is walked, so a
+    non-vocabulary probe in a shared helper (tests/hermetic.py, a future
+    tests/_gitutil.py, engines/, scripts/) is caught at the import site."""
     out = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -211,35 +335,32 @@ def _imported_probe_names(tree, loader, seen) -> set:
             # _fname() returns the attribute name, so seeding the sibling's
             # traced set is enough to catch the module-object shape too.
             for a in node.names:
-                if a.name.startswith('test_'):
-                    out |= sibling_probes(a.name, loader, seen)
+                out |= exported_probes(a.name, loader, seen)
             continue
         if not isinstance(node, ast.ImportFrom):
             continue
         mod = (node.module or '').lstrip('.')
         if not mod:
             continue  # `from . import x` — no resolvable module name
-        sib = None
         for a in node.names:
             local = a.asname or a.name
             if local != '*' and _probe_shaped(local):
                 out.add(local)
-        if mod.startswith('test_'):
-            sib = sibling_probes(mod, loader, seen)
-            for a in node.names:
-                if a.name == '*':
-                    out |= sib
-                elif a.name in sib:
-                    out.add(a.asname or a.name)
+        sib = exported_probes(mod, loader, seen)
+        for a in node.names:
+            if a.name == '*':
+                out |= sib
+            elif a.name in sib:
+                out.add(a.asname or a.name)
     return out
 
 
 def scan(src: str, loader=None):
     """Return [(lineno, why, line)] for location-dependent git-state
-    assertions in the given test-module source. `loader` resolves sibling
-    module names to source (b95); defaults to reading tests/<name>.py."""
+    assertions in the given test-module source. `loader` resolves module
+    names to source (b95/b97); defaults to the widened sys.path resolver."""
     if loader is None:
-        loader = _default_loader
+        loader = resolve_src
     tree = ast.parse(src)
     lines = src.splitlines()
 
@@ -537,8 +658,10 @@ class TestCrossModuleProbes(unittest.TestCase):
     def test_real_b91_sibling_resolves_under_the_default_loader(self):
         """The fixture above mirrors the REAL repo: b91's own traced set
         must contain _checkout_is_detached, so any future test that imports
-        it and hardcodes the answer is caught by the repo-wide sweep."""
-        probes = sibling_probes('test_b91_stale_worktree', _default_loader)
+        it and hardcodes the answer is caught by the repo-wide sweep.
+        b97: the default loader is now the widened sys.path resolver — the
+        sibling lives in tests/, which it must still find."""
+        probes = sibling_probes('test_b91_stale_worktree', resolve_src)
         self.assertIn('_checkout_is_detached', probes)
 
     def test_repo_wide_sweep_uses_cross_module_resolution(self):
@@ -555,6 +678,101 @@ class TestCrossModuleProbes(unittest.TestCase):
                         + '; '.join(offenders))
         # and the REAL repo is still clean under the exact same sweep
         self.assertEqual(sweep_offenders(disk_files()), [])
+
+
+class TestNonTestHelperModules(unittest.TestCase):
+    """b97: the residual blind spot of b95. Seed (2) used to walk only
+    modules named test_* inside tests/. A checkout-state probe with a
+    NON-vocabulary name that lives in a shared helper — tests/hermetic.py,
+    a future tests/_gitutil.py, an engines/ or scripts/ module — and is
+    imported into a test slipped past BOTH seeds: the name misses
+    PROBE_NAME_WORDS and the module misses the test_* filter. The loader now
+    resolves ANY module reachable from the suite's sys.path roots."""
+
+    # a helper whose probe name carries NO vocabulary word at all
+    GITUTIL = ("def _shape():\n"
+               "    r = subprocess.run(['git', 'symbolic-ref', '-q', 'HEAD'],\n"
+               "                       cwd=str(REPO))\n"
+               "    return r.returncode != 0\n")
+
+    @staticmethod
+    def _loader(mapping):
+        return lambda name: mapping.get(name)
+
+    def test_non_vocabulary_probe_in_helper_module_is_caught(self):
+        src = ("from _gitutil import _shape\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertFalse(_shape())\n')
+        loader = self._loader({'_gitutil': self.GITUTIL})
+        hits = scan(src, loader=loader)
+        self.assertTrue(hits,
+                        'b97 shape: helper probe with a non-vocabulary name '
+                        'imported into a test still slips past: ' + str(hits))
+
+    def test_helper_probe_survives_a_rename_via_as(self):
+        src = ("from _gitutil import _shape as sh\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertTrue(sh())\n')
+        loader = self._loader({'_gitutil': self.GITUTIL})
+        self.assertTrue(scan(src, loader=loader),
+                        'aliased helper probe not caught')
+
+    def test_production_module_probe_is_caught_via_the_default_loader(self):
+        """No injected loader: the DEFAULT resolution must reach engines/
+        (the way the suite's own sys.path does) and flag hardcoding
+        head_verify's parser's answer."""
+        src = ("from engines.head_verify import list_worktrees\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertTrue(list_worktrees(REPO))\n')
+        hits = scan(src)
+        self.assertTrue(hits,
+                        'default loader cannot see engines/ — the b97 '
+                        'widening is decorative: ' + str(hits))
+
+    def test_helper_locals_are_not_seeded_into_consumers(self):
+        """Anti-false-positive for the widening: head_verify's functions
+        trace 'r', 'add', 'rm' as state-call results LOCALLY. Those are not
+        importable names, so they must never seed a consumer's probes set —
+        otherwise every test that happens to use `r` for a subprocess
+        result would light up."""
+        exposed = exported_probes('engines.head_verify', resolve_src)
+        self.assertIn('list_worktrees', exposed)
+        for local in ('r', 'add', 'rm', 'pr'):
+            self.assertNotIn(local, exposed,
+                             f'{local} is a LOCAL of head_verify, not an '
+                             'exported probe — seeding it would flag '
+                             'unrelated tests')
+        src = ("from engines import head_verify\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               "        r = subprocess.run(['ls'])\n"
+               '        self.assertEqual(r.returncode, 0)\n')
+        self.assertEqual(scan(src), [],
+                         'a plain subprocess result named r flagged — the '
+                         'export filter is broken')
+
+    def test_unresolvable_helper_falls_back_to_the_vocabulary_seed(self):
+        """A helper OUTSIDE the sys.path roots (moved, third-party) cannot
+        be read — the name vocabulary stays as the fallback, exactly as
+        b95 shipped it."""
+        src = ("from third_party_git_thing import is_detached\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertTrue(is_detached())\n')
+        self.assertTrue(scan(src),
+                        'vocabulary fallback lost in the b97 widening')
+
+    def test_repo_wide_sweep_stays_clean_under_the_widened_default(self):
+        """The widened default loader must not flag ANYTHING in the current
+        suite — if it does, the widening is too aggressive and this test is
+        the tripwire on itself."""
+        offenders = sweep_offenders(disk_files())  # default loader = resolve_src
+        self.assertEqual(offenders, [],
+                         'b97 widening flags existing correct code: '
+                         + '; '.join(offenders))
 
 
 if __name__ == '__main__':

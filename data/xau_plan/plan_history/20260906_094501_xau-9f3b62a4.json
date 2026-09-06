@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-09b89d21",
+  "plan_id": "xau-9f3b62a4",
   "symbol": "XAUUSD",
   "bias": "neutral",
   "session": "london",
@@ -44,9 +44,9 @@
     "smc_poi": "C",
     "smc_signal": "wait"
   },
-  "created_at": "2026-09-06T10:10:31.334725+00:00",
-  "expires_at": "2026-09-06T22:10:31.334725+00:00",
-  "next_reassessment": "2026-09-06T10:15:31.334725+00:00",
+  "created_at": "2026-09-06T09:45:01.679319+00:00",
+  "expires_at": "2026-09-06T21:45:01.679319+00:00",
+  "next_reassessment": "2026-09-06T09:50:01.679319+00:00",
   "context": {
     "m5_last": 4431.72,
     "h1_last": 4431.72,
@@ -879,111 +879,6 @@
           "weight": 0.0
         }
       }
-    },
-    "macro": {
-      "timestamp": "2026-09-06T10:00:04.287075+00:00",
-      "dxy": {
-        "change_pct": 0.026,
-        "direction": "up",
-        "available": true,
-        "source": "synthetic"
-      },
-      "silver": {
-        "available": false
-      },
-      "risk_sentiment": {
-        "available": false
-      },
-      "tick_volume": {
-        "volume_ratio": 0.35,
-        "is_high_volume": false,
-        "is_low_volume": true,
-        "available": true
-      },
-      "higher_tf": {
-        "h4": {
-          "price": 4431.72,
-          "high_20": 4510.89,
-          "low_20": 4282.51,
-          "pos_in_range": 0.65,
-          "zone": "equilibrium",
-          "sma10": 4458.77,
-          "trend": "bearish"
-        },
-        "d1": {
-          "price": 4431.72,
-          "high_20": 4697.2,
-          "low_20": 4282.51,
-          "pos_in_range": 0.36,
-          "zone": "equilibrium",
-          "sma10": 4502.91,
-          "trend": "bearish"
-        },
-        "w1": {
-          "price": 4431.72,
-          "high_20": 4443.47,
-          "low_20": 4411.85,
-          "pos_in_range": 0.63,
-          "zone": "equilibrium",
-          "sma10": 4430.73,
-          "trend": "bullish"
-        }
-      },
-      "verdict": {
-        "verdict": "none",
-        "score_long": 0,
-        "score_short": 1,
-        "macro_conflicting": false
-      },
-      "calendar": {
-        "source": "forexfactory",
-        "high_impact": [
-          {
-            "title": "Final Employment Change q/q",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-07T05:00:00-04:00",
-            "time": "",
-            "forecast": "0.1%",
-            "previous": "0.1%"
-          },
-          {
-            "title": "Revised GDP q/q",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-07T05:00:00-04:00",
-            "time": "",
-            "forecast": "0.4%",
-            "previous": "0.4%"
-          }
-        ],
-        "medium_impact": [
-          {
-            "title": "Final Employment Change q/q",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-07T05:00:00-04:00",
-            "time": "",
-            "forecast": "0.1%",
-            "previous": "0.1%"
-          },
-          {
-            "title": "Revised GDP q/q",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-07T05:00:00-04:00",
-            "time": "",
-            "forecast": "0.4%",
-            "previous": "0.4%"
-          }
-        ],
-        "total_events": 78,
-        "upcoming_events": 9,
-        "strict_high_count": 0,
-        "window_hours": 24,
-        "fetched_at": "2026-09-06T10:00:04.892841+00:00"
-      },
-      "_fetched_at": 1788688804.8935719
     }
   }
 }

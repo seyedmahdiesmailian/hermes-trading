@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-06T08:00:31.716167+00:00",
+ "last_run_utc": "2026-09-06T09:02:44.532831+00:00",
  "recent_commits": [
+  "556e750 autopilot: b96 b50 leak test made concurrency-safe \u2014 owner-attributed worktree count (spare this checkout + the main tree derived from git --git-common-dir + any prefixed leftover whose owner.pid is ALIVE via head_verify.owner_state; dead/unknown owners still count; 2s re-confirm closes the opposite race); 4 new tests pin both directions with b91's real-worktree fixtures; new todo b98 (shared-state count claims must be owner-attributed)",
   "6db55ad autopilot: b95 cross-module probe resolution in the b94 tripwire \u2014 scan() seeds the probes set from imports (vocabulary-shaped names + sibling test module's own traced set, recursive/cycle-guarded, plain/aliased/star/module-object shapes); repo-wide sweep refactored to in-memory sweep_offenders (no temp file in tests/, avoids the b96 race class); 10 new tests, 989 green; new todo b97 (residual: probes in non-test helper modules)",
   "47050db autopilot: b94 wrap-up \u2014 new todo b96 (b50 leak test raced a concurrent verify_head this run: 2-line worktree list is legitimate under b91's supported concurrency, must count only dead/unknown-owner leftovers)",
   "25b6200 autopilot: b94 follow-up \u2014 new todo b95 (scan blind spot: cross-module imported probe names slip past the single-module dataflow trace)",
-  "ea2fa77 autopilot: b94 location-dependent test tripwire \u2014 AST scan fails any tests/*.py that compares git checkout-state (detached/bare/gitdir, worktree-listing keys, live probe results) to a hardcoded literal instead of git's own answer; pinned against the real 937e82f offender; b50/b91 audited clean, zero other offenders in the suite",
-  "462e90d autopilot: b93 measure the medium before the gate \u2014 datasets are broker-server-time, market_hours live-record + boundary escalation"
+  "ea2fa77 autopilot: b94 location-dependent test tripwire \u2014 AST scan fails any tests/*.py that compares git checkout-state (detached/bare/gitdir, worktree-listing keys, live probe results) to a hardcoded literal instead of git's own answer; pinned against the real 937e82f offender; b50/b91 audited clean, zero other offenders in the suite"
  ]
 }
