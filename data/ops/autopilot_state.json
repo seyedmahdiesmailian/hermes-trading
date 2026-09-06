@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-06T06:30:03.071984+00:00",
+ "last_run_utc": "2026-09-06T07:19:34.968640+00:00",
  "recent_commits": [
+  "47050db autopilot: b94 wrap-up \u2014 new todo b96 (b50 leak test raced a concurrent verify_head this run: 2-line worktree list is legitimate under b91's supported concurrency, must count only dead/unknown-owner leftovers)",
+  "25b6200 autopilot: b94 follow-up \u2014 new todo b95 (scan blind spot: cross-module imported probe names slip past the single-module dataflow trace)",
+  "ea2fa77 autopilot: b94 location-dependent test tripwire \u2014 AST scan fails any tests/*.py that compares git checkout-state (detached/bare/gitdir, worktree-listing keys, live probe results) to a hardcoded literal instead of git's own answer; pinned against the real 937e82f offender; b50/b91 audited clean, zero other offenders in the suite",
   "462e90d autopilot: b93 measure the medium before the gate \u2014 datasets are broker-server-time, market_hours live-record + boundary escalation",
-  "b70bc77 harvest: b92 cooldown-gate measurement (left uncommitted by the 04:35 run) \u2014 gate is in a different domain than the book: post-open window unmeasurable on weekday-only datasets, restart guard arms 1x in live record, NOT shadowed",
-  "8788cfb autopilot: b91b \u2014 the b91 parse test assumed it runs in the MAIN checkout, so inside b50's nested detached worktree assertFalse(detached) went RED and verify_head stamped HEAD 937e82f BROKEN; now the parser is asserted against git's own symbolic-ref answer (location-independent, the very property b50 exists to protect)",
-  "937e82f harvest: b91 orphan-worktree self-heal in head_verify (killed run left a registered worktree that prune cannot see, poisoning every later suite) + b46 seam scoped to git-status lines w/ anti-vacuity test + b89 backlog mark + runtime data",
-  "5c17f28 autopilot: b90 \u2014 Telegram 400 killed the 21:13 report: agent narrative/backlog free text with a raw '<' was inserted unescaped into an HTML-mode message (escape at source + commit subjects + todo; +escape test)"
+  "b70bc77 harvest: b92 cooldown-gate measurement (left uncommitted by the 04:35 run) \u2014 gate is in a different domain than the book: post-open window unmeasurable on weekday-only datasets, restart guard arms 1x in live record, NOT shadowed"
  ]
 }

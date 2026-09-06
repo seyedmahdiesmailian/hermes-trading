@@ -25,6 +25,16 @@ test_b91_stale_worktree.py — b41 discipline: real history, not a strawman)
 and against synthetic fixtures for the other shapes, and the two known
 git-state test files (b50, b91) are audited by name.
 
+b95 (2026-09-06): the trace is NOT single-module any more. Cross-test imports
+are real in this repo (b50 sys.path-inserts tests/, test_b37/b64/b66/b92 all
+import helpers from sibling test modules), so a probe can arrive from the
+module next door: `from test_b91_stale_worktree import _checkout_is_detached`
+followed by `assertFalse(_checkout_is_detached())` used to slip past, because
+the imported name is not in the LOCAL probes set. scan() now seeds the set
+two ways — (1) any imported name matching the checkout-state vocabulary, and
+(2) any imported name that the SIBLING module's own traced set contains
+(resolved through an injectable loader, cycle-guarded).
+
 DELIBERATE NON-HITS (pinned by tests so the scan stays honest in BOTH
 directions):
   * `assertEqual(main['detached'], _checkout_is_detached())` — state key vs
@@ -63,6 +73,15 @@ GIT_STATE_WORDS = ('symbolic-ref', '--git-dir', '--git-common-dir',
 # state). list_worktrees is head_verify's parser; anything that WRAPS a
 # state-bearing git call is traced automatically (see scan()).
 PROBE_FUNCS = {'list_worktrees'}
+
+# b95: name vocabulary for probe-shaped helpers. A name imported from
+# ANOTHER module cannot be traced by dataflow here (the state call lives in
+# that module), so an imported name that READS like a checkout-state probe
+# is seeded into the probes set. Deliberately substring-matched: the repo's
+# helpers are `_checkout_is_detached`, `_worktree_paths`, `_is_bare_repo`...
+PROBE_NAME_WORDS = ('detach', 'bare', 'gitdir', 'git_dir', 'commondir',
+                    'common_dir', 'worktree', 'work_tree', 'checkout',
+                    'is_bare')
 
 # subprocess-ish runners whose args we inspect for GIT_STATE_WORDS.
 GIT_RUNNER_NAMES = {'run', 'check_output', 'call', 'Popen', '_git', 'g',
@@ -130,14 +149,20 @@ def _direct_probe(node, names):
     return False
 
 
-def scan(src: str):
-    """Return [(lineno, why, line)] for location-dependent git-state
-    assertions in the given test-module source."""
-    tree = ast.parse(src)
-    lines = src.splitlines()
+def _probe_shaped(name: str) -> bool:
+    """b95: does an IMPORTED name read like a checkout-state probe? The
+    state call lives in the sibling module, so local dataflow cannot see it
+    and the name itself is the only evidence. ALL-CAPS names are skipped:
+    they are constants (paths, shas), not probes."""
+    if name.isupper() or name.startswith('__'):
+        return False
+    low = name.lower()
+    return any(w in low for w in PROBE_NAME_WORDS)
 
-    # Pass 1: trace probe names — variables assigned from state calls, and
-    # helper functions whose body makes a state call.
+
+def _trace_local_probes(tree) -> set:
+    """Pass 1 of the old single-module scan: variables assigned from state
+    calls, and helper functions whose body makes a state call."""
     probes = set(PROBE_FUNCS)
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign) and _is_state_call(node.value):
@@ -149,6 +174,79 @@ def scan(src: str):
                 if _is_state_call(sub):
                     probes.add(node.name)
                     break
+    return probes
+
+
+def _default_loader(mod_name: str):
+    p = TESTS_DIR / (mod_name + '.py')
+    return p.read_text(encoding='utf-8') if p.exists() else None
+
+
+def sibling_probes(mod_name: str, loader, seen=frozenset()) -> set:
+    """The full traced-probe set of a sibling module, computed with the SAME
+    rules (local dataflow + its own imports), cycle-guarded."""
+    if mod_name in seen:
+        return set()
+    src = loader(mod_name)
+    if src is None:
+        return set()
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return set()
+    probes = _trace_local_probes(tree)
+    probes |= _imported_probe_names(tree, loader, seen | {mod_name})
+    return probes
+
+
+def _imported_probe_names(tree, loader, seen) -> set:
+    """b95: probes that ARRIVE from another module. Two seeds:
+    (1) any imported name matching the probe-shape vocabulary, and
+    (2) any name imported from a sibling test module that the SIBLING's own
+        traced set contains (resolved recursively through `loader`)."""
+    out = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            # b95: `import test_X as m` then `m._checkout_is_detached()` —
+            # _fname() returns the attribute name, so seeding the sibling's
+            # traced set is enough to catch the module-object shape too.
+            for a in node.names:
+                if a.name.startswith('test_'):
+                    out |= sibling_probes(a.name, loader, seen)
+            continue
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        mod = (node.module or '').lstrip('.')
+        if not mod:
+            continue  # `from . import x` — no resolvable module name
+        sib = None
+        for a in node.names:
+            local = a.asname or a.name
+            if local != '*' and _probe_shaped(local):
+                out.add(local)
+        if mod.startswith('test_'):
+            sib = sibling_probes(mod, loader, seen)
+            for a in node.names:
+                if a.name == '*':
+                    out |= sib
+                elif a.name in sib:
+                    out.add(a.asname or a.name)
+    return out
+
+
+def scan(src: str, loader=None):
+    """Return [(lineno, why, line)] for location-dependent git-state
+    assertions in the given test-module source. `loader` resolves sibling
+    module names to source (b95); defaults to reading tests/<name>.py."""
+    if loader is None:
+        loader = _default_loader
+    tree = ast.parse(src)
+    lines = src.splitlines()
+
+    # Pass 1: trace probe names — local dataflow plus b95's cross-module
+    # seeds (imported probe-shaped names and the siblings' own traced sets).
+    probes = _trace_local_probes(tree) | _imported_probe_names(
+        tree, loader, frozenset())
 
     # Pass 2: assertion shapes that hardcode the answer about the checkout.
     hits = []
@@ -194,23 +292,41 @@ def scan(src: str):
     return sorted(set(hits))
 
 
+def disk_files():
+    """Every tests/*.py except THIS file (it names the bad shapes as
+    fixtures). Returns [(name, src)] — read once, reused by the sweep."""
+    out = []
+    for p in sorted(TESTS_DIR.glob('*.py')):
+        if p.name == Path(__file__).name:
+            continue
+        out.append((p.name, p.read_text(encoding='utf-8')))
+    return out
+
+
+def sweep_offenders(files, loader=None):
+    """Run scan() over [(name, src)] and flatten to offender strings.
+    Shared by the repo-wide test and b95's in-memory anti-vacuity probe —
+    a synthetic offender is injected as a (name, src) PAIR, never written
+    to tests/: two suite runs sharing one checkout would otherwise race on
+    the temp file (the b96 flake class)."""
+    offenders = []
+    for name, src in files:
+        try:
+            hits = scan(src, loader=loader)
+        except SyntaxError as e:
+            offenders.append(f'{name}: SyntaxError: {e}')
+            continue
+        for ln, why, line in hits:
+            offenders.append(f'{name}:{ln}: {why} :: {line}')
+    return offenders
+
+
 class TripwireOnCurrentSuite(unittest.TestCase):
     MIN_FILES_SCANNED = 60  # anti-vacuity: the scan must actually scan
 
     def test_no_test_module_assumes_the_checkout_shape(self):
-        offenders = []
-        scanned = 0
-        for p in sorted(TESTS_DIR.glob('*.py')):
-            if p.name == Path(__file__).name:
-                continue  # this file names the bad shapes as fixtures
-            scanned += 1
-            src = p.read_text(encoding='utf-8')
-            try:
-                hits = scan(src)
-            except SyntaxError as e:
-                self.fail(f'{p.name} does not parse: {e}')
-            for ln, why, line in hits:
-                offenders.append(f'{p.name}:{ln}: {why} :: {line}')
+        offenders = sweep_offenders(disk_files())
+        scanned = len(disk_files())
         self.assertGreaterEqual(scanned, self.MIN_FILES_SCANNED,
                                 f'only {scanned} test files scanned — the '
                                 'scan is broken, not the repo clean')
@@ -313,6 +429,132 @@ class ScanIsHonest(unittest.TestCase):
         self.assertIn('symbolic-ref', src,
                       'the b91b live-probe fix is gone from the file')
         self.assertEqual(scan(src), [])
+
+
+class TestCrossModuleProbes(unittest.TestCase):
+    """b95: the single-module trace was blind to a probe imported from a
+    sibling test module — the exact shape this repo uses (b50 sys.path-
+    inserts tests/; b37/b64/b66/b92 import sibling helpers). The scan must
+    resolve `from test_X import probe` against X's OWN traced set, and must
+    still spare legitimate cross-imports."""
+
+    # sibling module: defines a real probe (state call in its body)
+    SIB = ("def _checkout_is_detached():\n"
+           "    r = subprocess.run(['git', 'symbolic-ref', '-q', 'HEAD'],\n"
+           "                       cwd=str(REPO))\n"
+           "    return r.returncode != 0\n"
+           "def _sha(ref='HEAD'):\n"
+           "    return subprocess.run(['git', 'rev-parse', ref]).stdout\n")
+    # consumer module: imports the probe and hardcodes its answer
+    OFFENDER = ("from test_sibling_fixture import _checkout_is_detached\n"
+                'class T(unittest.TestCase):\n'
+                '    def test_x(self):\n'
+                '        self.assertFalse(_checkout_is_detached())\n')
+
+    @staticmethod
+    def _loader(mapping):
+        return lambda name: mapping.get(name)
+
+    def test_imported_sibling_probe_is_caught(self):
+        loader = self._loader({'test_sibling_fixture': self.SIB})
+        hits = scan(self.OFFENDER, loader=loader)
+        self.assertTrue(any('probe' in why for _, why, _ in hits),
+                        'cross-module probe slipped past the scan: ' + str(hits))
+
+    def test_star_import_of_sibling_probe_is_caught(self):
+        src = ("from test_sibling_fixture import *\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertTrue(_checkout_is_detached())\n')
+        loader = self._loader({'test_sibling_fixture': self.SIB})
+        hits = scan(src, loader=loader)
+        self.assertTrue(hits, 'star-imported sibling probe not caught')
+
+    def test_aliased_sibling_probe_is_caught(self):
+        src = ("from test_sibling_fixture import _checkout_is_detached as det\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               "        self.assertEqual(det(), False)\n")
+        loader = self._loader({'test_sibling_fixture': self.SIB})
+        hits = scan(src, loader=loader)
+        self.assertTrue(hits, 'aliased sibling probe not caught: ' + str(hits))
+
+    def test_probe_shaped_import_name_is_caught_without_the_sibling(self):
+        """Seed (1): the source of the sibling may be unresolvable (moved,
+        renamed, outside tests/) — a name that READS like a checkout-state
+        probe is still enough to flag hardcoding its answer."""
+        src = ("from somewhere_else import is_detached\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertTrue(is_detached())\n')
+        hits = scan(src, loader=self._loader({}))
+        self.assertTrue(hits, 'probe-shaped import not caught: ' + str(hits))
+
+    def test_legitimate_cross_import_is_spared(self):
+        """The repo's real shapes: importing a Mock or a parser helper from
+        a sibling must NOT turn every use into a hit."""
+        src = ("from test_runtime_fallback_management import MockBridge\n"
+               "from test_b52_env_names import _env_doc_values\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertTrue(MockBridge.ok)\n'
+               '        self.assertEqual(len(_env_doc_values()), 3)\n')
+        self.assertEqual(scan(src, loader=self._loader({})), [])
+
+    def test_imported_state_key_dict_is_spared_when_derived(self):
+        """ALL-CAPS imports are constants, not probes: `from x import
+        GITDIR` used in a path join must not seed the probes set."""
+        src = ("from test_sibling_fixture import MAIN_WORKTREE_PATH\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertTrue(MAIN_WORKTREE_PATH.exists())\n')
+        self.assertEqual(scan(src, loader=self._loader({})), [])
+
+    def test_module_object_probe_call_is_caught(self):
+        """`import test_X as sib` then `sib._checkout_is_detached()` —
+        _fname() sees the attribute, so the sibling's traced set catches it."""
+        src = ("import test_sibling_fixture as sib\n"
+               'class T(unittest.TestCase):\n'
+               '    def test_x(self):\n'
+               '        self.assertFalse(sib._checkout_is_detached())\n')
+        loader = self._loader({'test_sibling_fixture': self.SIB})
+        hits = scan(src, loader=loader)
+        self.assertTrue(hits, 'module-object sibling probe not caught: '
+                              + str(hits))
+
+    def test_import_cycle_between_siblings_terminates(self):
+        a = ("from test_b_fixture import probe_b\n"
+             "def probe_a():\n"
+             "    return probe_b()\n")
+        b = ("from test_a_fixture import probe_a\n"
+             "def probe_b():\n"
+             "    return probe_a()\n")
+        loader = self._loader({'test_a_fixture': a, 'test_b_fixture': b})
+        # must not recurse forever and must not raise
+        hits = scan(a, loader=loader)
+        self.assertIsInstance(hits, list)
+
+    def test_real_b91_sibling_resolves_under_the_default_loader(self):
+        """The fixture above mirrors the REAL repo: b91's own traced set
+        must contain _checkout_is_detached, so any future test that imports
+        it and hardcodes the answer is caught by the repo-wide sweep."""
+        probes = sibling_probes('test_b91_stale_worktree', _default_loader)
+        self.assertIn('_checkout_is_detached', probes)
+
+    def test_repo_wide_sweep_uses_cross_module_resolution(self):
+        """Anti-vacuity for b95 itself: the sweep that guards the repo must
+        catch the offender shape end-to-end if it lands in tests/ — proven
+        IN MEMORY (inject the (name, src) pair), never by writing a temp
+        file into tests/ where a concurrent suite run would race on it."""
+        files = disk_files() + [
+            ('test_b95_zz_synthetic_offender.py', self.OFFENDER)]
+        offenders = sweep_offenders(files)
+        self.assertTrue(any('test_b95_zz_synthetic_offender' in o
+                            for o in offenders),
+                        'repo-wide sweep blind to the b95 shape: '
+                        + '; '.join(offenders))
+        # and the REAL repo is still clean under the exact same sweep
+        self.assertEqual(sweep_offenders(disk_files()), [])
 
 
 if __name__ == '__main__':

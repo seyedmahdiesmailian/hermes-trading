@@ -364,16 +364,6 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b95 B94 SCAN BLIND SPOT: CROSS-MODULE PROBES (from b94, 2026-09-06):
-      the tripwire traces probe names WITHIN one module only — a test that
-      does `from test_b91_stale_worktree import _checkout_is_detached` and
-      then `assertFalse(_checkout_is_detached())` slips past, because the
-      imported name is not in the local probes set. Cross-test imports are
-      real in this repo (b50 already sys.path-inserts tests/ to import
-      hermetic). Fix: seed the probes set with any imported name matching
-      the probe-shape vocabulary (or resolve `from tests import ...` names
-      against the sibling module's own traced set), pinned by a synthetic
-      two-module fixture. Small, tests-only.
 - [ ] b96 B50 LEAK TEST FLAKES UNDER CONCURRENT VERIFIERS (found 2026-09-06,
       b94 run): test_worktree_is_cleaned_up_after_verification asserts
       `git worktree list` has exactly ONE line — but b91's own docstring
@@ -388,6 +378,17 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       tool), so it detects real leaks without racing legitimate
       concurrency; pin with the synthetic alive-owner shape b91 already
       builds. Small, tests-only.
+- [ ] b97 B95 RESIDUAL BLIND SPOT: PROBES IN NON-TEST HELPER MODULES
+      (from b95, 2026-09-06): the sibling resolution (seed 2) only walks
+      modules named test_* living in tests/. A checkout-state probe with a
+      NON-vocabulary name (e.g. `def _shape()` wrapping symbolic-ref) that
+      lives in a shared helper (tests/hermetic.py, a future
+      tests/_gitutil.py, or a scripts/ module) and is imported into a test
+      slips past BOTH seeds — the name misses PROBE_NAME_WORDS and the
+      module misses the test_* filter. Fix: widen the loader to resolve ANY
+      ImportFrom module reachable from tests/ on sys.path (hermetic.py
+      first), and reuse sibling_probes() there; keep the vocabulary seed as
+      the unresolvable-source fallback. Small, tests-only.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
@@ -1776,6 +1777,22 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
   plus 2 regression tests (76 green).
 
 ## Done
+- [x] 2026-09-06 b95 CROSS-MODULE PROBE RESOLUTION IN THE b94 TRIPWIRE:
+      scan() now seeds the probes set from imports — (1) any imported name
+      matching the probe-shape vocabulary (detach/bare/gitdir/commondir/
+      worktree/checkout; ALL-CAPS constants spared), (2) names resolved
+      against the SIBLING test module's own traced set through an injectable
+      loader (recursive, cycle-guarded), covering plain, `as`-aliased, and
+      star imports, plus `import test_X as m; m.probe()` via the sibling's
+      traced names. The repo-wide sweep was refactored to a shared
+      sweep_offenders(files) over in-memory (name, src) pairs — b95's
+      anti-vacuity probe injects the synthetic offender as a PAIR instead of
+      writing a temp file into tests/, removing a race with concurrent suite
+      runs (the b96 flake class, avoided pre-emptively). 10 new tests
+      (catch: imported/aliased/star/module-object/probe-shaped-without-source;
+      spare: MockBridge-style legit imports, ALL-CAPS constants; cycle
+      termination; real b91 sibling resolves _checkout_is_detached; end-to-end
+      sweep catches the offender shape) — 989 green, live cycle OK (no_trade).
 - [x] 2026-09-06 b94 LOCATION-DEPENDENT TEST TRIPWIRE: tests/test_b94_
       location_dependent_tripwire.py — an AST scan (not grep: the b91 shape
       hides inside `main = next(w for w in wts ...)` dataflow that grep
