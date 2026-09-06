@@ -364,6 +364,16 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
+- [ ] b95 B94 SCAN BLIND SPOT: CROSS-MODULE PROBES (from b94, 2026-09-06):
+      the tripwire traces probe names WITHIN one module only — a test that
+      does `from test_b91_stale_worktree import _checkout_is_detached` and
+      then `assertFalse(_checkout_is_detached())` slips past, because the
+      imported name is not in the local probes set. Cross-test imports are
+      real in this repo (b50 already sys.path-inserts tests/ to import
+      hermetic). Fix: seed the probes set with any imported name matching
+      the probe-shape vocabulary (or resolve `from tests import ...` names
+      against the sibling module's own traced set), pinned by a synthetic
+      two-module fixture. Small, tests-only.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
