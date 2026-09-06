@@ -364,7 +364,23 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b99 PROBE-RESULT COMPARED TO AN EMPTY CONTAINER LITERAL (from b97,
+- [ ] b100 IDENTITY-ASSERT SIBLING OF THE b94 DISEASE (from b99, 2026-09-06):
+      the scan flags `assertEqual(probe(), X)` and bare `assert probe()`, but
+      NOT `assertIs(probe(), False)` / `assertIsNone(list_worktrees(REPO))` —
+      hardcoding the answer through the identity family is the same disease
+      as ==-with-a-literal. Measured 2026-09-06 (AST replay over all 73 test
+      files): ZERO offenders for assertIs/assertIsNot (probe or state-key vs
+      a Constant) and for assertIsNone/assertIsNotNone (probe or state-key) —
+      a free widening, same shape as b99's. Deliberately NOT shipped inside
+      b99: b99's scope was the empty-container item + the plain-assert
+      asymmetry, and a third silent widening in one commit is exactly what
+      this repo's audit history warns about. Ship as its own item: extend
+      scan() pass 2 with an IDENTITY_ASSERTS set ({assertIs, assertIsNot,
+      assertIsNone, assertIsNotNone}), reuse _hardcoded_answer/
+      _state_subscript/_direct_probe, pin both directions synthetically
+      (identity caught, `assertIsNone(obj.attr)` spared) + the
+      repo-wide-clean pin.
+- [x] b99 PROBE-RESULT COMPARED TO AN EMPTY CONTAINER LITERAL (from b97,
       2026-09-06): the b94 scan's _scalar() accepts None/bool/int/float/str/
       bytes, so `assertEqual(list_worktrees(REPO), [])` (or == (), == {}) —
       hardcoding "no worktrees"/"no output" as the answer a live probe exists
@@ -375,6 +391,22 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       flags ZERO offenders in the current 73-file suite, so it is a free
       widening — ship it with 2-3 synthetic pins (empty list/tuple/dict
       caught, non-empty list spared) plus the repo-wide-clean pin.
+      DONE 2026-09-06: re-measured first (kernel AST replay of the widened
+      predicate over all 73 files: 0 offenders — free confirmed). Shipped
+      _empty_container()/_hardcoded_answer() ([] () {} set() frozenset();
+      set()/frozenset() are CALLS in the AST, not Constants) on the
+      self.assert* pair path, AND the measured-free sibling the item did not
+      name: the PLAIN-assert COMPARISON (`assert probe() == []`,
+      `assert main['detached'] == False`) was caught on the self.assert*
+      path but not the bare-assert path — an asymmetry, not a policy; now
+      flagged with the same predicate (Eq/NotEq only). Non-empty containers
+      stay spared (structural/derived claim, b96 fixture-comparison shape);
+      len()/sorted() wrappers stay spared (derived size claim). 6 new tests
+      (TestEmptyContainerAndPlainAssert) pin both directions + an in-memory
+      repo-wide anti-vacuity for the b99 shape itself; identity family
+      (assertIs/None on a probe) measured 0 offenders too but deliberately
+      NOT widened silently — filed as todo b100. 1005 green, live cycle OK
+      (reassess, no_trade).
 - [x] b97 B95 RESIDUAL BLIND SPOT: PROBES IN NON-TEST HELPER MODULES
       (from b95, 2026-09-06): the sibling resolution (seed 2) only walks
       modules named test_* living in tests/. A checkout-state probe with a

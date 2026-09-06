@@ -48,6 +48,24 @@ traces 'r', 'add', 'rm' inside its own functions) into a consumer's probes
 set, only names the module EXPOSES at its top level are imported
 (exported_probes).
 
+b99 (2026-09-06): two siblings of the same disease, both measured FREE
+(zero offenders in the whole suite before shipping, per the backlog's own
+measurement):
+  (1) EMPTY-CONTAINER literals. _scalar() accepted only None/bool/int/float/
+      str/bytes, so `assertEqual(list_worktrees(REPO), [])` — hardcoding
+      "no worktrees" as the answer a live probe exists to discover — slipped
+      past while `assertFalse(probe())` was flagged. b96's OLD leak test
+      asserted a COUNT of the shared listing; the empty-container sibling is
+      the same disease. _hardcoded_answer() now covers [] () {} set()
+      frozenset() alongside the scalars.
+  (2) the PLAIN-assert comparison. The bare-assert pass caught
+      `assert probe()` but not `assert probe() == []` / `assert x['detached']
+      == False`, even though the self.assert* path catches both forms — an
+      asymmetry, not a policy. Plain `assert <probe|state-key> == <answer>`
+      (Eq/NotEq only) is now flagged with the same predicate.
+      Derived claims stay spared on BOTH paths: `assert len(wts) == 1` is a
+      SIZE claim (b50/b96 territory), not a shape claim.
+
 DELIBERATE NON-HITS (pinned by tests so the scan stays honest in BOTH
 directions):
   * `assertEqual(main['detached'], _checkout_is_detached())` — state key vs
@@ -142,6 +160,33 @@ def _scalar(c):
     return (isinstance(c, ast.Constant)
             and (c.value is None or isinstance(c.value, (bool, int, float,
                                                          str, bytes))))
+
+
+# b99: the empty-container siblings of the scalar answers. `set()`/
+# `frozenset()` are CALLS in the AST, not Constants, so they need their own
+# shape check; a non-empty container is a DERIVED/structural claim (b96's
+# owner-attributed leftovers list compares against a built fixture) and is
+# deliberately NOT in here — see _hardcoded_answer.
+EMPTY_CONTAINER_CALLS = {'set', 'frozenset'}
+
+
+def _empty_container(c):
+    if isinstance(c, (ast.List, ast.Tuple, ast.Set)) and not c.elts:
+        return True
+    if isinstance(c, ast.Dict) and not c.keys:
+        return True
+    return (isinstance(c, ast.Call) and isinstance(c.func, ast.Name)
+            and c.func.id in EMPTY_CONTAINER_CALLS
+            and not c.args and not c.keywords)
+
+
+def _hardcoded_answer(c):
+    """b99: is this operand a HARDCODED answer to a checkout-state question?
+    Scalars (True/False/'/x/.git'/None) plus the empty containers [] () {}
+    set() frozenset() — 'no worktrees'/'no output' is just as much an
+    assumed answer as 'not detached', and it is the shape a live probe
+    exists to discover."""
+    return _scalar(c) or _empty_container(c)
 
 
 def _state_subscript(node):
@@ -389,13 +434,13 @@ def scan(src: str, loader=None):
                               'exists to discover')
         elif len(args) == 2:
             a, b = args
-            if _state_subscript(a) and _scalar(b):
+            if _state_subscript(a) and _hardcoded_answer(b):
                 bad, why = True, 'git-state key compared to a literal'
-            elif _state_subscript(b) and _scalar(a):
+            elif _state_subscript(b) and _hardcoded_answer(a):
                 bad, why = True, 'literal compared to a git-state key'
-            elif _direct_probe(a, probes) and _scalar(b):
+            elif _direct_probe(a, probes) and _hardcoded_answer(b):
                 bad, why = True, 'live probe result compared to a literal'
-            elif _direct_probe(b, probes) and _scalar(a):
+            elif _direct_probe(b, probes) and _hardcoded_answer(a):
                 bad, why = True, 'literal compared to a live probe result'
         if bad:
             ln = node.lineno
@@ -403,6 +448,12 @@ def scan(src: str, loader=None):
 
     # Plain `assert x['detached']` / `assert probe()` statements carry the
     # same disease as self.assert* and must not slip through.
+    # b99: the COMPARISON form of the plain assert (`assert probe() == []`,
+    # `assert main['detached'] == False`) is the same disease too — the old
+    # pass caught only the bare-truthiness form, an asymmetry with the
+    # self.assert* path which flags both. Eq/NotEq only: `assert probe()
+    # is not None` is the identity family, deliberately out of scope (filed
+    # as a separate backlog question, not silently widened here).
     for node in ast.walk(tree):
         if isinstance(node, ast.Assert) and node.test is not None:
             t = node.test
@@ -410,6 +461,17 @@ def scan(src: str, loader=None):
                 ln = node.lineno
                 hits.append((ln, 'bare assert on git state',
                              lines[ln - 1].strip()[:110]))
+            elif (isinstance(t, ast.Compare) and len(t.ops) == 1
+                    and isinstance(t.ops[0], (ast.Eq, ast.NotEq))):
+                a, b = t.left, t.comparators[0]
+                if ((_state_subscript(a) and _hardcoded_answer(b))
+                        or (_state_subscript(b) and _hardcoded_answer(a))
+                        or (_direct_probe(a, probes) and _hardcoded_answer(b))
+                        or (_direct_probe(b, probes) and _hardcoded_answer(a))):
+                    hits.append((node.lineno,
+                                 'assert comparison hardcodes the probe '
+                                 'answer',
+                                 lines[node.lineno - 1].strip()[:110]))
     return sorted(set(hits))
 
 
@@ -773,6 +835,91 @@ class TestNonTestHelperModules(unittest.TestCase):
         self.assertEqual(offenders, [],
                          'b97 widening flags existing correct code: '
                          + '; '.join(offenders))
+
+
+class TestEmptyContainerAndPlainAssert(unittest.TestCase):
+    """b99: the two siblings of the b94 disease, both measured FREE before
+    shipping (zero offenders in the whole suite):
+      (1) an EMPTY container literal as the hardcoded answer — `[] () {}
+          set() frozenset()` say "no worktrees"/"no output" just as loudly
+          as False says "not detached";
+      (2) the plain-assert COMPARISON — `assert probe() == []` was caught on
+          the self.assert* path but not on the bare-assert path."""
+
+    HEAD = ('class T(unittest.TestCase):\n'
+            '    def _checkout_is_detached():\n'
+            "        r = subprocess.run(['git', 'symbolic-ref', '-q', "
+            "'HEAD'], cwd=str(REPO))\n"
+            '        return r.returncode != 0\n'
+            '    def test_x(self):\n'
+            '        wts = list_worktrees(REPO)\n'
+            '        main = wts[0]\n')
+
+    def _hits(self, stmt):
+        return scan(self.HEAD + f'        {stmt}\n')
+
+    def test_empty_container_answers_are_caught(self):
+        for stmt in ("self.assertEqual(wts, [])",
+                     "self.assertEqual(wts, ())",
+                     "self.assertEqual(wts, set())",
+                     "self.assertEqual(wts, frozenset())",
+                     "self.assertEqual(wts, {})",
+                     "self.assertEqual([], wts)",
+                     "self.assertEqual(main['detached'], [])",
+                     "self.assertEqual(_checkout_is_detached(), ())"):
+            self.assertTrue(self._hits(stmt),
+                            f'b99 shape still slips past the scan: {stmt}')
+
+    def test_non_empty_containers_are_spared(self):
+        """A populated literal is a STRUCTURAL/derived claim (b96 compares
+        an owner-attributed leftovers LIST against a fixture it built), not
+        an assumed answer about this checkout's shape."""
+        for stmt in ("self.assertEqual(wts, [1])",
+                     "self.assertEqual(wts, {'detached': True})",
+                     "self.assertEqual(len(wts), 0)",
+                     "self.assertEqual(sorted(wts), ['a'])"):
+            self.assertEqual(self._hits(stmt), [],
+                             f'the widening flags a non-answer: {stmt}')
+
+    def test_plain_assert_comparison_is_caught(self):
+        for stmt in ("assert wts == []",
+                     "assert main['detached'] == False",
+                     "assert _checkout_is_detached() == True",
+                     "assert wts != []",
+                     "assert main['gitdir'] == ()"):
+            hits = self._hits(stmt)
+            self.assertTrue(any('hardcodes' in why for _, why, _ in hits),
+                            f'plain-assert comparison slipped past: {stmt} '
+                            f'-> {hits}')
+
+    def test_plain_assert_fixed_and_derived_shapes_are_spared(self):
+        for stmt in ("assert main['detached'] == _checkout_is_detached()",
+                     "assert len(wts) == 1",
+                     "assert wts[0]['detached'] == _checkout_is_detached()",
+                     "assert wts is not None",
+                     "assert main['detached'] is False"):
+            self.assertEqual(self._hits(stmt), [],
+                             f'plain-assert widening hits a legal shape: '
+                             f'{stmt}')
+
+    def test_bare_assert_truthiness_still_caught(self):
+        """The b94 original must not regress behind the b99 elif branch."""
+        self.assertTrue(self._hits("assert main['detached']"))
+        self.assertTrue(self._hits("assert _checkout_is_detached()"))
+
+    def test_repo_wide_sweep_catches_the_b99_shape_end_to_end(self):
+        """Anti-vacuity, in memory (b95 rule: never write a temp file into
+        tests/ where a concurrent suite would race on it)."""
+        offender = (self.HEAD + '        self.assertEqual(wts, [])\n')
+        files = disk_files() + [
+            ('test_b99_zz_synthetic_offender.py', offender)]
+        offenders = sweep_offenders(files)
+        self.assertTrue(any('test_b99_zz_synthetic_offender' in o
+                            for o in offenders),
+                        'repo-wide sweep blind to the b99 empty-container '
+                        'shape: ' + '; '.join(offenders))
+        self.assertEqual(sweep_offenders(disk_files()), [],
+                         'the b99 widening flags existing correct code')
 
 
 if __name__ == '__main__':
