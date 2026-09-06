@@ -47,7 +47,52 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b109 TRADER CODE REVIEW — THE BACKTEST'S "LIVE" LADDER IS A CONSTANT:
+- [ ] b111 TRADER CODE REVIEW — THE TWO LIVE LADDER PRODUCERS DISAGREE ON GRADE
+      (found by b109, 2026-09-06; spared-direction pin:
+      tests/test_b109_share_fn_contract.py::TestB109ProducerParity::
+      test_b111_*). position_daemon.build_trade inlines a PRE-b45 grade rule:
+      an A needs only aligned+trend>=3.0 (NO regime clause) and 'mixed'
+      alignment reaches B, while hermes_runtime._infer_setup_grade /
+      auto_executor require regime in {breakout,pullback}_continuation for an A
+      and send 'mixed' to C (b45, 2026-08-31, justified by two mixed/range
+      sells that netted -56.7$). In production the watchdog is alive whenever a
+      position exists, so the ladder decision that ACTUALLY runs is the
+      watchdog's looser rule. Measured over 1540 plan_history files
+      (scripts/b109_probe_lane_reachability.py): the two rules agree on the
+      strong-runner lane (0 disagreements — the collapse makes it grade-A-only
+      on both sides) but differ on the WEAK-lane share (runtime 86.9% vs
+      watchdog 68.1% of plans), and the weak/balanced split feeds
+      _breakeven_stop: grade>=2 + momentum>=0.65 locks +0.15R instead of plain
+      BE. So the watchdog locks profit on plans the canonical rule calls C.
+      DECISION NEEDED (b89 class, human gate): align the watchdog onto
+      _infer_setup_grade (tightening — but it changes live exit behaviour, so
+      it needs its own measured round), or document the divergence as intended.
+      b109 deliberately did NOT align it. Before deciding, re-run the probe:
+      its lane-disagreement assert is pinned at 0 and will fire if the rules
+      ever split the lane itself.
+- [x] b109 TRADER CODE REVIEW — THE BACKTEST'S "LIVE" LADDER IS A CONSTANT:
+      SHIPPED 2026-09-06: strategy_signal now emits the live ladder fields
+      through ONE shared derivation (engines.trade_management.ladder_fields,
+      called by hermes_runtime.cycle + position_daemon.build_trade + the
+      backtest), engines/backtest.py carries them into the trade dict, and the
+      re-measurement (scripts/b109_ladder_parity_rescore.py, ledger
+      data/backtest/b109_ladder_parity_rescore.json) says the A-grade runner
+      leg is WORTH NOTHING: d_exp_R -0.015 cached / +0.003 W1 / +0.021 W2 /
+      -0.004 W3 / -0.001 W4 — MIXED SIGN, max |delta| 0.021R, maxDD_R
+      unchanged on all five legs, so by b110's neutrality rule the
+      b80/b81/b108 numbers and the ~0.20-0.23R merit bar STAND. Two structural
+      findings came out of the read-through: (a) the four-way AND in
+      _partial_close_fraction COLLAPSES to `setup_grade == 'A'` (both producers
+      derive all four inputs from alignment+trend_strength and hardcode
+      rr_remaining=2.0 — verified over every distinct (alignment,trend,regime)
+      in 1540 real plans, scripts/b109_probe_lane_reachability.py), so b55's
+      "a thesis the parity backtest cannot model" was one threshold, and the
+      `rr_remaining<=1.2` weak clause has been dead since it was written; (b)
+      the two live producers do NOT share a grade rule — filed as b111.
+      b108's contract tests were EDITED to certify the fix from both
+      directions (fields arrive / ladder discriminates / lab arms keep their
+      shape), not deleted. 14 tests in tests/test_b109_share_fn_contract.py,
+      1105 green, live cycle OK. Original note follows.
       engines/backtest.py's trade dict does not satisfy
       trade_management._partial_close_fraction's contract (found by b108,
       2026-09-06, pinned by tests/test_b109_share_fn_contract.py — EDIT those

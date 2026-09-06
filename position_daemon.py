@@ -35,7 +35,7 @@ load_dotenv(BASE / '.env')
 from bridge_client import BridgeClient
 from engines import paths
 from engines.bridge_payload import positions_list
-from engines.trade_management import evaluate_trade_management
+from engines.trade_management import evaluate_trade_management, ladder_fields
 from engines.auto_executor import evaluate_management_action
 from engines.legacy_guards import evaluate_news_lock, evaluate_time_exit
 
@@ -156,6 +156,12 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
         if _final:
             _mid = p.price_open + (_final - p.price_open) * 0.5
             tp_levels = [_mid, _final]
+    # b109: the watchdog's OWN grade rule (see the note in the dict below —
+    # it is deliberately NOT _infer_setup_grade). Named once so the dict and
+    # the shared derivation cannot diverge.
+    wd_grade = ('A' if alignment == 'aligned' and trend >= 3.0
+                else 'B' if alignment in ('aligned', 'mixed') and trend >= 1.2
+                else 'C')
     return {
         'symbol': 'XAUUSD',
         'side': side,
@@ -172,15 +178,27 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
         'scaled_in_levels': [],
         'volume': p.volume,
         'regime': quality.get('regime'),
-        'setup_grade': ('A' if alignment == 'aligned' and trend >= 3.0
-                        else 'B' if alignment in ('aligned', 'mixed') and trend >= 1.2 else 'C'),
-        'momentum_strength': min(1.0, max(0.2, trend / 2.0)),  # ATR units → 0-1
-        'volatility_state': 'high' if trend >= 3.0 else 'normal',
-        'structure_state': 'healthy' if alignment == 'aligned' else 'mixed',
-        'session_phase': plan.get('session'),
-        'rr_remaining': 2.0,
-        'thesis_valid': alignment != 'counter',
-        'exposure_fraction': 0.5,
+        # b109: the ladder fields come from the ONE shared derivation
+        # (engines.trade_management.ladder_fields), the same helper
+        # hermes_runtime.cycle and the live-parity backtest use — so the three
+        # producers can no longer drift apart field by field.
+        #
+        # THE GRADE IS STILL THIS FILE'S OWN RULE, ON PURPOSE. It is NOT
+        # _infer_setup_grade: this inline rule has no regime clause (an A needs
+        # only aligned + trend>=3.0) and lets 'mixed' alignment reach B, while
+        # hermes_runtime/auto_executor require a continuation regime for A and
+        # send 'mixed' to C (b45, 2026-08-31). Switching the watchdog to the
+        # canonical rule would change the live breakeven lock (grade>=2 +
+        # momentum>=0.65 -> lock +0.15R instead of plain BE) on a real account,
+        # so it is filed as a human decision (b111), not taken here. Measured
+        # over data/xau_plan/plan_history (1540 plans): the two rules agree on
+        # the strong-runner lane (0 disagreements) and differ on the WEAK lane
+        # (runtime 86.9% vs watchdog 68.1% of plans) — i.e. the drift is real
+        # and sits in the branch that decides whether the stop gets locked.
+        'setup_grade': wd_grade,
+        **{k: v for k, v in ladder_fields(quality, wd_grade,
+                                          session=plan.get('session')).items()
+           if k != 'setup_grade'},
     }
 
 

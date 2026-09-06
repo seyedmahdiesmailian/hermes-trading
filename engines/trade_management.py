@@ -5,6 +5,14 @@ from datetime import datetime
 
 GRADE_RANK = {"A": 3, "B": 2, "C": 1}
 
+# b109: the keys the ladder functions read out of a trade dict. ONE list, so a
+# producer (live or backtest) that forgets one fails loudly in the parity test
+# instead of silently defaulting — which is exactly how the backtest's
+# "live-parity ladder" degenerated into a constant (b108's side finding).
+LADDER_FIELDS = ("setup_grade", "momentum_strength", "volatility_state",
+                 "structure_state", "session_phase", "rr_remaining",
+                 "thesis_valid", "exposure_fraction")
+
 
 def _is_buy(trade: dict) -> bool:
     return str(trade.get("side", "")).upper() == "BUY"
@@ -30,6 +38,43 @@ def _next_scale_level(trade: dict):
 
 def _grade_value(trade: dict) -> int:
     return GRADE_RANK.get(str(trade.get("setup_grade", "B")).upper(), 2)
+
+
+def ladder_fields(quality: dict, setup_grade: str,
+                  session: str | None = None) -> dict:
+    """b109: THE ONE definition of how a plan becomes the fields the ladder
+    reads. Both live producers (hermes_runtime.cycle, position_daemon.build_trade)
+    and the live-parity backtest (engines.backtest_real.strategy_signal) call
+    this, so "live semantics" is a single source, not three lookalikes.
+
+    grade is a PARAMETER, not derived here: the two live producers do not use
+    the same grade rule (hermes_runtime calls _infer_setup_grade, which
+    requires a continuation regime for an A and sends 'mixed' to C;
+    position_daemon inlines a pre-b45 rule that lets 'mixed' reach B and has
+    no regime clause). Aligning them would change the live breakeven lock, so
+    it is a human decision — filed, not taken. Everything else is derived from
+    the plan's own quality dict.
+
+    rr_remaining is a CONSTANT 2.0 in both producers (never recomputed from
+    the live price path), which is why the `rr_remaining <= 1.2` weak clause
+    and the `>= 2.0` runner clause are both dead weight — see the collapse
+    note on _partial_close_fraction. The backtest mirrors the constant because
+    modelling a live rr recompute would simulate a rule live never runs.
+    """
+    q = quality or {}
+    trend = float(q.get("trend_strength", 0) or 0)
+    alignment = q.get("alignment")
+    return {
+        "setup_grade": setup_grade,
+        "momentum_strength": min(1.0, max(0.2, trend / 2.0)),   # ATR units -> 0-1
+        "volatility_state": "high" if trend >= 3.0 else "normal",
+        "structure_state": "healthy" if alignment == "aligned" else "mixed",
+        "session_phase": session if session is not None else q.get("session"),
+        "rr_remaining": 2.0,
+        # b109: the constant is load-bearing, not laziness — see docstring.
+        "thesis_valid": alignment != "counter",
+        "exposure_fraction": 0.5,
+    }
 
 
 def _partial_close_fraction(trade: dict) -> tuple[float, str]:

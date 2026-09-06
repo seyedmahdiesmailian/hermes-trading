@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from typing import Callable
 
+# b109: the ladder-field names live in engines.trade_management (the module
+# that READS them). Imported, never restated — a restated tuple is a second
+# source of truth that can drift from the reader. trade_management imports
+# nothing from here, so this edge is acyclic.
+from engines.trade_management import LADDER_FIELDS
+
 
 def backtest_ohlc(
     rows: list[dict],
@@ -197,6 +203,21 @@ def backtest_ohlc(
             "style": signal.get("style"),
             "grade": signal.get("grade"),
         }
+        # b109: carry the LIVE ladder fields from the signal into the trade
+        # dict the partial-share function reads. Before this, the
+        # "live-parity ladder" was fed a dict with none of them, so
+        # rr_remaining defaulted to 0.0, the `<= 1.2` weak branch tripped on
+        # EVERY call, and _partial_close_fraction returned the constant
+        # (1.0, 'weak_full_exit_at_tp1') — 935/935 calls on the cached funnel,
+        # all 84 A-grade signals included. engines.backtest_real.strategy_signal
+        # now emits them through the same ladder_fields() helper the two live
+        # producers use, so the parity is by construction again.
+        # Arms that do not supply them (every standalone lab arm) keep
+        # today's behaviour untouched: nothing is copied, the live function
+        # defaults as it always did for a grade-B arm.
+        for _k in LADDER_FIELDS:
+            if _k in signal:
+                open_trade[_k] = signal[_k]
 
     # unfinished trade: force-close at last bar's close (marked as its raw result)
     if open_trade is not None:

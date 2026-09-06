@@ -21,7 +21,7 @@ from engines.context import build_plan_context
 from engines.bridge_payload import positions_list
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
-from engines.trade_management import evaluate_trade_management
+from engines.trade_management import evaluate_trade_management, ladder_fields
 from engines.risk import assess_account_policy, compute_performance_state
 from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log
 from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
@@ -525,11 +525,14 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                 'breakeven_active': bool(((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('breakeven_active', False)),
                 'runner_active': bool(((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('runner_active', True)),
                 'scaled_in_levels': ((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('scaled_in_levels', []),
-                'volume': p.volume, 'regime': (plan.get('quality') or {}).get('regime'), 'setup_grade': _infer_setup_grade(plan),
-                'momentum_strength': min(1.0, max(0.2, float((plan.get('quality') or {}).get('trend_strength', 0) or 0) / 2.0)),  # ATR units → 0-1
-                'volatility_state': 'high' if float((plan.get('quality') or {}).get('trend_strength', 0) or 0) >= 3.0 else 'normal',
-                'structure_state': 'healthy' if (plan.get('quality') or {}).get('alignment') == 'aligned' else 'mixed',
-                'session_phase': plan.get('session'), 'rr_remaining': 2.0, 'thesis_valid': (plan.get('quality') or {}).get('alignment') != 'counter', 'exposure_fraction': 0.5,
+                'volume': p.volume, 'regime': (plan.get('quality') or {}).get('regime'),
+                # b109: the ladder fields come from the ONE shared derivation
+                # (engines.trade_management.ladder_fields), same helper the
+                # watchdog and the live-parity backtest use. The values are
+                # byte-identical to the inline block this replaces.
+                **ladder_fields(plan.get('quality') or {},
+                                _infer_setup_grade(plan),
+                                session=plan.get('session')),
             }
             market_price = float(tick_obj.ask if trade['side'] == 'BUY' else tick_obj.bid)
             management = evaluate_trade_management(trade, market_price, now)

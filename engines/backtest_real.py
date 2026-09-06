@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from engines.context import build_plan_context
 from engines.smc import smc_analyse, merge_smc_with_classic
+from engines.trade_management import ladder_fields
 from engines.orchestrator import build_plan_from_context, evaluate_monitor_cycle
 from engines.backtest import backtest_ohlc
 from engines import paths as _paths
@@ -88,10 +89,24 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         # (MIN_SETUP_GRADE="B"). Without this the backtest silently traded
         # every stale-plan C setup the live funnel would reject.
         from hermes_runtime import _infer_setup_grade
-        return {"side": bp["side"], "entry": float(bp["entry_price"]),
-                "sl": float(bp["sl"]), "tp": float(bp["tp"]),
-                "style": decision.get("execution_style"),
-                "grade": _infer_setup_grade(plan)}
+        grade = _infer_setup_grade(plan)
+        # b109: the trade dict the ladder reads must be built from LIVE
+        # semantics, not a lookalike. Until now the backtest handed the real
+        # _partial_close_fraction a dict with none of the four fields it reads
+        # (setup_grade/momentum_strength/rr_remaining/structure_state), so
+        # rr_remaining defaulted to 0.0, the `<= 1.2` branch tripped on every
+        # call and the "live-parity ladder" was the constant (1.0,
+        # weak_full_exit_at_tp1) — 935/935 calls on the cached funnel, the
+        # 84 A-grade signals included. Emit them through the SAME helper the
+        # live producers use (engines.trade_management.ladder_fields), so the
+        # parity claim is by construction again.
+        sig = {"side": bp["side"], "entry": float(bp["entry_price"]),
+               "sl": float(bp["sl"]), "tp": float(bp["tp"]),
+               "style": decision.get("execution_style"),
+               "grade": grade}
+        sig.update(ladder_fields(plan.get("quality") or {}, grade,
+                                 session=plan.get("session")))
+        return sig
     except Exception:
         return None
 
