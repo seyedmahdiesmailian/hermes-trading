@@ -66,6 +66,18 @@ measurement):
       Derived claims stay spared on BOTH paths: `assert len(wts) == 1` is a
       SIZE claim (b50/b96 territory), not a shape claim.
 
+b100 (2026-09-06): the IDENTITY family on the self.assert* path — the
+  widening b99 measured free and filed rather than shipping silently.
+  `assertIs(probe(), False)` hardcodes the answer through `is` exactly as
+  `assertEqual(probe(), False)` does through `==`, and
+  `assertIsNone(probe())`/`assertIsNotNone(probe())` hardcode it by OMITTING
+  it (None lives in the method name) — "the probe found nothing" is b99's
+  empty-container claim in a different spelling. IDENTITY_ASSERTS joins the
+  pass-2 filter; both operand orders are covered, mirroring assertEqual.
+  The plain-assert `is`/`is not` sibling is deliberately NOT flipped here
+  (b99 parked it as a spared pin; one widening per commit) — measured free
+  and filed as b101, pinned by test_plain_assert_identity_stays_spared.
+
 DELIBERATE NON-HITS (pinned by tests so the scan stays honest in BOTH
 directions):
   * `assertEqual(main['detached'], _checkout_is_detached())` — state key vs
@@ -75,6 +87,9 @@ directions):
     leak test uses this shape legitimately.
   * `assertEqual(main['head'], _sha())` — 'head' is not in the state-key
     vocabulary (it is a content claim, and both sides are live probes).
+  * `assertIsNone(cfg.path)` / `assertIs(obj.attr, None)` (b100) — an
+    identity claim about a NON-probe object: the scan binds probes by
+    dataflow and imports, so unrelated identity asserts stay untouched.
 """
 from __future__ import annotations
 
@@ -120,6 +135,27 @@ GIT_RUNNER_NAMES = {'run', 'check_output', 'call', 'Popen', '_git', 'g',
 
 BOOL_ASSERTS = {'assertTrue', 'assertFalse'}
 PAIR_ASSERTS = {'assertEqual', 'assertNotEqual'}
+
+# b100: the IDENTITY family of the same disease. `assertIs(probe(), False)`
+# hardcodes the answer through `is` exactly as `assertEqual(probe(), False)`
+# does through `==`, and `assertIsNone(probe())` hardcodes it by OMITTING it
+# (None is implicit in the method name) — "the probe found nothing" is
+# b99's empty-container claim spelled differently.
+#
+# Scope follows this file's own stated policy, which is STRICT, not
+# semantic: the scan flags any assertion that compares a checkout-state
+# value to a hardcoded answer, in EITHER direction — PAIR_ASSERTS already
+# contains assertNotEqual, so `assertNotEqual(probe(), None)` has been an
+# offender since b94. The identity family is the same claim through `is`,
+# so all four methods are in: assertIs/assertIsNot (answer in arg 2) and
+# assertIsNone/assertIsNotNone (answer implicit). Dropping the negative
+# forms would leave the tripwire blind to `assertIsNotNone(probe())` while
+# it still catches its `!= None` twin — the exact asymmetry b99 shipped the
+# plain-assert comparison to close.
+# All four were measured FREE (zero offenders over all 73 test files).
+IDENTITY_PAIR_ASSERTS = {'assertIs', 'assertIsNot'}
+IDENTITY_UNARY_ASSERTS = {'assertIsNone', 'assertIsNotNone'}
+IDENTITY_ASSERTS = IDENTITY_PAIR_ASSERTS | IDENTITY_UNARY_ASSERTS
 
 # The real historical offender: HEAD before the b91b fix. Its copy of the
 # b91 test contains `assertFalse(main['detached'])` — the exact line that
@@ -420,11 +456,29 @@ def scan(src: str, loader=None):
         if not isinstance(node, ast.Call):
             continue
         name = _fname(node.func)
-        if name not in BOOL_ASSERTS | PAIR_ASSERTS:
+        if name not in BOOL_ASSERTS | PAIR_ASSERTS | IDENTITY_ASSERTS:
             continue
         args = node.args[:2]
         bad = why = ''
-        if name in BOOL_ASSERTS and args and _state_subscript(args[0]):
+        # b100: the identity family. assertIs/assertIsNot carry the answer in
+        # their second arg exactly like assertEqual; assertIsNone/
+        # assertIsNotNone carry it by OMITTING it (None is in the method
+        # name), so they are UNARY probes of the same disease.
+        if (name in IDENTITY_UNARY_ASSERTS and args
+                and (_state_subscript(args[0])
+                     or _direct_probe(args[0], probes))):
+            bad, why = True, ('identity assert with an implicit None answer '
+                              'on git state: assertIsNone(probe()) hardcodes '
+                              'what the probe exists to discover')
+        elif (len(args) == 2 and name in IDENTITY_PAIR_ASSERTS
+              and (((_state_subscript(args[0]) or _direct_probe(args[0], probes))
+                    and _hardcoded_answer(args[1]))
+                   or (((_state_subscript(args[1])
+                         or _direct_probe(args[1], probes))
+                        and _hardcoded_answer(args[0]))))):
+            bad, why = True, ('git-state probe compared by identity to a '
+                              'literal')
+        elif name in BOOL_ASSERTS and args and _state_subscript(args[0]):
             bad, why = True, ('bare truth assert on a git-state key: the '
                               'expected answer depends on WHICH checkout '
                               'the suite runs in')
@@ -451,9 +505,8 @@ def scan(src: str, loader=None):
     # b99: the COMPARISON form of the plain assert (`assert probe() == []`,
     # `assert main['detached'] == False`) is the same disease too — the old
     # pass caught only the bare-truthiness form, an asymmetry with the
-    # self.assert* path which flags both. Eq/NotEq only: `assert probe()
-    # is not None` is the identity family, deliberately out of scope (filed
-    # as a separate backlog question, not silently widened here).
+    # self.assert* path which flags both. Eq/NotEq only there: `is`/`is not`
+    # was the identity family, filed as b100 and widened in b100 below.
     for node in ast.walk(tree):
         if isinstance(node, ast.Assert) and node.test is not None:
             t = node.test
@@ -472,6 +525,14 @@ def scan(src: str, loader=None):
                                  'assert comparison hardcodes the probe '
                                  'answer',
                                  lines[node.lineno - 1].strip()[:110]))
+            # b100 deliberately stops here on the plain-assert path. The
+            # `is`/`is not` sibling (`assert main['detached'] is False`) is
+            # the same disease and b99 parked it as a SPARED pin on purpose;
+            # b100's scope is the self.assert* identity family named in the
+            # backlog item. Flipping b99's pin in the same breath as shipping
+            # a new family is the multi-widening-in-one-commit shape this
+            # repo's audit history warns about -> filed as b101, measured
+            # free, its own decision.
     return sorted(set(hits))
 
 
@@ -920,6 +981,87 @@ class TestEmptyContainerAndPlainAssert(unittest.TestCase):
                         'shape: ' + '; '.join(offenders))
         self.assertEqual(sweep_offenders(disk_files()), [],
                          'the b99 widening flags existing correct code')
+
+
+class TestIdentityAsserts(unittest.TestCase):
+    """b100 — the IDENTITY sibling of the b94 disease, the widening b99
+    measured free and deliberately filed instead of shipping silently.
+    `self.assertIs(probe(), False)` hardcodes the answer through `is`
+    exactly as `assertEqual(probe(), False)` does through `==`, and
+    `self.assertIsNone(probe())` hardcodes it by OMITTING it — "the probe
+    found nothing" is b99's empty-container claim in a different spelling.
+    Both directions (probe first / literal first) are covered, mirroring
+    the assertEqual path."""
+
+    HEAD = TestEmptyContainerAndPlainAssert.HEAD
+
+    def _hits(self, stmt):
+        return scan(self.HEAD + f'        {stmt}\n')
+
+    def test_identity_pair_asserts_are_caught(self):
+        for stmt in ("self.assertIs(main['detached'], False)",
+                     "self.assertIs(_checkout_is_detached(), True)",
+                     "self.assertIsNot(main['bare'], True)",
+                     "self.assertIs(wts, [])",
+                     "self.assertIs(main['gitdir'], '/x')",
+                     # literal-first direction, same as assertEqual's path
+                     "self.assertIs(False, main['detached'])",
+                     "self.assertIs(None, _checkout_is_detached())"):
+            self.assertTrue(self._hits(stmt),
+                            f'b100 identity shape still slips past: {stmt}')
+
+    def test_implicit_none_identity_asserts_are_caught(self):
+        """assertIsNone/assertIsNotNone carry the answer in the METHOD NAME,
+        so they are unary probes of the same disease."""
+        for stmt in ("self.assertIsNone(list_worktrees(REPO))",
+                     "self.assertIsNone(wts)",
+                     "self.assertIsNotNone(_checkout_is_detached())",
+                     "self.assertIsNone(main['commondir'])"):
+            self.assertTrue(self._hits(stmt),
+                            f'implicit-None identity shape slipped: {stmt}')
+
+    def test_identity_asserts_on_foreign_objects_are_spared(self):
+        """The scan binds probes by dataflow/import — an identity assert on
+        an attribute, a plain object, or two live probes is not a checkout
+        state claim. `assertIsNone(cfg.path)` is the backlog's own spared
+        shape."""
+        for stmt in ("self.assertIs(obj.attr, None)",
+                     "self.assertIsNone(cfg.path)",
+                     "self.assertIs(wts[0], wts[1])",
+                     "self.assertIsNotNone(m)",
+                     "self.assertIs(main['detached'], "
+                     "_checkout_is_detached())",
+                     "self.assertIsNone(len(wts))"):
+            self.assertEqual(self._hits(stmt), [],
+                             f'identity widening hits a legal shape: {stmt}')
+
+    def test_plain_assert_identity_stays_spared_pending_b101(self):
+        """b99 parked `assert main['detached'] is False` in its SPARED list
+        on purpose, and b100's scope is the self.assert* family the backlog
+        names. Flipping the previous commit's pin inside this commit would
+        be the multi-widening shape this repo warns about — the plain-assert
+        identity sibling is measured free and filed as b101, its own
+        decision. This test pins the boundary so b101 cannot be "forgotten"
+        in either direction."""
+        for stmt in ("assert main['detached'] is False",
+                     "assert _checkout_is_detached() is True",
+                     "assert wts is not None"):
+            self.assertEqual(self._hits(stmt), [],
+                             f'b100 crossed into the b101 scope: {stmt}')
+
+    def test_repo_wide_sweep_catches_the_b100_shape_end_to_end(self):
+        """Anti-vacuity, in memory (b95 rule)."""
+        offender = (self.HEAD
+                    + "        self.assertIs(main['detached'], False)\n")
+        files = disk_files() + [
+            ('test_b100_zz_synthetic_offender.py', offender)]
+        offenders = sweep_offenders(files)
+        self.assertTrue(any('test_b100_zz_synthetic_offender' in o
+                            for o in offenders),
+                        'repo-wide sweep blind to the b100 identity shape: '
+                        + '; '.join(offenders))
+        self.assertEqual(sweep_offenders(disk_files()), [],
+                         'the b100 widening flags existing correct code')
 
 
 if __name__ == '__main__':

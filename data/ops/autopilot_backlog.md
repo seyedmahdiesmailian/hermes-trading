@@ -364,7 +364,28 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b100 IDENTITY-ASSERT SIBLING OF THE b94 DISEASE (from b99, 2026-09-06):
+- [ ] b101 PLAIN-ASSERT IDENTITY SIBLING (from b100, 2026-09-06): b100
+      widened the self.assert* identity family (assertIs/assertIsNot/
+      assertIsNone/assertIsNotNone) but deliberately did NOT flip the
+      plain-assert `is` form — `assert main['detached'] is False` /
+      `assert _checkout_is_detached() is True` — because b99 had parked
+      exactly that shape in its SPARED pin list on purpose, and flipping
+      the previous commit's pin inside a new widening is the
+      multi-widening-in-one-commit shape this repo's audit history warns
+      about. Measured 2026-09-06 (AST replay of the b101 predicate —
+      Compare with Is/IsNot, either operand a probe/state-key and the
+      other a _hardcoded_answer — over all 73 test files): ZERO offenders,
+      so it is a free widening, same shape as b99/b100. Ship as its own
+      item: add the Is/IsNot elif branch to scan()'s plain-assert pass
+      reusing _state_subscript/_direct_probe/_hardcoded_answer, and MOVE
+      the three shapes now pinned spared by
+      TestIdentityAsserts.test_plain_assert_identity_stays_spared_pending_b101
+      into the caught list (that test is the boundary pin — it must be
+      edited, not deleted, so the flip is deliberate and dated). Decide
+      the reversed direction (`assert None is probe()`) at the same time:
+      b100's self.assert* branch covers both operand orders, the plain
+      path's Eq branch does too, so symmetry says yes.
+- [x] b100 IDENTITY-ASSERT SIBLING OF THE b94 DISEASE (from b99, 2026-09-06):
       the scan flags `assertEqual(probe(), X)` and bare `assert probe()`, but
       NOT `assertIs(probe(), False)` / `assertIsNone(list_worktrees(REPO))` —
       hardcoding the answer through the identity family is the same disease
@@ -380,6 +401,24 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       _state_subscript/_direct_probe, pin both directions synthetically
       (identity caught, `assertIsNone(obj.attr)` spared) + the
       repo-wide-clean pin.
+      DONE 2026-09-06: re-measured first (kernel replay of the widened
+      predicate over all 73 files: 0 offenders — free confirmed). Shipped
+      IDENTITY_ASSERTS on scan() pass 2 exactly as specified: the unary
+      implicit-None branch (assertIsNone/assertIsNotNone on a probe or
+      state-key) and the pair branch (assertIs/assertIsNot, BOTH operand
+      orders, mirroring assertEqual). Scope decision recorded in the file:
+      the negative forms stay IN because PAIR_ASSERTS has always contained
+      assertNotEqual — dropping them would leave the tripwire blind to
+      `assertIsNotNone(probe())` while it still catches its `!= None`
+      twin. The plain-assert `is` sibling was NOT flipped (b99 parked it
+      as a spared pin; one widening per commit) — measured free, filed as
+      b101, and pinned in place by
+      test_plain_assert_identity_stays_spared_pending_b101 so the boundary
+      cannot be forgotten in either direction. 5 new tests
+      (TestIdentityAsserts: pair caught both orders, implicit-None caught,
+      foreign-object identity spared, b101 boundary pinned, in-memory
+      repo-wide anti-vacuity + repo-wide-clean pin); 1010 green, live
+      cycle OK.
 - [x] b99 PROBE-RESULT COMPARED TO AN EMPTY CONTAINER LITERAL (from b97,
       2026-09-06): the b94 scan's _scalar() accepts None/bool/int/float/str/
       bytes, so `assertEqual(list_worktrees(REPO), [])` (or == (), == {}) —
