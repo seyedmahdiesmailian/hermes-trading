@@ -364,7 +364,26 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b103 PROSE-AUDIT HYGIENE: MERGE WRAPPED COMMENT LINES, LET NEGATION
+- [ ] b104 SEMANTIC AUDITS NEED A REALITY-BINDING END-TO-END CHECK, NOT JUST
+      FIXTURES (reusable procedure from b103, 2026-09-06): a tripwire whose
+      predicate reads MEANING (prose, naming, intent) cannot be validated by
+      fixtures alone — a fixture only proves the predicate fires on the shapes
+      its author imagined, and every one of b103's rules 4/5/6 was a shape the
+      author had NOT imagined, each found only when the predicate was pointed
+      at the repo's REAL prose and REAL git history. RULE: pair every such
+      audit with a check that the FINDINGS RESOLVE TO REAL ENTITIES — b103's
+      version asserts that every item number the prose scan binds must exist as
+      a backlog item, so a phantom claim (a number nobody ever filed) fails
+      even though the predicate itself never crashed; the same shape works for
+      any semantic scan (a flagged file must exist, a named test must be
+      collectable, a cited config key must appear in .env.example). SECOND
+      HALF OF THE RULE, and the part that made it bite: assert the scan is NOT
+      VACUOUS on the same real data (found set must be non-empty) — a reality
+      check that reads zero findings passes on a dead predicate. THIRD: when a
+      shared helper layer DOCUMENTS N rules, pin one test class per rule and
+      cross-check the count (b103 shipped with rule 5 documented and unowned;
+      the docstring's own rule table is the checklist).
+- [x] b103 PROSE-AUDIT HYGIENE: MERGE WRAPPED COMMENT LINES, LET NEGATION
       WIN, SCAN COMMIT MESSAGES TOO (reusable procedure from b102,
       2026-09-06): any future tripwire that reads ENGLISH PROSE for a policy
       claim (not code structure) inherits three bugs b102 hit while measuring
@@ -386,6 +405,27 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       lesson for every prose audit: before trusting a green result, ask which
       media it reads and whether a wrapped or negated phrasing can hide the
       claim.
+      DONE 2026-09-06 (SHIPPED VIA STEP-0 HARVEST — the previous run wrote the
+      whole layer + its test file + the b102 refactor and died before
+      committing, b46 shape; and its own HEAD 50cf480 was stamped BROKEN by
+      verify_head, so the harvest is also the push-gate heal). The three rules
+      above plus THREE MORE the layer found while being built now live in
+      tests/prose_audit.py (shared, non-test_ so discovery skips it), with
+      b102 refactored into its first consumer (predicates re-exported, not
+      copied — the tests still bind the REAL ones): (4) A QUOTED PHRASE IS A
+      MENTION, not a decision, and the item binds NEAREST the verb — this is
+      the bug that made HEAD 50cf480 BROKEN (b102's commit-message replay
+      flagged b102's OWN message, which quotes the vocabulary, and bound it to
+      an incidental 'b94'); (5) EXTRACT PROSE FROM THE TOKENIZER/AST, not from
+      'any line containing a hash', or a tripwire's own fixtures — which must
+      quote the vocabulary to pin it — read as policy prose; (6) A QUOTE IS ONE
+      SENTENCE — found BY THIS RUN's new reality-binding test: the splitter cut
+      on '. ' INSIDE quoted examples (rule-4 examples carry ellipses), so the
+      tail half had no opening quote, the mention spare died on the very
+      sentences documenting it, and a phantom claim bound to 'b94' escaped every
+      fixture test and was caught only repo-wide. 26 tests
+      (tests/test_b103_prose_audit.py, one class per rule incl. the 8 this run
+      added for rules 5 and 6), 1052 green, live cycle OK.
 - [x] b102 DELIBERATE NON-WIDENINGS MUST BE PINNED AS TESTS, NOT COMMIT
       MESSAGES (reusable procedure from b100, 2026-09-06): when a widening
       is measured free but deliberately NOT shipped (scope discipline —
@@ -1224,6 +1264,54 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+- 2026-09-06 b103 — SHARED PROSE-AUDIT LAYER (tests/prose_audit.py +
+  tests/test_b103_prose_audit.py; b102 refactored into its first consumer).
+  SHIPPED VIA STEP-0 HARVEST (b46 shape): the previous run wrote the layer, its
+  test file and the b102 re-export refactor and died ~5 minutes before this run
+  started, leaving them UNCOMMITTED — and its own HEAD 50cf480 was stamped
+  VERDICT=BROKEN by verify_head.sh (push gate closed, ops paged). The harvest
+  was therefore also the heal: the stranded work is exactly what makes HEAD
+  green again, which is the designed loop (b47/b51) working, not an accident.
+  WHAT THE LAYER IS: b102 shipped the first tripwire that reads ENGLISH PROSE
+  for a policy claim instead of code structure, and hit bugs a structural scan
+  never has. Its fixes lived inside its own file, so the next prose audit would
+  re-discover them; prose_audit.py is the reusable form and b102 now imports
+  (not copies) every predicate.
+  THE SIX RULES, each pinned by a test class: (1) merge consecutive '#' lines
+  before splitting into sentences, or a wrapped claim vanishes; (2) a negated
+  widening verb always beats the history-spare, and shipping evidence must NAME
+  the item — 'not widened in this commit' contains 'widened in'; (3) git log is
+  a medium under audit, a decision recorded only in a commit message leaves the
+  tree looking clean; (4) a phrase inside quotes is a MENTION, not a decision,
+  and the b-number binds NEAREST the verb — this is the bug that broke HEAD
+  50cf480: b102's replay flagged b102's own message for quoting its vocabulary
+  and bound it to an incidental 'b94' three clauses away; (5) extract prose from
+  the TOKENIZER and the AST, never from 'any line with a hash' — a tripwire's
+  fixtures must quote the vocabulary to pin it, and a line scan sentences those
+  strings as policy prose; (6) A QUOTE IS ONE SENTENCE — found by THIS run.
+  NEW FINDING (rule 6, the reason to keep going after a harvest): the stranded
+  layer documented five rules but owned four test classes, so the first thing
+  this run did — pin rule 5 — immediately caught a sixth bug the previous run
+  never saw. prose_audit's own nearest_item docstring quotes an example
+  containing an ellipsis; the naive splitter cut INSIDE the quote, the tail half
+  had no opening quote, quoted_spans() found nothing, the mention spare died on
+  the exact sentence written to demonstrate it, and a phantom claim bound to
+  'b94' — an item that exists nowhere as a parked widening. Every fixture test
+  passed on it; only the repo-wide reality-binding check (every bound item must
+  exist in the backlog) caught it. Fix: split_sentences() skips boundaries
+  inside quoted spans, and BOTH prose paths (code and commit messages) go
+  through it, so the spare can no longer be split away from a claim.
+  METHOD RULE -> new todo b104: a semantic/meaning-reading audit cannot be
+  validated by fixtures alone (a fixture only proves the predicate fires on the
+  shapes its author imagined — rules 4, 5 and 6 were each a shape its author had
+  NOT imagined). Pair it with a check that the FINDINGS RESOLVE TO REAL
+  ENTITIES, and assert the scan is non-vacuous on the same real data, or the
+  reality check passes on a dead predicate.
+  Nothing wired into the trading path: no gate, no exit, no order call touched.
+  26 tests in tests/test_b103_prose_audit.py (8 added by this run for rules 5
+  and 6, incl. the anti-vacuity pair proving the same words UNQUOTED are still
+  claims), 1052 green, live cycle OK.
+
 
 - 2026-09-06 b92 (b87 queue item 3) — THE COOLDOWN GATE CANNOT BE MEASURED AS
   A BOOK: IT LIVES IN THE CLOCK DOMAIN (scripts/b92_cooldown_gate.py +

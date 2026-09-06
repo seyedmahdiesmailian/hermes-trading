@@ -36,6 +36,17 @@ Anti-vacuity, same discipline as b94/b95/b99/b100: the sweep runs over
 in-memory (name, src) pairs — a synthetic offender is INJECTED, never written
 into tests/ where a concurrent suite run would race on it (b95 rule) — and a
 MIN_FILES floor asserts the scan actually scanned.
+
+b103 (2026-09-06): the three hygiene rules above — plus the fourth one this
+file's own tripwire taught by going RED on HEAD 50cf480 (a QUOTED claim phrase
+is a mention, not a decision, and the item must bind NEAREST the verb), the
+fifth (extract prose from the tokenizer, not a line scan, or a fixture that
+quotes the vocabulary reads as a decision) and the sixth (a quote is one
+sentence — splitting inside a quoted example kills the mention spare on the
+very sentences that document it) — now live in tests/prose_audit.py, the
+shared layer for prose-reading tripwires. This file is its first consumer:
+the predicates below are re-exported from there, and
+tests/test_b103_prose_audit.py pins the layer itself.
 """
 from __future__ import annotations
 
@@ -48,6 +59,14 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 TESTS_DIR = REPO / 'tests'
 sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(TESTS_DIR))  # `import prose_audit` must not depend
+                                     # on discovery's path insertion (b97 shape)
+
+from prose_audit import (  # noqa: E402  (b103 shared hygiene layer)
+    FILED_CLAIM, NONWIDENING, NEGATED_WIDENING, ITEM,
+    COMMIT_WINDOW, claim_items, comment_blocks, docstring_blocks,
+    is_history, prose_claims, sentences)
+from prose_audit import commit_claims as _shared_commit_claims  # noqa: E402
 
 BACKLOG = REPO / 'data' / 'ops' / 'autopilot_backlog.md'
 
@@ -57,133 +76,21 @@ BACKLOG = REPO / 'data' / 'ops' / 'autopilot_backlog.md'
 # unenforceable as one in a test.
 SCAN_DIRS = ('tests', 'scripts', 'engines')
 
-# --- the claim vocabulary -------------------------------------------------
-# "filed as b101" / "parked as b101" / "pending_b101" (b100's own naming for
-# its boundary test). The item number is captured; that is the pin's name tag.
-FILED_CLAIM = re.compile(
-    r'\b(?:filed(?:\s+(?:as|into))?|parked(?:\s+as)?|pending[_ ]):?\s*'
-    r'(b\d{2,4})\b', re.I)
-
-# "deliberately NOT flipped here" / "deliberately not widened" / "...not
-# shipped inside b99" / "...not applied".
+# The claim vocabulary, the history-spare, the sentence splitter and the
+# commit-message replay all live in tests/prose_audit.py since b103 — this
+# file is that layer's first consumer, and the names it used to define
+# locally (FILED_CLAIM, NONWIDENING, is_history, sentences, commit_claims,
+# ...) are re-exported from the import above so the tests below keep binding
+# the REAL predicates, not copies.
 #
-# MEASURED SCOPE DECISION (2026-09-06, pinned by
-# test_untouchable_file_scope_note_is_not_a_widening_claim): the verb list is
-# the WIDENING vocabulary only. `deliberately NOT edited` was tried and
-# dropped: its one repo-wide hit (test_b89_window_contract.py:205, "engines/
-# risk.py is deliberately NOT edited by b89") is an untouchable-FILE scope
-# statement, not a parked widening, and it is already pinned by a byte-identity
-# test named after a different item (b88). Flagging it would have made the
-# audit cry wolf on the first run — the same "the scan flags correct code"
-# failure b94 pins against.
-NONWIDENING = re.compile(
-    r'\bdeliberately\s+not\s+(?:flipped|widened|shipped|applied)\b'
-    r'|\bdid\s+not\s+(?:flip|widen|ship|apply)\b', re.I)
-
-# The same sentence saying the item HAS since shipped -> history, not a live
-# boundary. Deliberately narrow, and MEASURED NARROWER BY A REAL MISS: the
-# first version of this file spared any sentence containing "widened in", and
-# replaying the actual commit history through the predicate showed it silently
-# swallowing b99's own message — "new todo b100 (identity-assert family,
-# measured free, deliberately not widened in this commit)" — because "not
-# widened in this commit" contains the substring "widened in". That is the
-# exact false-negative this audit exists to prevent, caught on day one by
-# testing against real data instead of fixtures. So: the shipping evidence must
-# name the ITEM ("widened in b100", b94's history line) or use an unambiguous
-# past/passive form, and a negated widening verb in the sentence always wins.
-NEGATED_WIDENING = re.compile(
-    r'\b(?:not|never)\s+(?:widened|shipped|flipped|applied)\b', re.I)
-
-
-def is_history(sentence: str, item: str) -> bool:
-    """Does this sentence report the parked item as ALREADY shipped?"""
-    if NEGATED_WIDENING.search(sentence):
-        return False
-    if re.search(r'\b(?:now|was|already|since)\s+widened\b', sentence, re.I):
-        return True
-    return bool(re.search(r'\b(?:widened|shipped)\s+in\s+'
-                          + re.escape(item) + r'\b', sentence, re.I))
-
-ITEM = re.compile(r'(?<![0-9A-Za-z])b\d{2,4}(?![0-9])')
-
 # The wording b102 requires inside the parked item itself.
 EDIT_NOT_DELETE = re.compile(r'\bedited,?\s+not\s+deleted\b', re.I)
 
 
-def _comment_lines(src: str):
-    """(lineno, text) for every comment in the module.
-
-    CONSECUTIVE comment lines are merged into one block: a sentence that
-    wraps across two '#' lines ('# new todo b100 (measured free,' /
-    '# deliberately not widened in this commit)') is ONE claim, and splitting
-    per line would strand the item number in one half and the negated verb in
-    the other — so the claim would vanish. (Found by the test that pins the
-    wrapped form.)"""
-    lines = src.splitlines()
-    out = []
-    buf = []
-    buf_start = 0
-    for i, line in enumerate(lines, 1):
-        if '#' in line:
-            if buf and i != buf_start + len(buf):
-                out.append((buf_start, ' '.join(buf)))
-                buf = []
-            if not buf:
-                buf_start = i
-            buf.append(line.split('#', 1)[1])
-    if buf:
-        out.append((buf_start, ' '.join(buf)))
-    return out
-
-
-def _docstring_lines(src: str):
-    """(lineno, text) for every docstring line (module/class/function)."""
-    out = []
-    try:
-        tree = ast.parse(src)
-    except SyntaxError:
-        return out
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef,
-                             ast.AsyncFunctionDef)):
-            doc = ast.get_docstring(node)
-            if doc:
-                base = getattr(node, 'lineno', 1)
-                for off, _ in enumerate(doc.splitlines()):
-                    out.append((base, _))
-    return out
-
-
-def sentences(src: str):
-    """Comment + docstring text, whitespace-normalised, split on sentence
-    ends. Assertions and code are NOT scanned: the claim lives in prose, and
-    scanning code would flag the synthetic fixtures inside the tripwire's own
-    test data (b94's HEAD strings) as if they were decisions."""
-    blocks = _comment_lines(src) + _docstring_lines(src)
-    out = []
-    for lineno, raw in blocks:
-        norm = re.sub(r'\s+', ' ', raw).strip()
-        for s in re.split(r'(?<=[.;:])\s+', norm):
-            s = s.strip()
-            if s:
-                out.append((lineno, s))
-    return out
-
-
 def nonwidening_claims(src: str):
     """[(lineno, item, sentence)] — every live 'we chose NOT to widen' claim
-    in one module's prose."""
-    hits = []
-    for lineno, s in sentences(src):
-        m = FILED_CLAIM.search(s)
-        item = m.group(1) if m else None
-        if item is None and NONWIDENING.search(s):
-            mm = ITEM.search(s)
-            item = mm.group(0) if mm else None
-        if item is None or is_history(s, item):
-            continue
-        hits.append((lineno, item.lower(), s))
-    return hits
+    in one module's prose. Thin alias onto the shared layer's prose_claims()."""
+    return prose_claims(src)
 
 
 def scanned_files():
@@ -196,6 +103,12 @@ def scanned_files():
     test_this_file_is_self_excluded_and_why so it cannot hide a real offender
     by accident — the synthetic-offender test proves the predicate still bites
     on injected prose.
+
+    b103 note: prose_audit.py itself is deliberately IN the scan set. It is
+    the layer's documentation, but its prose was written to pass the rules it
+    documents (quoted example phrases read as mentions, unquoted claims bind
+    to real parked items) — and if it ever stops passing, that is exactly the
+    drift the scan should catch.
     """
     out = []
     for d in SCAN_DIRS:
@@ -328,33 +241,17 @@ COMMIT_CLAIM_WINDOW = 100  # last N commit messages
 
 
 def commit_claims(n: int = COMMIT_CLAIM_WINDOW):
-    """[(sha, item, sentence)] for every non-widening claim recorded in a
-    COMMIT MESSAGE — the medium b102 exists to distrust. b99's own message
+    """[(sha, item, sentence)] for every live claim recorded in a COMMIT
+    MESSAGE — the medium b102 exists to distrust. b99's own message
     ('new todo b100 ... deliberately not widened in this commit') is the
     shape: the decision was recorded ONLY in prose git history, and no test
     would have caught someone silently widening b100's parked shape without
-    the b100-named pin. Sentences are split the same way as code prose."""
-    import subprocess
-    r = subprocess.run(['git', 'log', '--format=%H\x01%B\x02', '-n', str(n)],
-                       cwd=str(REPO), capture_output=True, text=True)
-    out = []
-    for rec in r.stdout.split('\x02'):
-        if '\x01' not in rec:
-            continue
-        sha, body = rec.split('\x01', 1)
-        norm = re.sub(r'\s+', ' ', body).strip()
-        for s in re.split(r'(?<=[.;:])\s+', norm):
-            s = s.strip()
-            if not s:
-                continue
-            mm = FILED_CLAIM.search(s)
-            item = mm.group(1) if mm else None
-            if item is None and NONWIDENING.search(s):
-                q = ITEM.search(s)
-                item = q.group(0) if q else None
-            if item and not is_history(s, item):
-                out.append((sha[:7], item.lower(), s))
-    return out
+    the b100-named pin.
+
+    Thin wrapper onto prose_audit.commit_claims (b103) so the repo is always
+    the repo THIS test file lives in — the same REPO binding the b42/b44
+    integrity scans use, never an author's cwd."""
+    return _shared_commit_claims(REPO, n)
 
 
 class CommitMessagesAreNotTheOnlyRecord(unittest.TestCase):

@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-9694454f",
+  "plan_id": "xau-109a31a2",
   "symbol": "XAUUSD",
   "bias": "neutral",
   "session": "newyork",
@@ -44,9 +44,9 @@
     "smc_poi": "B",
     "smc_signal": "wait"
   },
-  "created_at": "2026-09-06T15:12:20.880918+00:00",
-  "expires_at": "2026-09-07T03:12:20.880918+00:00",
-  "next_reassessment": "2026-09-06T15:17:20.880918+00:00",
+  "created_at": "2026-09-06T14:30:01.940599+00:00",
+  "expires_at": "2026-09-07T02:30:01.940599+00:00",
+  "next_reassessment": "2026-09-06T14:35:01.940599+00:00",
   "context": {
     "m5_last": 4431.72,
     "h1_last": 4431.72,
@@ -568,18 +568,18 @@
         "swing_low": 4365.48
       },
       "killzone": {
-        "session": "london_close",
-        "weight": 0.5
+        "session": "newyork",
+        "weight": 1.0
       },
       "bias": "bullish",
-      "confidence": 0.07038288288288287,
+      "confidence": 0.07040270346381301,
       "signal": "wait",
       "signal_confidence": 0.0,
       "poi": "B",
       "swing_high": 4490.81,
       "swing_low": 4365.48,
       "last_price": 4431.72,
-      "smc_weight": 0.5,
+      "smc_weight": 1.0,
       "h1_structure": {
         "phase": "range",
         "confidence": 0.0
@@ -839,9 +839,9 @@
         "fake_level": null
       },
       "silver_bullet": {
-        "active": false,
-        "window": null,
-        "label": null
+        "active": true,
+        "window": "am",
+        "label": "Silver Bullet AM (10-11 NY)"
       },
       "session_liquidity": {
         "session": "asia",
@@ -867,21 +867,21 @@
       "smc_source": {
         "bias": "bullish",
         "signal": "wait",
-        "confidence": 0.07038288288288287,
-        "weight": 0.5,
+        "confidence": 0.07040270346381301,
+        "weight": 1.0,
         "poi": "B",
         "market_structure": {
           "phase": "bos_bearish",
           "confidence": 0.011933174224061337
         },
         "killzone": {
-          "session": "london_close",
-          "weight": 0.5
+          "session": "newyork",
+          "weight": 1.0
         }
       }
     },
     "macro": {
-      "timestamp": "2026-09-06T15:00:02.146069+00:00",
+      "timestamp": "2026-09-06T14:15:02.074778+00:00",
       "dxy": {
         "change_pct": 0.026,
         "direction": "up",
@@ -981,9 +981,9 @@
         "upcoming_events": 11,
         "strict_high_count": 0,
         "window_hours": 24,
-        "fetched_at": "2026-09-06T15:00:02.278457+00:00"
+        "fetched_at": "2026-09-06T14:15:02.237852+00:00"
       },
-      "_fetched_at": 1788706802.2792845
+      "_fetched_at": 1788704102.238606
     }
   }
 }
