@@ -94,7 +94,9 @@ def _binding_lines(src: str) -> list:
     blind to the difference between code and a string of code. Prose and
     fixture payloads are now excluded because the literal is embedded INSIDE
     a longer string, not equal to it. (Pinned by
-    test_tripwire_distinguishes_code_from_string_of_code.)
+    test_allowed_entries_are_still_real, which fails the ALLOWED exemption if
+    its residual literals ever become BINDINGS — b104 measured that the name
+    this docstring used to cite never existed.)
     """
     try:
         tree = ast.parse(src)

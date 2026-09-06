@@ -156,9 +156,22 @@ class TestLiveRecord(unittest.TestCase):
         ledger's own last stamp (cron appends a new cycle every 15 min), and
         cycles are counted as DISTINCT created_at values, because a finalised
         plan is rewritten under a new write-time filename with the same stamp
-        (observed: 20260906_060002_xau-f2e037be / 20260906_061502_xau-f2e037be)."""
+        (observed: 20260906_060002_xau-f2e037be / 20260906_061502_xau-f2e037be).
+
+        b104 (2026-09-06): the EXACT count equality held only while the whole
+        window still existed on disk. engines/storage.py prunes plan_history at
+        PLAN_HISTORY_KEEP=1500 files (amortized, ~10% over), so the ledger's
+        OLDEST stamps are deleted under it — measured: the shipped 771-cycle
+        record was recomputable at 695, a permanent RED on a healthy repo, the
+        same location-dependence class as b91/b94 (the test compared a snapshot
+        to a directory another process owns). The claim is now split honestly:
+        the RATE (the number that means anything) is compared with a
+        tolerance, the COUNT is compared exactly ONLY while the window is
+        intact, and a stale window must be a LOUD freshness failure, never a
+        silent count mismatch."""
         lr = _led()["live_record"]
         cutoff = dt.datetime.fromisoformat(lr["last"])
+        first = dt.datetime.fromisoformat(lr["first"])
         stamps = set()
         for fn in (REPO / "data/xau_plan/plan_history").glob("*.json"):
             try:
@@ -167,10 +180,31 @@ class TestLiveRecord(unittest.TestCase):
                     stamps.add(at)
             except Exception:
                 continue
+        self.assertTrue(stamps, "no plan_history survives at all — the "
+                                "recomputation is vacuous, not passing")
         blocked = sum(1 for s in stamps
                       if not is_market_open(dt.datetime.fromisoformat(s)))
-        self.assertEqual(lr["cycles"], len(stamps))
-        self.assertEqual(lr["cycles_blocked_by_market_hours"], blocked)
+        window_intact = min(dt.datetime.fromisoformat(s) for s in stamps) <= first
+        if window_intact:
+            # nothing pruned: the strong claim still applies
+            self.assertEqual(lr["cycles"], len(stamps))
+            self.assertEqual(lr["cycles_blocked_by_market_hours"], blocked)
+        else:
+            # pruned prefix: counts cannot match by construction, so compare
+            # the RATE and prove the pruning is real (else this branch is a
+            # quiet way to dodge the exact assertion)
+            self.assertLess(len(stamps), lr["cycles"],
+                            "window reported as pruned but nothing is missing")
+            shipped = lr["share_of_cycles_blocked"]
+            now = blocked / len(stamps)
+            self.assertLess(abs(now - shipped), 0.06,
+                            f"live fire RATE drifted: ledger {shipped:.3f} vs "
+                            f"recomputed {now:.3f} over {len(stamps)} cycles")
+        age_days = (dt.datetime.now(dt.timezone.utc) - cutoff).total_seconds() / 86400
+        self.assertLess(age_days, 3.0,
+                        f"live_record is {age_days:.1f} days stale — re-run "
+                        "scripts/b93_market_hours_gate.py; a stale snapshot "
+                        "makes this test certify a window nobody can re-measure")
 
 
 class TestShadowRow(unittest.TestCase):

@@ -162,9 +162,16 @@ def find_pins(names, item: str):
 def backlog_items(text: str):
     """{item_id: {'status': 'todo'|'done', 'body': str}} parsed out of the
     backlog's Active section. Checkbox lines start an entry; the next
-    checkbox or '## ' heading ends it."""
+    checkbox or '## ' heading ends it.
+
+    b104 heal (2026-09-06): 0a281bb tagged meta todos with a leading
+    '[META] ' and the old regex anchored on '(b\\d+)' right after the
+    checkbox — 14 tagged items (b70, b101, b104...) silently vanished from
+    the parse, and b103's phantom-claim check went RED on a REAL item.
+    Optional bracket tags are now skipped; a pin below counts raw checkbox
+    lines so a future prefix can never shrink the parse again."""
     items = {}
-    pat = re.compile(r'^- \[([ xX])\] (b\d+)\b', re.M)
+    pat = re.compile(r'^- \[([ xX])\] (?:\[[^\]]*\]\s*)?(b\d+)\b', re.M)
     marks = list(pat.finditer(text))
     for i, m in enumerate(marks):
         start = m.end()

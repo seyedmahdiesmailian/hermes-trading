@@ -76,7 +76,7 @@ b100 (2026-09-06): the IDENTITY family on the self.assert* path — the
   pass-2 filter; both operand orders are covered, mirroring assertEqual.
   The plain-assert `is`/`is not` sibling is deliberately NOT flipped here
   (b99 parked it as a spared pin; one widening per commit) — measured free
-  and filed as b101, pinned by test_plain_assert_identity_stays_spared.
+  and filed as b101, pinned by test_plain_assert_identity_stays_spared_pending_b101.
 
 DELIBERATE NON-HITS (pinned by tests so the scan stays honest in BOTH
 directions):

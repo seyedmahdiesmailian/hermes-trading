@@ -75,7 +75,10 @@ fi
 PROMPT='You are the Hermes trading-system autopilot. Work autonomously, no questions.
 
 TASK: Read '"$REPO_ROOT"'/data/ops/autopilot_backlog.md. Pick the TOP item
-with status todo. Implement/analyze it fully in '"$REPO_ROOT"', then:
+with status todo THAT IS ABOUT THE AUTO-TRADER ITSELF (standing user order
+2026-09-06: focus = trader code review, optimization, research, backtests,
+architecture fixes; meta/harness/tripwire todos are LOW PRIORITY — skip them
+unless NO trader item applies). Implement/analyze it fully in '"$REPO_ROOT"', then:
 1. Run: python3 -m unittest discover -s tests  (must stay green; fix or revert)
 2. Run one real cycle: timeout 120 python3 hermes_master.py  (must complete)
 3. Mark the item done in the backlog with a 1-line dated finding.

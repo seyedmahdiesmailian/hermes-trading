@@ -20,6 +20,8 @@ harvested):
     NEAREST the verb                                -> TestMentionIsNotADecision
   5 prose comes from the TOKENIZER/AST, never from a
     line scan that reads string literals            -> TestProseComesFromTokens
+  6 a quote is ONE SENTENCE: the splitter must not
+    cut inside a quoted span                        -> TestProseComesFromTokens
 
 Rule 4 is not academic: it is the reason HEAD 50cf480 was BROKEN when this
 run started. b102's commit-message replay flagged b102's OWN commit message,

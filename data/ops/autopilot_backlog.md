@@ -29,7 +29,38 @@ step 4b sees what the commit actually shipped.
 never weaken risk gates. Code quality & analysis only. All changes must keep
 `python3 -m unittest discover -s tests` green and pass a real `hermes_master.py` cycle.
 
+**TRADER FOCUS (user standing order 2026-09-06):** the autopilot's job is the
+AUTO-TRADER, not the harness. Priority order for picking a todo:
+1. Read the trader's own code (engines/signal_parser.py, signal_decision.py,
+   plan.py, defcon.py, risk.py, trade_management.py, auto_executor.py,
+   orchestrator.py, smc.py, market_hours.py, cooldown.py, kill_switch.py,
+   macro_filter.py, learning.py) for real defects, dead paths, contradictions
+   between modules — and FIX what is found, with a backtest or live-parity
+   proof where possible.
+2. Research (web/literature) methods that could RAISE the funnel's exp_R or
+   cut its DD; measure them in the lab (b68 protocol); wire in ONLY what
+   beats the funnel on cached AND fresh sets without weakening gates.
+3. Audit the ARCHITECTURE end-to-end (signal -> plan -> gate -> entry ->
+   management -> exit) against backtests and the live journal; propose and
+   implement structural fixes.
+4. Meta/harness/tripwire/report items (b94-b104 family, report-builder fixes):
+   do them ONLY when no trader item applies. Tag such todos [META].
+
 ## Active
+- [ ] b105 TRADER CODE REVIEW — trade_management.py vs LIVE JOURNAL: read the
+      SL/BE/trail/TP ladder code line by line; for every branch, find deals in
+      the live journal (data/storage) that exercised it; flag any branch that
+      never fired or fired wrong (e.g. BE move before min-profit, trail that
+      can cut a winner early). Fix defects with unit tests; NO gate loosening.
+- [ ] b106 TRADER CODE REVIEW — signal_parser.py vs signal_decision.py: the
+      parser's fields vs what the decision layer actually consumes; find
+      silently-dropped fields (parsed but never used) and used-but-never-set
+      ones; reconcile. Backtest any behavior change with run_backtest.
+- [ ] b107 RESEARCH ROUND — exit-side improvement: funnel edge is the ENTRY
+      filter (b68r4 finding); search literature for exit/TP-ladder methods
+      (A-trailing variants, time-stops, news-veto) and MEASURE exp_R/DD in
+      the lab on cached+fresh sets. Report numbers; wire nothing without the
+      b68 merit bar.
 - [x] b68 STRATEGY LAB CONTINUOUS LOOP (user standing order 2026-09-03: "keep searching strategies/analysis methods, pick the best, test, bring into the real structure"). Each run: (a) pick ONE new candidate method not yet in data/backtest/b62_strategy_lab.json (sources: quant literature, ICT/SMC concepts not yet measured, session/volatility patterns; web search is low-signal — prefer implementing from the concept definition), (b) implement it as a standalone signal_fn in scripts/b62_strategy_lab.py style (indexed() adapter, ATR-based geometry, grade B), (c) run through engines.backtest.backtest_ohlc on the CACHED dataset (data/backtest/ab_aggressive_data.json, 3000 M15 bars) with spread 0.20 AND with the live b60 ladder (partial_share_fn=_partial_close_fraction, tp1_position=0.50, trail_after_partial=0.5), (d) append the row to data/backtest/b62_strategy_lab.json, (e) MERIT BAR: only propose wiring into the live funnel if exp_R beats the current funnel's 0.854R/trade (b61 best arm) on BOTH the cached set and one fresh fetch; otherwise record the rejection in ## Findings with numbers. NEVER weaken existing gates to make a new arm look better; the funnel stays the exit manager. Baseline table so far (exp_R, cached M15): funnel b60 0.854 | asia_break 0.18 | ema_pullback 0.114 | bb_bounce 0.035 | donchian -0.013 | sweep_rev -0.004 | fvg_retest -0.020 | ny_orb -0.098 | rsi_rev -0.226 | vwap_fade 0.380 (ladder; fresh-set 0.436 vs funnel 0.576 — REJECTED 2026-09-03, see Findings). SMC/RTM round (b63/b63b, 2026-09-03): turtle_soup 0.508 cached / 0.469 fresh, eqh_sweep 0.085 / 0.638, ote 0.62 / 0.299, breaker 0.008 / 0.113, ob_first_retest 0.978 (n=3) / 0.483 (n=6), sweep_choch_ob 1.702 (n=2) / 1.066 (n=4) — none beat the funnel on BOTH sets with a usable n; funnel stays. Momentum round (b68r2, 2026-09-03): atr_expand_all 0.362 / fresh 0.443, atr_expand_lny 0.344 / 0.432 — REJECTED, loses on both sets (see Findings). HTF-trend+pullback round (b68r3, 2026-09-03): htf_pull_50 0.271 / fresh 0.317, htf_pull_618 0.194 / fresh 0.346 — REJECTED, loses on both sets (see Findings).
       (progress 2026-09-03, rounds 1+2 done: vwap_fade and atr_expand tested+rejected
       (Findings). Round 4 (b68e, PDH/PDL breakout) done this run: REJECTED as a
@@ -364,7 +395,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
-- [ ] b104 SEMANTIC AUDITS NEED A REALITY-BINDING END-TO-END CHECK, NOT JUST
+- [ ] b104 [META] SEMANTIC AUDITS NEED A REALITY-BINDING END-TO-END CHECK, NOT JUST
       FIXTURES (reusable procedure from b103, 2026-09-06): a tripwire whose
       predicate reads MEANING (prose, naming, intent) cannot be validated by
       fixtures alone — a fixture only proves the predicate fires on the shapes
@@ -460,7 +491,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       piece that makes the rule enforce the "not commit messages" half.
       Hygiene lessons filed as new todo b103. 16 new tests, 1026 green, live
       cycle OK.
-- [ ] b101 PLAIN-ASSERT IDENTITY SIBLING (from b100, 2026-09-06): b100
+- [ ] b101 [META] PLAIN-ASSERT IDENTITY SIBLING (from b100, 2026-09-06): b100
       widened the self.assert* identity family (assertIs/assertIsNot/
       assertIsNone/assertIsNotNone) but deliberately did NOT flip the
       plain-assert `is` form — `assert main['detached'] is False` /
@@ -563,7 +594,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       6 new tests (TestNonTestHelperModules) + repo-wide-clean pin; widened
       scan flags ZERO existing offenders. New todo b99 (empty-container
       literal sibling of the same disease).
-- [ ] b98 SHARED-STATE COUNT CLAIMS MUST BE OWNER-ATTRIBUTED (reusable
+- [ ] b98 [META] SHARED-STATE COUNT CLAIMS MUST BE OWNER-ATTRIBUTED (reusable
       procedure from b96, 2026-09-06): a test that asserts a COUNT of
       shared, mutable state (`len(git worktree list) == 1`, `len(listdir
       of a lock/tmp dir) == N`) is a flake whenever the repo supports a
@@ -588,7 +619,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       not built by the test itself (repo listings, /tmp, process tables)
       — b96's sweep found this file is the only remaining instance today,
       so this is a tripwire-candidate rule, not a queue of victims.
-- [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
+- [ ] b87 [META] GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
       position) proves whether a gate BINDS. It cannot prove whether a gate
@@ -659,7 +690,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       both-directions, and that no live-path module imports the harness. NOTE: the
       harness module itself was left UNCOMMITTED by the previous run (b46 shape) —
       shipped via this run's harvest commit.)
-- [ ] b70 ADDITIVE-LANE CAPACITY ANALYSIS (follow-up to b68 round 4, 2026-09-03): the
+- [ ] b70 [META] ADDITIVE-LANE CAPACITY ANALYSIS (follow-up to b68 round 4, 2026-09-03): the
       pdh_break_w10 arm (scripts/b68e_pdh_lab.py, 1.0*ATR stop beyond the previous
       TRADING day's extreme, close-confirmed) is the first lab arm that beats the live
       funnel on fresh data (exp_R 0.640 vs 0.576, n=108) and the funnel's own merit bar
@@ -867,7 +898,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       are already shipped in data/backtest/b68{l,m,n,n4,p,q}_*.json — read
       them, compare against data/backtest/b80_gate_parity.json's gradeB
       column, and rewrite b70's decision set. Read-only, lab-only.
-- [ ] b82 PARITY TRIPWIRE: THE LAB HARNESS MUST NOT BE ALLOWED TO DRIFT FROM
+- [ ] b82 [META] PARITY TRIPWIRE: THE LAB HARNESS MUST NOT BE ALLOWED TO DRIFT FROM
       run_backtest AGAIN (reusable procedure from b80, 2026-09-05): b80 was
       the second measurement-parity bug in this lab (b71 was the first — the
       missing time exit). Both were silent because the harness re-declared its
@@ -880,7 +911,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       default diverges. That turns the whole class of bug into a red test the
       next time someone adds a gate to live and forgets the lab. Small,
       tests-only.
-- [ ] b83 COMPOSITE-SIGNAL PARITY RULE: A FIX TO A COMPONENT MUST RE-PRICE ANY
+- [ ] b83 [META] COMPOSITE-SIGNAL PARITY RULE: A FIX TO A COMPONENT MUST RE-PRICE ANY
       MEASUREMENT THAT EMBEDS IT (reusable procedure from b81, 2026-09-05):
       when a measurement bug is found in a component (b80: the funnel baseline
       lacked the live grade gate), the follow-up work must NOT assume that
@@ -933,7 +964,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       98.9-100% of entries on all 4 windows (-257.3R given up, 3 trades
       left, pays 2-of-4 only) — knob stays (never weaken), but any future
       adaptive-floor proposal must clear this ledger first.
-- [ ] b85d FIXTURE-COMPLETENESS RULE FOR SUBPROCESS TESTS (reusable procedure
+- [ ] b85d [META] FIXTURE-COMPLETENESS RULE FOR SUBPROCESS TESTS (reusable procedure
       from the 12:35 run, 2026-09-05): a test that runs a repo script in a
       THROWAWAY fixture dir (copy of the script + symlinked engines) inherits
       the script's whole import surface — including fallback imports like
@@ -950,7 +981,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       interpreters (venv vs system) before suspecting the code. Fixed by
       shipping env_loader.py into the fixture (tests/test_b85_report_
       attribution.py). Small, tests-only.
-- [ ] b79 GATE FIRE-RATE STABILITY PRE-FLIGHT (reusable procedure promised
+- [ ] b79 [META] GATE FIRE-RATE STABILITY PRE-FLIGHT (reusable procedure promised
       by b68 round 16's Findings, 2026-09-05; first metric measured in round
       17): before spending four b74 draws on a gated arm, measure the
       oracle's PASS RATE per window (gate_share in the probe block) and the
@@ -968,7 +999,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       (max-min gate_share across legs) to the verdict block in
       scripts/b68*_confirm_*.py and a pre-flight FAIL line in the round
       summary when swing > 20 points. Small, lab-only, read-only.
-- [ ] b72 COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
+- [ ] b72 [META] COMBINATION-ROUND PLAYBOOK (reusable procedure from b68 round 7, for
       every future b68 round that gates one family on another): (1) build the
       combo as a PURE INTERSECTION — one arm supplies the geometry unchanged,
       the other is a direction/timing oracle only, so no new stop geometry can
@@ -984,7 +1015,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       lane exp_R AND dd_R together — round 7 proved a lane can add tot_R
       (+6.8%) while being negative on both per-trade R and DD. Small, docs/
       procedure only unless a round needs it.
-- [ ] b73 COMBINATION-ROUND SEQUENCING RULE (reusable procedure from b68 rounds
+- [ ] b73 [META] COMBINATION-ROUND SEQUENCING RULE (reusable procedure from b68 rounds
       7+8, 2026-09-04): the two measured combination rounds split cleanly by
       WHICH ingredient acts as the gate — a DAY-PATH gate (dayext) LIFTED its
       control (nr7 0.598->0.622 cached), a COMPRESSION gate (NR7 squeeze
@@ -1012,7 +1043,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       FRESHER event of the pair (the one whose signal bar IS the trigger)
       should carry the stop, and the background state should be the oracle.
       Splitting {level, path} by freshness, not just type -> new todo b75.)
-- [ ] b75 GEOMETRY-FRESHNESS RULE FOR COMBINATION ROUNDS (reusable procedure
+- [ ] b75 [META] GEOMETRY-FRESHNESS RULE FOR COMBINATION ROUNDS (reusable procedure
       from b68 round 10, 2026-09-04): both directions of the dayext<->PD-level
       pairing now have data. Forward (round 9: level geometry, path oracle):
       lift +0.30R, stretch 0.56 ATR, merit bar PASSED. Reversed (round 10:
@@ -1036,7 +1067,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       be flipped. Cheap to apply: the lag counter is a 5-line loop over the
       same scan gate_probe() already does; fold it into the b72 checklist as
       rule (6) on the next combination round. Read-only, docs/procedure only.
-- [ ] b76 CONFIRM SETS MUST PROVE INDEPENDENCE (reusable procedure from b68
+- [ ] b76 [META] CONFIRM SETS MUST PROVE INDEPENDENCE (reusable procedure from b68
       round 11, 2026-09-04 — the loop's biggest methodology finding: rounds
       1-10's "fresh" confirm set was the last 6000 M15 bars, which contains
       100% of the 3000 cached bars, so the merit bar's "beat the funnel on
@@ -1057,7 +1088,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       hand-fetching, plus a tripwire test that no scripts/b*_*_confirm*.py
       fetches last-N bars without recording an overlap fact. Read-only,
       lab-only.
-- [ ] b77 CHRONOLOGICAL-DECAY TEST BEFORE SPENDING A DRAW (reusable procedure
+- [ ] b77 [META] CHRONOLOGICAL-DECAY TEST BEFORE SPENDING A DRAW (reusable procedure
       from b68 round 14, 2026-09-04 — the todo round 14's Findings promised but
       never wrote; added by the round-14 harvest run). The fourth draw killed
       funnel_h4t_agree, and the SHAPE of the kill is the lesson: margins
@@ -1080,7 +1111,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       NEWEST-FIRST (W1 newest), so any code that reads a "decay W1→W4" series
       is reading time BACKWARDS — the round-14 near-miss was exactly this
       misread. Read-only, docs/procedure + a small helper only.
-- [ ] b74 CANDIDATE PROMOTION PROTOCOL (reusable procedure from b68 round 9,
+- [ ] b74 [META] CANDIDATE PROMOTION PROTOCOL (reusable procedure from b68 round 9,
       the FIRST arm ever to pass the merit bar — the loop has never needed
       this before): a lab arm that beats the funnel on both sets is a
       CANDIDATE, not a winner. Before any wiring proposal, it must survive:

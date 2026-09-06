@@ -139,7 +139,8 @@ class TestRuntimeCycle(unittest.TestCase):
 
     def test_cycle_plan_step_defers_execution(self):
         """Plan step only defers execution to the trigger; manage/enter steps
-        execute autonomously (checked in test_cycle.py)."""
+        execute autonomously (asserted by assertTrue(will_execute_now) in
+        test_broker_clock.py and test_runtime_fallback_management.py)."""
         from hermes_runtime import cycle
         m5 = _make_ohlc_rows(120, 4600, 5, "bullish")
         h1 = _make_ohlc_rows(80, 4600, 15, "bullish")

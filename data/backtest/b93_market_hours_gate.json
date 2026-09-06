@@ -276,20 +276,20 @@
   }
  },
  "live_record": {
-  "cycles": 771,
-  "first": "2026-08-29T09:45:01.795384+00:00",
-  "last": "2026-09-06T06:15:02.277928+00:00",
-  "span_days": 7.85,
-  "cycles_blocked_by_market_hours": 282,
-  "share_of_cycles_blocked": 0.3658,
+  "cycles": 741,
+  "first": "2026-08-30T05:38:19.482170+00:00",
+  "last": "2026-09-06T17:00:02.404650+00:00",
+  "span_days": 7.47,
+  "cycles_blocked_by_market_hours": 252,
+  "share_of_cycles_blocked": 0.3401,
   "blocked_by_weekday": {
    "Fri": 8,
-   "Sat": 145,
-   "Sun": 129
+   "Sat": 96,
+   "Sun": 148
   },
   "blocked_fri_after_22": 8,
-  "blocked_sat": 145,
-  "blocked_sun": 129,
+  "blocked_sat": 96,
+  "blocked_sun": 148,
   "note": "a blocked cycle is one that reached the executor and was rejected with reason=market_closed; the gate is the only thing standing between those cycles and order attempts into a closed market (broker retcode 10018). cycles = DISTINCT created_at values (finalised plans are rewritten under a new filename with the same stamp)"
  },
  "shadow": {
@@ -369,7 +369,7 @@
   "blocked_bars_true_frame_total": 235,
   "book_can_price_this_gate": false,
   "book_verdict": "INVERTED POPULATION \u2014 the naive frame's kills are open-market bars and its zero-Sunday reading hides the truly closed ones; a book number here is meaningless in either frame, which is exactly what b93's rule is for (and it retroactively voids b92's '0 Sunday bars' as a coverage statement: the bars exist, the frame hid them)",
-  "live_fire_rate": "282/771 cycles",
+  "live_fire_rate": "252/741 cycles",
   "shadow_verdict": "DISJOINT \u2014 cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar",
   "adaptive_reachable": false,
   "boundary_mismatch": "gate Sun 23:00/Fri 22:00 vs broker Sun 22:00/Fri 21:00",
