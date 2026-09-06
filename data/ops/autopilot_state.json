@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-05T20:36:10.432379+00:00",
+ "last_run_utc": "2026-09-06T03:35:22.884619+00:00",
  "recent_commits": [
+  "5c17f28 autopilot: b90 \u2014 Telegram 400 killed the 21:13 report: agent narrative/backlog free text with a raw '<' was inserted unescaped into an HTML-mode message (escape at source + commit subjects + todo; +escape test)",
   "d0a7122 autopilot: b88 (b68 r20) DEFCON as books + rollover blind-cycle fix",
   "5e5841a autopilot: b86 (b68 round 19) \u2014 range-kill gate measured as books: no-op at live 0.35 (0 kills, flat book across the whole 0.0-0.99 ladder on 5 legs) and FULLY SHADOWED by MIN_SETUP_GRADE (100% of killable signals are C-grade; live-gated book 0 trades, ungated 0.34-0.45R below the funnel); knob has no adaptive path at all. +15 tests, new todo b87 (gate-shadowing test)",
   "5147061 harvest: b85d fix \u2014 b85 fixture now ships env_loader.py so the subprocess test survives hosts without python-dotenv (plus b84 tick + b85d todo note from the 12:35 run)",
-  "e5e44c4 autopilot: b85c \u2014 route the backlog-dirty check through engines/dirty_work (b46 single-seam rule) via new is_path_dirty()",
-  "25b305e autopilot: b85b \u2014 CLI startup noise hijacked the narrative (503 hidden behind English warning); backlog 'not yet committed' note now checks git state, not this run's commits"
+  "e5e44c4 autopilot: b85c \u2014 route the backlog-dirty check through engines/dirty_work (b46 single-seam rule) via new is_path_dirty()"
  ]
 }

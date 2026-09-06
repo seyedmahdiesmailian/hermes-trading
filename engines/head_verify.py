@@ -133,6 +133,148 @@ def _tail(text: str, n: int = 25) -> str:
     return '\n'.join(lines[-n:])
 
 
+# ── b91: stale-worktree self-heal ──────────────────────────────────────
+# INCIDENT (2026-09-05): the 21:13 run was hard-killed while its OWN suite
+# was inside tests/test_b50_*.py's class-level verify_ref. SIGKILL skips
+# Python's `finally`, so the detached worktree stayed registered
+# (/tmp/hermes_headverify_*/checkout). The very next suite then went RED on
+# test_worktree_is_cleaned_up_after_verification — which runs verify_ref
+# itself, so the leak was re-measured by the test that was supposed to
+# detect it: a self-poisoning loop no one would ever fix by hand.
+#
+# `git worktree prune` cannot heal this: prune only drops registrations whose
+# directory is GONE, and a killed run leaves the directory behind. The entry
+# is, to git, a perfectly valid live worktree.
+#
+# So the verifier sweeps its own leftovers before it works. Safety: only paths
+# matching THIS module's own temp prefix, and only ones older than any live
+# verification could be (see STALE_WORKTREE_AFTER_SEC) — a concurrently
+# running verifier is never disturbed.
+WORKTREE_PREFIX = 'hermes_headverify_'
+# A live worktree's age is bounded by the OUTER timeout (verify_head.sh uses
+# `timeout 900`, the module budget by default 600). Anything older than the
+# larger of the two plus slack is by definition an orphan.
+STALE_WORKTREE_AFTER_SEC = int(os.environ.get(
+    'HERMES_STALE_WORKTREE_AFTER', str(max(SUITE_TIMEOUT_SEC, 900) + 300)))
+
+
+def list_worktrees(repo: Path | str | None = None) -> list[dict]:
+    """Registered worktrees as [{'path','head','detached','prunable'}].
+    Never raises: an unreadable listing returns [] (the sweep then does
+    nothing, which is the fail-safe direction)."""
+    try:
+        r = _git('worktree', 'list', '--porcelain', cwd=repo)
+        if r.returncode != 0:
+            return []
+        out, cur = [], {}
+        for line in (r.stdout or '').splitlines():
+            if not line.strip():
+                if cur:
+                    out.append(cur)
+                    cur = {}
+                continue
+            if line.startswith('worktree '):
+                cur = {'path': line[len('worktree '):], 'head': None,
+                       'detached': False, 'prunable': False}
+            elif line.startswith('HEAD '):
+                cur['head'] = line[5:].strip()
+            elif line.strip() == 'detached':
+                cur['detached'] = True
+            elif line.startswith('prunable'):
+                cur['prunable'] = True
+        if cur:
+            out.append(cur)
+        return out
+    except Exception as exc:
+        selfcheck.fail('head_verify list_worktrees', exc)
+        return []
+
+
+def _age_sec(path: str, now: float) -> int:
+    """Seconds since the leftover's directory was last touched (0 when it
+    cannot be stat'ed — a missing dir is handled by prune, not by age)."""
+    try:
+        return int(now - os.stat(path).st_mtime)
+    except OSError:
+        return 0
+
+
+def owner_state(base_dir: str) -> str:
+    """'alive' | 'dead' | 'unknown' for a temp worktree's creator.
+
+    verify_ref stamps its throwaway dir with owner.pid BEFORE registering the
+    worktree, so any worktree created by this code is attributable. A dead
+    owner means the verifier was hard-killed (SIGKILL skips the finally block)
+    and the registration is an orphan — removable at once, no age wait.
+    'unknown' (no pid file: pre-b91 leftover, or hand-made) falls back to the
+    conservative age rule.
+    """
+    try:
+        with open(os.path.join(base_dir, 'owner.pid'), encoding='utf-8') as f:
+            pid = int(f.read().strip())
+    except (OSError, ValueError):
+        return 'unknown'
+    try:
+        os.kill(pid, 0)
+        return 'alive'
+    except ProcessLookupError:
+        return 'dead'
+    except PermissionError:
+        return 'alive'
+    except OSError:
+        return 'unknown'
+
+
+def sweep_stale_worktrees(*, repo: Path | str | None = None, now: float | None = None,
+                          min_age_sec: int | None = None) -> dict:
+    """Remove THIS verifier's orphaned temp worktrees. Returns a report.
+
+    Never raises. Removes nothing that is not (a) under the temp prefix this
+    module creates and (b) older than min_age_sec (default
+    STALE_WORKTREE_AFTER_SEC) — so a live verification running elsewhere on
+    the same repo is left alone.
+    """
+    budget = min_age_sec if min_age_sec is not None else STALE_WORKTREE_AFTER_SEC
+    stamp_now = now if now is not None else time.time()
+    rep = {'removed': [], 'kept_fresh': [], 'pruned': False, 'errors': []}
+    try:
+        for wt in list_worktrees(repo):
+            p = wt.get('path') or ''
+            # The prefix only ever appears in paths THIS module created
+            # (tempfile.mkdtemp(prefix=WORKTREE_PREFIX)); the main checkout
+            # can never match, so it is structurally unremovable here.
+            if WORKTREE_PREFIX in p:
+                if not os.path.isdir(p):
+                    continue                      # prune below handles it
+                base = os.path.dirname(p.rstrip('/'))
+                state = owner_state(base)
+                age = _age_sec(p, stamp_now)
+                if state == 'alive':
+                    rep['kept_fresh'].append({'path': p, 'age_sec': age,
+                                              'owner': 'alive'})
+                    continue
+                if state == 'unknown' and age < budget:
+                    rep['kept_fresh'].append({'path': p, 'age_sec': age,
+                                              'owner': 'unknown'})
+                    continue
+                r = _git('worktree', 'remove', '--force', p, cwd=repo)
+                if r.returncode == 0:
+                    rep['removed'].append({'path': p, 'age_sec': age,
+                                           'owner': state})
+                else:
+                    shutil.rmtree(p, ignore_errors=True)
+                    rep['removed'].append({'path': p, 'age_sec': age,
+                                           'owner': state, 'via': 'rmtree'})
+                    rep['errors'].append((r.stderr or r.stdout or '').strip()[:200])
+        pr = _git('worktree', 'prune', cwd=repo)
+        rep['pruned'] = pr.returncode == 0
+        return rep
+    except Exception as exc:
+        selfcheck.fail('head_verify sweep_stale_worktrees', exc)
+        rep['errors'].append(f'{type(exc).__name__}: {exc}'[:200])
+        return rep
+
+
 # ── b45: the push gate ─────────────────────────────────────────────────
 # A broken HEAD must never reach GitHub (43c5f52 / 920ed0d: commit shipped,
 # verification said BROKEN or never ran, cron's git_sync pushed it anyway,
@@ -319,8 +461,16 @@ def verify_ref(ref: str = 'HEAD', *, timeout: int | None = None) -> dict:
         if not sha:
             out['note'] = f'cannot resolve ref {ref!r} in {REPO_STR}'
             return out
-        base = Path(tempfile.mkdtemp(prefix='hermes_headverify_'))
+        base = Path(tempfile.mkdtemp(prefix=WORKTREE_PREFIX))
         wt = base / 'checkout'
+        # b91: stamp the creator's pid BEFORE registering the worktree, so a
+        # later sweep can tell "orphan of a killed run" (pid gone) from "a
+        # verification running right now" (pid alive) and never disturb the
+        # latter. Written first: a worktree that exists was stamped first.
+        try:
+            (base / 'owner.pid').write_text(str(os.getpid()), encoding='utf-8')
+        except Exception as exc:
+            selfcheck.fail('head_verify owner stamp', exc)
         try:
             shutil.rmtree(wt, ignore_errors=True)
             wt.mkdir(parents=True, exist_ok=True)
@@ -332,6 +482,12 @@ def verify_ref(ref: str = 'HEAD', *, timeout: int | None = None) -> dict:
             return out
         # A hard kill mid-run can leave stale admin entries behind; prune
         # first so a leftover registration can never block a verification.
+        # b91: prune alone is NOT enough — a killed run leaves the worktree
+        # DIRECTORY in place, so git sees a valid live worktree and prune
+        # refuses it. Sweep this module's own orphans (prefix + age guarded)
+        # first; the report rides on the result so a leak is visible in the
+        # verdict instead of only in a red test three runs later.
+        out['sweep'] = sweep_stale_worktrees()
         _git('worktree', 'prune')
         add = _git('worktree', 'add', '--detach', str(wt), sha)
         if add.returncode != 0:

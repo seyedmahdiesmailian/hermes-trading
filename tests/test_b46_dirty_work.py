@@ -197,6 +197,14 @@ class WriterReaderDiscipline(unittest.TestCase):
     """scan() must be the ONLY git-status reader in production code — the
     b40 lesson: two modules parsing one fact drift silently."""
 
+    @staticmethod
+    def _is_offender_line(s: str) -> bool:
+        """The tripwire's line predicate, extracted so BOTH directions can
+        be replayed (b52 discipline: a scoped-down rule must still catch
+        the shape it was written for)."""
+        return ('porcelain' in s and 'git' in s.lower()
+                and 'status' in s.lower())
+
     def test_single_seam_no_hand_parsed_git_status(self):
         offenders = []
         for base in ('engines', 'notifier', 'scripts'):
@@ -208,10 +216,33 @@ class WriterReaderDiscipline(unittest.TestCase):
                     s = ln.strip()
                     if s.startswith('#'):
                         continue
-                    if 'porcelain' in s and 'git' in s.lower():
+                    # b91: the seam is git-STATUS, not every --porcelain
+                    # command. head_verify's `git worktree list --porcelain`
+                    # reads a different fact (worktree registration) that
+                    # dirty_work does not provide; flagging it would push a
+                    # second module to fake a status parse. Scope the match
+                    # to lines that actually parse git status.
+                    if self._is_offender_line(s):
                         offenders.append(f'{p.relative_to(REPO)}: {s[:80]}')
         self.assertEqual(offenders, [],
                          'engines/dirty_work is the single git-status seam')
+
+    def test_scoping_keeps_the_rule_alive(self):
+        """ANTI-VACUITY (b91): narrowing the predicate to git-STATUS lines
+        must not neuter it — the original b46 shape (a hand-parsed
+        `git status --porcelain` outside dirty_work) still offends, while
+        the worktree-registration read (a different fact, dirty_work has no
+        API for it) does not."""
+        bad = ["r = subprocess.run(['git', 'status', '--porcelain=v1', '-z'])",
+               "out = _git('status', '--porcelain')"]
+        for line in bad:
+            self.assertTrue(self._is_offender_line(line),
+                            f'hand-parsed git status no longer caught: {line}')
+        good = ["r = _git('worktree', 'list', '--porcelain', cwd=repo)",
+                "x = 1  # no git here"]
+        for line in good:
+            self.assertFalse(self._is_offender_line(line),
+                             f'non-status porcelain command wrongly caught: {line}')
 
 
 class PanelIntegration(unittest.TestCase):

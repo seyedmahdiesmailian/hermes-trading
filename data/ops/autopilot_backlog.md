@@ -311,7 +311,7 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
        against so a stale ledger cannot pass as current. 22 tests in
        tests/test_b88_defcon_books.py; full numbers in
        data/backtest/b88_defcon_books.json + logs/b88_run_chrono.log.
-- [ ] b89 DEFCON WINDOW: DEALS vs TRADES — HUMAN DECISION (found by b88,
+- [x] b89 DEFCON WINDOW: DEALS vs TRADES — HUMAN DECISION (found by b88,
        2026-09-05, NOT applied by autopilot). engines/risk.compute_performance_state
        documents `recent_closed` as "last 10 closed trades" but slices the last 10
        DEALS from a feed that also contains opening deals (entry==0), so DEFCON's
@@ -324,6 +324,12 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
        the docstring to match the code and record that RED is reachable only because
        of the deal-level slice. Either way add a test pinning the window's exit count
        so the two cannot drift again.
+       DONE 2026-09-05 (option (b) shipped by the 21:13 run, left unmarked —
+       b46 shape; verified this run: ledger reproduces byte-identical, both
+       code shas match, 15 tests green): DEFCON's window is 10 DEALS = 5 exits
+       in an alternating book; RED needs EVERY exit an SL; dilution is
+       one-directional (deal slice is HARDER than the docstring's trade slice,
+       never looser), so option (a) stays a human decision.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob

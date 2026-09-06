@@ -111,6 +111,7 @@ DOCUMENTED_KNOBS = {
     "HERMES_STAMP": "verify_head.sh → head_verify stamping opt-in (b45)",
     "HERMES_VERIFY_TIMEOUT": "head_verify suite timeout knob (b50)",
     "HERMES_PUSH_GATE_MAX_AGE": "push-gate fail-open age knob (b45)",
+    "HERMES_STALE_WORKTREE_AFTER": "b91 orphan-worktree sweep age budget, default = outer timeout + slack (head_verify)",
     # HERMES_B50_NESTED is deliberately NOT listed: production (head_verify)
     # only WRITES it into the child env; the sole reader is a test file, which
     # is out of scope. The liveness test below would (rightly) reject it.
