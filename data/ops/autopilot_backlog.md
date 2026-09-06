@@ -374,6 +374,20 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       the probe-shape vocabulary (or resolve `from tests import ...` names
       against the sibling module's own traced set), pinned by a synthetic
       two-module fixture. Small, tests-only.
+- [ ] b96 B50 LEAK TEST FLAKES UNDER CONCURRENT VERIFIERS (found 2026-09-06,
+      b94 run): test_worktree_is_cleaned_up_after_verification asserts
+      `git worktree list` has exactly ONE line — but b91's own docstring
+      says concurrent verifications are a supported shape (cron's b51
+      start-heal vs the agent's step 4b), and the sweep deliberately KEEPS
+      a live-owner worktree. This run hit it for real: a background suite
+      run overlapped a verify_head.sh, the leak test saw the other
+      verifier's live /tmp/hermes_headverify_* checkout and went RED while
+      the repo was actually fine (both verifiers cleaned up; final HEAD
+      verified OK 979/979). Fix: the leak test must count only worktrees
+      NOT owned by a live pid (owner_state from head_verify is the exact
+      tool), so it detects real leaks without racing legitimate
+      concurrency; pin with the synthetic alive-owner shape b91 already
+      builds. Small, tests-only.
 - [ ] b87 GATE-SHADOWING TEST: MEASURE A FILTER AGAINST THE OTHER FILTERS,
       NOT JUST AGAINST NOTHING (reusable procedure from b86, 2026-09-05):
       b84's template (kept book vs dropped book vs the counterfactual knob
