@@ -1,0 +1,182 @@
+{
+ "_note": "b92 (b87 queue item 3): the COOLDOWN gate measured in its own domain. Book test on cached+W1..W4 (live-parity strategy_signal), clock test on the live master-cycle log, shadow test against market_hours, reachability against learning.adjustments(). Read-only; nothing wired; no gate weakened.",
+ "_live_gates": {
+  "POST_OPEN_COOLDOWN_MIN": 15,
+  "RESTART_COOLDOWN_MIN": 5,
+  "restart_gap_min": 30
+ },
+ "cached": {
+  "_bars": 3000,
+  "_first": "2026-07-15T10:00:00+00:00",
+  "_last": "2026-08-28T23:45:00+00:00",
+  "_weekday_hist": {
+   "0": 552,
+   "1": 552,
+   "2": 608,
+   "3": 644,
+   "4": 644
+  },
+  "_sunday_bars": 0,
+  "_signals": 848,
+  "_signals_in_post_open_window": 0,
+  "bind": {
+   "signals_rejected_by_gate": 0,
+   "book_is_measurable": false
+  }
+ },
+ "W1": {
+  "_bars": 6000,
+  "_first": "2026-04-14T17:30:00+00:00",
+  "_last": "2026-07-15T09:45:00+00:00",
+  "_weekday_hist": {
+   "0": 1186,
+   "1": 1222,
+   "2": 1232,
+   "3": 1196,
+   "4": 1164
+  },
+  "_sunday_bars": 0,
+  "_signals": 1429,
+  "_signals_in_post_open_window": 0,
+  "bind": {
+   "signals_rejected_by_gate": 0,
+   "book_is_measurable": false
+  }
+ },
+ "W2": {
+  "_bars": 6000,
+  "_first": "2026-01-12T07:30:00+00:00",
+  "_last": "2026-04-14T17:15:00+00:00",
+  "_weekday_hist": {
+   "0": 1242,
+   "1": 1262,
+   "2": 1196,
+   "3": 1196,
+   "4": 1104
+  },
+  "_sunday_bars": 0,
+  "_signals": 1544,
+  "_signals_in_post_open_window": 0,
+  "bind": {
+   "signals_rejected_by_gate": 0,
+   "book_is_measurable": false
+  }
+ },
+ "W3": {
+  "_bars": 6000,
+  "_first": "2025-10-08T14:15:00+00:00",
+  "_last": "2026-01-12T07:15:00+00:00",
+  "_weekday_hist": {
+   "0": 1221,
+   "1": 1196,
+   "2": 1218,
+   "3": 1094,
+   "4": 1271
+  },
+  "_sunday_bars": 0,
+  "_signals": 1767,
+  "_signals_in_post_open_window": 0,
+  "bind": {
+   "signals_rejected_by_gate": 0,
+   "book_is_measurable": false
+  }
+ },
+ "W4": {
+  "_bars": 6000,
+  "_first": "2025-07-09T06:45:00+00:00",
+  "_last": "2025-10-08T14:00:00+00:00",
+  "_weekday_hist": {
+   "0": 1186,
+   "1": 1196,
+   "2": 1226,
+   "3": 1196,
+   "4": 1196
+  },
+  "_sunday_bars": 0,
+  "_signals": 1745,
+  "_signals_in_post_open_window": 0,
+  "bind": {
+   "signals_rejected_by_gate": 0,
+   "book_is_measurable": false
+  }
+ },
+ "live_cycles": {
+  "cycles": 1544,
+  "first": "2026-08-29T09:45:01.795384+00:00",
+  "last": "2026-09-06T05:09:00.345524+00:00",
+  "span_days": 7.81,
+  "restart_guard_armed": 1,
+  "gaps": [
+   {
+    "from": "2026-08-29T11:30:01.467284+00:00",
+    "to": "2026-08-29T13:45:02.309996+00:00",
+    "gap_min": 135.0
+   }
+  ],
+  "blocked_cycles_per_arm": 1,
+  "note": "each arm blocks the cycle that armed it for 5 min; the next cron tick is at +15 min, outside the guard, so one arm costs at most one cycle \u2014 the b30 fix made the guard proportional"
+ },
+ "reach": {
+  "window_min": 15,
+  "session_min_per_week": 7020,
+  "share_of_trading_time": 0.00214,
+  "windows_per_week": 1,
+  "restart_window_min": 5,
+  "restart_armed_by_gap_min": 30
+ },
+ "shadow": {
+  "probe": [
+   {
+    "at": "2026-08-30T23:00:00+00:00",
+    "cooldown_blocks": true,
+    "market_hours_allows": true
+   },
+   {
+    "at": "2026-08-30T23:05:00+00:00",
+    "cooldown_blocks": true,
+    "market_hours_allows": true
+   },
+   {
+    "at": "2026-08-30T23:10:00+00:00",
+    "cooldown_blocks": true,
+    "market_hours_allows": true
+   },
+   {
+    "at": "2026-08-30T23:14:00+00:00",
+    "cooldown_blocks": true,
+    "market_hours_allows": true
+   },
+   {
+    "at": "2026-08-30T23:15:00+00:00",
+    "cooldown_blocks": false,
+    "market_hours_allows": true
+   },
+   {
+    "at": "2026-08-30T23:20:00+00:00",
+    "cooldown_blocks": false,
+    "market_hours_allows": true
+   }
+  ],
+  "shadowed_by_market_hours": 0,
+  "covered_only_by_cooldown": 4,
+  "verdict": "NOT_SHADOWED \u2014 cooldown is the only gate on its window"
+ },
+ "reachability": {
+  "learning_changes_keys": [],
+  "learning_can_move_cooldown": false,
+  "constants": {
+   "POST_OPEN_COOLDOWN_MIN": 15,
+   "RESTART_COOLDOWN_MIN": 5
+  },
+  "note": "both knobs are module literals; learning.py adjusts min_rr/min_grade/risk_mult only (same class as b86's range-kill: operator-only reach)"
+ },
+ "_verdict": {
+  "legs": 5,
+  "sunday_bars_total": 0,
+  "signals_in_window_total": 0,
+  "book_can_price_this_gate": false,
+  "restart_arms_in_live_record": 1,
+  "shadow_verdict": "NOT_SHADOWED \u2014 cooldown is the only gate on its window",
+  "adaptive_reachable": false
+ }
+}
