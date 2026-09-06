@@ -364,6 +364,19 @@ never weaken risk gates. Code quality & analysis only. All changes must keep
       Fri 22:00 UTC vs broker real Sun 22:00/Fri 21:00 — Friday side is ~1h
       PERMISSIVE into the 10018 window. scripts/b93_market_hours_gate.py +
       data/backtest/b93_market_hours_gate.json + 16 tests.
+- [ ] b102 DELIBERATE NON-WIDENINGS MUST BE PINNED AS TESTS, NOT COMMIT
+      MESSAGES (reusable procedure from b100, 2026-09-06): when a widening
+      is measured free but deliberately NOT shipped (scope discipline —
+      one widening per commit), the decision lives nowhere unless a test
+      pins the spared shape with the future item's number in its name
+      (b100's test_plain_assert_identity_stays_spared_pending_b101). RULE:
+      every "we chose NOT to widen here" gets (a) a spared-direction test
+      named after the parked item, and (b) a line in that item saying the
+      pin must be EDITED, not deleted, when it ships — so the flip is
+      deliberate and dated, and the boundary cannot rot into an accident
+      in either direction. Cheap audit next tripwire round: grep the
+      b94-file docstrings for 'filed as bNN' / 'deliberately NOT' and
+      check each one has a matching named test.
 - [ ] b101 PLAIN-ASSERT IDENTITY SIBLING (from b100, 2026-09-06): b100
       widened the self.assert* identity family (assertIs/assertIsNot/
       assertIsNone/assertIsNotNone) but deliberately did NOT flip the
