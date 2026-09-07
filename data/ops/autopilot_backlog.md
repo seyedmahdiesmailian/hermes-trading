@@ -929,6 +929,34 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       — b31 fixed its shape, no round has ever priced whether the veto earns its
       keep on the funnel) and any exit method from the literature not yet in the
       lab. Keep this item open until the news-veto is priced.
+      PROGRESS 2026-09-07 (news-veto leg, cheap-version start): the veto's
+      BLAST RADIUS is now measured from the git calendar snapshots (union of
+      all 27 committed economic_calendar.json versions, Aug23–Sep12): 14
+      strict-high USD/XAU events at 6 unique timestamps (08-26 12:30, 08-28
+      14:00, 09-01 14:00, 09-04 12:30, 09-10 12:30, 09-11 12:30 UTC) → ±30min
+      blackout = ~6h of veto over 21 days (~1.2% of wall time, all inside the
+      US session). What BLOCKS finishing the pricing: the stored funnel
+      ledgers (ab_aggressive_data, b121/b129/b130 artifacts) keep per-arm
+      AGGREGATES only — no per-trade entry timestamps — so the b110 cheap
+      version (arithmetic on two existing ledgers) is impossible for a
+      TIME-based gate; it needs one fresh run_backtest pair (veto ON/OFF) on
+      the b121 windows. Filed as b131 (ledger entry-time stamp + the ON/OFF
+      pair producer). No gate was weakened; nothing wired.
+- [ ] b131 TRADER RESEARCH (from b107 news-veto leg, 2026-09-07) — PRICE THE
+      NEWS-VETO ON THE FUNNEL: run_backtest has no time-of-day veto parameter
+      and the stored ledgers carry NO per-trade entry timestamps, so a
+      time-based gate cannot be priced by ledger arithmetic (b110 cheap
+      version fails for TIME gates — reusable lesson: an aggregate-only ledger
+      can only re-price LEVEL-based arms). Procedure: (1) add an additive
+      `news_veto_windows` parameter to engines/backtest_real.run_backtest
+      (default None = byte-identical, same discipline as b130's
+      time_stop_hours), (2) stamp each trade's entry bar time into the ledger
+      so future time-gate questions become arithmetic, (3) run the ON/OFF pair
+      on the b121 fresh windows (W1..W6) using the veto calendar already
+      measured in b107's progress note (6 unique high-impact USD timestamps,
+      ±30min), (4) price by NEUTRALITY per b110 (delta exp_R vs delta net_R
+      vs delta maxDD_R per window, one-sided test across >=3 windows) and
+      report; wire nothing without the b68 merit bar.
 - [ ] b110 RESEARCH PROCEDURE — PRICE AN ENGINE FIX BY ITS NEUTRALITY, NOT JUST
       ITS LEVEL (reusable procedure from b108, 2026-09-06): when a backtest
       engine defect is fixed, re-running the baseline is only half the job.
