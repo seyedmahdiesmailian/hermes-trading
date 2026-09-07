@@ -75,6 +75,7 @@ LEDGER_123 = os.path.join(BT, "b123_protection_share_decomposition.json")
 LEDGER_129 = os.path.join(BT, "b129_timestop_reprice.json")
 LEDGER_130 = os.path.join(BT, "b130_wall_clock_parity.json")
 LEDGER_132 = os.path.join(BT, "b132_news_veto_real_calendar.json")
+LEDGER_131 = os.path.join(BT, "b131_news_veto_pricing.json")
 
 
 def _load(path: str) -> dict:
@@ -425,6 +426,43 @@ def check_b132_derived_blocks() -> str:
             f"({len(led['_neutrality'])} arms, archive {cal['n_events']} ev)")
 
 
+def check_b131_derived_blocks() -> str:
+    """b128's ship-time rule applied to the b131 ledger (b133's correction of
+    b131's own ship: the ledger went out with no check at all).
+
+    The census, the three delta tables, the neutrality rows and the verdict
+    are pure functions of the shipped grid + windows + off_rows and are
+    re-executed here. The measurement half (7 arms x 7 legs of funnel replay)
+    is NOT re-run — it is pinned by the ledger's integrity block instead,
+    which demands the OFF arm still equal b129's frozen incumbent cell: that
+    equality is what makes a veto delta a delta on ONE funnel rather than two
+    spliced ones.
+
+    `veto_windows()` is deliberately NOT re-probed here: it asks the live
+    evaluate_macro_filter once per bar over a calendar built from `git show`
+    of committed economic_calendar.json versions, so re-running it would make
+    this check depend on the git history of a data file (and on the network
+    for nothing). The windows are pinned transitively instead — the census
+    reads led[leg]["windows"] verbatim, so a moved window moves the census and
+    fails the equality below."""
+    from scripts import b131_news_veto_pricing as b131
+    led = _load(LEDGER_131)
+    l129 = _load(LEDGER_129)
+    assert b131.integrity(led, l129) == led["_integrity"], \
+        "b131 integrity fails on the shipped ledger — the OFF arm no longer " \
+        "reproduces b129, so the veto deltas are two spliced funnels"
+    for fn, key in ((b131.vetoed_census, "_census"),
+                    (b131.deltas, "_delta_exp_R"),
+                    (lambda l: b131.deltas(l, "net_R", 1), "_delta_net_R"),
+                    (lambda l: b131.deltas(l, "maxDD_R", 1), "_delta_maxDD_R"),
+                    (b131.neutrality, "_neutrality"),
+                    (b131.verdict, "_verdict")):
+        got = fn(led)
+        assert got == led[key], f"b131 producer {key} no longer reproduces"
+    return (f"b131 integrity + census(7 legs) + 6 derived blocks "
+            f"({len(led['_neutrality'])} arms)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -446,6 +484,7 @@ CHECKS = (
     check_b114_drift_is_arithmetic,
     check_b129_derived_blocks,
     check_b130_derived_blocks,
+    check_b131_derived_blocks,
     check_b132_derived_blocks,
 )
 

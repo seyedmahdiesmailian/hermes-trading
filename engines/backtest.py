@@ -128,7 +128,10 @@ def backtest_ohlc(
                           # because the stored ledgers carried aggregates only.
                           # Additive: r_stats reads none of these keys, so no
                           # frozen grid cell changes shape (pinned by
-                          # tests/test_b131_news_veto_pricing.py).
+                          # tests/test_b131_news_veto_dial.py — b133 harvest
+                          # fixed this citation: b131's test file shipped as
+                          # _dial, never _pricing, so the b104 reality-binder
+                          # called HEAD BROKEN on abf7c68/5a02ea7).
                           "entry_time": t.get("entry_time"),
                           "exit_time": (int(rows[index]["time"])
                                         if isinstance(rows[index].get("time"),

@@ -4,12 +4,26 @@ b131 built the veto machinery and had to report its own premise false: the
 only calendar on the box (git union of committed economic_calendar.json)
 covers Aug 23..Sep 12 2026, so six of seven legs were COVERAGE ZERO and
 "inert" there was an absence of data. b132 recovered a real archive — the
-Internet Archive's daily crawl of the SAME ForexFactory feed (95 snapshots,
-1941 events, 81 high-impact USD/XAU, span 2026-05-03..2026-09-12) — and
-re-priced the veto on it. These tests read the shipped ledger
+Internet Archive's crawl of the SAME ForexFactory feed — and re-priced the
+veto on it. These tests read the shipped ledger
 (data/backtest/b132_news_veto_real_calendar.json) and re-derive its claims
 from the archive file itself; nothing here restates a number as a literal
 that the ledger can already produce.
+
+b133 RE-STATED THIS ROUND'S CLAIMS (the archive got 2.6x deeper)
+================================================================
+b132's fetcher queried CDX by EXACT url and concluded the archive began
+2026-05-03. That was a query artefact: ForexFactory ships the feed with a
+cache-busting `?version=<hash>`, and every 2021..2025 crawl recorded the url
+WITH that string, so those captures sit under a different urlkey. Re-queried
+by prefix, the same feed yields 145 captured days from 2025-01-19 (5043
+events, 303 high-impact USD/XAU) instead of 95 days from 2026-05-03 (1941
+events). Consequence for the study: ALL SEVEN legs are now covered, so the
+covered-leg vote went from n=2 (below b129's strict floor, no strict answer
+possible) to n=7 (a strict answer is reachable). The veto question now HAS
+one: at live's own ±30min the delta is one-sided NEGATIVE on 4 legs vs 1
+positive, mean -0.0094R — the guard costs exp_R, it does not add it, and no
+arm is a lever.
 
 WHAT IS PINNED
 1. ARCHIVE IS REAL AND IN LIVE'S SHAPE: the fetched archive parses, carries
@@ -17,17 +31,30 @@ WHAT IS PINNED
    engines/economic_calendar.py emits (b82's parity rule — the archive must
    be readable by the predicate live runs, not by a private schema).
 2. COVERAGE IS RE-DERIVED, NOT QUOTED: coverage() re-run from the archive +
-   the leg's own bar span must equal the stored _coverage rows, cached/W1
-   covered, W2..W6 honestly NOT (the archive starts 2026-05-03). An
-   anti-vacuity probe shows a leg entirely outside the archive reads 0.0.
-3. THE VETO REMOVES WINNERS AT LIVE'S WIDTH: the ±30min arm's vetoed entries
-   carry POSITIVE R on BOTH covered legs (cached +2.8R, W1 +0.5R); on cached
-   that drags exp_R (-0.053) and net_R (-6.0R) down — the guard costs
-   measured R on this data, it does not save it. (W1's replacement re-entry
-   nearly covers the hole at +0.004 exp_R, so the per-leg claim pinned here
-   is the vetoed_R sign, not a uniform delta sign. The veto stays live
-   insurance: fail-closed on outage, tail-risk the funnel's short holds
-   rarely sample. That is a human-gate argument, not a wiring by this round.)
+   the leg's own bar span must equal the stored _coverage rows — and now on
+   ALL SEVEN legs (b133's point: the coverage-zero disease was a query bug,
+   not a data limit). An anti-vacuity probe shows a leg entirely outside the
+   archive still reads 0.0, so "covered" is earned, not defaulted.
+2a.AN ARCHIVE REGRESSION CANNOT PASS SILENTLY: the depth (>=5000 events) and
+   the exact count of payloads Wayback indexes but does not serve (3 x 404)
+   are pinned, so a re-fetch that quietly re-narrows the study fails here.
+2b.THE ARCHIVE PICKER USES SPAN, NOT FILENAME: the study must price on the
+   widest archive. A filename sort puts a later-but-thinner re-fetch last and
+   would silently re-narrow the study; _pick_archive() must return the widest
+   span even when it sorts first.
+3. THE VETO REMOVES WINNERS ON 5 OF 6 EVIDENCE LEGS AT LIVE'S WIDTH: the
+   ±30min arm's vetoed entries carry POSITIVE R on cached, W1, W3, W4, W5;
+   W6 is the exception (its vetoed entries were -0.53R losers, so there the
+   guard helped) and W2 has NO evidence at live width — it is calendar-
+   COVERED (12 high events in span) but vetoed ZERO funnel entries, so it
+   cannot vote on the sign at all (b133's finding: coverage is not evidence;
+   b132's dead-run prose had W2 and W6's roles inverted). On cached the veto
+   drags exp_R (-0.053) and net_R (-6.0R) down — the guard costs measured R
+   on this data, it does not save it. The pinned claim is the MAJORITY sign
+   over legs-with-evidence, not a uniform one: a flipped majority re-opens
+   the question. The veto stays live insurance: fail-closed on outage,
+   tail-risk the funnel's short holds rarely sample. That is a human-gate
+   argument, not a wiring by this round.
 4. NO ARM IS A LEVER, AND THE CEILING CAN LIE: the ±720/±1440min arms clear
    b119's 0.10R ceiling on exp_R while net_R is NEGATIVE on covered legs —
    pure subtraction inflation. lever_test() must flag both as
@@ -35,8 +62,8 @@ WHAT IS PINNED
    the reusable rule the round files: an ENTRY-REMOVING arm must be judged
    on net_R, never on exp_R alone.
 5. THE REAL CALENDAR MOVED b131'S NUMBER: cached Δexp_R at live width went
-   -0.026 (git-union calendar) -> -0.053 (real archive). The synthetic-proxy
-   era's answer was not the real one.
+   -0.026 (git-union calendar) -> -0.053 (real archive), and FIVE of seven
+   legs changed sign or magnitude once the archive reached back into 2025.
 6. NOTHING WIRED: live's blackout default and the macro gate's wiring are
    untouched; engines/macro_filter.py and auto_executor Check 7 unchanged.
 """
@@ -77,19 +104,29 @@ _led = lambda: _load(LEDGER)
 
 
 def _archive():
+    """The WIDEST-span archive on disk — same rule the study uses (b133:
+    a filename sort can put a later-but-thinner re-fetch last)."""
     paths = sorted(glob.glob(ARCHIVE_GLOB))
     assert paths, "b132's archive must be committed: run scripts/b132_event_archive_fetch.py"
-    return _load(paths[-1])
+    return _load(max(paths, key=lambda q: _load(q).get("event_first", "")
+                     + "|" + str(_load(q).get("event_last", ""))))
 
 
 class TestB132ArchiveIsReal(unittest.TestCase):
     def test_b132_archive_shape_matches_the_live_calendar_schema(self):
         cal = _archive()
-        self.assertGreaterEqual(cal["n_events"], 1000)
+        self.assertGreaterEqual(cal["n_events"], 5000,
+                                "b133 deepened the archive to 2025-01-19; a "
+                                "regression to the thin 2026-only crawl must "
+                                "not pass silently")
         self.assertGreater(cal["n_high_gold"], 50)
         self.assertEqual(cal["n_snapshots_failed"], 0,
                          "every CDX snapshot must be captured or retried — "
                          "a silent gap is a fake 'no events'")
+        self.assertEqual(cal["n_snapshots_unrecoverable"], 3,
+                         "the 3 payloads Wayback indexes but 404s on id_ are "
+                         "recorded, not hidden — if that number moves, the "
+                         "archive was re-fetched and must be re-read")
         # the keys engines/economic_calendar._fetch_forexfactory emits
         want = {"title", "currency", "impact", "date", "time",
                 "forecast", "previous"}
@@ -105,13 +142,14 @@ class TestB132ArchiveIsReal(unittest.TestCase):
             self.assertEqual(got, led[leg]["_coverage"],
                              f"{leg} coverage row no longer derives from the "
                              "archive — the covered-leg vote is stale")
-        self.assertTrue(led["_coverage"]["cached"]["covered"])
-        self.assertTrue(led["_coverage"]["W1"]["covered"])
-        for leg in ("W2", "W3", "W4", "W5", "W6"):
-            self.assertFalse(led["_coverage"][leg]["covered"],
-                             f"{leg} is outside the archive span and must "
-                             "NOT vote (b131's coverage-zero disease)")
-        self.assertEqual(led["_covered_legs"], ["cached", "W1"])
+        # b133: the prefix-query fix reached back into 2025, so ALL SEVEN legs
+        # now vote. If the archive ever regresses to the thin 2026-only crawl,
+        # W2..W6 fall out of _covered_legs and this fails loudly.
+        self.assertEqual(led["_covered_legs"], list(LEGS))
+        for leg in LEGS:
+            self.assertTrue(led["_coverage"][leg]["covered"],
+                            f"{leg} dropped out of coverage — the b133 "
+                            "archive-depth regression")
 
     def test_b132_coverage_is_not_vacuously_true(self):
         b132, cal = _script(), _archive()
@@ -140,21 +178,51 @@ class TestB132VetoPricing(unittest.TestCase):
 
     def test_b132_the_live_width_veto_removes_winners_not_losses(self):
         arm = self.led["_arms"][1]                      # real::±<live min>
+        pos, neg, silent = [], [], []
         for leg in self.led["_covered_legs"]:
             cen = self.led["_census"][leg][arm]
-            self.assertGreater(cen["n_vetoed_entries"], 0,
-                               "a covered leg with zero vetoed entries cannot "
-                               "support the finding")
-            # THE finding: the entries the veto deletes were themselves
-            # WINNERS in R. On cached that also drags exp_R and net_R down;
-            # on W1 the re-entered replacement nearly covers the hole
-            # (+0.004 exp_R), so only the vetoed_R sign is claimed per-leg.
-            self.assertGreater(cen["vetoed_R"], 0,
-                               f"{leg}: the vetoed entries' own R was not "
-                               "positive — the 'veto costs R' finding changed "
-                               "and this note must be re-read, not re-asserted")
+            if cen["n_vetoed_entries"] == 0:
+                silent.append(leg)                      # covered, no evidence
+            elif cen["vetoed_R"] > 0:
+                pos.append(leg)
+            else:
+                neg.append(leg)
+        # THE b133 finding, honestly: on the DEEP archive the vetoed entries
+        # were winners on 5 of the 6 legs that HAVE evidence at live width;
+        # W6 is the exception (its 8 vetoed entries were -0.53R losers, so
+        # there the guard helped) and W2 cannot vote — it is calendar-covered
+        # but the funnel took zero entries inside any ±30min window. Pinning
+        # the majority sign over evidence legs, not a uniform one — a flipped
+        # majority re-opens the question.
+        self.assertEqual(pos, ["cached", "W1", "W3", "W4", "W5"])
+        self.assertEqual(neg, ["W6"])
+        self.assertEqual(silent, ["W2"])
         self.assertLess(self.led["_delta_exp_R"][arm]["cached"], 0.0)
         self.assertLess(self.led["_delta_net_R"][arm]["cached"], 0.0)
+
+    def test_b133_coverage_is_not_evidence_a_covered_leg_can_vote_zero(self):
+        """b133: the ±30min arm is INERT on W2 for a reason the b132 prose
+        never anticipated. W2 passes coverage() (12 high-impact events in
+        span, overlap 1.0) yet the veto deleted ZERO funnel entries there —
+        the events exist and no trade was open near them. A leg can therefore
+        be covered and still carry no sign, and a majority claim built over
+        _covered_legs without checking n_vetoed_entries silently counts a
+        zero-vote leg as agreement. The census must expose the silent legs."""
+        arm = self.led["_arms"][1]
+        cen = self.led["_census"]["W2"][arm]
+        self.assertTrue(self.led["_coverage"]["W2"]["covered"],
+                        "W2 must still be a COVERED leg — the finding is not "
+                        "that the archive misses it")
+        self.assertGreaterEqual(self.led["_coverage"]["W2"]["n_high_events_in_leg"],
+                                5, "coverage is earned by real events")
+        self.assertEqual(cen["n_vetoed_entries"], 0,
+                         "W2's zero-vote shape changed — re-read the "
+                         "majority claim before quoting it")
+        self.assertEqual(cen["vetoed_R"], 0)
+        # anti-vacuity: the SAME leg does produce evidence at a wider arm, so
+        # the zero is the ±30min width's, not a dead leg
+        wide = self.led["_census"]["W2"][self.led["_arms"][2]]
+        self.assertGreater(wide["n_vetoed_entries"], 0)
 
     def test_b132_no_arm_is_a_lever_and_the_ceiling_cannot_lie(self):
         led = self.led

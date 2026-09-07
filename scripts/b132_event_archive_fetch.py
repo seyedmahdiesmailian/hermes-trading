@@ -18,17 +18,40 @@ investing.com: 403. myfxbook: 403. TradingEconomics /calendar/csv: login
 wall (the CSV link redirects to sso). TradingEconomics API guest account:
 410 discontinued. TradingView calendar API: 403 (b131).
 
-What DOES work is the Internet Archive's own crawl of the same feed: the CDX
-index for nfs.faireconomy.media/ff_calendar_thisweek.json returns ~98 daily
-200-responses spanning 2026-05-04 .. 2026-09-06 (plus three isolated 2022
-snapshots, which are outside every lab window and are skipped by range).
-Each snapshot is the FOREXFACTORY feed for the week it was captured in, so the
+What DOES work is the Internet Archive's own crawl of the same feed. Each
+snapshot is the FOREXFACTORY feed for the week it was captured in, so the
 UNION over daily captures is a real, dated, high-impact-tagged event record —
 exactly the shape engines/economic_calendar.py already parses.
 
+b133 CORRECTION — THE CDX QUERY WAS THE BUG, NOT THE ARCHIVE
+============================================================
+The b132 round queried CDX by EXACT url
+(`?url=https://nfs.faireconomy.media/ff_calendar_thisweek.json`) and concluded
+"the archive only reaches 2026-05-03". That conclusion was an artefact of the
+query. ForexFactory ships the feed with a cache-busting `?version=<hash>`
+query string, and every 2021..2025 crawl recorded the ORIGINAL url WITH that
+query string, so those captures live under a different urlkey and an exact-URL
+CDX lookup cannot see them. Measured 2026-09-07 (same host, same feed):
+
+    exact-URL query   : 98 daily 200s  -> 2022 (3), 2026 (95)      [b132's view]
+    prefix+urlkey query: 1087 daily 200s -> 2021 (40), 2022 (400), 2023 (419),
+                                              2024 (52), 2025 (76), 2026 (100)
+
+So the archive is not thin, it is DEEP — 2025 alone has 76 captured days,
+which covers the W3..W6 legs b132 wrote off as coverage-zero. The query below
+is therefore the prefix form with a urlkey filter, and fetches use each
+capture's OWN original url (not a reconstructed bare one), because Wayback
+keys the payload by the url it actually crawled.
+
+REUSABLE LESSON: a "the data does not exist" finding from an index is only as
+good as the key you looked it up by. Before writing off a source, re-query it
+by prefix/substring and diff the hit counts; a cache-busting query string is
+the single most common way a real record hides from an exact-URL lookup.
+
 WHAT THIS SCRIPT DOES
 =====================
-1. Query CDX for every 200 snapshot of the feed.
+1. Query CDX (prefix + urlkey filter) for every 200 snapshot of the feed and
+   keep (timestamp, original-url) pairs.
 2. Fetch each snapshot raw (`id_` suffix = no Wayback re-writing; the payload
    arrives gzip-encoded, which is handled).
 3. Normalise every event into the repo's own calendar shape, using the SAME
@@ -56,8 +79,14 @@ sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
 
 FEED = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
-CDX = ("http://web.archive.org/cdx/search/cdx?url=" + FEED +
-       "&output=json&fl=timestamp,statuscode,length&collapse=timestamp:8")
+# b133: the PREFIX form. An exact-url query sees only the 98 bare-URL captures
+# (2022 + 2026) and hides the 989 `?version=<hash>` captures of 2021..2025,
+# because Wayback keys them under a different urlkey. See module docstring.
+CDX = ("http://web.archive.org/cdx/search/cdx"
+       "?url=nfs.faireconomy.media&matchType=prefix"
+       "&filter=urlkey:.*ff_calendar_thisweek\\.json.*"
+       "&output=json&fl=timestamp,original,statuscode,length"
+       "&collapse=timestamp:8")
 UA = "Mozilla/5.0 (X11; Linux x86_64) hermes-trading-b132/1.0 (research archive)"
 
 # Snapshots older than this are outside every lab window (the 2022 captures)
@@ -65,24 +94,51 @@ UA = "Mozilla/5.0 (X11; Linux x86_64) hermes-trading-b132/1.0 (research archive)
 MIN_SNAPSHOT = "20250101"
 
 
-def _get(url: str, timeout: int = 30) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        raw = r.read()
-        enc = (r.headers.get("Content-Encoding") or "").lower()
-    if "gzip" in enc or raw[:2] == b"\x1f\x8b":
+def _get(url: str, timeout: int = 30, attempts: int = 4) -> bytes:
+    """GET with backoff. The CDX index intermittently accepts the connection
+    and then never answers (measured 2026-09-07: the prefix query succeeded in
+    3s on one call and timed out at 30s on the next), so a single-attempt fetch
+    turns a live archive into a false 'no snapshots'."""
+    import time
+    last = None
+    for i in range(attempts):
         try:
-            raw = gzip.decompress(raw)
-        except OSError:
-            pass
-    return raw
+            req = urllib.request.Request(url, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                raw = r.read()
+                enc = (r.headers.get("Content-Encoding") or "").lower()
+            if "gzip" in enc or raw[:2] == b"\x1f\x8b":
+                try:
+                    raw = gzip.decompress(raw)
+                except OSError:
+                    pass
+            return raw
+        except Exception as exc:                                # noqa: BLE001
+            last = exc
+            if i < attempts - 1:
+                time.sleep(5 * (i + 1))
+    raise last
 
 
-def snapshot_list() -> list[str]:
-    """Every 200-status daily capture timestamp of the feed, oldest first."""
-    rows = json.loads(_get(CDX).decode("utf-8", "replace"))[1:]
-    return sorted(r[0] for r in rows
-                  if len(r) >= 2 and r[1] == "200" and r[0] >= MIN_SNAPSHOT)
+def snapshot_list() -> list[tuple[str, str]]:
+    """Every 200-status daily capture of the feed as (timestamp, original-url),
+    oldest first.
+
+    b133: the ORIGINAL url is carried through to the fetch, not rebuilt from
+    FEED. The 2021..2025 crawls recorded `...json?version=<hash>` and Wayback
+    serves the payload under the url it actually crawled, so a reconstructed
+    bare url 404s for exactly the years we are trying to recover.
+    """
+    rows = json.loads(_get(CDX, timeout=90).decode("utf-8", "replace"))[1:]
+    out = {}
+    for r in rows:
+        if len(r) < 3 or r[2] != "200":
+            continue
+        ts, orig = r[0], r[1]
+        if ts < MIN_SNAPSHOT or not orig.endswith(".json") and ".json?" not in orig:
+            continue
+        out.setdefault(ts[:8], (ts, orig))      # one capture per day
+    return [out[k] for k in sorted(out)]
 
 
 def normalise(items: list[dict], captured: str) -> list[dict]:
@@ -112,8 +168,9 @@ def normalise(items: list[dict], captured: str) -> list[dict]:
     return out
 
 
-def fetch_one(ts: str) -> tuple[str, list[dict], str | None]:
-    url = f"http://web.archive.org/web/{ts}id_/{FEED}"
+def fetch_one(snap: tuple[str, str]) -> tuple[str, list[dict], str | None]:
+    ts, orig = snap
+    url = f"http://web.archive.org/web/{ts}id_/{orig}"
     try:
         body = json.loads(_get(url).decode("utf-8", "replace"))
     except Exception as exc:                                # noqa: BLE001
@@ -144,42 +201,71 @@ def existing_snapshots() -> set[str]:
 
 
 def build(workers: int = 5, verbose: bool = True,
-          only: list[str] | None = None) -> dict:
+          only: list[tuple[str, str]] | None = None) -> dict:
     snaps = only if only is not None else snapshot_list()
     if not snaps:
         raise SystemExit("CDX returned no usable snapshots — archive blocked?")
     events: dict[tuple, dict] = {}
-    failures: dict[str, str] = {}
+    failures: dict[str, str] = {}        # transient — must end up at zero
+    unrecoverable: dict[str, str] = {}   # Wayback lists it, payload is gone
     per_week: dict[str, int] = {}
-    if workers <= 1:                                          # polite serial path
+
+    def consume(ts: str, items: list[dict], err: str | None) -> bool:
+        """True when the error is transient (worth a retry pass)."""
+        if not err:
+            per_week[ts[:8]] = len(items)
+            for e in items:
+                events[(e["date"], e["currency"], e["title"])] = e
+            return False
+        if "404" in err:
+            unrecoverable[ts] = err      # orphan CDX row: index lies, payload gone
+            return False
+        failures[ts] = err
+        return True
+
+    def pass_over(todo: list[tuple[str, str]], serial: bool) -> list:
         import time
-        for ts in snaps:
-            r = fetch_one(ts)
-            if r[2]:
-                failures[ts] = r[2]
-            else:
-                per_week[ts[:8]] = len(r[1])
-                for e in r[1]:
-                    events[(e["date"], e["currency"], e["title"])] = e
-            time.sleep(0.4)
-    else:
+        retry = []
+        if serial:                                       # polite serial path
+            for snap in todo:
+                if consume(*fetch_one(snap)):
+                    retry.append(snap)
+                time.sleep(0.4)
+            return retry
         with ThreadPoolExecutor(max_workers=workers) as ex:
-            for ts, items, err in ex.map(fetch_one, snaps):
-                if err:
-                    failures[ts] = err
-                    continue
-                per_week[ts[:8]] = len(items)
-                for e in items:
-                    events[(e["date"], e["currency"], e["title"])] = e
+            for ts, items, err in ex.map(fetch_one, todo):
+                if consume(ts, items, err):
+                    retry.append((ts, next(o for t, o in snaps if t == ts)))
+        return retry
+
+    retry = pass_over(snaps, serial=workers <= 1)
+    for round_no in range(2):                            # transient-only retries
+        if not retry:
+            break
+        if verbose:
+            print(f"retry pass {round_no + 1}: {len(retry)} transient failures")
+        import time
+        time.sleep(10)
+        retry = pass_over(retry, serial=True)
+
+    stamps = sorted(per_week)
+    # a ts that failed transiently and then 404'd on the retry pass is
+    # unrecoverable, not a gap worth retrying — reconcile so `failures` means
+    # exactly "still missing, and the archive should be re-fetched".
+    for ts in unrecoverable:
+        failures.pop(ts, None)
     ordered = sorted(events.values(), key=lambda e: (str(e["date"]),
                                                      e["currency"], e["title"]))
     dates = [e["date"] for e in ordered if e.get("date")]
     return {"source": "forexfactory_via_internet_archive_cdx",
             "feed": FEED,
-            "n_snapshots": len(snaps),
+            "n_snapshots": len(stamps),
             "n_snapshots_failed": len(failures),
             "failures": failures,
-            "snapshot_first": snaps[0], "snapshot_last": snaps[-1],
+            "n_snapshots_unrecoverable": len(unrecoverable),
+            "unrecoverable": unrecoverable,
+            "snapshot_first": stamps[0] if stamps else None,
+            "snapshot_last": stamps[-1] if stamps else None,
             "event_first": dates[0] if dates else None,
             "event_last": dates[-1] if dates else None,
             "n_events": len(ordered),
@@ -201,7 +287,8 @@ def main() -> None:
     os.makedirs(os.path.dirname(p), exist_ok=True)
     with open(p, "w") as f:
         json.dump(led, f, indent=1)
-    print(f"snapshots: {led['n_snapshots']} (failed {led['n_snapshots_failed']})")
+    print(f"snapshots: {led['n_snapshots']} (failed {led['n_snapshots_failed']}, "
+          f"unrecoverable {led['n_snapshots_unrecoverable']})")
     print(f"events: {led['n_events']}  high USD/XAU: {led['n_high_gold']}")
     print(f"event span: {led['event_first']} .. {led['event_last']}")
     print("saved:", os.path.abspath(p))

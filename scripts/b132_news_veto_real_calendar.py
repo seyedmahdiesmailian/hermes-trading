@@ -15,14 +15,22 @@ BEFORE designing the study.
 THIS ROUND
 ==========
 scripts/b132_event_archive_fetch.py recovered a real historical calendar from
-the Internet Archive's crawl of the same ForexFactory feed (95 daily snapshots,
-1941 events, 81 high-impact USD/XAU, span 2026-05-03..2026-09-12). Step 0 of
-this script therefore does what b131 skipped: it MEASURES coverage per leg
+the Internet Archive's crawl of the same ForexFactory feed. b132 shipped it
+thin (95 daily snapshots, 1941 events, span 2026-05-03..); b133's harvest
+re-queried the CDX by PREFIX (the exact-url query was blind to every
+`?version=<hash>` capture, see the fetcher's docstring) and the same source
+now yields 145 captured days from 2025-01-19, 5043 events, 303 high-impact
+USD/XAU — ALL SEVEN legs covered. Step 0 of this script therefore does what
+b131 skipped: it MEASURES coverage per leg
 (events inside the leg, and the fraction of the leg's span inside the archive)
 and only then prices. The veto arms are swept on the REAL calendar at live's
 own ±30min and at four wider half-widths, on all seven legs, and the neutrality
 verdict is computed over the COVERED legs only — a coverage-zero leg is
-excluded from the vote, not silently averaged in as a zero.
+excluded from the vote, not silently averaged in as a zero. b133's harvest
+adds the second exclusion the design had not anticipated: a leg can be
+COVERED and still carry no evidence (W2 has 12 high events in span yet the
+±30min veto deleted ZERO funnel entries there), so a sign claim must be read
+over legs with n_vetoed_entries > 0, not over _covered_legs blindly.
 
 PARITY (unchanged from b131, by construction)
 =============================================
@@ -78,13 +86,37 @@ MIN_COVERAGE_FRAC = 0.50
 MIN_HIGH_EVENTS = 5
 
 
+def _span_days(cal: dict) -> float:
+    """Days covered by an archive's event span (negative = unparseable)."""
+    a, b = cal.get("event_first"), cal.get("event_last")
+    try:
+        return (dt.datetime.fromisoformat(str(b)[:10]) -
+                dt.datetime.fromisoformat(str(a)[:10])).days
+    except Exception:                                        # noqa: BLE001
+        return -1.0
+
+
 def load_archive() -> dict:
-    """The newest fetched archive (b132_event_archive_fetch's product)."""
+    """The WIDEST-span fetched archive on disk (b132_event_archive_fetch's
+    product).
+
+    b133: this used to be `sorted(glob)[-1]`, i.e. newest by filename. The
+    filename carries the event span, so a re-fetch that reaches BACK further
+    sorts EARLIER and the old rule would have silently priced the veto on the
+    thin archive again. Span is the thing the study needs, so span picks it."""
+    cal, path = _pick_archive()
+    cal["_path"] = path
+    return cal
+
+
+def _pick_archive() -> tuple[dict, str]:
     paths = sorted(glob.glob(ARCHIVE_GLOB))
     if not paths:
         raise SystemExit("no event archive on disk — run "
                          "scripts/b132_event_archive_fetch.py first")
-    return json.load(open(paths[-1]))
+    cals = [(json.load(open(p)), p) for p in paths]
+    return max(cals, key=lambda cp: (_span_days(cp[0]),
+                                     int(cp[0].get("n_events") or 0)))
 
 
 def coverage(cal: dict, first: int, last: int) -> dict:
@@ -271,7 +303,7 @@ def build() -> dict:
     led: dict = {
         "_live_blackout_min": LIVE_BLACKOUT_MIN,
         "_arms": list(ARM_NAMES),
-        "_archive": {"path": sorted(glob.glob(ARCHIVE_GLOB))[-1],
+        "_archive": {"path": _pick_archive()[1],
                      "source": cal.get("source"),
                      "n_events": cal.get("n_events"),
                      "n_high_gold": cal.get("n_high_gold"),
@@ -301,14 +333,17 @@ def build() -> dict:
     led["_verdict"] = verdict(led)
     led["_lever"] = lever_test(led)
     n_cov = len(led["_covered_legs"])
+    uncovered = [leg for leg in LEGS if leg not in led["_covered_legs"]]
+    floor = ("the floor is unreachable and NO arm can be strictly one-sided "
+             "here by construction" if n_cov < 3
+             else "a strict verdict is reachable")
     led["_caveat"] = (
-        f"only {n_cov} of {len(LEGS)} legs are covered by the archive, and "
-        f"b129's one_sided_strict floor is max(3, half the legs) non-zero legs "
-        f"— at n={n_cov} that floor is unreachable, so NO arm can be strictly "
-        f"one-sided here by construction. The honest reading is 'no arm earns "
-        f"a lever on the covered legs, and the covered-leg evidence is thin "
-        f"(n={n_cov})', not 'the veto is proven inert'. W2..W6 remain "
-        f"coverage-zero: the archive starts 2026-05-03.")
+        f"{n_cov} of {len(LEGS)} legs are covered by the archive "
+        f"(archive span {led['_archive']['event_first'][:10]}.."
+        f"{led['_archive']['event_last'][:10]}); b129's one_sided_strict floor "
+        f"is max(3, half the legs) non-zero legs, so at n={n_cov} {floor}. "
+        f"Legs with no archive coverage are an absence of data, not a finding "
+        f"of no-effect: {uncovered or 'none'}.")
     led["_vs_b131"] = vs_b131(led, json.load(open(LEDGER_131)))
     return led
 

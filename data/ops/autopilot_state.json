@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-07T18:34:18.140377+00:00",
+ "last_run_utc": "2026-09-07T21:06:18.392377+00:00",
  "recent_commits": [
+  "5a02ea7 autopilot: b132 real event-calendar archive (Wayback FF feed) + news-veto re-priced; lever_test guard; b127 check registered",
   "abf7c68 autopilot: b131 price the news-veto on the funnel (veto dial + clock fields + inert finding)",
   "10f4e90 autopilot: b107 news-veto leg \u2014 blast radius measured from git calendar snapshots (14 strict-high USD events, 6 unique timestamps, ~6h veto over 21d); aggregate-only ledgers cannot price TIME gates (b110 cheap version fails) -> filed b131 with the additive news_veto_windows procedure",
   "f7a2931 autopilot: b130 wall-clock parity of the time exit \u2014 b129's 'inert' was a bar-clock artefact (32 trades >=36h wall, 0 >=144 bars); value 36h stands (|gap|<=0.014R), n_nonzero denominator ships with every neutrality row; engine gains additive time_stop_hours dial (default off), 19 tests, b127 20/20",
-  "6619ef5 autopilot: harvest b129 (b107 exit-side time-stop reprice) left uncommitted by a dead run \u2014 2 tests red (b42 untracked producer+test, b103 phantom b130); landed the files, filed b130 with its name-carrier, registered b129's derived blocks in b127 CHECKS per b128's ship-time rule (19/19 exact), b107 progress note. Findings: live 36h time exit is INERT (ts_0 = 0.000R on all 7 legs, 0 holds over exit), tightening one-sidedly worse (ts_8 -0.031R mean, 5/6 windows, fresh pair agrees), best arm ts_48 +0.003R = no lever; runner-exemption inert across all 14 arms (max gate gap 0.006R); b123 one_sided() is vacuous on inert grids -> one_sided_strict floor",
-  "b762f2f autopilot: b127 producer-reproduction tests for frozen ledgers (18 checks, 9 producers, all exact)"
+  "6619ef5 autopilot: harvest b129 (b107 exit-side time-stop reprice) left uncommitted by a dead run \u2014 2 tests red (b42 untracked producer+test, b103 phantom b130); landed the files, filed b130 with its name-carrier, registered b129's derived blocks in b127 CHECKS per b128's ship-time rule (19/19 exact), b107 progress note. Findings: live 36h time exit is INERT (ts_0 = 0.000R on all 7 legs, 0 holds over exit), tightening one-sidedly worse (ts_8 -0.031R mean, 5/6 windows, fresh pair agrees), best arm ts_48 +0.003R = no lever; runner-exemption inert across all 14 arms (max gate gap 0.006R); b123 one_sided() is vacuous on inert grids -> one_sided_strict floor"
  ]
 }
