@@ -914,7 +914,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       boundary does not emit fails — verified to bite (removing the new line
       makes it report ['computed_rr']). 8 tests in
       tests/test_b106_parser_decision_contract.py, 1112 green, live cycle OK.
-- [ ] b107 RESEARCH ROUND — exit-side improvement: funnel edge is the ENTRY
+- [x] b107 RESEARCH ROUND — exit-side improvement: funnel edge is the ENTRY
       filter (b68r4 finding); search literature for exit/TP-ladder methods
       (A-trailing variants, time-stops, news-veto) and MEASURE exp_R/DD in
       the lab on cached+fresh sets. Report numbers; wire nothing without the
@@ -942,6 +942,15 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       TIME-based gate; it needs one fresh run_backtest pair (veto ON/OFF) on
       the b121 windows. Filed as b131 (ledger entry-time stamp + the ON/OFF
       pair producer). No gate was weakened; nothing wired.
+      CLOSED 2026-09-07 (b47): the news-veto leg is now PRICED on a real
+      archive — b131 built the dial + clock fields, b132 recovered the
+      ForexFactory Wayback archive, b133's prefix-query fix made it deep
+      (2025-01-19.., all 7 legs covered). ANSWER: at live's ±30min the veto
+      is one-sided NEGATIVE on exp_R (mean -0.0094R; the deleted entries were
+      winners on 5 of 6 evidence legs) and no width is a lever — it stays
+      live insurance (fail-closed on calendar outage), never a merit claim.
+      Every leg of b107's mandate (time-stops b129, A-trailing b117,
+      TP-ladder b119/b121/b123, news-veto b131-b133) is now measured.
 - [x] b131 TRADER RESEARCH (from b107 news-veto leg, 2026-09-07) — PRICE THE
       NEWS-VETO ON THE FUNNEL: run_backtest has no time-of-day veto parameter
       and the stored ledgers carry NO per-trade entry timestamps, so a
@@ -1015,7 +1024,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       before that FF's feed wasn't crawled here) — veto stays live insurance
       (fail-closed), no wiring change. tests/test_b132_real_event_archive.py
       (10 tests) + registered in b127 CHECKS (check_b132_derived_blocks).
-- [ ] b133 TRADER RESEARCH — REGISTER b131'S LEDGER IN b127 CHECKS + EXTEND
+- [x] b133 TRADER RESEARCH — REGISTER b131'S LEDGER IN b127 CHECKS + EXTEND
       THE EVENT ARCHIVE BACKWARDS (from b132, 2026-09-07): (a) b131 shipped
       data/backtest/b131_news_veto_pricing.json WITHOUT a check in
       scripts/b127_producer_reproduction.py CHECKS — b128's ship-time rule
@@ -1031,6 +1040,19 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       NEVER be judged on exp_R alone — deleting trades inflates exp_R by
       subtraction; require net_R and maxDD to agree before calling it a lever
       (b132's lever_test is the template).
+      DONE 2026-09-07 (b133 harvest, committed 05a61f9 by b47): (a)
+      check_b131_derived_blocks registered in CHECKS (22/22 reproductions
+      exact). (b) THE ARCHIVE WAS NEVER THIN — THE CDX QUERY WAS: exact-url
+      lookups are blind to every `?version=<hash>` capture; the PREFIX query
+      reaches 2025-01-19 (145 days, 5043 events, 303 high USD/XAU), ALL SEVEN
+      legs now covered and the covered-leg vote went n=2 -> n=7. THE VETO
+      QUESTION NOW HAS A STRICT ANSWER: at live's ±30min the delta is
+      one-sided NEGATIVE (mean -0.0094R, 4 legs vs 1), the vetoed entries were
+      winners on 5 of 6 evidence legs (W2 covered but vetoed ZERO entries —
+      coverage is not evidence), and no arm is a lever; ±120min is negative on
+      7/7 net_R. Veto stays live insurance; nothing wired. Also fixed the
+      BROKEN-HEAD cause: engines/backtest.py cited
+      test_b131_news_veto_pricing (the file shipped as _dial) — b104 phantom.
 - [ ] b110 RESEARCH PROCEDURE — PRICE AN ENGINE FIX BY ITS NEUTRALITY, NOT JUST
       ITS LEVEL (reusable procedure from b108, 2026-09-06): when a backtest
       engine defect is fixed, re-running the baseline is only half the job.
