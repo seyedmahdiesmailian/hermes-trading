@@ -23,6 +23,12 @@ def backtest_ohlc(
                                         # which is what every earlier sweep ran with)
     time_stop_bars: int = 0,            # b57: force-close at bar close after N bars
                                         # without TP1/TP hit (0 = off)
+    trail_floor: float = 0.0,           # b117: absolute $ floor under the trail
+                                        # distance, mirroring live _trail_params'
+                                        # max(risk*mult, 3.0). 0 = off (every
+                                        # pre-b117 measurement; the lab default
+                                        # stays off until the merit bar is
+                                        # deliberately re-baselined — see b118).
     spread: float = 0.0,
     exclude_styles: list[str] | None = None,
 ) -> dict:
@@ -152,13 +158,20 @@ def backtest_ohlc(
                     # once the partial was taken, SL follows price at trail_mult x
                     # original risk behind the best high/low seen. Set on this bar,
                     # enforced from the NEXT bar (no same-bar lookahead).
+                    # b117: live _trail_params returns max(risk*mult, FLOOR) — an
+                    # ABSOLUTE dollar floor (3.00 on XAUUSD) that dominates the
+                    # multiplier whenever risk < FLOOR/mult. Without it the lab
+                    # trails TIGHTER than live on small-risk trades (measured:
+                    # 61.8% of W4's trades, 7.3% cached). trail_floor=0.0 keeps
+                    # every pre-b117 number byte-identical.
                     if trail_after_partial > 0 and t["partial_taken"] > 0 and risk > 0:
+                        dist = max(trail_after_partial * risk, trail_floor)
                         if side == "BUY":
-                            cand = high - trail_after_partial * risk
+                            cand = high - dist
                             if cand > t["sl"]:
                                 t["sl"] = cand
                         else:
-                            cand = low + trail_after_partial * risk
+                            cand = low + dist
                             if cand < t["sl"]:
                                 t["sl"] = cand
                     # 4c) b57 TIME STOP — trade that never reached TP1 within N

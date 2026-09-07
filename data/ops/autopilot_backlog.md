@@ -47,6 +47,44 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b118 TRADER MEASUREMENT — THE LAB BAR STILL SCORES THE FUNNEL AT A TRAIL
+      LIVE DOES NOT RUN (decision opened by b117, 2026-09-07):
+      engines/lab_harness.LADDER.trail_after_partial = 0.50 while live HEAD's
+      _trail_params balanced lane = 0.30 and live RUNNING = 0.45 (b114). Every
+      funnel number in this repo — the 0.285 cached bar, the ~0.20-0.23R merit
+      bar, b109's deltas — was scored at 0.50. b117 measured the trail grid is
+      FLAT (max spread ~0.02R on exp_R per leg), so the drift is currently
+      harmless to the RANKINGS, but it is exactly the b82 class: a harness that
+      re-declares its own exit constants instead of deriving them from live.
+      DECISION for a measured round: (a) re-baseline LADDER to the live value
+      (import the multiplier out of _trail_params the way b117's trail_floor()
+      probes the floor — one probe, no restated literal) and re-quote the merit
+      bar, or (b) keep 0.50 as a documented conservative bar. Either way the
+      test_b116_boot_commit_frame drift pin in tests/test_b117_trail_reprice.py
+      fires when the harness is aligned — EDIT it with a named note, never
+      delete it (b102's rule). Also decide whether trail_floor should default
+      ON in the harness (live-parity says yes; the whole stored ledger says no —
+      b110's neutrality test must run before the bar moves).
+- [ ] b119 TRADER RESEARCH — b66's "EXIT GEOMETRY IS LOCALLY OPTIMAL" WAS ALSO
+      PRICED ON THE PHANTOM RUNNER (reusable procedure from b117, 2026-09-07):
+      b117 re-priced ONE pre-b105 exit decision (b65's trail) and its evidence
+      shrank ~15x. The same deletion applies to the whole b55-b66 exit family,
+      which ran on the engine where _partial_close_fraction returned a constant
+      1.0 AND a phantom full-size runner survived every TP1 close. Specifically
+      suspect: b66's TP1-step grid (tp1_position arms — the phantom runner rode
+      to the final TP under every step, inflating high-tp1 arms), b66b's
+      "grade-weighted partial sizing CONFIRMED as real edge" (flat 30/50/70%
+      arms kept a runner post-b105 while the grade fn closes the ticket at
+      share>=1.0 — the comparison is now between DIFFERENT position models),
+      and b56/b57/b61's arms. RULE (generalising b83): when an engine fix
+      deletes a POPULATION rather than shifting a number, every stored decision
+      whose evidence was measured ON that population must be re-priced, not
+      just re-baselined. Method: reuse scripts/b117_trail_reprice.py's shape —
+      import b81.funnel_fn + lh.run_arm, arms differ in ONE exit parameter,
+      cached + W1..W4, verdict by b110's neutrality test (one-sided across >=3
+      windows = contaminated). Expect the b66b verdict to be the load-bearing
+      one: it is the only exit-side finding that claims REAL EDGE rather than
+      local optimality.
 - [x] b114 TRADER ARCHITECTURE AUDIT — THE LONG-LIVED DAEMONS RUN CODE NO TEST
       CERTIFIES (found by b111's harvest, 2026-09-07). DONE 2026-09-07:
       position_daemon booted 2026-09-03T14:45:01Z, 17 SECONDS before 31c64f7
@@ -70,6 +108,47 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       the historical pins read the FROZEN artifact so the restart (b115) cannot
       delete the evidence. NO restart performed here: it is a live-path
       operation, filed as b115.
+- [x] b117 TRADER CODE REVIEW — THE b65 TRAIL DECISION WAS PRICED ON A
+      POPULATION THAT NO LONGER EXISTS (found by b114's drift audit + b110's
+      neutrality rule, 2026-09-07). DONE 2026-09-07: THREE runner-trail values
+      were in play and nobody had priced them against each other — live HEAD
+      0.30 (_trail_params, b65), live RUNNING 0.45 (b114: the watchdog booted
+      17s before 31c64f7, so production never ran 0.30 once), and the LAB BAR
+      0.50 (engines/lab_harness.LADDER — the value every funnel number in this
+      repo was measured with, b80/b81/b108's merit bar included). Worse than
+      the drift: b65's sweep ran on the PRE-b105 engine, where
+      _partial_close_fraction returned the constant 1.0 and backtest.py kept a
+      PHANTOM full-size runner alive after every TP1 fill, so the trail touched
+      EVERY trade. Post-b105 a share>=1.0 TP1 close closes the ticket
+      (tp1_full) and the only population a trail can act on is the strong-runner
+      lane = setup_grade=='A' (b109's collapse), measured here at 20-27% of
+      gate-passed signals. scripts/b117_trail_reprice.py (arms differ ONLY in
+      trail_after_partial; same bars, same engine, same harness, same live
+      grade gate; ledger data/backtest/b117_trail_reprice.json): DIRECTION
+      SURVIVES — 0.30 beats 0.45 on net_R in 4/4 independent windows (+0.6/+1.3/
+      +0.8/+2.4R) — but MAGNITUDE IS GONE: b65 quoted +10.6R (M5) / +22.1R
+      (M15), the honest effect is +0.6..+2.4R per 6000 bars, ~1/15th, so b65's
+      win was ~93% the phantom runner b105 deleted. NOT ONE-SIDED (b110's test):
+      no-trail beats 0.30 on cached exp_R (0.284 vs 0.278) and on W1 (0.227 vs
+      0.211) while 0.80 wins W1's net_R — the exit grid is FLAT in the trail
+      dimension, so the trail is NOT a lever and the real cost of leaving b115
+      un-restarted is ~1R per 6000 bars, not 20R (this re-prices b115's
+      "consequence while un-restarted" note). SECOND GAP FOUND IN THE SAME READ:
+      live returns max(risk*mult, $3.00) — an ABSOLUTE floor the lab never
+      modelled, so the lab trailed TIGHTER than live on small-risk trades; binds
+      on 61.8% of W4's trades (median risk $8.84), 7.3% cached, 0% W2 — a
+      regime-dependent parity gap. engines/backtest.py + backtest_real.run_backtest
+      now carry trail_floor (DEFAULT 0.0: every pre-b117 number byte-identical,
+      pinned by AST) and the ledger scores both grids; with the floor modelled
+      the verdict is unchanged (grid stays flat, max spread <0.06R). NO live
+      change shipped. 17 tests in tests/test_b117_trail_reprice.py: the boot-tree
+      0.45 claim is re-derived from immutable git objects (b116's frame rule —
+      this item is argued in the boot-commit frame and says so), the runner
+      census is recomputed from the real share function, the floored and
+      unfloored W4 grids MUST differ (anti-vacuity: identical numbers would mean
+      trail_floor is dead code) while W2's MUST be identical, and the probe is
+      pinned read-only. Filed b118 (the lab bar vs live HEAD drift is now a
+      decision, not a discovery).
 - [ ] b115 OPERATIONS — RESTART THE TWO TRADING DAEMONS ONTO HEAD, GUARDED
       (follow-up to b114, 2026-09-07): the drift is measured, the fix is
       operational. Preconditions, all checkable: (1) `positions_list` from the
@@ -95,6 +174,16 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       backtest_ohlc(trail_after_partial=...), live via
       trade_management._trail_params — so the drift does NOT corrupt the funnel
       numbers, it only withholds their benefit.
+      B117 RE-PRICED THIS NOTE (2026-09-07): the withheld benefit is NOT ~20R.
+      b65's +10.6R/+22.1R was measured on the pre-b105 engine whose phantom
+      full-size runner let the trail touch every trade; under the corrected
+      engine 0.30 beats 0.45 by only +0.6..+2.4R per 6000 bars (net_R, 4/4
+      windows) and the whole trail grid is FLAT (no-trail wins cached exp_R).
+      So the restart is still correct hygiene — it also loads b74g's instrument
+      gate, b109's ladder_fields and b106's computed_rr, which b114 found in the
+      same closure — but it must NOT be sold as a ~20R exit improvement, and any
+      "live underperforms the funnel on the runner leg" round should read
+      data/backtest/b117_trail_reprice.json before blaming anything.
 - [ ] b116 MEASUREMENT PROCEDURE — BEFORE QUOTING LIVE BEHAVIOUR, ASK WHICH
       COMMIT THE RUNNING PROCESS BOOTED FROM (reusable procedure from b114,
       2026-09-07): b113 says a census must be taken in the frame the gate runs
@@ -1588,6 +1677,27 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       already contains it) so future regime joins are exact, not heuristic.
 
 ## Findings
+- 2026-09-07 b117 — THE TRAIL IS NOT A LEVER: b65'S EXIT EVIDENCE WAS ~93% THE
+  b105 PHANTOM RUNNER (scripts/b117_trail_reprice.py +
+  data/backtest/b117_trail_reprice.json + 17 tests). Re-pricing b65's
+  0.45->0.30 trail decision under the corrected engine, arms differing ONLY in
+  trail_after_partial on identical bars: the DIRECTION holds (0.30 > 0.45 on
+  net_R in 4/4 independent windows) but the MAGNITUDE collapses from b65's
+  +10.6R (M5) / +22.1R (M15) to +0.6..+2.4R per 6000 bars — because pre-b105 the
+  ladder was a constant 1.0 and a phantom full-size runner survived every TP1, so
+  the trail touched every trade; post-b105 only the A-grade runner lane (~20-27%
+  of gate-passed signals) can be trailed at all. The grid is FLAT, not one-sided
+  (b110's test): no-trail wins cached exp_R (0.284 vs 0.278) and W1 (0.227 vs
+  0.211), 0.80 wins W1's net_R — so no trail retune earns a live change, and
+  b115's restart is worth ~1R/6000 bars on the exit axis, not ~20R. SECOND GAP
+  from the same read-through: live _trail_params floors the distance at $3.00
+  absolute (max(risk*mult, 3.0)) and the lab never modelled it, so the lab
+  trailed TIGHTER than live wherever risk < $10 — 61.8% of W4's trades, 7.3%
+  cached, 0% W2 (a regime-dependent parity gap, invisible on the legs that were
+  quoted most). engines/backtest.py/backtest_real.run_backtest gained
+  trail_floor (default 0.0 — every stored number byte-identical, AST-pinned);
+  with the floor modelled the verdict is unchanged. Filed b118: the lab bar
+  (0.50) still differs from live HEAD (0.30) — now a decision, not a discovery.
 - 2026-09-06 b108 — THE FUNNEL BASELINE AND THE b70 LANE SET, RE-MEASURED UNDER
   THE b105-CORRECTED ENGINE (scripts/b108_rescore_corrected.py +
   data/backtest/b108_rescore_corrected.json + 22 tests in
