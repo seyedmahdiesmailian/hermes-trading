@@ -47,6 +47,48 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b112 TRADER CODE REVIEW — THE SIGNAL GATE PENALISES A WARNING FAMILY THAT
+      HAS NEVER FIRED AND IGNORES THE TWO THAT HAVE (found by b106, 2026-09-06;
+      spared-direction pin: tests/test_b106_parser_decision_contract.py::
+      TestB106WarningCoverage::test_b112_*). DECIDED 2026-09-06 by the measured
+      round the item itself demanded — NO PENALTY, no gate change, and b106's
+      premise turns out to be a MEASUREMENT-FRAME ARTIFACT. scripts/
+      b112_warning_frame_probe.py re-parsed all 29 journal signals in BOTH
+      frames through the real parser + real gate (ledger
+      data/backtest/b112_warning_frame.json): the LIVE frame (current_price>0,
+      what the listener always passes when the market is open) sees
+      symbol_defaulted_xauusd 15/29, no_symbol_found 0, sl_* 0 — while b106's
+      OFFLINE census (parse_signal(raw) with no price) saw defaulted 4 and
+      no_symbol_found 11, because the parser's `_gold_abbrev` branch only
+      fires when a price is passed. And every offline no_symbol_found row has
+      symbol=="" → is_valid False → the listener `continue`s BEFORE
+      evaluate_signal: that family NEVER reaches the gate in any frame, so
+      penalising it taxes an unreachable population. The defaulted family —
+      the only one that does reach it (52% of gate-reachable) — fails the
+      penalty on BOTH sides: COST = every scheme (−0.5, −1.0, Check-1-half)
+      flips exactly 1/29 signals (idx 0, score 6.0→5.5), and the two signals
+      that actually executed in production (idx 4, 9) don't flip because under
+      the CURRENT parser they don't clear the gate even un-penalised (4:
+      direction_conflict, 9: poor_rr_0.5 after b74's ladder fix — the journal
+      rows are stale artefacts of an older parser); BENEFIT = the defaulted
+      legs look worse in the 1358-leg channel replay (0.105R vs 0.125R, WR
+      53.6% vs 70.7%, scripts/b112_defaulted_performance.py + ledger
+      data/backtest/b112_defaulted_performance.json) but the split is
+      CHANNEL-CONFOUNDED: 664 of 707 filled defaulted legs are radin-main,
+      which contributes only 3 named-gold legs; within the channels carrying
+      both populations goldfree's defaulted side is n=6 (noise) and olivex's
+      is n=0 filled — no usable control anywhere. The warning encodes the
+      channel's POSTING STYLE (does it type "XAUUSD"?), not trade quality.
+      Check 8 stays sl_-scoped (dead-but-correct: it fires on impossible SL
+      geometry, which the parser also flags with −0.1 confidence). 9 tests in
+      tests/test_b112_warning_penalty_measured.py pin the frame artifact, the
+      1/29 flip count, the confound floors (each floor FIRES if the sample
+      grows enough to make the decision possible again), and the no-change
+      shipped state; b106's spared-direction pin is untouched. 10 tests here
+      (the b113 frame rule carries its own named pin,
+      test_b113_a_frame_census_must_record_both_frames_side_by_side, per the
+      b102 discipline that a filed item needs a name-carrier — b102's
+      tripwire caught the first draft and was right).
 - [ ] b111 TRADER CODE REVIEW — THE TWO LIVE LADDER PRODUCERS DISAGREE ON GRADE
       (found by b109, 2026-09-06; spared-direction pin:
       tests/test_b109_share_fn_contract.py::TestB109ProducerParity::
@@ -68,8 +110,10 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       _infer_setup_grade (tightening — but it changes live exit behaviour, so
       it needs its own measured round), or document the divergence as intended.
       b109 deliberately did NOT align it. Before deciding, re-run the probe:
-      its lane-disagreement assert is pinned at 0 and will fire if the rules
-      ever split the lane itself.
+      the runner-lane agreement is pinned at 0 disagreements (
+      test_b111_the_two_rules_agree_on_the_runner_lane_and_differ_on_weak) and
+      the weak-lane drift is pinned as a 5%-40% band (measured 293/1558 =
+      18.8%), so either rule changing shape fires instead of rotting.
 - [x] b109 TRADER CODE REVIEW — THE BACKTEST'S "LIVE" LADDER IS A CONSTANT:
       SHIPPED 2026-09-06: strategy_signal now emits the live ladder fields
       through ONE shared derivation (engines.trade_management.ladder_fields,
@@ -151,10 +195,44 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       numbers, and the side-finding b109 (the ladder's live share fn is fed a
       dict that cannot satisfy its contract — constant 1.0) was filed from the
       same read-through.
-- [ ] b106 TRADER CODE REVIEW — signal_parser.py vs signal_decision.py: the
+- [x] b106 TRADER CODE REVIEW — signal_parser.py vs signal_decision.py: the
       parser's fields vs what the decision layer actually consumes; find
       silently-dropped fields (parsed but never used) and used-but-never-set
       ones; reconcile. Backtest any behavior change with run_backtest.
+      DONE 2026-09-06: full census of the boundary, both directions, over the
+      real code and the 28-signal journal. ONE used-but-never-set key found and
+      fixed: signal_decision reads `signal.get("rr_ratio",0) or
+      signal.get("computed_rr",0)` but to_dict() folded computed_rr INTO
+      rr_ratio and never emitted the key, so the second operand always yielded
+      the default 0 — to_dict() now emits it (PROVABLY INERT: rr_ratio is
+      `rr_ratio or computed_rr`, so a falsy rr_ratio means a falsy
+      computed_rr; pinned by test_b106_the_emitted_key_is_inert so if the fold
+      ever changes, the change is loud). THREE further findings, all measured
+      not guessed: (a) the decision layer's own inline RR fallback (Check 5's
+      second branch, recompute from entry/sl/tp) is DEAD CODE BY CONSTRUCTION —
+      reached 0/28 signals, because the parser already owns that rule; it is
+      b109's three-lookalikes disease one step earlier in the pipeline, left in
+      place and pinned unreachable rather than deleted (a deletion cannot change
+      behaviour but the pin is what makes leaving it safe); (b) the gate's
+      warning penalty is sl_-only while the two families that actually fire
+      (symbol_defaulted_xauusd 4/28, no_symbol_found 11/28, sl_* 0/28) cost
+      nothing, and a defaulted symbol still earns Check 1's full +1.0 — that is
+      a live-gate TIGHTENING so it is filed as b112 with a spared-direction pin
+      (test_b112_*), not taken; (c) five fields are parsed, emitted and read by
+      NO downstream module (entries, tp2, tps, ladder_rr, order_type — grep
+      over every non-test non-legacy consumer) and are KEPT on purpose because
+      b72 wants the ladder_rr evidence to accumulate before the gate is retuned
+      and radin_replay feeds the same dict to the same gate; the census is
+      pinned so a future round decides with the list in hand. NO BEHAVIOUR
+      CHANGE, so no backtest was owed: the item's own rule was "backtest any
+      behavior change", and the only shipped change adds a key nobody reads
+      yet. THE REUSABLE PART is the generic tripwire
+      test_b106_every_key_the_decision_layer_reads_is_emitted_by_the_parser:
+      it derives the producer's key set from to_dict()'s own AST and the
+      consumer's from signal_decision's source, so ANY future read of a key the
+      boundary does not emit fails — verified to bite (removing the new line
+      makes it report ['computed_rr']). 8 tests in
+      tests/test_b106_parser_decision_contract.py, 1112 green, live cycle OK.
 - [ ] b107 RESEARCH ROUND — exit-side improvement: funnel edge is the ENTRY
       filter (b68r4 finding); search literature for exit/TP-ladder methods
       (A-trailing variants, time-stops, news-veto) and MEASURE exp_R/DD in
@@ -177,6 +255,26 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       name so the pre-fix verdict cannot be re-quoted. Cheap version: the
       shift is arithmetic on two ledgers of the same measurement — no new
       runs needed once both exist.
+- [ ] b113 MEASUREMENT PROCEDURE — A CENSUS THAT FEEDS A GATE DECISION MUST BE
+      TAKEN IN THE FRAME THE GATE RUNS IN (reusable procedure from b112,
+      2026-09-06): b112 was filed from an offline re-parse of the live signal
+      journal (parse_signal(raw_text) with no price) and its premise — "the
+      no_symbol_found family fires 11/28 and costs nothing" — turned out to be
+      an artifact of that frame: the live listener always passes
+      current_price>0, which switches the parser's `_gold_abbrev` branch, so
+      the live frame sees 0 no_symbol_found; and the offline ones never reach
+      the gate anyway (symbol=="" → is_valid False → dropped upstream).
+      RULE: before any number measured offline is used to argue for or
+      against a live-gate change, (1) state which production call-site the
+      measurement emulates and what arguments that site actually passes,
+      (2) re-measure through the same entry point with those arguments
+      reconstructed (b112 used radin_replay.price_at on bridge M5 candles —
+      the same price/band the listener would have seen), and (3) check
+      reachability: does the measured population survive every upstream
+      filter before the gate, or does it die at is_valid /
+      names_other_instrument / the freshness gate? A warning/field census
+      over an unreachable population is decoration. Cheap version: the
+      frame diff is one extra parse per journal row.
 - [x] b68 STRATEGY LAB CONTINUOUS LOOP (user standing order 2026-09-03: "keep searching strategies/analysis methods, pick the best, test, bring into the real structure"). Each run: (a) pick ONE new candidate method not yet in data/backtest/b62_strategy_lab.json (sources: quant literature, ICT/SMC concepts not yet measured, session/volatility patterns; web search is low-signal — prefer implementing from the concept definition), (b) implement it as a standalone signal_fn in scripts/b62_strategy_lab.py style (indexed() adapter, ATR-based geometry, grade B), (c) run through engines.backtest.backtest_ohlc on the CACHED dataset (data/backtest/ab_aggressive_data.json, 3000 M15 bars) with spread 0.20 AND with the live b60 ladder (partial_share_fn=_partial_close_fraction, tp1_position=0.50, trail_after_partial=0.5), (d) append the row to data/backtest/b62_strategy_lab.json, (e) MERIT BAR: only propose wiring into the live funnel if exp_R beats the current funnel's 0.854R/trade (b61 best arm) on BOTH the cached set and one fresh fetch; otherwise record the rejection in ## Findings with numbers. NEVER weaken existing gates to make a new arm look better; the funnel stays the exit manager. Baseline table so far (exp_R, cached M15): funnel b60 0.854 | asia_break 0.18 | ema_pullback 0.114 | bb_bounce 0.035 | donchian -0.013 | sweep_rev -0.004 | fvg_retest -0.020 | ny_orb -0.098 | rsi_rev -0.226 | vwap_fade 0.380 (ladder; fresh-set 0.436 vs funnel 0.576 — REJECTED 2026-09-03, see Findings). SMC/RTM round (b63/b63b, 2026-09-03): turtle_soup 0.508 cached / 0.469 fresh, eqh_sweep 0.085 / 0.638, ote 0.62 / 0.299, breaker 0.008 / 0.113, ob_first_retest 0.978 (n=3) / 0.483 (n=6), sweep_choch_ob 1.702 (n=2) / 1.066 (n=4) — none beat the funnel on BOTH sets with a usable n; funnel stays. Momentum round (b68r2, 2026-09-03): atr_expand_all 0.362 / fresh 0.443, atr_expand_lny 0.344 / 0.432 — REJECTED, loses on both sets (see Findings). HTF-trend+pullback round (b68r3, 2026-09-03): htf_pull_50... [truncated]
       (progress 2026-09-03, rounds 1+2 done: vwap_fade and atr_expand tested+rejected
       (Findings). Round 4 (b68e, PDH/PDL breakout) done this run: REJECTED as a

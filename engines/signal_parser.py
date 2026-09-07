@@ -172,11 +172,22 @@ class Signal:
         return round(self.reward_distance / rd, 2)
 
     def to_dict(self) -> dict:
+        # b106: `computed_rr` is emitted as well as folded into rr_ratio. It is
+        # PROVABLY inert today — rr_ratio is `self.rr_ratio or
+        # self.computed_rr`, so whenever rr_ratio is falsy computed_rr is 0 too
+        # — but engines/signal_decision.py reads the key
+        # (`signal.get("rr_ratio", 0) or signal.get("computed_rr", 0)`) and that
+        # fallback was reaching for a field this boundary never produced. A read
+        # of a key the producer does not emit is a contract hole whether or not
+        # it bites today: the day someone narrows rr_ratio to the channel-stated
+        # value only, the fallback silently becomes the whole RR gate. Emitting
+        # it closes the hole without changing one verdict.
         return {
             "symbol": self.symbol, "side": self.side, "entry": self.entry,
             "entries": list(self.entries),
             "sl": self.sl, "tp": self.tp, "tp2": self.tp2, "lot": self.lot,
             "rr_ratio": self.rr_ratio or self.computed_rr,
+            "computed_rr": self.computed_rr,
             "tps": list(self.tps), "ladder_rr": self.ladder_rr,
             "order_type": self.order_type, "confidence": self.confidence,
             "warnings": self.warnings,

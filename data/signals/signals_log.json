@@ -1293,5 +1293,56 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-09-06T23:13:59.700207+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n📌 مقاومت ها 📉\n4433 🔻\n4438 🔻\n4444 🔻\n4457 🔻   \n4464 🔻\n4472 🔻\n4480 🔻\n4488 🔻\n\n\n📌 حمایت ها 📈\n4422 🔹 \n4415 🔹\n4407 🔹\n4395 🔹\n4382 🔹\n4371 🔹\n4365 🔹\n4344 🔹\n\n\n           ⚡️ Xauusd level's ✨",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4433.0,
+      "entries": [
+        4433.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.65,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4433.0,
+        "entries": [
+          4433.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.65,
+        "warnings": []
+      }
+    }
   }
 ]

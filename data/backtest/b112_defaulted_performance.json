@@ -1,0 +1,123 @@
+{
+ "legs_total": 1358,
+ "unmatched_dates": 0,
+ "by_tag": {
+  "defaulted": {
+   "legs": 757,
+   "filled": 707,
+   "avg_usd_tp1": 0.83,
+   "avg_usd_ladder": 0.28,
+   "avg_R_tp1": 0.105,
+   "win_rate_tp1": 0.536,
+   "channels": [
+    "replay.csv",
+    "replay_goldfree.csv",
+    "replay_goldsystem.csv",
+    "replay_olivex.csv"
+   ]
+  },
+  "named_gold": {
+   "legs": 445,
+   "filled": 430,
+   "avg_usd_tp1": 1.08,
+   "avg_usd_ladder": 0.64,
+   "avg_R_tp1": 0.125,
+   "win_rate_tp1": 0.707,
+   "channels": [
+    "replay.csv",
+    "replay_goldfree.csv",
+    "replay_gtmo.csv",
+    "replay_gtmofx.csv",
+    "replay_olivex.csv",
+    "replay_otsfx.csv"
+   ]
+  },
+  "other:EURUSD": {
+   "legs": 1,
+   "filled": 0
+  },
+  "other:GBPUSD": {
+   "legs": 1,
+   "filled": 0
+  },
+  "other:none": {
+   "legs": 154,
+   "filled": 147,
+   "avg_usd_tp1": 2.12,
+   "avg_usd_ladder": 0.78,
+   "avg_R_tp1": 0.185,
+   "win_rate_tp1": 0.803,
+   "channels": [
+    "replay_goldfree.csv",
+    "replay_gtmofx.csv"
+   ]
+  }
+ },
+ "within_channel_both_populations": {
+  "replay.csv": {
+   "defaulted": {
+    "legs": 712,
+    "filled": 664,
+    "avg_usd_tp1": 0.84,
+    "avg_usd_ladder": 0.26,
+    "avg_R_tp1": 0.104,
+    "win_rate_tp1": 0.532,
+    "channels": [
+     "replay.csv"
+    ]
+   },
+   "named_gold": {
+    "legs": 4,
+    "filled": 3,
+    "avg_usd_tp1": 13.33,
+    "avg_usd_ladder": 6.67,
+    "avg_R_tp1": 1.0,
+    "win_rate_tp1": 1.0,
+    "channels": [
+     "replay.csv"
+    ]
+   }
+  },
+  "replay_goldfree.csv": {
+   "defaulted": {
+    "legs": 6,
+    "filled": 6,
+    "avg_usd_tp1": 1.33,
+    "avg_usd_ladder": -0.25,
+    "avg_R_tp1": 0.212,
+    "win_rate_tp1": 0.833,
+    "channels": [
+     "replay_goldfree.csv"
+    ]
+   },
+   "named_gold": {
+    "legs": 223,
+    "filled": 213,
+    "avg_usd_tp1": 3.01,
+    "avg_usd_ladder": 1.48,
+    "avg_R_tp1": 0.268,
+    "win_rate_tp1": 0.826,
+    "channels": [
+     "replay_goldfree.csv"
+    ]
+   }
+  },
+  "replay_olivex.csv": {
+   "defaulted": {
+    "legs": 1,
+    "filled": 0
+   },
+   "named_gold": {
+    "legs": 47,
+    "filled": 47,
+    "avg_usd_tp1": -5.19,
+    "avg_usd_ladder": 0.04,
+    "avg_R_tp1": -0.556,
+    "win_rate_tp1": 0.149,
+    "channels": [
+     "replay_olivex.csv"
+    ]
+   }
+  }
+ }
+}
