@@ -74,6 +74,7 @@ LEDGER_121C = os.path.join(BT, "b121c_partial_call_census.json")
 LEDGER_123 = os.path.join(BT, "b123_protection_share_decomposition.json")
 LEDGER_129 = os.path.join(BT, "b129_timestop_reprice.json")
 LEDGER_130 = os.path.join(BT, "b130_wall_clock_parity.json")
+LEDGER_132 = os.path.join(BT, "b132_news_veto_real_calendar.json")
 
 
 def _load(path: str) -> dict:
@@ -394,6 +395,36 @@ def check_b130_derived_blocks() -> str:
             f"({len(led['_neutrality'])} arms)")
 
 
+def check_b132_derived_blocks() -> str:
+    """b128's ship-time rule applied to the b132 ledger: coverage, census,
+    deltas, neutrality, verdict and the lever test are pure functions of the
+    shipped grid + the committed event archive, re-executed here. The funnel
+    half (5 arms x 7 legs) is pinned by the integrity block: the OFF arm must
+    still equal b129's frozen incumbent, which is what makes the veto deltas
+    comparable instead of two spliced funnels."""
+    from scripts import b132_news_veto_real_calendar as b132
+    led = _load(LEDGER_132)
+    l129 = _load(LEDGER_129)
+    assert b132.integrity(led, l129) == led["_integrity"], \
+        "b132 integrity fails on the shipped ledger — the OFF arm no longer " \
+        "reproduces b129, so the veto deltas are two spliced funnels"
+    cal = b132.load_archive()
+    for leg in b132.LEGS:
+        got = b132.coverage(cal, led[leg]["_first"], led[leg]["_last"])
+        assert got == led[leg]["_coverage"], f"b132 coverage {leg} moved"
+    for fn, key in ((b132.vetoed_census, "_census"),
+                    (b132.deltas, "_delta_exp_R"),
+                    (b132.neutrality, "_neutrality"),
+                    (b132.verdict, "_verdict"),
+                    (b132.lever_test, "_lever")):
+        got = fn(led)
+        assert got == led[key], f"b132 producer {key} no longer reproduces"
+    assert all(not v["is_lever"] for v in led["_lever"].values()), \
+        "a b132 veto arm now reads as a lever — re-open the human-gate call"
+    return (f"b132 integrity + coverage(7 legs) + census + 5 derived blocks "
+            f"({len(led['_neutrality'])} arms, archive {cal['n_events']} ev)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -415,6 +446,7 @@ CHECKS = (
     check_b114_drift_is_arithmetic,
     check_b129_derived_blocks,
     check_b130_derived_blocks,
+    check_b132_derived_blocks,
 )
 
 

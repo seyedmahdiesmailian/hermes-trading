@@ -978,7 +978,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       fresh windows needs a real historical event archive (FF yearly feeds
       404; TradingView API 403), so the W-leg numbers are coverage-zero,
       not evidence of no-effect there. Filed b132 for the archive problem.
-- [ ] b132 TRADER RESEARCH PREREQ — GET A REAL HISTORICAL EVENT CALENDAR
+- [x] b132 TRADER RESEARCH PREREQ — GET A REAL HISTORICAL EVENT CALENDAR
       ARCHIVE (from b131, 2026-09-07): b131 proved the veto question CANNOT
       be answered on W1..W6 with the data on this box — the git-union
       calendar covers only Aug23..Sep12 2026, so six of seven legs have
@@ -998,6 +998,39 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       the gate's DATA window with the measurement windows FIRST (one-line
       timestamp overlap check); b131's own step-3 premise failed that check
       and the study had to report coverage-zero legs instead of deltas.
+      DONE 2026-09-07 (b132 run): THE SOURCE WAS THE WAYBACK MACHINE — the
+      Internet Archive crawled nfs.faireconomy.media/ff_calendar_thisweek.json
+      DAILY (95 snapshots, 2026-05-03..2026-09-12, CDX API + `id_` raw mode);
+      scripts/b132_event_archive_fetch.py dedupes them into
+      data/calendar/events_archive_ff_wayback_20260503_20260912.json
+      (1941 events, 81 high USD/XAU, live's exact event schema).
+      scripts/b132_news_veto_real_calendar.py re-priced the veto on it:
+      FINDING — at live's ±30min the veto deletes entries whose OWN R was
+      positive (cached +2.8R/4 entries, W1 +0.5R/3) and cached exp_R FALLS
+      -0.053 (b131's git-union answer was -0.026 — the real calendar moved
+      it 2x); no arm is a lever: ±720/±1440min clear b119's 0.10R exp_R
+      ceiling ONLY by subtraction (net_R negative on covered legs, maxDD
+      worse) — lever_test() flags inflation_by_subtraction and is_lever=False
+      everywhere. W2..W6 stay coverage-zero (archive starts 2026-05-03,
+      before that FF's feed wasn't crawled here) — veto stays live insurance
+      (fail-closed), no wiring change. tests/test_b132_real_event_archive.py
+      (10 tests) + registered in b127 CHECKS (check_b132_derived_blocks).
+- [ ] b133 TRADER RESEARCH — REGISTER b131'S LEDGER IN b127 CHECKS + EXTEND
+      THE EVENT ARCHIVE BACKWARDS (from b132, 2026-09-07): (a) b131 shipped
+      data/backtest/b131_news_veto_pricing.json WITHOUT a check in
+      scripts/b127_producer_reproduction.py CHECKS — b128's ship-time rule
+      violated; add check_b131_derived_blocks (its producers: windows(),
+      veto_census, deltas, neutrality, verdict — read the script for exact
+      names). (b) The Wayback CDX for ff_calendar_thisweek.json only reaches
+      2026-05-03; probe ff_calendar_prevweek.json / nextweek variants and
+      per-week URLs for older crawls to push the archive back over W2..W6
+      spans, then re-run b132's pricing (covered-leg vote is n=2 today,
+      below b129's one_sided_strict floor of max(3, half) — more legs is the
+      ONLY way the veto question gets a strict answer).
+      REUSABLE LESSON (b132): an ENTRY-REMOVING arm (veto/filter/gate) must
+      NEVER be judged on exp_R alone — deleting trades inflates exp_R by
+      subtraction; require net_R and maxDD to agree before calling it a lever
+      (b132's lever_test is the template).
 - [ ] b110 RESEARCH PROCEDURE — PRICE AN ENGINE FIX BY ITS NEUTRALITY, NOT JUST
       ITS LEVEL (reusable procedure from b108, 2026-09-06): when a backtest
       engine defect is fixed, re-running the baseline is only half the job.
