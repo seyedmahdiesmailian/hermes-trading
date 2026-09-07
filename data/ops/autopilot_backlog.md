@@ -163,7 +163,12 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       the void-census pin, the engine-field pin, the call-ratio bands, and the
       unwired state). b119's carrier pin was EDITED with a named note (it rode
       "- [ ] b121", which this round closed — the same trap b119 fell into once)
-      and now rides b123. ORIGINAL NOTE follows.
+      and now rides b123. HARVEST 2026-09-07 (d6d8891): the whole round was
+      left UNCOMMITTED by a dead run — 6 tests red (b42 untracked, b50 broken
+      HEAD, b102 x3: b121/b122/b123 had no name-carrier). Fixed by renaming
+      three methods to carry their item (test_b121_flat_0_30_replicates...,
+      test_b122_pre_b109_trade_dict..., test_b123_the_breakeven_and_trail...);
+      no measurement re-run, no live change. ORIGINAL NOTE follows.
       keeping a
       0.3 runner on EVERY trade (flat share) rather than only on grade A beat
       live's rule on exp_R in 4/4 independent windows (+0.002..+0.046R), on
