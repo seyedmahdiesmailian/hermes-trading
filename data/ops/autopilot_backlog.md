@@ -114,6 +114,52 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       tests/test_b118_merit_bar_rebaseline.py::
       TestB120StaleHeadlineRule::test_b120_* (b102's discipline: a filed item
       lives in a test name, not only in this file).
+- [ ] b121 TRADER MEASUREMENT — flat_0.30 BEAT THE GRADE-WEIGHTED INCUMBENT ON
+      EVERY AXIS b119 CHECKED (candidate round from b119, 2026-09-07): keeping a
+      0.3 runner on EVERY trade (flat share) rather than only on grade A beat
+      live's rule on exp_R in 4/4 independent windows (+0.002..+0.046R), on
+      net_R in 3/4, on maxDD in 3/4, with mean hold +0.8 bars and zero holds
+      past the live time exit. That is NOT a claim of edge — the margins are
+      b109/b110 noise-level (max 0.046R, ~1.5R per 6000 bars) and the ONLY
+      reason it is worth a round is that b66b's stored verdict ("grade-weighted
+      sizing CONFIRMED as real edge", 2x total R) is now known to have been the
+      double-count, so the incumbent has no evidence behind it either. Before
+      any wiring decision: (1) re-measure with the b68 protocol on a FRESH draw
+      (b119's windows are the same bars the incumbent was chosen on — a
+      one-sided delta on the selection set is not replication), (2) price the
+      COST SIDE the lab cannot see: a 0.7 runner on every trade means 70% of
+      every position rides past TP1, so the live partial-close path runs 5x
+      more often (bridge calls, MT5 10026 rejection handling, the
+      `_tp1_exit_closes_all` branch) — an operational-risk change, not just an
+      R change, (3) it is a live EXIT-BEHAVIOUR change = human gate (b89 class),
+      and per the standing rule the autopilot does not restart or re-wire the
+      live path. Name-carrier:
+      tests/test_b119_exit_grid_reprice.py::
+      TestB119ShareRankingInverted::test_flat_30_percent_beats_the_grade_weighted_incumbent_one_sided
+      (b102's discipline: the pin fires if the delta moves, so the round starts
+      from a number that still reproduces).
+- [ ] b122 MEASUREMENT PROCEDURE — VERIFY AN ARM IS THE RULE IT IS NAMED FOR
+      (reusable rule from b119, 2026-09-07): b66b's "live grade-fn share" arm
+      was a lambda that called the live share function, so it LOOKED like the
+      live rule and was read, quoted and defended as such for four days. It was
+      not: the engine fed that function a dict that could not satisfy its
+      contract, so it returned a constant. The general shape — an arm whose
+      NAME describes a rule the FRAME could not execute — is invisible to every
+      neutrality test, because neutrality compares numbers between arms and
+      both numbers can come from the same degenerate function. RULE: before
+      trusting any stored arm-vs-arm comparison, (1) enumerate the inputs the
+      arm's function actually reads, (2) enumerate what the frame at the time
+      actually supplied, (3) if the function's output was constant over the
+      population it was scored on, the arm measured NOTHING about the rule it
+      is named after, and every verdict built on it is void, not shrunk. Cheap
+      version: b119's `arm_identity_census()` — replay the arm's function over
+      the real signals under the old dict shape and the new one and print both
+      histograms; a one-value histogram is the tell. Cross-check the b109
+      lesson (a restated constant drifts) and b117's (a deleted population
+      invalidates its decisions): this is the third variant, a MISLABELLED arm.
+      Name-carrier: tests/test_b119_exit_grid_reprice.py::
+      TestB119ArmIdentity (all four tests are the procedure, run on the frozen
+      ledger every suite).
 - [ ] b118b TRADER MEASUREMENT — THE b108/b81/b70 LANE LEDGERS STILL CARRY THE
       PRE-b109 FUNNEL ROW (follow-up to b118, 2026-09-07): b118 re-derived the
       BAR (live-parity cached 0.278 / W1 0.211 / W2 0.230 / W3 0.232 / W4 0.233)
@@ -128,8 +174,56 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       so the harness alignment flows through automatically) and diff
       `_b70_redecision` against the stored block. LOW priority until a lane is
       actually up for wiring.
-- [ ] b119 TRADER RESEARCH — b66's "EXIT GEOMETRY IS LOCALLY OPTIMAL" WAS ALSO
-      PRICED ON THE PHANTOM RUNNER (reusable procedure from b117, 2026-09-07):
+- [x] b119 TRADER RESEARCH — b66's "EXIT GEOMETRY IS LOCALLY OPTIMAL" WAS ALSO
+      PRICED ON THE PHANTOM RUNNER (reusable procedure from b117, 2026-09-07).
+      DONE 2026-09-07: b66b's load-bearing verdict is not merely smaller under
+      the corrected engine, it is INVERTED, and the arm it crowned never
+      existed. ARM IDENTITY (measured over the real funnel signals, not argued):
+      b66b's "live grade-fn share" passed `_partial_close_fraction` into an
+      engine whose trade dict carried none of the four ladder fields, so
+      `rr_remaining` defaulted to 0.0 and the function returned the CONSTANT 1.0
+      on EVERY call — 306/306 cached, 536/536 W1, 523/523 W2, 737/737 W3,
+      578/578 W4. Post-b109 the same function returns 0.3 for the A lane
+      (84/306 cached), so live's incumbent is a THIRD rule that had never been
+      scored. The frozen b66b ledger carries the phantom-population signature
+      itself: four different share rules, IDENTICAL trade counts and IDENTICAL
+      win rates (303/62.7% M5, 338/63.6% M15), total_r swinging 91.5->184.3R —
+      a sizing rule cannot reprice a closed ticket without changing which
+      tickets get taken, so that 2x "edge" WAS the b105 double-count.
+      RE-PRICED (scripts/b119_exit_grid_reprice.py, cached+W1..W4, one harness,
+      live grade gate/min_rr imported, trail + $ floor derived per b118, ledger
+      data/backtest/b119_exit_grid_reprice.json): the constant-1.0 arm b66b
+      actually scored now LOSES to the real grade fn on exp_R in 4/4 windows
+      (-0.005..-0.024R) — keeping a runner is worth ~0.01R/trade, not 2x total
+      R — and `flat_0.30` (keep 70% riding on EVERY trade) BEATS the
+      grade-weighted incumbent one-sided: exp_R 4/4 (+0.002..+0.046), net_R 3/4,
+      maxDD better on 3/4, mean hold +0.8 bars, zero holds past the time exit
+      (so it is not b71's swing-in-disguise). b66's DECISION stands on its OWN
+      metric (no looser TP1 arm wins net_R on all four; .70 has a -13.2R W2
+      hole) but its evidence is contradicted: tp1=0.60 is positive on exp_R in
+      3/4 windows — the opposite direction — bought with trade count (109->95
+      cached), and ".45 wins M15 +7.0R" is refuted outright (loses exp_R 3/4,
+      net_R 3/4). FRAME, not only engine: b66/b66b ran with no min_grade, so
+      they scored every C-grade setup live rejects — same engine, same bars,
+      exp_R 0.081..0.161 ungraded vs 0.211..0.278 graded (+0.079..+0.152R),
+      while b71's missing time exit cost EXACTLY 0.000R on this family (max
+      hold 112 < 144 bars on every leg, pinned with an anti-vacuity arm at a
+      24-bar exit so the zero means something). NO live change:
+      engines/trade_management.py untouched; flat_0.30 is a CANDIDATE for its
+      own measured round + a human gate decision (b89 class), not something a
+      probe wires in. 24 tests in tests/test_b119_exit_grid_reprice.py: the
+      incumbent arms of BOTH grids must reproduce b118's live-parity bar
+      exactly (cross-ledger integrity), the census must stay constant-1.0
+      pre-b109 / discriminating post-b109 with the delta equal to the A-grade
+      count, the frozen b66b ledger's identical-n/identical-WR signature is
+      re-read every run, the reversal is pinned on BOTH metrics with magnitude
+      ceilings (a 2x-scale gap reappearing = the double-count is back), the
+      probe is pinned read-only, and the open-todo state is pinned so wiring
+      flat-0.30 fires. Filed b121 (the candidate round) + b122 (reusable rule:
+      before trusting a stored arm-vs-arm comparison, verify the arms were
+      DIFFERENT functions in the frame that ran — an arm named after a rule it
+      could not execute is the b109 disease wearing a decision's clothes).
+      ORIGINAL NOTE follows.
       b117 re-priced ONE pre-b105 exit decision (b65's trail) and its evidence
       shrank ~15x. The same deletion applies to the whole b55-b66 exit family,
       which ran on the engine where _partial_close_fraction returned a constant

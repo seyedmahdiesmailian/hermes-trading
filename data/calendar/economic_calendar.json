@@ -254,6 +254,15 @@
       "previous": "99.8"
     },
     {
+      "title": "Monetary Policy Report Hearings",
+      "currency": "GBP",
+      "impact": "medium",
+      "date": "2026-09-08T09:15:00-04:00",
+      "time": "",
+      "forecast": "",
+      "previous": ""
+    },
+    {
       "title": "Consumer Credit m/m",
       "currency": "USD",
       "impact": "low",
@@ -333,6 +342,15 @@
       "time": "",
       "forecast": "",
       "previous": "11.8K"
+    },
+    {
+      "title": "ECB President Lagarde Speaks",
+      "currency": "EUR",
+      "impact": "medium",
+      "date": "2026-09-09T13:00:00-04:00",
+      "time": "",
+      "forecast": "",
+      "previous": ""
     },
     {
       "title": "German Buba President Nagel Speaks",
@@ -650,6 +668,15 @@
       "previous": "3.4%"
     },
     {
+      "title": "ECB President Lagarde Speaks",
+      "currency": "EUR",
+      "impact": "medium",
+      "date": "2026-09-11T10:00:00-04:00",
+      "time": "",
+      "forecast": "",
+      "previous": ""
+    },
+    {
       "title": "Prelim UoM Consumer Sentiment",
       "currency": "USD",
       "impact": "medium",
@@ -704,5 +731,5 @@
       "previous": ""
     }
   ],
-  "cached_at": "2026-09-06T21:30:03.813489+00:00"
+  "cached_at": "2026-09-07T04:30:03.308269+00:00"
 }
