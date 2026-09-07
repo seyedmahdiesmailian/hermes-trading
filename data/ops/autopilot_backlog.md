@@ -47,6 +47,25 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b134 [META] TRIAGE RULE — WHEN ONLY b50'S SUITE-INSIDE-HEAD FAILS, THE
+      TREE IS RIGHT AND HEAD IS WRONG (reusable procedure from b47,
+      2026-09-07): the b47 harvest found the full suite red on exactly one
+      test — test_b50_suite_is_location_independent::
+      test_head_passes_the_full_suite_in_a_clean_worktree — whose failure
+      message quoted a b104 phantom citation living in the COMMITTED tree
+      (engines/backtest.py cited test_b131_news_veto_pricing; the file
+      shipped as _dial). b50 runs the suite inside a detached worktree of
+      HEAD, so it is the only test that can fail while the working tree is
+      green — and its failure is therefore a statement about HEAD, not about
+      uncommitted work. RULE: if b50 is the ONLY failure, (1) read its
+      embedded inner-suite output (it prints the real failing test), (2) run
+      that test module against the working tree, (3) if it is green there,
+      the defect is already fixed in the tree — commit the fix FIRST and
+      re-run verify_head before touching anything else; never revert good
+      tree work because HEAD is stale. Cheap version: `bash
+      scripts/verify_head.sh` after every commit is exactly this check
+      automated; the suite-embedded copy only exists so a forgotten step 4b
+      cannot ship silently.
 - [x] b118 TRADER MEASUREMENT — THE LAB BAR STILL SCORES THE FUNNEL AT A TRAIL
       LIVE DOES NOT RUN (decision opened by b117, 2026-09-07). DONE 2026-09-07:
       option (a) taken — `lab_harness.LADDER` no longer restates the trail, it
