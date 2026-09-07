@@ -164,21 +164,37 @@ class TestB116BootCommitFrame(unittest.TestCase):
                       "this item is argued in has changed; re-measure")
         self.assertIn("0.3", trail_at("31c64f7"))
 
-    def test_the_lab_bar_differs_from_live_head_so_a_drift_pin_is_needed(self):
-        # The reason this item exists: the funnel's headline was scored at 0.50
-        # while live HEAD says 0.30. If someone aligns the harness, this fires
-        # and the b117 ledger must be re-read (that is a GOOD outcome — it means
-        # the lab finally matches live).
+    def test_the_lab_bar_now_matches_live_head_b118_retired_this_drift_pin(self):
+        # b117 filed this as a DRIFT pin: the funnel's headline was scored at
+        # 0.50 while live HEAD said 0.30, and the item's own instruction was
+        # "if someone aligns the harness, this fires and the b117 ledger must be
+        # re-read (that is a GOOD outcome)". b118 did exactly that
+        # (scripts/b118_merit_bar_rebaseline.py), so the assertion is FLIPPED to
+        # certify the alignment instead of the drift — the tripwire stays, it
+        # just points the other way (b102's rule: edit, never delete).
+        #
+        # It now fires if the harness drifts off live in EITHER direction: a
+        # restated literal creeping back, or a live retune the harness fails to
+        # follow because the derivation was broken.
         from engines import lab_harness as lh
-        from engines.trade_management import _trail_params
-        t = {"side": "BUY", "entry_price": 100.0, "sl": 90.0,
-             "volatility_state": "normal", "momentum_strength": 0.5}
-        live_mult = _trail_params(t)[0] / abs(100.0 - 90.0)
-        self.assertNotAlmostEqual(live_mult, lh.LADDER["trail_after_partial"],
-                                  places=2,
-                                  msg="lab harness trail now matches live HEAD — "
-                                      "re-baseline the merit bar (b118) and retire "
-                                      "this drift pin with a named edit, not a delete")
+        probe = lh.live_runner_trail()
+        self.assertAlmostEqual(lh.LADDER["trail_after_partial"],
+                               probe["multiplier"], places=6,
+                               msg="lab harness trail no longer equals the "
+                                   "multiplier live applies to the runner lane "
+                                   "— the b118 derivation broke or a literal "
+                                   "crept back")
+        self.assertAlmostEqual(lh.LADDER["trail_floor"], probe["floor_usd"],
+                               places=6,
+                               msg="lab harness trail floor no longer equals "
+                                   "live's absolute floor")
+        # And the probe must still be asking in the runner frame, not a generic
+        # trade: b109's collapse says only grade A survives TP1 with a runner,
+        # and ladder_fields forces volatility_state='high' for an A, so the
+        # probe must land on the high-volatility branch.
+        self.assertEqual(probe["grade"], "A")
+        self.assertEqual(probe["volatility_state"], "high")
+        self.assertEqual(probe["lane"], "high_volatility_tighter_trail")
 
 
 class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
@@ -229,14 +245,23 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
         # control wins there, which is the loudest single statement of flatness.
         self.assertEqual(best_exp["cached"], "no_trail_0.00")
 
-    def test_b117_no_live_change_shipped(self):
-        # This item is measurement. The live trail and the lab bar must both be
-        # exactly where they were, or the run silently wired a retune.
+    def test_b117_no_live_change_shipped_b118_edited_the_lab_side(self):
+        # This item is measurement: the LIVE trail must be exactly where it
+        # was. b117 pinned the LAB bar at 0.50 too; b118 (2026-09-07) then made
+        # the decided change on the lab side — the harness now DERIVES the
+        # runner trail (multiplier + $ floor) from live instead of restating a
+        # literal — so the lab half of this pin is re-pointed at the derivation
+        # (named edit, not delete). The live half is unchanged and still the
+        # hard rule: no autopilot round retunes _trail_params.
         src = open(os.path.join(ROOT, "engines", "trade_management.py")).read()
         self.assertIn("risk_distance * 0.3", src)
         self.assertNotIn("risk_distance * 0.35", src)
         from engines import lab_harness as lh
-        self.assertEqual(lh.LADDER["trail_after_partial"], 0.5)
+        self.assertEqual(lh.LADDER["trail_after_partial"],
+                         lh.live_runner_trail()["multiplier"],
+                         "b118: the lab bar must equal the DERIVED live value — "
+                         "a literal here (the old 0.5) is the drift this item "
+                         "was filed to close")
 
 
 class TestB117RunnerPopulation(unittest.TestCase):

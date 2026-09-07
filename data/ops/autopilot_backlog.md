@@ -47,8 +47,38 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b118 TRADER MEASUREMENT — THE LAB BAR STILL SCORES THE FUNNEL AT A TRAIL
-      LIVE DOES NOT RUN (decision opened by b117, 2026-09-07):
+- [x] b118 TRADER MEASUREMENT — THE LAB BAR STILL SCORES THE FUNNEL AT A TRAIL
+      LIVE DOES NOT RUN (decision opened by b117, 2026-09-07). DONE 2026-09-07:
+      option (a) taken — `lab_harness.LADDER` no longer restates the trail, it
+      PROBES it (`live_runner_trail()` derives multiplier AND $ floor from
+      `_trail_params` in the RUNNER frame: grade A ⇒ volatility_state high ⇒
+      the branch a trail can actually reach), and `trail_floor` is ON in the
+      harness (measured cost: 0.000R on 4/5 legs, +0.005R on W4 — live-parity
+      is practically free). UNPLANNED FINDING, BIGGER THAN THE ITEM: the quoted
+      merit bar (b108's 0.285/0.202/0.206/0.227/0.222) DOES NOT REPRODUCE on
+      today's engine — 0.270/107 at the identical call. Cause: b109 shipped
+      LADDER_FIELDS into the backtest trade dict, measured its own delta at
+      -0.015/+0.003/+0.021/-0.004/-0.001, declared the numbers "STAND" (true:
+      noise-level) and never re-quoted the HEADLINE, so every document since
+      2026-09-06 carried a pre-b109 bar. Proved by EXACT REPRODUCTION:
+      stripping the ladder fields (the pre-b109 trade dict) reproduces b108's
+      exp_R AND trade count on all five legs. NEW BAR (live-parity): cached
+      0.278 | W1 0.211 | W2 0.230 | W3 0.232 | W4 0.233; total drift vs stored
+      -0.007..+0.024R, all under 0.025R = an order of magnitude below the lane
+      margins b70/b81/b108 decided on, so no stored ranking rots (b110's rule
+      applied to the bar itself). scripts/b118_merit_bar_rebaseline.py + ledger
+      data/backtest/b118_merit_bar_rebaseline.json; 12 tests in
+      tests/test_b118_merit_bar_rebaseline.py (AST-pin: LADDER's trail keys must
+      be NAMES not numbers; anti-vacuity: the strip MUST change at least one
+      leg; the harness default MUST reproduce the ledger's parity row). b117's
+      two drift pins were FLIPPED with named edits, not deleted, and b117's
+      probe now pins its unfloored grid explicitly (`dict(LADDER,
+      trail_floor=0.0)`) so the two ledgers cannot silently disagree about what
+      "the lab bar" means. NO live change: engines/trade_management.py
+      untouched. Filed b120 (the reusable rule: "the delta is noise" is NOT
+      "the headline stands" — an engine change that moves a stored bar must
+      re-quote it, not just certify its size).
+      ORIGINAL NOTE follows.
       engines/lab_harness.LADDER.trail_after_partial = 0.50 while live HEAD's
       _trail_params balanced lane = 0.30 and live RUNNING = 0.45 (b114). Every
       funnel number in this repo — the 0.285 cached bar, the ~0.20-0.23R merit
@@ -65,6 +95,39 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       delete it (b102's rule). Also decide whether trail_floor should default
       ON in the harness (live-parity says yes; the whole stored ledger says no —
       b110's neutrality test must run before the bar moves).
+- [ ] b120 MEASUREMENT PROCEDURE — "THE DELTA IS NOISE" IS NOT "THE HEADLINE
+      STANDS" (reusable rule from b118, 2026-09-07): b109 shipped a backtest
+      engine change (LADDER_FIELDS into the trade dict), measured its own effect
+      on the funnel at -0.015..+0.021R per leg, concluded the old numbers
+      "STAND", and left every stored ledger and backlog note quoting the
+      pre-change bar. The conclusion was right about the RANKINGS and wrong
+      about the BOOKKEEPING: 25 rounds later b118 found the repo's headline
+      (0.285 cached) no longer reproducible, and had to reconstruct the gap
+      from scratch. RULE: whenever an engine/harness change moves a stored
+      headline number, (1) re-QUOTE the headline in the same round, not just
+      size the delta, (2) record the reproduction recipe (what convention
+      produces the old number — b118's `quoted_pre_b109` arm is exactly that),
+      and (3) state the new bar in the ledger, not only in prose. Cheap
+      version: after any change to engines/backtest*.py or lab_harness.LADDER,
+      re-run the funnel baseline and diff it against the stored merit bar
+      before writing "stands". Name-carrier:
+      tests/test_b118_merit_bar_rebaseline.py::
+      TestB120StaleHeadlineRule::test_b120_* (b102's discipline: a filed item
+      lives in a test name, not only in this file).
+- [ ] b118b TRADER MEASUREMENT — THE b108/b81/b70 LANE LEDGERS STILL CARRY THE
+      PRE-b109 FUNNEL ROW (follow-up to b118, 2026-09-07): b118 re-derived the
+      BAR (live-parity cached 0.278 / W1 0.211 / W2 0.230 / W3 0.232 / W4 0.233)
+      but the stored lane-vs-funnel DELTAS in data/backtest/
+      b108_rescore_corrected.json were computed against the stale row, so every
+      `d_exp_R` there is off by b109's mixed-sign component (-0.015..+0.021).
+      Max possible effect on a verdict: nr7htf's margin, which b108 already
+      calls the largest shift (+0.045..+0.093), so a re-decision is unlikely to
+      flip anything — but b70's standing answer should be re-derived from
+      numbers that reproduce, not argued from. Method: re-run
+      scripts/b108_rescore_corrected.py (it imports b81's measure_leg verbatim,
+      so the harness alignment flows through automatically) and diff
+      `_b70_redecision` against the stored block. LOW priority until a lane is
+      actually up for wiring.
 - [ ] b119 TRADER RESEARCH — b66's "EXIT GEOMETRY IS LOCALLY OPTIMAL" WAS ALSO
       PRICED ON THE PHANTOM RUNNER (reusable procedure from b117, 2026-09-07):
       b117 re-priced ONE pre-b105 exit decision (b65's trail) and its evidence

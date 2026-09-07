@@ -130,6 +130,10 @@ def floor_bind_census(m15, h1, h4, mult: float = 0.30) -> dict:
     funnel = b81.funnel_fn(m15, h1, h4)
     ts = lh.live_time_stop_bars(m15)
     kw = dict(lh.LADDER)
+    kw["trail_floor"] = 0.0            # b118: this census measures the UNFLOORED
+                                       # grid's risk distribution (see the note in
+                                       # measure_leg); the floor is what is being
+                                       # counted, so it must not be in the geometry.
     kw["trail_after_partial"] = mult
     kw["time_stop_bars"] = ts
     from engines.backtest import backtest_ohlc
@@ -169,7 +173,15 @@ def measure_leg(m15, h1, h4) -> dict:
     """
     from engines.backtest import backtest_ohlc
     funnel = b81.funnel_fn(m15, h1, h4)
-    extras = tuple((name, dict(lh.LADDER, trail_after_partial=mult))
+    # b118 PARITY NOTE (edit, not a change to the frozen ledger): the harness
+    # LADDER used to carry NO `trail_floor`, so `arms` below was by construction
+    # the floor-OFF grid ("the historical lab shape", see measure_leg's
+    # docstring). b118 aligned the harness onto live's derived trail INCLUDING
+    # the $3.00 floor, so the unfloored grid must now say so explicitly —
+    # otherwise re-running this probe would print floored numbers into the
+    # `arms` column and contradict the ledger that is this item's evidence.
+    BASE = dict(lh.LADDER, trail_floor=0.0)
+    extras = tuple((name, dict(BASE, trail_after_partial=mult))
                    for name, mult in ARMS)
     out = lh.run_arm(m15, funnel, extra_modes=extras)
     rows = {name: out[name] for name, _mult in ARMS}
@@ -179,7 +191,7 @@ def measure_leg(m15, h1, h4) -> dict:
     floor_a = {}
     floor = trail_floor()
     for name, mult in ARMS:
-        kw = dict(lh.LADDER)
+        kw = dict(BASE)
         kw["trail_after_partial"] = mult
         kw["time_stop_bars"] = ts
         a_only[name] = _a_slice(m15, funnel, kw)

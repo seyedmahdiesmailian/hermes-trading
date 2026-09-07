@@ -1,0 +1,351 @@
+{
+ "_note": "b118: the lab bar re-baselined onto live's runner trail (multiplier AND $ floor derived from _trail_params by the harness, not restated), with the full decomposition of the gap between the quoted merit bar and the live-parity one.",
+ "_legacy_literal_trail": 0.5,
+ "_live_trail_mult_derived": 0.3,
+ "_live_trail_floor_derived": 3.0,
+ "_harness_ladder_trail": 0.3,
+ "_harness_ladder_floor": 3.0,
+ "_live_min_grade": "B",
+ "_live_min_rr": 1.5,
+ "cached": {
+  "_bars": 3000,
+  "_first": 1784109600,
+  "_last": 1787960700,
+  "quoted_pre_b109": {
+   "trades": 110,
+   "exp_R": 0.285,
+   "WR%": 70.9,
+   "avg_win_R": 0.82,
+   "avg_loss_R": -1.01,
+   "net_R": 31.3,
+   "maxDD_R": -2.3,
+   "mean_hold_bars": 8.8,
+   "p95_hold_bars": 29,
+   "max_hold_bars": 78,
+   "holds_over_time_exit": 0
+  },
+  "lab_bar_0_50": {
+   "trades": 107,
+   "exp_R": 0.27,
+   "WR%": 71.0,
+   "avg_win_R": 0.79,
+   "avg_loss_R": -1.01,
+   "net_R": 28.9,
+   "maxDD_R": -2.3,
+   "mean_hold_bars": 9.4,
+   "p95_hold_bars": 29,
+   "max_hold_bars": 78,
+   "holds_over_time_exit": 0
+  },
+  "live_trail_no_floor": {
+   "trades": 109,
+   "exp_R": 0.278,
+   "WR%": 70.6,
+   "avg_win_R": 0.81,
+   "avg_loss_R": -1.01,
+   "net_R": 30.3,
+   "maxDD_R": -2.3,
+   "mean_hold_bars": 9.1,
+   "p95_hold_bars": 29,
+   "max_hold_bars": 78,
+   "holds_over_time_exit": 0
+  },
+  "live_parity": {
+   "trades": 109,
+   "exp_R": 0.278,
+   "WR%": 70.6,
+   "avg_win_R": 0.81,
+   "avg_loss_R": -1.01,
+   "net_R": 30.3,
+   "maxDD_R": -2.3,
+   "mean_hold_bars": 9.1,
+   "p95_hold_bars": 29,
+   "max_hold_bars": 78,
+   "holds_over_time_exit": 0
+  }
+ },
+ "W1": {
+  "_bars": 6000,
+  "_first": 1776187800,
+  "_last": 1784108700,
+  "quoted_pre_b109": {
+   "trades": 182,
+   "exp_R": 0.202,
+   "WR%": 65.4,
+   "avg_win_R": 0.84,
+   "avg_loss_R": -1.0,
+   "net_R": 36.7,
+   "maxDD_R": -6.1,
+   "mean_hold_bars": 7.7,
+   "p95_hold_bars": 25,
+   "max_hold_bars": 49,
+   "holds_over_time_exit": 0
+  },
+  "lab_bar_0_50": {
+   "trades": 180,
+   "exp_R": 0.205,
+   "WR%": 65.6,
+   "avg_win_R": 0.84,
+   "avg_loss_R": -0.99,
+   "net_R": 37.0,
+   "maxDD_R": -6.1,
+   "mean_hold_bars": 8.1,
+   "p95_hold_bars": 26,
+   "max_hold_bars": 49,
+   "holds_over_time_exit": 0
+  },
+  "live_trail_no_floor": {
+   "trades": 181,
+   "exp_R": 0.211,
+   "WR%": 65.2,
+   "avg_win_R": 0.85,
+   "avg_loss_R": -1.0,
+   "net_R": 38.2,
+   "maxDD_R": -6.1,
+   "mean_hold_bars": 8.0,
+   "p95_hold_bars": 26,
+   "max_hold_bars": 49,
+   "holds_over_time_exit": 0
+  },
+  "live_parity": {
+   "trades": 181,
+   "exp_R": 0.211,
+   "WR%": 65.2,
+   "avg_win_R": 0.85,
+   "avg_loss_R": -1.0,
+   "net_R": 38.2,
+   "maxDD_R": -6.1,
+   "mean_hold_bars": 8.0,
+   "p95_hold_bars": 26,
+   "max_hold_bars": 49,
+   "holds_over_time_exit": 0
+  }
+ },
+ "W2": {
+  "_bars": 6000,
+  "_first": 1768203000,
+  "_last": 1776186900,
+  "quoted_pre_b109": {
+   "trades": 175,
+   "exp_R": 0.206,
+   "WR%": 65.1,
+   "avg_win_R": 0.86,
+   "avg_loss_R": -1.01,
+   "net_R": 36.0,
+   "maxDD_R": -5.1,
+   "mean_hold_bars": 10.1,
+   "p95_hold_bars": 34,
+   "max_hold_bars": 96,
+   "holds_over_time_exit": 0
+  },
+  "lab_bar_0_50": {
+   "trades": 169,
+   "exp_R": 0.227,
+   "WR%": 65.1,
+   "avg_win_R": 0.89,
+   "avg_loss_R": -1.01,
+   "net_R": 38.4,
+   "maxDD_R": -5.1,
+   "mean_hold_bars": 10.6,
+   "p95_hold_bars": 34,
+   "max_hold_bars": 101,
+   "holds_over_time_exit": 0
+  },
+  "live_trail_no_floor": {
+   "trades": 173,
+   "exp_R": 0.23,
+   "WR%": 65.3,
+   "avg_win_R": 0.89,
+   "avg_loss_R": -1.01,
+   "net_R": 39.9,
+   "maxDD_R": -5.1,
+   "mean_hold_bars": 10.4,
+   "p95_hold_bars": 34,
+   "max_hold_bars": 101,
+   "holds_over_time_exit": 0
+  },
+  "live_parity": {
+   "trades": 173,
+   "exp_R": 0.23,
+   "WR%": 65.3,
+   "avg_win_R": 0.89,
+   "avg_loss_R": -1.01,
+   "net_R": 39.9,
+   "maxDD_R": -5.1,
+   "mean_hold_bars": 10.4,
+   "p95_hold_bars": 34,
+   "max_hold_bars": 101,
+   "holds_over_time_exit": 0
+  }
+ },
+ "W3": {
+  "_bars": 6000,
+  "_first": 1759932900,
+  "_last": 1768202100,
+  "quoted_pre_b109": {
+   "trades": 206,
+   "exp_R": 0.227,
+   "WR%": 68.0,
+   "avg_win_R": 0.81,
+   "avg_loss_R": -1.0,
+   "net_R": 46.8,
+   "maxDD_R": -7.6,
+   "mean_hold_bars": 9.5,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 76,
+   "holds_over_time_exit": 0
+  },
+  "lab_bar_0_50": {
+   "trades": 205,
+   "exp_R": 0.223,
+   "WR%": 67.8,
+   "avg_win_R": 0.8,
+   "avg_loss_R": -1.0,
+   "net_R": 45.7,
+   "maxDD_R": -7.6,
+   "mean_hold_bars": 9.8,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 76,
+   "holds_over_time_exit": 0
+  },
+  "live_trail_no_floor": {
+   "trades": 205,
+   "exp_R": 0.232,
+   "WR%": 67.8,
+   "avg_win_R": 0.82,
+   "avg_loss_R": -1.0,
+   "net_R": 47.5,
+   "maxDD_R": -7.6,
+   "mean_hold_bars": 9.8,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 76,
+   "holds_over_time_exit": 0
+  },
+  "live_parity": {
+   "trades": 205,
+   "exp_R": 0.232,
+   "WR%": 67.8,
+   "avg_win_R": 0.82,
+   "avg_loss_R": -1.0,
+   "net_R": 47.5,
+   "maxDD_R": -7.6,
+   "mean_hold_bars": 9.8,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 76,
+   "holds_over_time_exit": 0
+  }
+ },
+ "W4": {
+  "_bars": 6000,
+  "_first": 1752043500,
+  "_last": 1759932000,
+  "quoted_pre_b109": {
+   "trades": 179,
+   "exp_R": 0.222,
+   "WR%": 68.7,
+   "avg_win_R": 0.79,
+   "avg_loss_R": -1.03,
+   "net_R": 39.7,
+   "maxDD_R": -5.9,
+   "mean_hold_bars": 10.8,
+   "p95_hold_bars": 36,
+   "max_hold_bars": 112,
+   "holds_over_time_exit": 0
+  },
+  "lab_bar_0_50": {
+   "trades": 176,
+   "exp_R": 0.221,
+   "WR%": 68.8,
+   "avg_win_R": 0.79,
+   "avg_loss_R": -1.03,
+   "net_R": 38.8,
+   "maxDD_R": -5.9,
+   "mean_hold_bars": 11.0,
+   "p95_hold_bars": 34,
+   "max_hold_bars": 112,
+   "holds_over_time_exit": 0
+  },
+  "live_trail_no_floor": {
+   "trades": 178,
+   "exp_R": 0.228,
+   "WR%": 68.5,
+   "avg_win_R": 0.8,
+   "avg_loss_R": -1.03,
+   "net_R": 40.5,
+   "maxDD_R": -5.9,
+   "mean_hold_bars": 11.1,
+   "p95_hold_bars": 37,
+   "max_hold_bars": 112,
+   "holds_over_time_exit": 0
+  },
+  "live_parity": {
+   "trades": 177,
+   "exp_R": 0.233,
+   "WR%": 68.9,
+   "avg_win_R": 0.8,
+   "avg_loss_R": -1.03,
+   "net_R": 41.2,
+   "maxDD_R": -5.9,
+   "mean_hold_bars": 11.2,
+   "p95_hold_bars": 37,
+   "max_hold_bars": 112,
+   "holds_over_time_exit": 0
+  }
+ },
+ "_stored_b108_bar": {
+  "cached": 0.285,
+  "W1": 0.202,
+  "W2": 0.206,
+  "W3": 0.227,
+  "W4": 0.222
+ },
+ "_stored_b108_trades": {
+  "cached": 110,
+  "W1": 182,
+  "W2": 175,
+  "W3": 206,
+  "W4": 179
+ },
+ "_attribution": {
+  "cached": {
+   "d_b109_ladder_fields": -0.015,
+   "d_trail_0_50_to_live": 0.008,
+   "d_trail_floor": 0.0,
+   "d_total_vs_stored": -0.007,
+   "trades_quoted": 110,
+   "trades_live_parity": 109
+  },
+  "W1": {
+   "d_b109_ladder_fields": 0.003,
+   "d_trail_0_50_to_live": 0.006,
+   "d_trail_floor": 0.0,
+   "d_total_vs_stored": 0.009,
+   "trades_quoted": 182,
+   "trades_live_parity": 181
+  },
+  "W2": {
+   "d_b109_ladder_fields": 0.021,
+   "d_trail_0_50_to_live": 0.003,
+   "d_trail_floor": 0.0,
+   "d_total_vs_stored": 0.024,
+   "trades_quoted": 175,
+   "trades_live_parity": 173
+  },
+  "W3": {
+   "d_b109_ladder_fields": -0.004,
+   "d_trail_0_50_to_live": 0.009,
+   "d_trail_floor": 0.0,
+   "d_total_vs_stored": 0.005,
+   "trades_quoted": 206,
+   "trades_live_parity": 205
+  },
+  "W4": {
+   "d_b109_ladder_fields": -0.001,
+   "d_trail_0_50_to_live": 0.007,
+   "d_trail_floor": 0.005,
+   "d_total_vs_stored": 0.011,
+   "trades_quoted": 179,
+   "trades_live_parity": 177
+  }
+ }
+}

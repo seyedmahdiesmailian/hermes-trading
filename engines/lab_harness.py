@@ -37,7 +37,8 @@ from typing import Callable
 
 from engines.backtest import backtest_ohlc
 from engines.legacy_guards import MAX_POSITION_AGE_HOURS
-from engines.trade_management import _partial_close_fraction
+from engines.trade_management import (_partial_close_fraction, _trail_params,
+                                      ladder_fields)
 
 # Live-parity measurement constants shared by every lab round.
 SPREAD = 0.20                 # XAUUSD demo round-trip cost (live assumption)
@@ -51,10 +52,52 @@ MIN_RR = 0.0                  # lab arms measure raw expectancy; live gate 6
 # so a live gate change moves the lab bar automatically.
 from engines.auto_executor import MIN_RISK_REWARD as LIVE_MIN_RR, \
     MIN_SETUP_GRADE as LIVE_MIN_GRADE
-LADDER = dict(                # the live b60 exit ladder, verbatim
-    partial_tp1_share=0.5,
+# ── b118: the runner trail is DERIVED from live, never restated ────────────
+# Until b117 this file carried `trail_after_partial=0.5` as a literal while live
+# trailed the runner lane at 0.30 x risk with a $3.00 absolute floor
+# (`_trail_params`). b117 measured the trail grid FLAT (max spread ~0.02R), so
+# the drift cost nothing in RANKINGS — but it is the b82 class: a harness that
+# re-declares its own exit constants drifts silently, and the next live retune
+# would have moved the lab bar with nobody deciding to. Same shape as b80 (the
+# grade gate) and b71 (the time exit): import/probe the live value.
+#
+# The probe must ask in the RIGHT FRAME (b116's rule). A trail can only act on
+# a trade that survives TP1 with a runner, and b109 proved that lane collapses
+# to setup_grade=='A' — which, through `ladder_fields`, forces
+# volatility_state=='high' (an A needs trend>=3.0 and high is trend>=3.0), so
+# the runner lane takes `_trail_params`' FIRST branch, not the momentum branch.
+# Probing a generic grade-B trade would read the wrong lane.
+def live_runner_trail() -> dict:
+    """(multiplier, $ floor) live applies to the only lane a trail can reach.
+
+    Derived by probe, not by copy: risk is set to 100.0 so the multiplier
+    dominates the floor, and a second call with risk 0.0 returns the floor
+    itself (max(0*mult, floor) == floor).
+    """
+    from engines.plan import setup_grade          # leaf module, no cycle
+    quality = {"trend_strength": 3.0, "alignment": "aligned",
+               "regime": "breakout_continuation"}
+    grade = setup_grade({"quality": quality})
+    fields = ladder_fields(quality, grade)
+    wide = {"side": "BUY", "entry_price": 100.0, "sl": 0.0, **fields}
+    zero = {"side": "BUY", "entry_price": 0.0, "sl": 0.0, **fields}
+    dist_wide, reason = _trail_params(wide)
+    floor, _ = _trail_params(zero)
+    return {"multiplier": round(dist_wide / 100.0, 6),
+            "floor_usd": round(float(floor), 6),
+            "lane": reason, "grade": grade,
+            "volatility_state": fields["volatility_state"]}
+
+
+_LIVE_TRAIL = live_runner_trail()
+LIVE_TRAIL_MULT = _LIVE_TRAIL["multiplier"]
+LIVE_TRAIL_FLOOR = _LIVE_TRAIL["floor_usd"]
+
+LADDER = dict(                # the live b60 exit ladder, DERIVED where live
+    partial_tp1_share=0.5,    # exposes a constant to read (b118)
     tp1_position=0.50,
-    trail_after_partial=0.5,
+    trail_after_partial=LIVE_TRAIL_MULT,
+    trail_floor=LIVE_TRAIL_FLOOR,
     breakeven_at_r=0.0,
     partial_share_fn=lambda t: _partial_close_fraction(t),
 )
