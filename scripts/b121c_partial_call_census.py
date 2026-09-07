@@ -91,6 +91,22 @@ def measure(m15, h1, h4) -> dict:
     return out
 
 
+def ratios(led: dict) -> dict:
+    """Candidate/incumbent call ratios per leg — pure arithmetic on the ledger.
+
+    b127: lifted verbatim out of main() so the reproduction test executes the
+    shipped derivation instead of reading its output.
+    """
+    return {leg: {
+        "partial_calls_candidate_over_incumbent":
+            round(led[leg]["flat_0.30"]["partial_close_calls"]
+                  / max(led[leg][INCUMBENT]["partial_close_calls"], 1), 2),
+        "multi_call_runner_trades_candidate_over_incumbent":
+            round(led[leg]["flat_0.30"]["multi_call_runner_trades"]
+                  / max(led[leg][INCUMBENT]["multi_call_runner_trades"], 1), 2),
+    } for leg in LEGS}
+
+
 def main() -> int:
     led = {"_note": "b121c: the operational cost side of the share candidate, "
                     "counted off trade_log.partial_taken (the field b121 added "
@@ -108,14 +124,7 @@ def main() -> int:
         m15, h1, h4 = _rows_for(leg)
         led[leg] = measure(m15, h1, h4)
 
-    led["_ratio"] = {leg: {
-        "partial_calls_candidate_over_incumbent":
-            round(led[leg]["flat_0.30"]["partial_close_calls"]
-                  / max(led[leg][INCUMBENT]["partial_close_calls"], 1), 2),
-        "multi_call_runner_trades_candidate_over_incumbent":
-            round(led[leg]["flat_0.30"]["multi_call_runner_trades"]
-                  / max(led[leg][INCUMBENT]["multi_call_runner_trades"], 1), 2),
-    } for leg in LEGS}
+    led["_ratio"] = ratios(led)
 
     print(f"{'leg':8s}{'arm':28s}{'n':>6s}{'partials':>10s}{'1-call':>8s}"
           f"{'runners':>9s}{'part_rate':>10s}{'exp_R':>8s}")

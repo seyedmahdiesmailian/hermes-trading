@@ -113,6 +113,32 @@ def measure_leg(m15, h1, h4) -> dict:
     }
 
 
+def attribution(led: dict) -> dict:
+    """Each step of the drift, per leg — pure arithmetic on the ledger's rows.
+
+    b127: lifted verbatim out of main() so a test can EXECUTE it against the
+    shipped JSON and require exact reproduction. Before this, the only copy of
+    this arithmetic lived in a main() that no test could call without re-running
+    the 7-minute funnel replay (and overwriting the frozen ledger).
+    """
+    attr = {}
+    for leg in LEGS:
+        L = led[leg]
+        attr[leg] = {
+            "d_b109_ladder_fields": round(L["lab_bar_0_50"]["exp_R"]
+                                          - L["quoted_pre_b109"]["exp_R"], 3),
+            "d_trail_0_50_to_live": round(L["live_trail_no_floor"]["exp_R"]
+                                          - L["lab_bar_0_50"]["exp_R"], 3),
+            "d_trail_floor": round(L["live_parity"]["exp_R"]
+                                   - L["live_trail_no_floor"]["exp_R"], 3),
+            "d_total_vs_stored": round(L["live_parity"]["exp_R"]
+                                       - led["_stored_b108_bar"][leg], 3),
+            "trades_quoted": L["quoted_pre_b109"]["trades"],
+            "trades_live_parity": L["live_parity"]["trades"],
+        }
+    return attr
+
+
 def main() -> int:
     wins = wl.load_windows()
     c = json.load(open("data/backtest/ab_aggressive_data.json"))
@@ -142,23 +168,10 @@ def main() -> int:
     led["_stored_b108_trades"] = {leg: old[leg]["funnel_graded"]["trades"]
                                   for leg in LEGS}
 
-    # Attribution: each step of the drift, per leg.
-    attr = {}
-    for leg in LEGS:
-        L = led[leg]
-        attr[leg] = {
-            "d_b109_ladder_fields": round(L["lab_bar_0_50"]["exp_R"]
-                                          - L["quoted_pre_b109"]["exp_R"], 3),
-            "d_trail_0_50_to_live": round(L["live_trail_no_floor"]["exp_R"]
-                                          - L["lab_bar_0_50"]["exp_R"], 3),
-            "d_trail_floor": round(L["live_parity"]["exp_R"]
-                                   - L["live_trail_no_floor"]["exp_R"], 3),
-            "d_total_vs_stored": round(L["live_parity"]["exp_R"]
-                                       - led["_stored_b108_bar"][leg], 3),
-            "trades_quoted": L["quoted_pre_b109"]["trades"],
-            "trades_live_parity": L["live_parity"]["trades"],
-        }
-    led["_attribution"] = attr
+    # Attribution: each step of the drift, per leg. b127: the arithmetic lives
+    # in attribution() so the reproduction test executes THE SAME code that
+    # ships in the ledger, not a copy of it.
+    led["_attribution"] = attribution(led)
 
     print(f"{'leg':8s} {'stored':>8s} {'quoted':>8s} {'lab050':>8s} "
           f"{'livetr':>8s} {'parity':>8s}   attribution")

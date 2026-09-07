@@ -121,14 +121,22 @@ def import_closure(entry: str, extra: list[str]) -> list[str]:
     return sorted(seen)
 
 
-def changed_files(sha: str, paths: list[str]) -> list[dict]:
+def changed_files(sha: str, paths: list[str],
+                  ref: str = "HEAD") -> list[dict]:
+    """Which closure files changed between `sha` and `ref`.
+
+    b127: `ref` defaults to HEAD (the live question), but the reproduction test
+    must be able to re-derive a FROZEN ledger against the head it recorded, so
+    the reference is a parameter instead of a hardcoded string. Additive: the
+    default keeps every existing call byte-identical.
+    """
     if not sha:
         return []
-    out = _git("diff", "--name-only", sha, "HEAD", "--", *paths)
+    out = _git("diff", "--name-only", sha, ref, "--", *paths)
     names = [n for n in out.splitlines() if n.strip()]
     detail = []
     for n in names:
-        c = _git("log", "--format=%h %cI", f"{sha}..HEAD", "--", n)
+        c = _git("log", "--format=%h %cI", f"{sha}..{ref}", "--", n)
         detail.append({"file": n,
                        "commits_since_boot": [l for l in c.splitlines() if l]})
     return detail

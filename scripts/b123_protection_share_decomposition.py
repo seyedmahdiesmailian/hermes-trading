@@ -298,6 +298,25 @@ def integrity(led, step1: dict, step2: dict) -> dict:
     return checks
 
 
+def arm_identity_live_share(led) -> dict:
+    """b122's arm-identity check on the LIVE share rule, per leg.
+
+    For the live share function the three protection families must be the SAME
+    trade under `partial` and `tp1` (live returns 1.0 for every non-A ticket —
+    closed at TP1 before any arming — and 0.3 for the A lane, armed under both),
+    and must DIFFER under `none`. Lifted verbatim out of main() by b127 so the
+    reproduction test executes the shipped derivation.
+    """
+    return {
+        leg: {"partial_eq_tp1": (led[leg]["grid"][f"no_partial::{INC_ARM}"]
+                                 == led[leg]["grid"]
+                                 [f"no_partial::{arm_name('tp1', 'grade')}"]),
+              "partial_neq_none": (led[leg]["grid"][f"no_partial::{INC_ARM}"]
+                                   != led[leg]["grid"]
+                                   [f"no_partial::{arm_name('none', 'grade')}"])}
+        for leg in LEGS}
+
+
 def main(argv: list[str]) -> int:
     rederive = "--rederive" in argv
     step1 = json.load(open(STEP1))
@@ -348,14 +367,7 @@ def main(argv: list[str]) -> int:
     # live's function returns 1.0 for every non-A ticket (closed at TP1 before
     # any arming) and 0.3 for the A lane (armed under all three modes). If they
     # differ, one of the modes is not what it is named for.
-    led["_arm_identity_live_share"] = {
-        leg: {"partial_eq_tp1": (led[leg]["grid"][f"no_partial::{INC_ARM}"]
-                                 == led[leg]["grid"]
-                                 [f"no_partial::{arm_name('tp1', 'grade')}"]),
-              "partial_neq_none": (led[leg]["grid"][f"no_partial::{INC_ARM}"]
-                                   != led[leg]["grid"]
-                                   [f"no_partial::{arm_name('none', 'grade')}"])}
-        for leg in LEGS}
+    led["_arm_identity_live_share"] = arm_identity_live_share(led)
     bad = [leg for leg, v in led["_arm_identity_live_share"].items()
            if not (v["partial_eq_tp1"] and v["partial_neq_none"])]
     if bad:

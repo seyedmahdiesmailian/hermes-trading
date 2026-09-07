@@ -374,7 +374,23 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       (exact reproduction, pinned). Defence ships as scripts/
       b126_dead_path_scan.py (static scan for calls to unbound names, clean on
       repo+tests+bridge, pinned in both directions incl. the defect shape).
-- [ ] b127 TRADER HYGIENE (reusable procedure from b118b, 2026-09-07) — EVERY
+- [x] b127 TRADER HYGIENE (reusable procedure from b118b, 2026-09-07) — EVERY
+      FROZEN BACKTEST LEDGER NEEDS A REPRODUCTION TEST THAT EXECUTES ITS
+      PRODUCER, NOT JUST READS ITS JSON. DONE 2026-09-07: 18 reproductions
+      across 9 producers (b81 verdict+40 delta cells, b108 merit_bar/
+      redecide_b70/no-unbound-call, b114 closure+drift-as-git-arithmetic for
+      both running daemons, b118 attribution, b118b redecide+margin_table,
+      b119 both neutrality blocks+frame probe+derived blocks, b121 verdict,
+      b121b merge+curve, b121c ratios, b123 integrity/decomposition/
+      neutrality/4 curves/arm-identity) — ALL EXACT on the shipped ledgers, so
+      no frozen number rotted; four producers needed their post-processing
+      lifted verbatim into pure functions (b118 attribution, b121c ratios,
+      b123 arm_identity, b114 changed_files ref param) to be executable at all,
+      which is itself the finding: the arithmetic was unreachable from a test
+      by construction. Pinned by tests/test_b127_producer_reproduction.py
+      (checks live in scripts/b127_producer_reproduction.py, one
+      implementation; anti-vacuity + missing-artifact guards). Original
+      procedure follows.
       FROZEN BACKTEST LEDGER NEEDS A REPRODUCTION TEST THAT EXECUTES ITS
       PRODUCER, NOT JUST READS ITS JSON. b108 shipped a NameError in main()'s
       LAST statement and no test noticed for a day, because every b108 test
@@ -393,6 +409,18 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       pin only the pure post-processing half and say so in the test docstring.
       Do NOT re-run producer mains() in tests (they overwrite frozen ledgers);
       b118b's write-a-new-ledger-import-the-machinery pattern is the way.
+- [ ] b128 TRADER HYGIENE (reusable procedure from b127, 2026-09-07) — EVERY
+      NEW FROZEN LEDGER MUST REGISTER A CHECK IN scripts/
+      b127_producer_reproduction.py::CHECKS AT SHIP TIME, AND THE PRODUCERS
+      b127 DID NOT COVER GET ADDED THE SAME WAY. b127 pinned 9 producers / 18
+      checks; the coverage scan it shipped (enumerate scripts/*.py that
+      json.dump a data/backtest or data/ops artifact, diff against CHECKS)
+      lists the rest — mostly producers whose ONLY derived numbers live inline
+      in main(). b127's finding generalises into the rule: post-processing
+      arithmetic written inline in main() is UNREACHABLE from any test by
+      construction, so a new producer must write its derived blocks as a pure
+      function of the ledger dict from day one and register it in CHECKS in
+      the same commit.
 - [x] b119 TRADER RESEARCH — b66's "EXIT GEOMETRY IS LOCALLY OPTIMAL" WAS ALSO
       PRICED ON THE PHANTOM RUNNER (reusable procedure from b117, 2026-09-07).
       DONE 2026-09-07: b66b's load-bearing verdict is not merely smaller under
