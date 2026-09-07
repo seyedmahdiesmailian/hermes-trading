@@ -942,7 +942,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       TIME-based gate; it needs one fresh run_backtest pair (veto ON/OFF) on
       the b121 windows. Filed as b131 (ledger entry-time stamp + the ON/OFF
       pair producer). No gate was weakened; nothing wired.
-- [ ] b131 TRADER RESEARCH (from b107 news-veto leg, 2026-09-07) — PRICE THE
+- [x] b131 TRADER RESEARCH (from b107 news-veto leg, 2026-09-07) — PRICE THE
       NEWS-VETO ON THE FUNNEL: run_backtest has no time-of-day veto parameter
       and the stored ledgers carry NO per-trade entry timestamps, so a
       time-based gate cannot be priced by ledger arithmetic (b110 cheap
@@ -957,6 +957,47 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       ±30min), (4) price by NEUTRALITY per b110 (delta exp_R vs delta net_R
       vs delta maxDD_R per window, one-sided test across >=3 windows) and
       report; wire nothing without the b68 merit bar.
+      DONE 2026-09-07 (b131 run): FINDING — the live ±30min news veto is
+      INERT on the funnel: the only historical calendar that exists (git
+      union of committed economic_calendar.json = Aug23..Sep12 2026, 6 unique
+      high-impact timestamps) intersects exactly 2 of 1243 funnel entries
+      (both in `cached`), Δexp_R = -0.026R there and 0.000 on all six W-legs;
+      no arm clears b119's 0.10R ceiling even at a synthetic ±24h NFP-cadence
+      veto (max 0.026R, mean +0.009R). The veto costs nothing measurable and
+      buys nothing measurable on this data — it stays as live insurance
+      (fail-closed on calendar outage), nothing re-tuned. Steps 1+2 shipped:
+      engines/backtest.py gained the additive `news_veto_windows` dial
+      (applied after signal_fn, mirroring auto_executor Check 7's order) and
+      trade_log now carries entry_time/exit_time per trade; producer
+      scripts/b131_news_veto_pricing.py (veto windows probed through the REAL
+      evaluate_macro_filter = parity by construction; OFF arm byte-identical
+      to b129 incumbent on all 7 legs); tests/test_b131_news_veto_dial.py
+      pins empty-dial no-op, exact-entry removal, Check-7 order, clock
+      fields. CAVEAT (b131's own step-3 premise was wrong): the b107 note's
+      6 timestamps do NOT intersect W1..W6 at all — pricing the veto on the
+      fresh windows needs a real historical event archive (FF yearly feeds
+      404; TradingView API 403), so the W-leg numbers are coverage-zero,
+      not evidence of no-effect there. Filed b132 for the archive problem.
+- [ ] b132 TRADER RESEARCH PREREQ — GET A REAL HISTORICAL EVENT CALENDAR
+      ARCHIVE (from b131, 2026-09-07): b131 proved the veto question CANNOT
+      be answered on W1..W6 with the data on this box — the git-union
+      calendar covers only Aug23..Sep12 2026, so six of seven legs have
+      coverage-zero and "inert" is a data artifact there, not a finding.
+      Probed and dead: nfs.faireconomy.media yearly feeds (404 for 2024/25/26
+      and week variants), TradingView calendar API (403), finnhub (needs key).
+      Procedure: (a) find a reachable free historical-events source (candidates
+      to test: investing.com calendar export via browser tool, myfxbook,
+      forexfactory's weekly JSONs captured week-by-week going forward, or
+      akshare/pandas_datareader-style packages if installable offline),
+      (b) store it as data/calendar/events_archive_<range>.json in the SAME
+      event shape economic_calendar.py already parses, (c) re-run
+      scripts/b131_news_veto_pricing.py with the archive swapped into
+      git_union_calendar() — the dial, the parity probe, and the neutrality
+      grid are all already built, so this is a data task, not a code task.
+      REUSABLE LESSON (b131): before designing a time-gate study, intersect
+      the gate's DATA window with the measurement windows FIRST (one-line
+      timestamp overlap check); b131's own step-3 premise failed that check
+      and the study had to report coverage-zero legs instead of deltas.
 - [ ] b110 RESEARCH PROCEDURE — PRICE AN ENGINE FIX BY ITS NEUTRALITY, NOT JUST
       ITS LEVEL (reusable procedure from b108, 2026-09-06): when a backtest
       engine defect is fixed, re-running the baseline is only half the job.

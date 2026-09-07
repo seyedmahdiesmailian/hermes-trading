@@ -45,6 +45,20 @@ def backtest_ohlc(
                                         # a partial). "age_only" mirrors live
                                         # evaluate_time_exit, which is age
                                         # based and does not care about partials.
+    news_veto_windows: list | None = None,   # b131: ENTRY-TIME VETO. A list of
+                                        # (start_ts, end_ts) unix-second pairs;
+                                        # a signal whose bar timestamp falls
+                                        # inside one is NOT taken (live:
+                                        # macro_filter.evaluate_macro_filter
+                                        # returns allowed=False and
+                                        # auto_executor Check 7 refuses the
+                                        # entry). None = off (every pre-b131
+                                        # measurement, byte-identical). It
+                                        # vetoes the ENTRY only — a position
+                                        # already open is managed as usual,
+                                        # which is live's behaviour too (the
+                                        # blackout never closes a trade; the
+                                        # separate news_lock only tightens SL).
     time_stop_hours: float = 0.0,       # b130: THE OTHER CLOCK. Live's
                                         # evaluate_time_exit measures WALL-CLK
                                         # hours between open and now; the lab's
@@ -106,6 +120,19 @@ def backtest_ohlc(
         else:
             losses += 1
         trade_log.append({**{k: t[k] for k in ("entry_index", "side", "entry", "style", "grade")},
+                          # b131 STEP 2 (the item's own procedure): stamp the
+                          # ENTRY CLOCK into the row, so a future time-based
+                          # gate question (news veto, session, day-of-week) is
+                          # arithmetic on a stored ledger instead of a fresh
+                          # 28-arm re-run. b107's news-veto leg died precisely
+                          # because the stored ledgers carried aggregates only.
+                          # Additive: r_stats reads none of these keys, so no
+                          # frozen grid cell changes shape (pinned by
+                          # tests/test_b131_news_veto_pricing.py).
+                          "entry_time": t.get("entry_time"),
+                          "exit_time": (int(rows[index]["time"])
+                                        if isinstance(rows[index].get("time"),
+                                                    (int, float)) else None),
                           "orig_sl": t.get("orig_sl"),
                           # b121: the share the TP1 partial actually took (0.0 =
                           # the ticket never reached TP1). exit_reason cannot
@@ -286,6 +313,18 @@ def backtest_ohlc(
         signal = signal_fn(row)
         if not signal:
             continue
+        # b131 NEWS VETO — live's entry-side blackout, in live's ORDER.
+        # engines/macro_filter.evaluate_macro_filter is consulted by BOTH entry
+        # paths (hermes_runtime and engines/signal_listener) and
+        # auto_executor Check 7 refuses the proposal when it says
+        # allowed=False. That happens AFTER the funnel has produced a signal and
+        # BEFORE the ticket exists, so the veto is applied here at the same
+        # point in the sequence — a vetoed bar frees the position slot for the
+        # next bar exactly as live does, and never touches an open trade.
+        if news_veto_windows:
+            _bt = int(row.get("time") or 0)
+            if any(_s <= _bt <= _e for _s, _e in news_veto_windows):
+                continue
         side = str(signal.get("side", "")).upper()
         entry = float(signal["entry"])
         sl = float(signal["sl"])
