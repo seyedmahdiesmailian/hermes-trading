@@ -47,13 +47,13 @@ def ladder_fields(quality: dict, setup_grade: str,
     and the live-parity backtest (engines.backtest_real.strategy_signal) call
     this, so "live semantics" is a single source, not three lookalikes.
 
-    grade is a PARAMETER, not derived here: the two live producers do not use
-    the same grade rule (hermes_runtime calls _infer_setup_grade, which
-    requires a continuation regime for an A and sends 'mixed' to C;
-    position_daemon inlines a pre-b45 rule that lets 'mixed' reach B and has
-    no regime clause). Aligning them would change the live breakeven lock, so
-    it is a human decision — filed, not taken. Everything else is derived from
-    the plan's own quality dict.
+    grade is a PARAMETER, not derived here, so each caller states which rule
+    it is applying — but since b111 (2026-09-07) all three live/lab producers
+    pass the SAME rule (engines.plan.setup_grade). Before that,
+    position_daemon.build_trade inlined a looser pre-b45 variant (no regime
+    clause for an A, 'mixed' reaching B) while hermes_runtime/auto_executor
+    required a continuation regime; the divergence was measured inert and the
+    copies were collapsed (scripts/b111_blast_radius_probe.py).
 
     rr_remaining is a CONSTANT 2.0 in both producers (never recomputed from
     the live price path), which is why the `rr_remaining <= 1.2` weak clause

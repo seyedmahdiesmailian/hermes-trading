@@ -279,86 +279,105 @@ class TestB109ProducerParity(unittest.TestCase):
                              f"{rel} hardcodes {restated} again — derive them "
                              "through ladder_fields or the producers drift (b109)")
 
-    def test_b111_watchdog_grade_rule_is_still_its_own_on_purpose(self):
-        # THE SPARED-DIRECTION PIN for b111 (the producer grade-rule drift
-        # found by b109). The b102 rule: a deliberate non-widening must be
-        # pinned by a test whose NAME carries the item, so the decision cannot
-        # be quietly "refactored" away.
-        #
-        # position_daemon's inline grade rule has no regime clause and admits
-        # 'mixed' alignment to B, while hermes_runtime/auto_executor require a
-        # continuation regime for an A and send 'mixed' to C (b45). Aligning
-        # them would change the live breakeven lock (grade>=2 + momentum>=0.65
-        # -> lock +0.15R instead of plain BE) on a real account, so b109 left
-        # it alone and filed it. If someone imports _infer_setup_grade here,
-        # this test fires and forces the human decision to be taken
-        # deliberately.
+    def test_b111_watchdog_grade_rule_is_now_the_canonical_one(self):
+        # EDITED 2026-09-07 (b111 shipped). This pin used to certify the OPPOSITE:
+        # that position_daemon's inline pre-b45 rule (no regime clause for an A,
+        # 'mixed' reaching B) was still its own on purpose, because b109 filed
+        # the drift as a human decision on the premise that aligning it "would
+        # change the live breakeven lock on a real account".
+        # The premise was measured, not assumed, and it was FALSE: the only
+        # broker-visible difference is the cell aligned + trend>=3.0 + a
+        # NON-continuation regime, which engines.context._detect_regime cannot
+        # emit (0/320 swept cells, 0/65 real plans), and the remaining 35
+        # differing cells differ only in a reason LABEL. See
+        # scripts/b111_blast_radius_probe.py + tests/test_b111_grade_rule_aligned.py
+        # for the pins that replaced this one.
         with open(os.path.join(ROOT, "position_daemon.py")) as fh:
             src = fh.read()
-        self.assertNotIn("from hermes_runtime import _infer_setup_grade", src)
-        self.assertIn("b111", src,
-                      "the watchdog's own grade rule needs its b111 note")
+        self.assertIn("from engines.plan import setup_grade", src,
+                      "the watchdog no longer shares the canonical grade rule "
+                      "— the b111 alignment has regressed")
+        self.assertIn("b111", src, "the watchdog's grade line needs its b111 note")
+        # The looser inline rule must be GONE, not merely unused: a second
+        # definition of the grade is the b109 three-lookalikes disease.
+        self.assertNotIn("'B' if alignment in ('aligned', 'mixed')", src,
+                         "the pre-b45 inline grade rule is back in the watchdog")
 
-    def test_b111_the_two_rules_agree_on_the_runner_lane_and_differ_on_weak(self):
-        # b111's blast radius, measured rather than asserted. The two grade
-        # rules agree on the RUNNER lane (the only lane where the share
-        # differs from 1.0, so the only one where the drift could change how
-        # much of the position survives TP1) and disagree on the WEAK lane
-        # (weak <-> balanced). That second disagreement is NOT cosmetic: both
-        # lanes close the full position at TP1, but the grade rides along into
-        # the breakeven lock (grade>=2 + momentum>=0.65 -> lock +0.15R instead
-        # of plain BE), so weak-vs-balanced decides whether the stop gets
-        # locked in. Pinned so the decision is made with the number in hand.
+    def test_b111_the_live_producers_now_agree_on_every_lane(self):
+        # EDITED 2026-09-07 (b111 shipped). This pin used to measure the drift
+        # between TWO LIVE grade rules — the canonical one and the watchdog's
+        # inline pre-b45 copy — and asserted the weak-lane share differed by
+        # 5%-40% (measured 18.8%) while the runner lane agreed exactly. That
+        # band was the blast radius of a decision not yet taken.
         #
-        # b109's first draft of this pin asserted lane_diff == 0 over ALL
-        # lanes, which contradicts its own name and the measurement (293 plans
-        # differ weak<->balanced) — the assertion was fixed to the runner lane,
-        # the thing it was meant to certify. The weak-lane difference is
-        # asserted to EXIST below, not to be zero.
+        # The decision is taken: position_daemon now calls the same
+        # engines.plan.setup_grade as hermes_runtime/auto_executor, so
+        # live-vs-live drift is 0 BY CONSTRUCTION and cannot rot. What is still
+        # worth pinning is the HISTORY: the canonical rule must remain STRICTER
+        # than (never looser than) the rule it replaced, and it must still
+        # differ from it on the weak lane — otherwise the alignment was a
+        # no-op and the 18.8% number quoted in the backlog is fiction.
         from hermes_runtime import _infer_setup_grade
-        combos = _plan_history_combos()
-        if not combos:
-            self.skipTest("no plan_history on this checkout")
+        import position_daemon as pd_mod
 
-        def wd(plan):
+        def pre_b45_watchdog_grade(plan):
+            """The rule b111 REMOVED, restated here as the historical control."""
             q = plan.get("quality") or {}
             al, tr = q.get("alignment"), float(q.get("trend_strength") or 0)
             return ("A" if al == "aligned" and tr >= 3.0
                     else "B" if al in ("aligned", "mixed") and tr >= 1.2
                     else "C")
 
-        total = runner_diff = weak_diff = 0
+        combos = _plan_history_combos()
+        if not combos:
+            self.skipTest("no plan_history on this checkout")
+        rank = {"A": 3, "B": 2, "C": 1}
+
+        def lane(quality, grade):
+            base = {"side": "BUY", "entry": 100.0, "sl": 98.0}
+            return _partial_close_fraction(
+                dict(base, **ladder_fields(quality, grade)))[1]
+
+        total = runner_diff = weak_diff = looser = 0
         for (al, tr, rg), n in combos.items():
             quality = {"alignment": al, "trend_strength": tr, "regime": rg}
             plan = {"quality": quality}
-            g_rt, g_wd = _infer_setup_grade(plan), wd(plan)
-            f_rt = ladder_fields(quality, g_rt)
-            f_wd = ladder_fields(quality, g_wd)
-            base = {"side": "BUY", "entry": 100.0, "sl": 98.0}
-            lane_rt = _partial_close_fraction(dict(base, **f_rt))[1]
-            lane_wd = _partial_close_fraction(dict(base, **f_wd))[1]
+            g_new, g_old = _infer_setup_grade(plan), pre_b45_watchdog_grade(plan)
+            # (1) LIVE-vs-LIVE: the watchdog's real code must equal the
+            # canonical rule on every observed plan, not just agree with it.
+            raw = {"ticket": 1, "type": "SELL", "volume": 0.05,
+                   "price_open": 4300.0, "sl": 4320.0, "tp": 0.0,
+                   "profit": 0.0, "time": 1}
+            wd_live = pd_mod.build_trade(
+                raw, {"quality": quality,
+                      "execution": {"tp_levels": [4280.0, 4260.0],
+                                    "tp_shares": [0.5, 0.3, 0.2]}}, {})
+            self.assertEqual(wd_live["setup_grade"], g_new,
+                             f"({al},{tr},{rg}): the watchdog's grade is no "
+                             "longer the canonical one — b111 has regressed")
+            # (2) HISTORY: never looser, and still a real change on weak.
+            if rank[g_new] > rank[g_old]:
+                looser += n
+            l_new, l_old = lane(quality, g_new), lane(quality, g_old)
             total += n
-            runner_diff += n * ((lane_rt == "strong_runner_keep_more")
-                                != (lane_wd == "strong_runner_keep_more"))
-            weak_diff += n * ((lane_rt == "weak_full_exit_at_tp1")
-                              != (lane_wd == "weak_full_exit_at_tp1"))
+            runner_diff += n * ((l_new == "strong_runner_keep_more")
+                                != (l_old == "strong_runner_keep_more"))
+            weak_diff += n * ((l_new == "weak_full_exit_at_tp1")
+                              != (l_old == "weak_full_exit_at_tp1"))
+        self.assertEqual(looser, 0,
+                         f"the canonical grade is LOOSER than the removed rule "
+                         f"on {looser}/{total} plans — that would widen a risk "
+                         "gate, which b111 must never do")
         self.assertEqual(runner_diff, 0,
-                         f"the two grade rules now pick different RUNNER lanes "
-                         f"for {runner_diff}/{total} plans — b111 got bigger "
-                         "than measured, re-read it before deciding")
-        self.assertGreater(weak_diff, 0,
-                           "the rules no longer differ on the weak lane — "
-                           "b111 may already be resolved; re-check and close it")
-        # The SIZE of the drift, as a band rather than a count: plan_history
-        # grows every 15 minutes, so an exact number would rot within a day.
-        # Measured 2026-09-06: 293/1558 plans (18.8%) are weak under
-        # hermes_runtime and balanced under the watchdog.
+                         f"the runner lane differs on {runner_diff}/{total} "
+                         "plans — the removed rule's A was reachable after all, "
+                         "contradicting the b111 measurement")
         self.assertGreater(weak_diff / total, 0.05,
-                           "the weak-lane drift nearly vanished — b111 may be "
-                           "resolved; re-measure and close it")
+                           "the alignment changed nothing on the weak lane — "
+                           "the 18.8% drift quoted in the backlog is stale")
         self.assertLess(weak_diff / total, 0.40,
-                        f"the weak-lane drift grew to {weak_diff}/{total} — "
-                        "b111 is bigger than measured, re-read it")
+                        f"the historical weak-lane drift is {weak_diff}/{total}, "
+                        "outside the 5%-40% band b109 measured")
 
 
 class TestB109Ledger(unittest.TestCase):

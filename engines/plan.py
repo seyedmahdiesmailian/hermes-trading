@@ -12,6 +12,45 @@ REANCHOR_STOP_ATR_CAP = 2.0
 REANCHOR_MIN_RR = 1.5
 
 
+def setup_grade(plan: dict) -> str:
+    """THE canonical setup grade from plan quality — one definition, three
+    consumers (the entry gate, the runtime ladder, the watchdog ladder).
+
+    b45 FIX 2026-08-31: 'mixed' alignment no longer qualifies for B.
+    Evidence: the two mixed/range sells at 14:15/14:30 UTC (counter-trend
+    entries into a rising market with contradictory TF votes) netted -56.7$
+    (+37.67 / -94.38), while every aligned plan that day was profitable.
+    Mixed votes = coin flip = C = blocked by MIN_SETUP_GRADE.
+
+    b111 (2026-09-07): this rule used to live twice — here-ish in
+    engines/auto_executor.py and again in hermes_runtime.py — while
+    position_daemon.build_trade inlined a looser PRE-b45 rule (no regime
+    clause for an A, 'mixed' reaching B). That third copy is now this
+    function. The divergence was measured inert before it was removed
+    (scripts/b111_blast_radius_probe.py, ledger
+    data/backtest/b111_blast_radius.json): the only cell where the two rules
+    produce a different broker-visible action is aligned + trend>=3.0 + a
+    NON-continuation regime, and engines.context._detect_regime cannot emit
+    that combination (0 of 320 swept vote x trend x geometry cells), so the
+    watchdog's looser A was unreachable and its looser B sat in a lane that
+    post-b55 closes the full position at TP1 either way.
+
+    This module is a LEAF (stdlib imports only) on purpose: the grade is read
+    by the entry gate, the runtime and the watchdog, and a shared definition
+    must not create an import cycle between any of them.
+    """
+    q = plan.get("quality", {}) or {}
+    alignment = q.get("alignment")
+    trend = float(q.get("trend_strength", 0) or 0)
+    regime = q.get("regime")
+    if (alignment == "aligned" and trend >= 3.0
+            and regime in {"breakout_continuation", "pullback_continuation"}):
+        return "A"
+    if alignment == "aligned" and trend >= 1.2:
+        return "B"
+    return "C"
+
+
 def classify_price_location(price: float, zones: dict) -> str:
     if zones["long_entry_low"] <= price <= zones["long_entry_high"]:
         return "long_zone"

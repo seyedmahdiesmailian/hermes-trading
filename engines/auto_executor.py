@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from engines.orchestrator import compute_xau_position_size
+from engines.plan import setup_grade
 from engines.market_hours import is_market_open
 from engines.defcon import filter_management_by_insights
 
@@ -495,20 +496,9 @@ def execute_trade(command: dict, bridge, dry_run: bool = False) -> dict:
 
 
 def _infer_setup_grade(plan: dict) -> str:
-    """Infer setup grade from plan quality.
-
-    b45 FIX 2026-08-31: 'mixed' alignment no longer qualifies for B.
-    Evidence: the two mixed/range sells at 14:15/14:30 UTC (counter-trend
-    entries into a rising market with contradictory TF votes) netted -56.7$
-    (+37.67 / -94.38), while every aligned plan that day was profitable.
-    Mixed votes = coin flip = C = blocked by MIN_SETUP_GRADE.
-    """
-    q = plan.get("quality", {})
-    alignment = q.get("alignment")
-    trend = float(q.get("trend_strength", 0) or 0)
-    regime = q.get("regime")
-    if alignment == "aligned" and trend >= 3.0 and regime in {"breakout_continuation", "pullback_continuation"}:
-        return "A"
-    if alignment == "aligned" and trend >= 1.2:
-        return "B"
-    return "C"
+    """b111: this used to be a SECOND copy of the grade rule (the first lived
+    in hermes_runtime.py, a third looser one was inlined in
+    position_daemon.build_trade). All three now read engines.plan.setup_grade.
+    The name stays because the entry gate and tests call it — it is a thin
+    alias, not a redefinition, so it cannot drift again."""
+    return setup_grade(plan)

@@ -36,6 +36,7 @@ from bridge_client import BridgeClient
 from engines import paths
 from engines.bridge_payload import positions_list
 from engines.trade_management import evaluate_trade_management, ladder_fields
+from engines.plan import setup_grade   # b111: ONE grade rule for all producers
 from engines.auto_executor import evaluate_management_action
 from engines.legacy_guards import evaluate_news_lock, evaluate_time_exit
 
@@ -125,8 +126,9 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
     p = _pos_obj(raw)
     execution = plan.get('execution') or {}
     quality = plan.get('quality') or {}
-    trend = float(quality.get('trend_strength', 0) or 0)
-    alignment = quality.get('alignment', '')
+    # b111: alignment/trend_strength used to be read here to feed the inline
+    # grade rule; the grade now comes from engines.plan.setup_grade, so the
+    # two locals were dead.
     side = p.type if p.type in ('BUY', 'SELL') else ('BUY' if p.type == 0 else 'SELL')
     # b44: plan levels are re-drawn every reassessment and can end up on the
     # WRONG side of this position's entry (re-anchored entries get a different
@@ -156,12 +158,26 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
         if _final:
             _mid = p.price_open + (_final - p.price_open) * 0.5
             tp_levels = [_mid, _final]
-    # b109: the watchdog's OWN grade rule (see the note in the dict below —
-    # it is deliberately NOT _infer_setup_grade). Named once so the dict and
-    # the shared derivation cannot diverge.
-    wd_grade = ('A' if alignment == 'aligned' and trend >= 3.0
-                else 'B' if alignment in ('aligned', 'mixed') and trend >= 1.2
-                else 'C')
+    # b111 FIX 2026-09-07: the watchdog used to inline a PRE-b45 grade rule
+    # here (no regime clause for an A, 'mixed' reaching B) while the entry
+    # gate and hermes_runtime used the canonical one — so the ladder decision
+    # that actually ran on a live position came from a looser rule than the
+    # one that opened the trade. b109 filed that as a human-gate decision on
+    # the premise that aligning it "would change the live breakeven lock".
+    # Measured instead of assumed (scripts/b111_blast_radius_probe.py, ledger
+    # data/backtest/b111_blast_radius.json): the premise was FALSE. Of 44
+    # cells where the rules differ on grade, only 9 differ on a BROKER-VISIBLE
+    # action, all one family (aligned + trend>=3.0 + a NON-continuation
+    # regime), and engines.context._detect_regime cannot produce that
+    # combination (0 of 320 swept vote x trend x geometry cells; 0 of the 65
+    # real aligned+trend>=3 plans). The other 35 cells differ only in the
+    # reason LABEL, and both labels carry close_fraction 1.0 →
+    # bridge.close_position. Replaying the
+    # 17 executed trades whose plan snapshot survives: 0 action differences.
+    # The canonical rule is also never LOOSER than the old inline one, so
+    # this cannot open a gate that was closed. One shared definition now lives
+    # in engines.plan.setup_grade (the b109 lesson: three lookalikes drift).
+    wd_grade = setup_grade(plan)
     return {
         'symbol': 'XAUUSD',
         'side': side,
@@ -183,18 +199,12 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
         # hermes_runtime.cycle and the live-parity backtest use — so the three
         # producers can no longer drift apart field by field.
         #
-        # THE GRADE IS STILL THIS FILE'S OWN RULE, ON PURPOSE. It is NOT
-        # _infer_setup_grade: this inline rule has no regime clause (an A needs
-        # only aligned + trend>=3.0) and lets 'mixed' alignment reach B, while
-        # hermes_runtime/auto_executor require a continuation regime for A and
-        # send 'mixed' to C (b45, 2026-08-31). Switching the watchdog to the
-        # canonical rule would change the live breakeven lock (grade>=2 +
-        # momentum>=0.65 -> lock +0.15R instead of plain BE) on a real account,
-        # so it is filed as a human decision (b111), not taken here. Measured
-        # over data/xau_plan/plan_history (1540 plans): the two rules agree on
-        # the strong-runner lane (0 disagreements) and differ on the WEAK lane
-        # (runtime 86.9% vs watchdog 68.1% of plans) — i.e. the drift is real
-        # and sits in the branch that decides whether the stop gets locked.
+        # THE GRADE IS NOW THE CANONICAL RULE (b111, 2026-09-07). It used to be
+        # this file's own looser pre-b45 copy; see the note above build_trade's
+        # return for the measurement that showed the divergence was inert.
+        # engines.plan.setup_grade is the ONE definition shared with the entry
+        # gate (auto_executor) and hermes_runtime, so the ladder can no longer
+        # disagree with the decision that opened the trade.
         'setup_grade': wd_grade,
         **{k: v for k, v in ladder_fields(quality, wd_grade,
                                           session=plan.get('session')).items()

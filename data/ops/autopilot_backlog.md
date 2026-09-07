@@ -47,6 +47,74 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b114 TRADER ARCHITECTURE AUDIT — THE LONG-LIVED DAEMONS RUN CODE NO TEST
+      CERTIFIES (found by b111's harvest, 2026-09-07). DONE 2026-09-07:
+      position_daemon booted 2026-09-03T14:45:01Z, 17 SECONDS before 31c64f7
+      (b65 balanced runner trail 0.45R→0.30R), so production has managed every
+      position with the looser trail while the funnel, the tests and this file
+      quoted 0.30R; signal_daemon booted 2026-09-04T18:44:16Z, 1 SECOND before
+      c32f4e8 (b74g non-gold instrument rejection in the LIVE listener). Both
+      closures also miss d3a0ba0 (b109 ladder_fields), 1698e7d (b106
+      computed_rr), and the watchdog misses 5c17f28 (b89 defcon UNITS note) +
+      6b65ef1 (learning journal migration); the signal path misses d0a7122
+      (b88 DEFCON rollover blind-cycle fix — a live gate). Python binds at
+      import and Restart=always only fires on a crash, so a committed exit-path
+      fix is INERT until a restart, and nothing recorded the boot commit: every
+      audit reads the working tree and describes behaviour production does not
+      have. scripts/b114_daemon_code_drift.py measures it read-only (ps boot
+      time → boot commit → transitive import closure → files changed since
+      boot); ledger data/ops/daemon_code_drift.json (live) +
+      daemon_code_drift_b114_finding.json (frozen evidence). 8 tests in
+      tests/test_b114_daemon_code_drift.py: machinery pins re-derive the drift
+      from the OS each run (so the ledger cannot be a hand-written claim), and
+      the historical pins read the FROZEN artifact so the restart (b115) cannot
+      delete the evidence. NO restart performed here: it is a live-path
+      operation, filed as b115.
+- [ ] b115 OPERATIONS — RESTART THE TWO TRADING DAEMONS ONTO HEAD, GUARDED
+      (follow-up to b114, 2026-09-07): the drift is measured, the fix is
+      operational. Preconditions, all checkable: (1) `positions_list` from the
+      read-only /api/positions is EMPTY (a restart mid-position hands the
+      watchdog's job to hermes_runtime's fallback path — survivable, but there
+      is no reason to test that on a live ticket), (2) the full suite is green
+      on the HEAD being loaded, (3) restart one service at a time
+      (`systemctl --user restart hermes-position`, then `hermes-signal`) and
+      after each: heartbeat file data/xau_plan/watchdog_heartbeat is fresh
+      (<60s), the journal/state files still parse, and
+      `python3 scripts/b114_daemon_code_drift.py` reports
+      changed_since_boot == [] for that daemon. Cost of NOT doing it: the
+      watchdog keeps the pre-b65 0.45R trail and the signal listener keeps
+      accepting non-gold instruments the parser now rejects. This run did not
+      restart anything (hard rule: autopilot never touches the live trading
+      path); the operator/owner decides the window. CONSEQUENCE WHILE IT STAYS
+      UN-RESTARTED: the funnel already scored the 0.30R runner trail (b65's
+      sweep, +11R M5/+22R M15 over 0.45R in all four independent slices) and
+      live has not run it once — so the measured exit improvement is committed
+      but INERT, and any "live underperforms the funnel on the runner leg"
+      round should check this ledger before blaming the entry filter. Note the
+      two implementations are separate: the funnel trails via
+      backtest_ohlc(trail_after_partial=...), live via
+      trade_management._trail_params — so the drift does NOT corrupt the funnel
+      numbers, it only withholds their benefit.
+- [ ] b116 MEASUREMENT PROCEDURE — BEFORE QUOTING LIVE BEHAVIOUR, ASK WHICH
+      COMMIT THE RUNNING PROCESS BOOTED FROM (reusable procedure from b114,
+      2026-09-07): b113 says a census must be taken in the frame the gate runs
+      in; b114 is the same disease on the TIME axis. Every audit, backlog note
+      and report in this repo reads the working tree and says "live does X" —
+      but position_daemon/signal_daemon are long-lived Python processes that
+      bound their modules at import, so "live" means "the tree that was HEAD at
+      the last restart", and Restart=always only fires after a crash. Measured
+      cost: the watchdog booted 17s before the b65 trail fix and 3.5 days of
+      position management ran 0.45R while every document quoted 0.30R. RULE:
+      before any claim about what production does (and before any decision that
+      rests on such a claim — a gate retune, a lane promotion, an "inert
+      because it never fires" argument), (1) resolve the boot commit of the
+      process that owns the code path (`ps -o lstart` → last commit at or
+      before that time), (2) diff the process's transitive import closure
+      against HEAD, (3) if anything on the path changed since boot, the claim
+      describes the LAB, not the box — say so and either restart (guarded,
+      b115) or re-measure in the boot tree. Cheap version:
+      `python3 scripts/b114_daemon_code_drift.py` prints both daemons' boot
+      commit and drifted closure files in under a second, read-only.
 - [x] b112 TRADER CODE REVIEW — THE SIGNAL GATE PENALISES A WARNING FAMILY THAT
       HAS NEVER FIRED AND IGNORES THE TWO THAT HAVE (found by b106, 2026-09-06;
       spared-direction pin: tests/test_b106_parser_decision_contract.py::
@@ -89,7 +157,18 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       test_b113_a_frame_census_must_record_both_frames_side_by_side, per the
       b102 discipline that a filed item needs a name-carrier — b102's
       tripwire caught the first draft and was right).
-- [ ] b111 TRADER CODE REVIEW — THE TWO LIVE LADDER PRODUCERS DISAGREE ON GRADE
+- [x] b111 TRADER CODE REVIEW — THE TWO LIVE LADDER PRODUCERS DISAGREE ON GRADE
+      DONE 2026-09-07 (shipped via STEP-0 harvest of the previous run's
+      uncommitted work, verified this run: 1132 green, live cycle rc=0, plus an
+      INDEPENDENT re-check of the inertness premise over 1592 real plan
+      snapshots — 68 aligned+trend>=3.0, 0 with a non-continuation regime, so
+      the watchdog's looser A was unreachable in the data as well as in the
+      producer sweep): the three lookalike grade rules are now ONE definition
+      (engines.plan.setup_grade), the watchdog's pre-b45 inline copy is gone,
+      and b109's "aligning would change the live breakeven lock" premise is
+      measured FALSE (scripts/b111_blast_radius_probe.py, ledger
+      data/backtest/b111_blast_radius.json, 8+ tests in
+      tests/test_b111_grade_rule_aligned.py). Original note follows.
       (found by b109, 2026-09-06; spared-direction pin:
       tests/test_b109_share_fn_contract.py::TestB109ProducerParity::
       test_b111_*). position_daemon.build_trade inlines a PRE-b45 grade rule:

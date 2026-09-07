@@ -24,6 +24,7 @@ from engines.orchestrator import build_plan_from_context, route_runtime_step, ev
 from engines.trade_management import evaluate_trade_management, ladder_fields
 from engines.risk import assess_account_policy, compute_performance_state
 from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log
+from engines.plan import setup_grade
 from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
 from engines.macro_filter import apply_macro_guard
 from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock
@@ -173,17 +174,11 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
 
 
 def _infer_setup_grade(plan: dict) -> str:
-    q = plan.get('quality', {})
-    alignment = q.get('alignment')
-    trend = float(q.get('trend_strength', 0) or 0)
-    regime = q.get('regime')
-    if alignment == 'aligned' and trend >= 3.0 and regime in {'breakout_continuation', 'pullback_continuation'}:
-        return 'A'
-    # b45 FIX 2026-08-31: 'mixed' alignment no longer qualifies for B —
-    # contradictory TF votes are a coin flip (see auto_executor docstring).
-    if alignment == 'aligned' and trend >= 1.2:
-        return 'B'
-    return 'C'
+    """b111: was a SECOND independent copy of the grade rule (auto_executor
+    had one, position_daemon inlined a looser third). All three now read
+    engines.plan.setup_grade; this alias keeps the name the runtime and the
+    backtest funnel call. Behaviour is byte-identical to the old body."""
+    return setup_grade(plan)
 
 
 def _epoch_to_iso(ts, broker_offset: float = 0.0) -> str | None:

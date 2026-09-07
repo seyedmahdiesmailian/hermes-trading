@@ -1,0 +1,157 @@
+{
+  "_note": "b114: does each long-lived trading daemon run the code at HEAD? Python binds at import, so a committed change to the live ladder is inert until the service restarts.",
+  "_generated_at": "2026-09-07T02:05:33.267996+00:00",
+  "head": "1698e7d2f2928bdc12d4df4256e1b39384e1cd9c",
+  "daemons": {
+    "position_daemon.py": {
+      "running": true,
+      "started_utc": "2026-09-03T14:45:01+00:00",
+      "stale_hours": 83.3,
+      "boot_commit": {
+        "sha": "29bebc4d4f6f4d278a7dbee86ee7ba3025d9f4fb",
+        "committed_at": "2026-09-03T14:37:34+03:30"
+      },
+      "closure_files": 15,
+      "closure": [
+        "bridge_client.py",
+        "engines/__init__.py",
+        "engines/auto_executor.py",
+        "engines/bridge_payload.py",
+        "engines/cooldown.py",
+        "engines/defcon.py",
+        "engines/economic_calendar.py",
+        "engines/learning.py",
+        "engines/legacy_guards.py",
+        "engines/market_hours.py",
+        "engines/orchestrator.py",
+        "engines/plan.py",
+        "engines/trade_management.py",
+        "env_loader.py",
+        "position_daemon.py"
+      ],
+      "changed_since_boot": [
+        {
+          "file": "bridge_client.py",
+          "commits_since_boot": [
+            "dbb7268 2026-09-04T19:14:20+03:30",
+            "3b56148 2026-09-04T13:48:56+03:30"
+          ]
+        },
+        {
+          "file": "engines/defcon.py",
+          "commits_since_boot": [
+            "5c17f28 2026-09-06T00:31:28+03:30"
+          ]
+        },
+        {
+          "file": "engines/learning.py",
+          "commits_since_boot": [
+            "6b65ef1 2026-09-05T00:57:57+03:30"
+          ]
+        },
+        {
+          "file": "engines/trade_management.py",
+          "commits_since_boot": [
+            "d3a0ba0 2026-09-07T02:27:34+03:30",
+            "31c64f7 2026-09-03T18:15:18+03:30"
+          ]
+        },
+        {
+          "file": "position_daemon.py",
+          "commits_since_boot": [
+            "d3a0ba0 2026-09-07T02:27:34+03:30"
+          ]
+        }
+      ],
+      "drift": true
+    },
+    "signal_daemon.py": {
+      "running": true,
+      "started_utc": "2026-09-04T18:44:16+00:00",
+      "stale_hours": 55.4,
+      "boot_commit": {
+        "sha": "9762faea91e10b7698bb0786b08c76669a313f2f",
+        "committed_at": "2026-09-04T21:31:34+03:30"
+      },
+      "closure_files": 30,
+      "closure": [
+        "bridge_client.py",
+        "engines/__init__.py",
+        "engines/auto_executor.py",
+        "engines/bridge_payload.py",
+        "engines/broker_clock.py",
+        "engines/context.py",
+        "engines/cooldown.py",
+        "engines/defcon.py",
+        "engines/economic_calendar.py",
+        "engines/kill_switch.py",
+        "engines/learning.py",
+        "engines/legacy_guards.py",
+        "engines/macro_filter.py",
+        "engines/macro_snapshot.py",
+        "engines/market_hours.py",
+        "engines/orchestrator.py",
+        "engines/paths.py",
+        "engines/plan.py",
+        "engines/report.py",
+        "engines/risk.py",
+        "engines/signal_decision.py",
+        "engines/signal_listener.py",
+        "engines/signal_parser.py",
+        "engines/smc.py",
+        "engines/storage.py",
+        "engines/trade_management.py",
+        "env_loader.py",
+        "hermes_runtime.py",
+        "notifier/__init__.py",
+        "signal_daemon.py"
+      ],
+      "changed_since_boot": [
+        {
+          "file": "engines/defcon.py",
+          "commits_since_boot": [
+            "5c17f28 2026-09-06T00:31:28+03:30"
+          ]
+        },
+        {
+          "file": "engines/learning.py",
+          "commits_since_boot": [
+            "6b65ef1 2026-09-05T00:57:57+03:30"
+          ]
+        },
+        {
+          "file": "engines/risk.py",
+          "commits_since_boot": [
+            "d0a7122 2026-09-05T21:55:47+03:30"
+          ]
+        },
+        {
+          "file": "engines/signal_listener.py",
+          "commits_since_boot": [
+            "c32f4e8 2026-09-04T22:14:17+03:30"
+          ]
+        },
+        {
+          "file": "engines/signal_parser.py",
+          "commits_since_boot": [
+            "1698e7d 2026-09-07T03:47:27+03:30",
+            "c32f4e8 2026-09-04T22:14:17+03:30"
+          ]
+        },
+        {
+          "file": "engines/trade_management.py",
+          "commits_since_boot": [
+            "d3a0ba0 2026-09-07T02:27:34+03:30"
+          ]
+        },
+        {
+          "file": "hermes_runtime.py",
+          "commits_since_boot": [
+            "d3a0ba0 2026-09-07T02:27:34+03:30"
+          ]
+        }
+      ],
+      "drift": true
+    }
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "_note": "b111: does the watchdog's inline grade rule change any live outcome? Three independent measurements (cells, producer reachability, live replay) + the watchdog-frame census.",
+  "_generated_at": "2026-09-07T01:13:14.294746+00:00",
+  "cells": {
+    "cells_differing_in_grade": 44,
+    "cells_differing_in_reason_label_only": 35,
+    "cells_differing_in_outcome": 9,
+    "outcome_differing_cells": [
+      {
+        "alignment": "aligned",
+        "trend": 3.0,
+        "regime": "range",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 3.0,
+        "regime": "reversal",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 3.0,
+        "regime": "none",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 4.0,
+        "regime": "range",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 4.0,
+        "regime": "reversal",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 4.0,
+        "regime": "none",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 6.0,
+        "regime": "range",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 6.0,
+        "regime": "reversal",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      },
+      {
+        "alignment": "aligned",
+        "trend": 6.0,
+        "regime": "none",
+        "grade_strict": "B",
+        "grade_watchdog": "A",
+        "replay_strict": [
+          [
+            "partial_take_profit",
+            1.0,
+            "balanced_full_exit_at_tp1"
+          ],
+          [
+            "TICKET_CLOSED_AT_TP1",
+            null,
+            null
+          ]
+        ],
+        "replay_watchdog": [
+          [
+            "partial_take_profit",
+            0.3,
+            "strong_runner_keep_more"
+          ],
+          [
+            "move_stop_to_breakeven",
+            4297.0,
+            "lock_in_after_tp1"
+          ]
+        ],
+        "outcome_differs": true
+      }
+    ]
+  },
+  "reachability": {
+    "aligned_strong_trend_geometries_swept": 320,
+    "producing_a_non_continuation_regime": 0,
+    "examples": []
+  },
+  "live_replay": {
+    "executed_trades": 20,
+    "replayed": 17,
+    "plan_snapshot_missing": 3,
+    "differing": 0,
+    "detail": []
+  },
+  "watchdog_frame": {
+    "plan_snapshots_total": 1580,
+    "snapshots_while_position_open": 65,
+    "outcome_differing_in_frame": 0
+  }
+}
