@@ -45,6 +45,17 @@ def backtest_ohlc(
                                         # a partial). "age_only" mirrors live
                                         # evaluate_time_exit, which is age
                                         # based and does not care about partials.
+    time_stop_hours: float = 0.0,       # b130: THE OTHER CLOCK. Live's
+                                        # evaluate_time_exit measures WALL-CLK
+                                        # hours between open and now; the lab's
+                                        # time_stop_bars measures BAR age, and
+                                        # XAUUSD bars do not span the weekend or
+                                        # holiday gaps, so the two rules are not
+                                        # the same guard. 0.0 = off (every
+                                        # pre-b130 measurement, byte-identical);
+                                        # >0 closes at the first bar whose row
+                                        # timestamp is >= that many hours after
+                                        # the entry bar's timestamp.
     spread: float = 0.0,
     exclude_styles: list[str] | None = None,
 ) -> dict:
@@ -253,6 +264,21 @@ def backtest_ohlc(
                         _close(t, float(row.get("close", t["entry"])), index, "time")
                         open_trade = None
                         continue
+                    # 4d) b130 WALL-CLOCK TIME STOP — the guard live actually
+                    # runs. engines/legacy_guards.evaluate_time_exit compares
+                    # datetime.now() against the position's open time, so a
+                    # position held across the Sunday-night close (or a holiday
+                    # gap) accrues age the bar-count rule cannot see: 144 M15
+                    # bars is 36h of CONTINUOUS tape, but a trade that spans a
+                    # weekend reaches 36 wall hours at ~110 bars. Same exemption
+                    # gate, same close-at-bar-close convention.
+                    if (time_stop_hours > 0 and not _ts_exempt
+                            and t.get("entry_time") and row.get("time")
+                            and (int(row["time"]) - int(t["entry_time"]))
+                            >= time_stop_hours * 3600):
+                        _close(t, float(row.get("close", t["entry"])), index, "time")
+                        open_trade = None
+                        continue
 
         if open_trade is not None:
             continue  # position occupied — live blocks new entries (gate 5)
@@ -283,6 +309,11 @@ def backtest_ohlc(
         open_trade = {
             "entry_index": index, "side": side, "entry": entry,
             "sl": sl, "orig_sl": sl, "tp": tp,
+            # b130: the bar's own timestamp, so the exit can be measured on the
+            # SAME clock live uses (wall hours) and not only in bar counts.
+            # Additive: trade_log keys are listed explicitly, so no stored row
+            # changes shape (pinned by tests/test_b130_wall_clock_parity.py).
+            "entry_time": row.get("time"),
             "be_moved": False, "partial_taken": 0, "realized": 0.0,
             # b123: did the TP1 touch arm the protection (SL->entry + trail)?
             # Under the default protection_mode="partial" this is identical to

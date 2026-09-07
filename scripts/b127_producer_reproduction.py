@@ -31,6 +31,9 @@ WHAT IS CHECKED (24 reproductions, all pure post-processing — no funnel replay
         blocks and arm_identity_live_share()
   b129  integrity() + deltas/neutrality/best_per_gate/gate_gap/verdict
         (b128's ship-time rule applied to the newest frozen ledger)
+  b130  integrity() + census(per leg) + deltas/neutrality/clock_gap/verdict
+        (the bar incumbent == b129's frozen cell is the proof the engine's new
+        time_stop_hours dial is inert at its default)
   b114  import_closure() and changed_files() re-derived from the ledger's OWN
         recorded boot commit and head (so the drift claim is arithmetic on git,
         not prose)
@@ -70,6 +73,7 @@ LEDGER_121B = os.path.join(BT, "b121b_share_sweep.json")
 LEDGER_121C = os.path.join(BT, "b121c_partial_call_census.json")
 LEDGER_123 = os.path.join(BT, "b123_protection_share_decomposition.json")
 LEDGER_129 = os.path.join(BT, "b129_timestop_reprice.json")
+LEDGER_130 = os.path.join(BT, "b130_wall_clock_parity.json")
 
 
 def _load(path: str) -> dict:
@@ -362,6 +366,34 @@ def check_b129_derived_blocks() -> str:
     return f"b129 integrity + 6 derived blocks ({len(led['_neutrality'])} arms)"
 
 
+def check_b130_derived_blocks() -> str:
+    """b128's ship-time rule applied to the b130 ledger: the census, the
+    clock-gap, the deltas, the neutrality rows and the verdict are pure
+    functions of the shipped grid + ages, re-executed here. The measurement
+    half (28 arms x 7 legs x 2 clocks of funnel replay) is NOT re-run — it is
+    pinned instead by the ledger's own integrity block, which requires the BAR
+    incumbent to still equal b129's frozen cell (the engine gained a dial this
+    round; that equality is the proof the dial is inert at its default)."""
+    from scripts import b130_wall_clock_parity as b130
+    led = _load(LEDGER_130)
+    assert {k: all(v.values()) for k, v in led["_integrity"].items()} == \
+           {k: True for k in led["_legs"]}, \
+        "b130 integrity fails on the shipped ledger — the bar incumbent no " \
+        "longer reproduces b129, so the two clocks are two spliced funnels"
+    for leg in led["_legs"]:
+        got = b130.census(led[leg]["_ages_off"], led[leg]["_time_stop_bars"],
+                          b130.LIVE_HOURS)
+        assert got == led[leg]["_census"], f"b130 census {leg} no longer reproduces"
+    for fn, key in ((b130.deltas, "_delta_exp_R"),
+                    (b130.neutrality, "_neutrality"),
+                    (b130.clock_gap, "_clock_gap"),
+                    (b130.verdict, "_verdict")):
+        got = fn(led)
+        assert got == led[key], f"b130 producer {key} no longer reproduces"
+    return (f"b130 integrity + census(7 legs) + 4 derived blocks "
+            f"({len(led['_neutrality'])} arms)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -382,6 +414,7 @@ CHECKS = (
     check_b108_producer_still_alive,
     check_b114_drift_is_arithmetic,
     check_b129_derived_blocks,
+    check_b130_derived_blocks,
 )
 
 

@@ -146,7 +146,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       registration was missing. Fixed by landing the files, filing b130 with
       its name-carrier (test_b130_a_single_non_zero_leg_is_not_one_sided_evidence)
       and adding the b129 check. No measurement re-run, no live change.
-- [ ] b130 TRADER PARITY NOTE — THE LAB'S TIME EXIT COUNTS BAR AGE, LIVE'S
+- [x] b130 TRADER PARITY NOTE — THE LAB'S TIME EXIT COUNTS BAR AGE, LIVE'S
       COUNTS WALL-CLK AGE, AND THE NEUTRALITY PREDICATE NEEDS A DENOMINATOR
       (filed by b129, 2026-09-07): two halves. (a) PARITY: b129 found the live
       36h exit is inert on the funnel's trades measured in BARS (max hold 112
@@ -171,6 +171,36 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       tests/test_b129_timestop_reprice.py::
       TestB130OneSidedNeedsNonZeroEvidence::
       test_b130_a_single_non_zero_leg_is_not_one_sided_evidence.
+      DONE 2026-09-07 (this run): scripts/b130_wall_clock_parity.py + ledger
+      data/backtest/b130_wall_clock_parity.json — the SAME 28-arm grid (2 b123
+      gates x 7 stops x both clocks, bar incumbent DERIVED via
+      lh.live_time_stop_bars, wall arm DERIVED from MAX_POSITION_AGE_HOURS,
+      never literals) replayed on cached + W1..W6 with engines/backtest.py
+      gaining one additive dial (time_stop_hours, default 0.0 = OFF; every
+      pre-b130 call site byte-identical, pinned by re-running b129's frozen
+      incumbent cell through the patched engine on all 7 legs). FINDING (a):
+      B129'S "INERT" WAS AN ARTEFACT OF THE CLOCK, NOT A PROPERTY OF THE GUARD
+      — the off-arm census finds 32 trades across the 7 legs at/over 36 WALL
+      hours (max 54.25..78.00h) while NONE reaches 144 BARS (max bar age
+      49..112): live's guard touches ~2.6% of funnel trades and b129's zero
+      holds only in bar time. The VALUE still stands: wall-36h minus bar-144
+      is -0.014..+0.007R per leg (mean +0.002R), far under b119's 0.10R
+      ceiling, and b57's direction survives the clock change (2h loses
+      one-sidedly on 5/6 real windows, mean -0.030R vs the bar clock's
+      -0.031R); no wall arm earns a lever, so NO live change and the retune
+      stays a human gate (b89 class). Mechanism pinned: the wall clock bites
+      by FREEING THE SLOT, not by repricing — trade counts go 109→111 (cached),
+      205→206 (W3), 177→178 (W4) while the cut trades' own pnl is unchanged.
+      FINDING (b): every neutrality row now carries n_nonzero NEXT TO the flag
+      (ts_0h: 0 non-zero legs, both predicates silent; wall ts_36h: its
+      one_sided flag rests on 5/6), and b123's shipped predicate was NOT
+      touched — this round ships its own grid with the denominator, so the
+      "re-derive the b123 ledger" precondition is moot. b128's ship-time rule:
+      check_b130_derived_blocks registers integrity + census(7 legs) + 4
+      derived blocks in scripts/b127_producer_reproduction.py::CHECKS
+      (20/20 reproductions exact). NOTHING WIRED: engines/legacy_guards.py
+      untouched, MAX_POSITION_AGE_HOURS still 36. 19 tests in
+      tests/test_b130_wall_clock_parity.py.
 - [ ] b120 MEASUREMENT PROCEDURE — "THE DELTA IS NOISE" IS NOT "THE HEADLINE
       STANDS" (reusable rule from b118, 2026-09-07): b109 shipped a backtest
       engine change (LADDER_FIELDS into the trade dict), measured its own effect
