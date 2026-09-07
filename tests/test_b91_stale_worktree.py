@@ -168,10 +168,29 @@ class TestSweepRealWorktrees(unittest.TestCase):
     def test_main_checkout_survives_any_sweep(self):
         # even with min_age 0 (the most aggressive sweep possible), the main
         # working tree must remain: its path can never contain the prefix.
-        rep = head_verify.sweep_stale_worktrees(repo=REPO, min_age_sec=0)
-        self.assertEqual(rep['removed'], [])
-        self.assertIn(str(REPO), _worktree_paths())
-        self.assertTrue(rep['pruned'])
+        # b124 fix (b96's class): the OLD assertion was `removed == []` — a
+        # claim about SHARED repo state. Any legitimate leftover (a killed
+        # run's worktree, a concurrent verifier's orphan) is EXACTLY what an
+        # age-0 sweep must remove, so the test went red on a healthy repo
+        # while proving nothing about the main checkout. The invariant is
+        # about MAIN, and about alive owners only: pin both.
+        alive_base, alive_wt = _make_leftover(pid_text=str(os.getpid()),
+                                              mtime_age=0)
+        try:
+            rep = head_verify.sweep_stale_worktrees(repo=REPO, min_age_sec=0)
+            removed = [r['path'] for r in rep['removed']]
+            self.assertNotIn(str(REPO), removed,
+                             "an age-0 sweep removed the MAIN checkout")
+            self.assertNotIn(str(alive_wt), removed,
+                             "an age-0 sweep removed an ALIVE owner's "
+                             "worktree — the owner check must outrank age")
+            self.assertTrue(all(WORKTREE_PREFIX in p for p in removed),
+                            "the sweep removed something outside its own "
+                            f"prefix: {removed}")
+            self.assertIn(str(REPO), _worktree_paths())
+            self.assertTrue(rep['pruned'])
+        finally:
+            _cleanup(alive_base, alive_wt)
 
 
 class TestWiredIntoVerifyRef(unittest.TestCase):
