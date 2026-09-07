@@ -209,8 +209,63 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       tests/test_b121_flat_share_replication.py::TestB121cHonestCallCensus
       (bands both ways: >2.0 and <5.0, plus exp_R rows must reproduce step 1's
       ledger exactly, so a moved engine cannot splice two funnels).
-- [ ] b123 TRADER MEASUREMENT — THE SHARE AXIS IS CONFOUNDED WITH THE
-      BREAKEVEN/TRAIL AXIS; DECOMPOSE IT BEFORE ANY WIRING PROPOSAL
+- [x] b123 TRADER MEASUREMENT — THE SHARE AXIS IS DECOMPOSED: THE PROTECTION
+      CONFOUND IS REAL AND MIXED-SIGN, BUT THE SHARE EFFECT SURVIVES IT AT
+      ~+0.03R WITH FRESH REPLICATION (found by b121b, 2026-09-07). DONE
+      2026-09-07: engines/backtest.py gained TWO additive dials —
+      `protection_mode` ("partial" = today's coupling, the default and what
+      every stored number means; "tp1" = a TP1 touch arms SL->entry + trail
+      whatever the share; "none" = never arms) and `time_stop_gate`
+      ("no_partial" = today's exemption, "age_only" = live's actual
+      age-based rule) — plus a `prot_armed` trade flag. Defaults preserve the
+      coupled path EXACTLY: all six b121/b121b rows (incumbent + flat 0.0/0.3/
+      0.5/0.7/1.0) reproduce byte-identically on all seven legs, dict-to-dict
+      (integrity() raises otherwise). scripts/
+      b123_protection_share_decomposition.py scored 18 arms x 2 gates on
+      cached+W1..W6; ledger data/backtest/
+      b123_protection_share_decomposition.json. FINDINGS: (1) THE CONFOUND IS
+      CONFIRMED — the coupled curve's left end (share=0.0) beats the incumbent
+      on 4/7 legs (+0.072..+0.094R) and loses on 3 (-0.016..-0.029R), and the
+      PURE protection effect there is mixed-sign (3 pos/4 neg, mean -0.006R,
+      max 0.072R): b121b's "monotone in the riding direction" curve really was
+      several dials and the protection dial alone is no lever. (2) THE SHARE
+      DIAL SURVIVES — with protection held constant (tp1 family), 0.3 vs 1.0
+      is 6/7 legs positive (only cached -0.007R), BOTH fresh windows positive
+      (+0.033/+0.049R), mean +0.030R, max +0.057R, and net_R (6/7) and maxDD
+      (5/7) agree with the same trade counts. So b121's candidate is NOT dead:
+      it is small, systematic, out-of-sample replicated — and the confound had
+      INFLATED its apparent size (the coupled left end looked worth up to
+      +0.094R; the pure share effect is ~1/3 of that). (3) THE CHEAP WIRING IS
+      A MEASURED NO-OP — for live's `_partial_close_fraction` the "partial"
+      and "tp1" families are byte-identical on all 7 legs (non-A tickets
+      return 1.0 and close at TP1 before any arming; the A lane returns 0.3
+      and arms either way), so decoupling protection while keeping the grade
+      gate changes nothing; buying (2) requires changing the SHARE rule, whose
+      best arm (`tp1::share_0.3`) runs a protection policy live does NOT run
+      (position_daemon arms BE only after a TP FILL) — a live exit-behaviour
+      change = human gate (b89 class). (4) THE TIME-EXIT EXEMPTION IS INERT ON
+      THIS POPULATION — 0.000R on 15/18 arms, -0.010..+0.003R on the three
+      never-protected arms that outride 144 bars, mixed sign: the stored bar
+      needs no re-baseline, but the lab/live gap is real in code and is now
+      pinned so it fails loudly if a future arm makes it material.
+      UNPLANNED FINDING BIGGER THAN THE ITEM — the b110 neutrality test as
+      written (`pos >= 3 or neg >= 3`) is a TAUTOLOGY at seven legs: the two
+      sides sum to seven so one is always >= 4. The abandoned first draft of
+      this round hit it — its own anti-wiring pin asserted `assertFalse` on a
+      3/4 split and could never pass, and its docstring concluded "protection
+      is the big axis, neither clears the bar", the REVERSE of its own ledger.
+      Fixed by `one_sided()` (>=3/4 majority AND <=1 dissent — reproduces
+      b110's literal exactly at n=4, where it was written) and pinned BOTH
+      ways: against known splits (TestB123OneSidedRule, an independent copy of
+      the predicate so the cross-check is not a function comparing itself) and
+      against the shipped ledger's own flags. b120's rule applied to this
+      round: the headline is re-quoted in the round that moved it. 17 tests in
+      tests/test_b123_protection_decomposition.py. NO live change:
+      engines/trade_management.py untouched. b121's two carrier pins were
+      EDITED with named notes, not deleted (the code-shape pin now asserts the
+      new flag AND the share=0.0 equivalence off this ledger; the unwired-state
+      carrier moved to b125). b119's sibling carrier moved the same way.
+      ORIGINAL NOTE follows.
       (found by b121b, 2026-09-07): in engines/backtest.py the BE move
       (`t["be_moved"] = True; t["sl"] = t["entry"]`) and the runner trail
       (`if trail_after_partial > 0 and t["partial_taken"] > 0`) are BOTH gated
@@ -233,6 +288,42 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       tests/test_b121_flat_share_replication.py::
       TestB121bCurveIsNotALever::test_the_breakeven_and_trail_are_gated_on_the_partial
       (fires the moment live decouples them, which is when this item is done).
+- [ ] b125 TRADER DECISION PACKAGE (HUMAN GATE) — WIRE THE SHARE RULE ONLY IF
+      THE PROTECTION POLICY CHANGE IS ACCEPTED (filed by b123, 2026-09-07):
+      b123's decomposition says the pure share dial (flat 0.3 vs live's
+      grade-gated 1.0) is worth ~+0.030R/trade, one-sided 6/7 legs with both
+      fresh windows agreeing, net_R and maxDD pointing the same way — but the
+      arm that expresses it (`tp1::share_0.3`) runs a protection policy live
+      does NOT run: the lab's "tp1" mode arms SL->entry + trail on a TP1 TOUCH
+      whatever the share, while position_daemon arms BE only after a TP FILL,
+      so a zero-share ticket never arms. Changing the share rule therefore
+      IS a live exit-behaviour change (b89 class) and stays human. The cheap
+      wiring (decouple protection, keep the grade gate) is a MEASURED NO-OP —
+      "partial" and "tp1" are byte-identical for live's
+      `_partial_close_fraction` on all 7 legs. DECISION SET for whoever
+      decides: (1) accept a BE-at-touch policy in position_daemon and wire
+      flat 0.3 for the A lane, or (2) keep the incumbent and record the
+      candidate as measured-but-declined. b123's pins
+      (test_b123_pure_share_effect_is_one_sided_with_fresh_replication,
+      TestB123NoLiveChange) and b119/b121's carrier pins are EDITED, not
+      deleted, when this ships. Name-carrier:
+      tests/test_b123_protection_decomposition.py::
+      TestB125WiringDecision::test_b125_live_share_rule_is_still_grade_gated.
+- [ ] b124 TRADER PARITY NOTE — THE LAB'S TIME-EXIT PARTIAL EXEMPTION VS
+      LIVE'S AGE-BASED RULE (filed by b123, 2026-09-07): engines/backtest.py
+      exempts any trade that took a partial from the b57 time exit
+      (`time_stop_gate="no_partial"`, the default) while
+      engines/legacy_guards.evaluate_time_exit is purely age-based — a real
+      parity gap in code. Measured INERT on this population: 0.000R on 15/18
+      arms, -0.010..+0.003R mixed-sign on the three never-protected arms whose
+      max_hold crosses 144 bars, so the stored funnel bar needs no re-baseline
+      TODAY. The gap is pinned in both directions
+      (test_b124_the_time_exit_exemption_costs_nothing_on_the_stored_arms
+      fires if the exemption ever moves the bar one-sided or past 0.010R —
+      that is when this becomes a re-baseline decision, b120's rule). When a
+      future exit arm holds runners past 144 bars, re-run the b123 grid with
+      `time_stop_gate="age_only"` and decide whether the lab should mirror
+      live's age rule by default.
 - [ ] b122 MEASUREMENT PROCEDURE — VERIFY AN ARM IS THE RULE IT IS NAMED FOR
       (reusable rule from b119, 2026-09-07): b66b's "live grade-fn share" arm
       was a lambda that called the live share function, so it LOOKED like the

@@ -1413,5 +1413,455 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-09-07T07:39:02.455945+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n396 و 406 فروش\nاستاپ 416\nتی پی 386 ، 76 ، 66 ، 56 ، 46",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4396.0,
+      "entries": [
+        4396.0,
+        4406.0
+      ],
+      "sl": 4416.0,
+      "tp": 4386.0,
+      "tp2": 4376.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "tps": [
+        4386.0,
+        4376.0,
+        4366.0,
+        4356.0,
+        4346.0
+      ],
+      "ladder_rr": 1.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "hermes_neutral",
+        "poor_rr_0.5"
+      ],
+      "score": 3.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4396.0,
+        "entries": [
+          4396.0,
+          4406.0
+        ],
+        "sl": 4416.0,
+        "tp": 4386.0,
+        "tp2": 4376.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "tps": [
+          4386.0,
+          4376.0,
+          4366.0,
+          4356.0,
+          4346.0
+        ],
+        "ladder_rr": 1.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T07:59:39.141196+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n405 و 415 فروش\nاستاپ 425\nتی پی 395 ، 85 ، 75 ، 65 ، 55",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4405.0,
+      "entries": [
+        4405.0,
+        4415.0
+      ],
+      "sl": 4425.0,
+      "tp": 4395.0,
+      "tp2": 4385.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "tps": [
+        4395.0,
+        4385.0,
+        4375.0,
+        4365.0,
+        4355.0
+      ],
+      "ladder_rr": 1.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_aligned",
+        "poor_rr_0.5"
+      ],
+      "score": 5.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4405.0,
+        "entries": [
+          4405.0,
+          4415.0
+        ],
+        "sl": 4425.0,
+        "tp": 4395.0,
+        "tp2": 4385.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "tps": [
+          4395.0,
+          4385.0,
+          4375.0,
+          4365.0,
+          4355.0
+        ],
+        "ladder_rr": 1.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T08:22:34.918136+00:00",
+    "raw_text": "[💬 از Gold System|گلدسیستم]\n🔴Sell  4428/4429\n\n🔴Stop 4434\n\nTp1:4423\nTp2:4417\nTp3:4411\nTp4:4404\nTP5:4394\n\n\n🗓Expiration Time: 2025/09/07 , 22:00\n\n▫️در محدوده ی دو عدد ، فقط یک پله ورود \n\n▫️مدیریت سرمایه ی نیم درصدی یا یک درصدی ، ریسک فری و سیو سود ، رعایت شود",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4428.0,
+      "entries": [
+        4428.0
+      ],
+      "sl": 4434.0,
+      "tp": 4423.0,
+      "tp2": 4417.0,
+      "lot": 0.0,
+      "rr_ratio": 0.83,
+      "tps": [
+        4423.0,
+        4417.0,
+        4411.0,
+        4404.0,
+        4394.0
+      ],
+      "ladder_rr": 3.03,
+      "order_type": "market",
+      "confidence": 0.85,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_conflict",
+        "hermes_says_bullish_signal_says_sell",
+        "poor_rr_0.83"
+      ],
+      "score": 2.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4428.0,
+        "entries": [
+          4428.0
+        ],
+        "sl": 4434.0,
+        "tp": 4423.0,
+        "tp2": 4417.0,
+        "lot": 0.0,
+        "rr_ratio": 0.83,
+        "tps": [
+          4423.0,
+          4417.0,
+          4411.0,
+          4404.0,
+          4394.0
+        ],
+        "ladder_rr": 3.03,
+        "order_type": "market",
+        "confidence": 0.85,
+        "warnings": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T08:23:16.011139+00:00",
+    "raw_text": "[💬 از Gold Forex Signals (free)]\nXAUUSD SELL 4416\nMORE SELL 4420\n\nTP¹ 4413\nTP² 4410\nTP³ 4407\nTP⁴ 4403\n\n\nTP OPEN \n\n\nTP OPEN\n\nSL OPEN  SCALPING",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4416.0,
+      "entries": [
+        4416.0,
+        4420.0
+      ],
+      "sl": 0.0,
+      "tp": 4413.0,
+      "tp2": 4410.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [
+        4413.0,
+        4410.0,
+        4407.0,
+        4403.0
+      ],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.75,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_conflict",
+        "hermes_says_bullish_signal_says_sell",
+        "missing_sl"
+      ],
+      "score": 2.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4416.0,
+        "entries": [
+          4416.0,
+          4420.0
+        ],
+        "sl": 0.0,
+        "tp": 4413.0,
+        "tp2": 4410.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [
+          4413.0,
+          4410.0,
+          4407.0,
+          4403.0
+        ],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.75,
+        "warnings": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T08:26:00.130859+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n17 و 27 فروش \nاستاپ 37\nتی پی 407 ، 397 ، 87 ، 77 ، 67",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4417.0,
+      "entries": [
+        4417.0,
+        4427.0
+      ],
+      "sl": 4437.0,
+      "tp": 4407.0,
+      "tp2": 4397.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "tps": [
+        4407.0,
+        4397.0,
+        4387.0,
+        4377.0,
+        4367.0
+      ],
+      "ladder_rr": 1.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_conflict",
+        "hermes_says_bullish_signal_says_sell",
+        "poor_rr_0.5"
+      ],
+      "score": 2.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4417.0,
+        "entries": [
+          4417.0,
+          4427.0
+        ],
+        "sl": 4437.0,
+        "tp": 4407.0,
+        "tp2": 4397.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "tps": [
+          4407.0,
+          4397.0,
+          4387.0,
+          4377.0,
+          4367.0
+        ],
+        "ladder_rr": 1.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T09:20:09.379388+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\nهدف اول تاچ شد \n100 پیپ سود 🟢",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4100.0,
+      "entries": [
+        4100.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4100.0,
+        "entries": [
+          4100.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.6,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T09:50:51.894098+00:00",
+    "raw_text": "[💬 از Gold Trader Mo (GTMO)]\n🥇  #XAUUSD | SELL 4410.00\n\n📊 Target 1 : 4405.00 | Target 2 : 4400.00 | Target 3 : 4396.00\n\n\n⚠️ Stoploss : 4415.00 🚨",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4410.0,
+      "entries": [
+        4410.0
+      ],
+      "sl": 4415.0,
+      "tp": 4405.0,
+      "tp2": 4400.0,
+      "lot": 0.0,
+      "rr_ratio": 1.0,
+      "tps": [
+        4405.0,
+        4400.0,
+        4396.0
+      ],
+      "ladder_rr": 1.93,
+      "order_type": "market",
+      "confidence": 0.85,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "hermes_neutral",
+        "acceptable_rr_1.0"
+      ],
+      "score": 5.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4410.0,
+        "entries": [
+          4410.0
+        ],
+        "sl": 4415.0,
+        "tp": 4405.0,
+        "tp2": 4400.0,
+        "lot": 0.0,
+        "rr_ratio": 1.0,
+        "tps": [
+          4405.0,
+          4400.0,
+          4396.0
+        ],
+        "ladder_rr": 1.93,
+        "order_type": "market",
+        "confidence": 0.85,
+        "warnings": []
+      }
+    }
   }
 ]

@@ -29,6 +29,22 @@ def backtest_ohlc(
                                         # pre-b117 measurement; the lab default
                                         # stays off until the merit bar is
                                         # deliberately re-baselined — see b118).
+    protection_mode: str = "partial",   # b123: WHAT arms the exit protection
+                                        # (SL->entry at TP1 plus the runner
+                                        # trail). "partial" = today's coupling,
+                                        # a TP1 partial was actually taken (the
+                                        # default; every stored number).
+                                        # "tp1" = a TP1 TOUCH arms it whatever
+                                        # the share was, so share=0.0 can be
+                                        # measured WITH protection — the cell
+                                        # the coupled engine cannot express.
+                                        # "none" = never arm it, so the share
+                                        # can be measured WITHOUT protection.
+    time_stop_gate: str = "no_partial",  # b123: "no_partial" = today (the time
+                                        # exit only sees trades that never took
+                                        # a partial). "age_only" mirrors live
+                                        # evaluate_time_exit, which is age
+                                        # based and does not care about partials.
     spread: float = 0.0,
     exclude_styles: list[str] | None = None,
 ) -> dict:
@@ -121,7 +137,21 @@ def backtest_ohlc(
                 else:
                     # 3) partial TP1 (half the distance to final TP, once) —
                     #    stop moves to entry, effective NEXT bar (no same-bar re-entry exit)
-                    if partial_tp1_share > 0 and not t["partial_taken"] and risk > 0:
+                    # b123: the branch used to be gated on partial_tp1_share > 0,
+                    # which made it unreachable for a share=0 arm and therefore
+                    # impossible to measure "riding with protection" (see
+                    # protection_mode). The gate is now share OR mode, and every
+                    # default run takes the identical path.
+                    _see_tp1 = (partial_tp1_share > 0 or protection_mode == "tp1")
+                    # b123: `not t["prot_armed"]` is the once-only guard. Under
+                    # the default it is redundant (prot_armed is set exactly
+                    # when partial_taken > 0, and a share>=1.0 ticket is closed
+                    # before either), but in mode "tp1" with share=0 the share
+                    # stays 0 forever, so without this guard the branch would
+                    # re-run every bar and re-set SL back to entry, ERASING the
+                    # trail it had just walked up.
+                    if (_see_tp1 and not t["partial_taken"]
+                            and not t["prot_armed"] and risk > 0):
                         share = partial_tp1_share
                         if partial_share_fn is not None:
                             # b55 parity fix: pass the WHOLE trade dict — the live
@@ -132,21 +162,22 @@ def backtest_ohlc(
                             # live, or a bare float from test lambdas.
                             v = partial_share_fn(t)
                             share = float(v[0]) if isinstance(v, (tuple, list)) else float(v)
-                        if share > 0:
+                        if share > 0 or protection_mode == "tp1":
                             tp1 = t["entry"] + (t["tp"] - t["entry"]) * tp1_position if side == "BUY" \
                                 else t["entry"] - (t["entry"] - t["tp"]) * tp1_position
                             hit_tp1 = high >= tp1 if side == "BUY" else low <= tp1
                             if hit_tp1:
-                                part = ((tp1 - t["entry"]) if side == "BUY"
-                                        else (t["entry"] - tp1)) * share - spread * share
-                                t["realized"] = round(part, 6)
-                                t["partial_taken"] = share
+                                if share > 0:
+                                    part = ((tp1 - t["entry"]) if side == "BUY"
+                                            else (t["entry"] - tp1)) * share - spread * share
+                                    t["realized"] = round(part, 6)
+                                    t["partial_taken"] = share
                                 # b105 PARITY FIX (part 2 of the same defect):
                                 # share >= 1.0 is not a partial at all. Live
                                 # routes close_fraction>=1.0 to
                                 # bridge.close_position (auto_executor, MT5
-                                # rejects a 100% partial with retcode 10026),
-                                # so the TICKET IS GONE at TP1 — no BE move to
+                                # rejects a 100% partial with retcode 10026), so
+                                # the TICKET IS GONE at TP1 — no BE move to
                                 # ride, no trail, no final TP, and the single
                                 # position slot is FREE from this bar on. The
                                 # old engine kept a phantom full-size runner
@@ -157,8 +188,23 @@ def backtest_ohlc(
                                     _close(t, tp1, index, "tp1_full")
                                     open_trade = None
                                     continue
-                                t["be_moved"] = True
-                                t["sl"] = t["entry"]  # live: partial comes with BE move
+                                # b123 PROTECTION AXIS. "partial" (the default, and
+                                # what every stored number in this repo means): the
+                                # SL->entry move and the runner trail are armed ONLY
+                                # because a partial was taken — the coupling that
+                                # makes share=0.0 a different TRADE rather than more
+                                # of the same. "tp1": a TP1 TOUCH arms them whatever
+                                # the share was, so the share can be swept with the
+                                # protection held constant. "none": never arm them,
+                                # so the share can be swept without protection.
+                                arm = (protection_mode == "tp1"
+                                       or (protection_mode == "partial" and share > 0))
+                                # protection_mode == "none" leaves arm False by
+                                # construction: never arm, whatever the share.
+                                if arm:
+                                    t["be_moved"] = True
+                                    t["sl"] = t["entry"]  # live: partial comes with BE move
+                                    t["prot_armed"] = True
                     # 4) plain BE move — effective from next bar
                     if breakeven_at_r > 0 and not t["be_moved"] and risk > 0:
                         move = (high - t["entry"]) if side == "BUY" else (t["entry"] - low)
@@ -175,7 +221,14 @@ def backtest_ohlc(
                     # trails TIGHTER than live on small-risk trades (measured:
                     # 61.8% of W4's trades, 7.3% cached). trail_floor=0.0 keeps
                     # every pre-b117 number byte-identical.
-                    if trail_after_partial > 0 and t["partial_taken"] > 0 and risk > 0:
+                    # b123: the gate is now `t["prot_armed"]` — "this ticket's
+                    # protection was armed at TP1" — instead of the share itself.
+                    # Under the default protection_mode="partial" the two are the
+                    # SAME SET (a 0<share<1 partial always arms; share>=1.0 is
+                    # closed before either line runs), so every stored number is
+                    # unchanged; the flag exists so a share=0 arm can be measured
+                    # WITH a trail and a share>0 arm WITHOUT one.
+                    if (trail_after_partial > 0 and t["prot_armed"] and risk > 0):
                         dist = max(trail_after_partial * risk, trail_floor)
                         if side == "BUY":
                             cand = high - dist
@@ -188,7 +241,14 @@ def backtest_ohlc(
                     # 4c) b57 TIME STOP — trade that never reached TP1 within N
                     # bars is dead weight under the one-position gate; exit at
                     # this bar's close (live would do the same on bar close).
-                    if (time_stop_bars > 0 and t["partial_taken"] == 0
+                    # b123: `partial_taken == 0` is an EXEMPTION for runner trades
+                    # that live does not give them — engines/legacy_guards
+                    # .evaluate_time_exit is purely age-based. time_stop_gate=
+                    # "age_only" measures the coupled-parity cost; the default
+                    # keeps every stored number.
+                    _ts_exempt = (t["partial_taken"] > 0
+                                  if time_stop_gate == "no_partial" else False)
+                    if (time_stop_bars > 0 and not _ts_exempt
                             and index - t["entry_index"] >= time_stop_bars):
                         _close(t, float(row.get("close", t["entry"])), index, "time")
                         open_trade = None
@@ -224,6 +284,10 @@ def backtest_ohlc(
             "entry_index": index, "side": side, "entry": entry,
             "sl": sl, "orig_sl": sl, "tp": tp,
             "be_moved": False, "partial_taken": 0, "realized": 0.0,
+            # b123: did the TP1 touch arm the protection (SL->entry + trail)?
+            # Under the default protection_mode="partial" this is identical to
+            # partial_taken > 0; it only diverges for the decomposition arms.
+            "prot_armed": False,
             "style": signal.get("style"),
             "grade": signal.get("grade"),
         }

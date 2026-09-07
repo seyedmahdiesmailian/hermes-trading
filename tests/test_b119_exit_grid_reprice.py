@@ -444,12 +444,16 @@ class TestB119NoLiveChangeShipped(unittest.TestCase):
     def test_the_flat_share_candidate_is_still_an_unwired_todo(self):
         # The reversal is a FINDING, not a change. b119 itself is DONE (its
         # measurement shipped), so the thing that must stay open is the DECISION
-        # it produced. This pin has moved twice, both times in the open:
+        # it produced. This pin has moved three times, each in the open:
         #   draft 1 rode "- [ ] b119" (its own item) and went red at step 3;
         #   draft 2 rode "- [ ] b121", which b121's own run closed (the
         #           replication shipped: flat_0.30 holds on two fresh windows);
-        #   now it rides b123, the round that must decompose the share axis from
-        #           the breakeven/trail axis before ANY wiring proposal exists.
+        #   draft 3 rode "- [ ] b123", which shipped 2026-09-07 — the
+        #           decomposition is in data/backtest/
+        #           b123_protection_share_decomposition.json and it came out
+        #           FOR the candidate (the share dial survives with protection
+        #           held constant: 6/7 legs, both fresh windows, mean +0.030R),
+        #           so the open thing is now the DECISION PACKAGE, b125.
         # b121's own test file pins the same state, so the carrier cannot be
         # quietly dropped: deleting either one leaves the other.
         text = open(os.path.join(ROOT, "data", "ops",
@@ -457,11 +461,14 @@ class TestB119NoLiveChangeShipped(unittest.TestCase):
         self.assertIn("- [x] b119", text,
                       "b119's measurement is shipped and its ledger is in the "
                       "repo — the done marker is the record of that")
-        self.assertIn("- [ ] b123", text,
-                      "b123 (the share-vs-BE/trail decomposition that must "
-                      "precede any wiring decision) is closed but no live exit "
-                      "change was made in this repo — if the wiring happened, "
-                      "delete this pin IN THE OPEN with the change")
+        self.assertIn("- [x] b123", text,
+                      "b123's decomposition ledger is in the repo — the done "
+                      "marker is the record of that")
+        self.assertIn("- [ ] b125", text,
+                      "b125 (the wiring decision b123's decomposition produced) "
+                      "is closed but no live exit change was made in this repo "
+                      "— if the wiring happened, delete this pin IN THE OPEN "
+                      "with the change")
 
 
 if __name__ == "__main__":

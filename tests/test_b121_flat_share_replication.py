@@ -111,6 +111,10 @@ LED1 = _load(STEP1)
 LED2 = _load(STEP2)
 FRESH_LED = _load(FRESH_LEDGER)
 LED119 = _load(B119)
+# b123's decomposition ledger, read by the name-carrier pin below so the
+# "share=0.0 is a different trade" claim stays a NUMBER, not a memory.
+LED3 = _load(os.path.join(ROOT, "data", "backtest",
+                          "b123_protection_share_decomposition.json"))
 
 
 class TestB121FreshWindowsAreFresh(unittest.TestCase):
@@ -261,17 +265,34 @@ class TestB121bCurveIsNotALever(unittest.TestCase):
     def test_b123_the_breakeven_and_trail_are_gated_on_the_partial(self):
         # NAME-CARRIER for b123 (b102's discipline: a filed item lives in a
         # test name, not only in this file). EDITED, not deleted, when b123
-        # ships its decomposition.
-        # WHY share=0.0 is a different TRADE, not more of the same: the engine
-        # moves SL to entry and starts the trail only inside the partial
-        # branch. Pinning the code shape keeps the confound honest — if live
-        # ever decouples them, this fires and the decomposition (b123) can be
-        # re-read as solved.
+        # shipped its decomposition (2026-09-07).
+        # WHAT CHANGED: b123 added `protection_mode`, so the trail line now
+        # reads `t["prot_armed"]` instead of `t["partial_taken"] > 0`. That is
+        # NOT a decoupling — under the DEFAULT mode ("partial") prot_armed is
+        # set exactly when a partial was taken, so the live path still moves SL
+        # to entry and starts the trail only inside the partial branch, and the
+        # share=0.0 confound b121b found still holds for everything live runs.
+        # The pin therefore keeps its job in a stronger form: it now asserts
+        # BOTH the code shape and the equivalence that makes the shape matter.
+        # If someone wires a non-default mode into the live funnel, the
+        # equivalence assert is what fires.
         src = open(BT_PY).read()
-        self.assertIn('if trail_after_partial > 0 and t["partial_taken"] > 0',
-                      src, "the trail is no longer gated on a partial — the "
-                          "share=0.0 confound note needs rewriting")
+        self.assertIn('if (trail_after_partial > 0 and t["prot_armed"]', src,
+                      "the trail is no longer gated on the arm flag — b123's "
+                          "decomposition cells stop being one-parameter arms")
+        self.assertIn('protection_mode: str = "partial"', src,
+                      "the engine's default protection mode moved off the "
+                          "coupled shape every stored number was measured on")
         self.assertIn("t[\"be_moved\"] = True", src)
+        # the equivalence, read off b123's own ledger: for the coupled family
+        # the protected and unprotected share=0.0 arms are the SAME trade,
+        # because at share=0.0 no partial is taken and so nothing arms.
+        for leg in ("cached", "W1", "W2", "W3", "W4", "W5", "W6"):
+            self.assertEqual(
+                LED3[leg]["grid"]["no_partial::partial::share_0.0"],
+                LED3[leg]["grid"]["no_partial::none::share_0.0"],
+                f"{leg}: the coupled engine arms protection without a partial "
+                f"— b121b's confound note is stale, rewrite it")
 
 
 class TestB121CensusIsBlind(unittest.TestCase):
@@ -382,19 +403,26 @@ class TestB121NothingIsWired(unittest.TestCase):
         # decomposition). EDITED in the open with a named note, never deleted
         # (b102/b114's rule: a suite that punishes the required edit trains
         # people to delete the test).
+        # b123 SHIPPED 2026-09-07 (the decomposition: the protection axis is
+        # mixed-sign, the share axis survives at ~+0.03R with fresh
+        # replication), so the carrier moves to b125 — the wiring DECISION that
+        # decomposition produced. The state this pins has not changed: nothing
+        # is wired, and the decision is still human.
         text = open(os.path.join(ROOT, "data", "ops",
                                  "autopilot_backlog.md")).read()
         self.assertIn("- [x] b121", text,
                       "b121's measurement is shipped — the done marker is the "
                       "record of that")
         # b121c (the honest call census) shipped IN THE SAME RUN, so the
-        # unwired-state carrier is b123, the decomposition that must precede
-        # any wiring proposal. b119's sibling test pins the same carrier.
+        # unwired-state carrier is b125, the decision package b123 filed.
         self.assertIn("- [x] b121c", text,
                       "b121c's census ledger is in the repo — the done marker "
                       "is the record of that")
-        self.assertIn("- [ ] b123", text,
-                      "b123 closed but no live exit change was made in this "
+        self.assertIn("- [x] b123", text,
+                      "b123's decomposition ledger is in the repo — the done "
+                      "marker is the record of that")
+        self.assertIn("- [ ] b125", text,
+                      "b125 closed but no live exit change was made in this "
                       "repo — if the wiring happened, delete this pin IN THE "
                       "OPEN with the change")
 
