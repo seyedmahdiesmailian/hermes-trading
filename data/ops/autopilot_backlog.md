@@ -47,6 +47,27 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b135 MEASUREMENT PROCEDURE — A DECISION TRIGGER MUST NOT OR A SIGN TEST
+      WITH A MAGNITUDE TEST (reusable rule from b124, 2026-09-07): b124's
+      wording was "the pin fires if the exemption moves the bar ONE-SIDED **or**
+      past 0.010R". An OR of a sign predicate and a size predicate is satisfied
+      by a one-sided 0.003R — a directional nothing — so the round would have
+      had to print "RE-BASELINE DECISION" for a gap no stored number can see.
+      RULE: any trigger that gates a re-baseline/wiring decision over N legs
+      must be a CONJUNCTION (one_sided AND past_tripwire) for the decision,
+      with both axes REPORTED separately so a one-sided-but-tiny gap is
+      disclosed as a bias direction, not escalated. This is the third variant
+      of the same bug class in three days: b123 fixed the n=7 tautology
+      (majority over a fixed denominator), b129's one_sided_strict fixed the
+      DENOMINATOR (inert legs must not count as evidence), b124's verdict
+      fixed the MAGNITUDE half (a sign test alone is not a decision trigger).
+      When writing a new grid round, grep your own trigger wording for " or "
+      between a sign word and a number word; if it's there, split the states
+      like scripts/b124_gate_exemption_census.py::verdict does (four named
+      states, pinned on synthetic axes, not just on the shipped ledger).
+      Name-carrier: tests/test_b124_gate_exemption_census.py::
+      TestB124TriggerIsAConjunction::
+      test_b124_the_conjunction_shape_is_pinned_on_synthetic_axes.
 - [ ] b134 [META] TRIAGE RULE — WHEN ONLY b50'S SUITE-INSIDE-HEAD FAILS, THE
       TREE IS RIGHT AND HEAD IS WRONG (reusable procedure from b47,
       2026-09-07): the b47 harvest found the full suite red on exactly one
@@ -434,7 +455,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       deleted, when this ships. Name-carrier:
       tests/test_b123_protection_decomposition.py::
       TestB125WiringDecision::test_b125_live_share_rule_is_still_grade_gated.
-- [ ] b124 TRADER PARITY NOTE — THE LAB'S TIME-EXIT PARTIAL EXEMPTION VS
+- [x] b124 TRADER PARITY NOTE — THE LAB'S TIME-EXIT PARTIAL EXEMPTION VS
       LIVE'S AGE-BASED RULE (filed by b123, 2026-09-07): engines/backtest.py
       exempts any trade that took a partial from the b57 time exit
       (`time_stop_gate="no_partial"`, the default) while
@@ -449,6 +470,42 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       future exit arm holds runners past 144 bars, re-run the b123 grid with
       `time_stop_gate="age_only"` and decide whether the lab should mirror
       live's age rule by default.
+      DONE 2026-09-07 (this run): scripts/b124_gate_exemption_census.py +
+      ledger data/backtest/b124_gate_exemption_census.json — the cross-tab
+      b130's census left out: wall-old trades x `partial_taken`, priced at
+      live's OWN limit (LIVE_HOURS imported from MAX_POSITION_AGE_HOURS, never
+      restated), both gates, cached + W1..W6. FINDING 1: the exemption is NOT
+      vacuous on live's clock — 14 of the 32 wall-old trades (44%) took a
+      partial, so the lab's stored default spares them and live would cut them
+      at 36h; on the bar clock the same census finds 0 old trades, which is
+      exactly why b123/b129 could both honestly measure 0.000R and still not
+      answer this. FINDING 2: all 14 spared trades are WINNERS (+$235.41,
+      14/14 pnl>0; 10 of them full-close-at-TP1 tickets), so the stored bar's
+      bias from this gap is directional and known — the lab keeps a winner
+      alive past live's limit — the honest statement is no longer "inert".
+      FINDING 3: the cost is still noise: age_only minus no_partial at 36h is
+      -0.003..0.000R (mean -0.0012R), trade counts IDENTICAL at both gates on
+      every leg (the cut ticket's R is substituted, not harvested), 3x UNDER
+      b123's 0.010R tripwire. FINDING 4 (the tooling result): b124's own
+      trigger — "one-sided OR past 0.010R" — is an OR of a sign test and a
+      magnitude test, so a one-sided 0.003R (a directional nothing) satisfies
+      it; the round ships the corrected CONJUNCTION shape (one_sided AND
+      past_tripwire = re-baseline; one_sided alone = disclosed bias, pinned
+      both ways on synthetic axes) — b129 fixed the denominator of this bug
+      class, this fixes its magnitude half, which no predicate here checked.
+      FINDING 5: decomposition — the total lab-vs-live time-exit gap splits
+      into clock_part (b130's, mean +0.0018R) and gate_part (this, mean
+      -0.0012R) with OPPOSITE signs; the total is mixed-sign and smaller than
+      either part, the arithmetic reason no re-baseline is owed. Integrity:
+      both wall cells byte-equal b130's grid on all 7 legs and the chain to
+      b129's bar incumbent re-asserted; census re-executes from stored
+      `_off_rows` (b130's shape) — check_b124_derived_blocks registered in
+      b127::CHECKS (21/21 reproductions exact). NOTHING WIRED: engine default
+      `time_stop_gate="no_partial"` unchanged, MAX_POSITION_AGE_HOURS still
+      36, a live retune stays a human gate (b89 class). 24 tests in
+      tests/test_b124_gate_exemption_census.py (incl. b123's bar-clock pin
+      kept, the tripwire value shared not restated, and the name-carrier
+      cross-check). Filed b135 (the reusable trigger-shape rule).
 - [ ] b122 MEASUREMENT PROCEDURE — VERIFY AN ARM IS THE RULE IT IS NAMED FOR
       (reusable rule from b119, 2026-09-07): b66b's "live grade-fn share" arm
       was a lambda that called the live share function, so it LOOKED like the

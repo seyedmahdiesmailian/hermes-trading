@@ -72,6 +72,7 @@ LEDGER_121 = os.path.join(BT, "b121_flat_share_replication.json")
 LEDGER_121B = os.path.join(BT, "b121b_share_sweep.json")
 LEDGER_121C = os.path.join(BT, "b121c_partial_call_census.json")
 LEDGER_123 = os.path.join(BT, "b123_protection_share_decomposition.json")
+LEDGER_124 = os.path.join(BT, "b124_gate_exemption_census.json")
 LEDGER_129 = os.path.join(BT, "b129_timestop_reprice.json")
 LEDGER_130 = os.path.join(BT, "b130_wall_clock_parity.json")
 LEDGER_132 = os.path.join(BT, "b132_news_veto_real_calendar.json")
@@ -396,6 +397,41 @@ def check_b130_derived_blocks() -> str:
             f"({len(led['_neutrality'])} arms)")
 
 
+def check_b124_derived_blocks() -> str:
+    """b128's ship-time rule applied to the b124 ledger: the exemption census
+    (re-executed from the stored `_off_rows`, the same shape b130 uses for its
+    `_ages_off`), the gate gap on every metric, the neutrality rows, the
+    parity decomposition, the verdict and the integrity claims are pure
+    functions of the shipped grid + rows, re-run here. The measurement half
+    (2 gates x 7 legs of funnel replay at live's wall limit) is NOT re-run —
+    it is pinned by the ledger's own integrity block, which byte-compares both
+    wall cells against b130's shipped grid and chains the bar incumbent to
+    b129 through b130's claim."""
+    from scripts import b124_gate_exemption_census as b124
+    led = _load(LEDGER_124)
+    assert {k: all(v.values()) for k, v in led["_integrity"].items()} == \
+           {k: True for k in led["_legs"]}, \
+        "b124 integrity fails on the shipped ledger — the wall cells no longer " \
+        "match b130, so the gate gap is a splice of two funnels"
+    for leg in led["_legs"]:
+        got = b124.exemption_census(led[leg]["_off_rows"],
+                                    led[leg]["_live_hours"],
+                                    b124.INCUMBENT_STOP)
+        assert got == led[leg]["_census"], \
+            f"b124 census {leg} no longer reproduces from its stored rows"
+    for fn, key in ((b124.gate_gap, "_gate_gap_R"),
+                    (b124.neutrality, "_neutrality"),
+                    (b124.parity_decomposition, "_parity_decomposition"),
+                    (b124.verdict, "_verdict")):
+        got = fn(led)
+        assert got == led[key], f"b124 producer {key} no longer reproduces"
+    for metric, rows in led["_gate_gap_other_metrics"].items():
+        assert rows == b124.gate_gap(led, metric), \
+            f"b124 gate gap ({metric}) no longer reproduces"
+    return (f"b124 integrity + census(7 legs) + 4 derived blocks + "
+            f"{len(led['_gate_gap_other_metrics'])} metric gaps")
+
+
 def check_b132_derived_blocks() -> str:
     """b128's ship-time rule applied to the b132 ledger: coverage, census,
     deltas, neutrality, verdict and the lever test are pure functions of the
@@ -484,6 +520,7 @@ CHECKS = (
     check_b114_drift_is_arithmetic,
     check_b129_derived_blocks,
     check_b130_derived_blocks,
+    check_b124_derived_blocks,
     check_b131_derived_blocks,
     check_b132_derived_blocks,
 )

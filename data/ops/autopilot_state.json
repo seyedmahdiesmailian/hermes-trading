@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-07T21:06:18.392377+00:00",
+ "last_run_utc": "2026-09-07T22:29:18.988531+00:00",
  "recent_commits": [
+  "0d04314 autopilot: file b134 [META] \u2014 b50-only-failure triage rule (HEAD is wrong, tree is right; commit-then-reverify, never revert good tree work)",
+  "ef89fe7 autopilot: b133 done-note + b107 closed (news-veto leg priced: \u00b130min one-sided NEGATIVE -0.0094R mean, no lever, veto stays insurance)",
+  "05a61f9 harvest: b133 \u2014 CDX prefix re-query deepens event archive to 2025-01-19 (145 snaps, 5043 ev, 303 high USD/XAU, all 7 legs covered); veto re-priced: \u00b130min one-sided NEGATIVE mean -0.0094R, no lever; b131 ledger registered in b127 CHECKS; fixed b131 test-file phantom citation (the BROKEN-HEAD cause); fetcher retry/404-split + span-based archive picker",
   "5a02ea7 autopilot: b132 real event-calendar archive (Wayback FF feed) + news-veto re-priced; lever_test guard; b127 check registered",
-  "abf7c68 autopilot: b131 price the news-veto on the funnel (veto dial + clock fields + inert finding)",
-  "10f4e90 autopilot: b107 news-veto leg \u2014 blast radius measured from git calendar snapshots (14 strict-high USD events, 6 unique timestamps, ~6h veto over 21d); aggregate-only ledgers cannot price TIME gates (b110 cheap version fails) -> filed b131 with the additive news_veto_windows procedure",
-  "f7a2931 autopilot: b130 wall-clock parity of the time exit \u2014 b129's 'inert' was a bar-clock artefact (32 trades >=36h wall, 0 >=144 bars); value 36h stands (|gap|<=0.014R), n_nonzero denominator ships with every neutrality row; engine gains additive time_stop_hours dial (default off), 19 tests, b127 20/20",
-  "6619ef5 autopilot: harvest b129 (b107 exit-side time-stop reprice) left uncommitted by a dead run \u2014 2 tests red (b42 untracked producer+test, b103 phantom b130); landed the files, filed b130 with its name-carrier, registered b129's derived blocks in b127 CHECKS per b128's ship-time rule (19/19 exact), b107 progress note. Findings: live 36h time exit is INERT (ts_0 = 0.000R on all 7 legs, 0 holds over exit), tightening one-sidedly worse (ts_8 -0.031R mean, 5/6 windows, fresh pair agrees), best arm ts_48 +0.003R = no lever; runner-exemption inert across all 14 arms (max gate gap 0.006R); b123 one_sided() is vacuous on inert grids -> one_sided_strict floor"
+  "abf7c68 autopilot: b131 price the news-veto on the funnel (veto dial + clock fields + inert finding)"
  ]
 }

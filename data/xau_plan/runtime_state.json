@@ -1,6 +1,6 @@
 {
-  "active_plan_id": "xau-05fc1d1a",
+  "active_plan_id": "xau-e0e72bfb",
   "last_step": "monitor",
-  "last_report_key": "reassess:xau-05fc1d1a",
-  "last_monitor_action": "wait_for_pullback"
+  "last_report_key": "reassess:xau-e0e72bfb",
+  "last_monitor_action": "market_entry_now"
 }
