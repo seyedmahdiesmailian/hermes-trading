@@ -1863,5 +1863,66 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-09-07T10:43:13.305818+00:00",
+    "raw_text": "[💬 از GTMoFx (goldtradermo)]\nGold sell now 4400 - 4404\n\nSL: 4408\n\nTP: 4398\nTP: 4396\nTP: 4394\nTP: 4392\nTP: open",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4400.0,
+      "entries": [
+        4400.0
+      ],
+      "sl": 4408.0,
+      "tp": 4398.0,
+      "tp2": 4396.0,
+      "lot": 0.0,
+      "rr_ratio": 0.25,
+      "tps": [
+        4398.0,
+        4396.0,
+        4394.0,
+        4392.0
+      ],
+      "ladder_rr": 0.62,
+      "order_type": "market",
+      "confidence": 0.85,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "hermes_neutral",
+        "poor_rr_0.25"
+      ],
+      "score": 3.5,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4400.0,
+        "entries": [
+          4400.0
+        ],
+        "sl": 4408.0,
+        "tp": 4398.0,
+        "tp2": 4396.0,
+        "lot": 0.0,
+        "rr_ratio": 0.25,
+        "tps": [
+          4398.0,
+          4396.0,
+          4394.0,
+          4392.0
+        ],
+        "ladder_rr": 0.62,
+        "order_type": "market",
+        "confidence": 0.85,
+        "warnings": []
+      }
+    }
   }
 ]

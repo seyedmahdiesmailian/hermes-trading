@@ -1030,3 +1030,6 @@ at,plan_id,event,old_bias,new_bias
 2026-09-07T09:45:02.117148+00:00,xau-9defb0bb,reassess,neutral,neutral
 2026-09-07T10:00:02.434939+00:00,xau-3772467f,reassess,neutral,bearish
 2026-09-07T10:15:02.607186+00:00,xau-5a56e622,reassess,bearish,bearish
+2026-09-07T10:30:02.025240+00:00,xau-42d5cd4d,reassess,bearish,neutral
+2026-09-07T10:45:01.980044+00:00,xau-d083453c,reassess,neutral,neutral
+2026-09-07T11:00:02.167321+00:00,xau-867eefa4,reassess,neutral,bearish

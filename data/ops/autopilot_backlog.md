@@ -346,7 +346,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       Name-carrier: tests/test_b119_exit_grid_reprice.py::
       TestB119ArmIdentity (all four tests are the procedure, run on the frozen
       ledger every suite).
-- [ ] b118b TRADER MEASUREMENT — THE b108/b81/b70 LANE LEDGERS STILL CARRY THE
+- [x] b118b TRADER MEASUREMENT — THE b108/b81/b70 LANE LEDGERS STILL CARRY THE
       PRE-b109 FUNNEL ROW (follow-up to b118, 2026-09-07): b118 re-derived the
       BAR (live-parity cached 0.278 / W1 0.211 / W2 0.230 / W3 0.232 / W4 0.233)
       but the stored lane-vs-funnel DELTAS in data/backtest/
@@ -360,6 +360,39 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       so the harness alignment flows through automatically) and diff
       `_b70_redecision` against the stored block. LOW priority until a lane is
       actually up for wiring.
+      DONE 2026-09-07: re-derived on live-parity numbers (scripts/
+      b118b_lane_redecision.py imports b81.measure_leg verbatim over
+      cached+W1..W4; frozen b108 ledger untouched; new ledger data/backtest/
+      b118b_lane_redecision_live_parity.json) — b70's answer HOLDS AND FIRMS:
+      no lane earns a slot, h4pdh drops 2/4 -> 1/4 (its W2 margin +0.003 turns
+      -0.001), best surviving margin +0.051R sits inside b110's noise band.
+      THE ROUND'S REAL FINDING IS ELSEWHERE: the script b118b's own method note
+      said to re-run had NEVER RUN since it shipped — `redeide_b70` typo at
+      b108:168, a NameError on main()'s last statement, after all measurement
+      and before the json.dump; fixed, and the frozen artifact vindicated by
+      EXECUTING its own merit_bar()/redecide_b70() against the shipped JSON
+      (exact reproduction, pinned). Defence ships as scripts/
+      b126_dead_path_scan.py (static scan for calls to unbound names, clean on
+      repo+tests+bridge, pinned in both directions incl. the defect shape).
+- [ ] b127 TRADER HYGIENE (reusable procedure from b118b, 2026-09-07) — EVERY
+      FROZEN BACKTEST LEDGER NEEDS A REPRODUCTION TEST THAT EXECUTES ITS
+      PRODUCER, NOT JUST READS ITS JSON. b108 shipped a NameError in main()'s
+      LAST statement and no test noticed for a day, because every b108 test
+      reads the artifact and none touches the code that makes it (b114/b116's
+      disease in a new costume: an artifact certifying a number, not the code
+      producing it). b126's static scan catches only UNBOUND NAMES; it cannot
+      see a KeyError on a dict-shape change or a wrong constant. Procedure:
+      for each producer script with a frozen ledger (b81_lane_rescore,
+      b118_merit_bar_rebaseline, b119_exit_grid_reprice,
+      b123_protection_share_decomposition, b114_daemon_code_drift), add one
+      test that imports the script's PURE functions and re-applies them to
+      the shipped JSON requiring exact reproduction (pattern:
+      tests/test_b118b_lane_redecision_and_b126_dead_scan.py::
+      TestB108ProducerPathIsAlive — merit_bar/redecide_b70 vs stored blocks).
+      Where a producer's measurement half needs the 7-minute funnel replay,
+      pin only the pure post-processing half and say so in the test docstring.
+      Do NOT re-run producer mains() in tests (they overwrite frozen ledgers);
+      b118b's write-a-new-ledger-import-the-machinery pattern is the way.
 - [x] b119 TRADER RESEARCH — b66's "EXIT GEOMETRY IS LOCALLY OPTIMAL" WAS ALSO
       PRICED ON THE PHANTOM RUNNER (reusable procedure from b117, 2026-09-07).
       DONE 2026-09-07: b66b's load-bearing verdict is not merely smaller under

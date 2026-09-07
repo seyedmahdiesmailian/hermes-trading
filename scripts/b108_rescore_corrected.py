@@ -165,7 +165,7 @@ def main():
         led[leg]["_compare"] = compare(led[leg], old[leg])
 
     led["_merit_bar"] = merit_bar(led)
-    led["_b70_redecision"] = redeide_b70(led)
+    led["_b70_redecision"] = redecide_b70(led)
     print("=== MERIT BAR (corrected) ===")
     print(json.dumps(led["_merit_bar"], indent=1))
     print("=== b70 RE-DECISION ===")

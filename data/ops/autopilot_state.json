@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-07T09:30:03.153856+00:00",
+ "last_run_utc": "2026-09-07T10:30:03.000863+00:00",
  "recent_commits": [
+  "b1c4ed5 harvest: b123 protection/share decomposition \u2014 finish the abandoned round (engine dials protection_mode+time_stop_gate additive, defaults byte-identical; file b124/b125 todos + b125 name-carrier pin; fix the one-sided trade-count pin that contradicted its own ledger; refresh b93 live_record after storage.py pruning)",
   "a46be24 autopilot: runtime state files from the post-harvest live cycle (rc=0, no_trade)",
   "ea1efb3 autopilot: backlog note for the b121 harvest",
   "d6d8891 autopilot: b121 HARVEST \u2014 the finished share-replication round was left uncommitted by a dead run; its three filed items had no b102 name-carriers, so 6 tests were red on the tree",
-  "450a7dd autopilot: b119 fix \u2014 verify_head caught my own pin asserting b119's todo marker (step 3 marks it done, so the suite punished the required edit); the UNWIRED-state pin now rides b121's open marker instead, per b114's rule that a test which punishes the fix trains people to delete it",
-  "94e4adf autopilot: b119 TRADER RESEARCH \u2014 b66b's \"GRADE-WEIGHTED PARTIAL SIZING IS REAL EDGE\" WAS SCORED ON AN ARM THAT WAS NOT GRADE-WEIGHTED, AND THE RANKING RUNS THE OTHER WAY NOW"
+  "450a7dd autopilot: b119 fix \u2014 verify_head caught my own pin asserting b119's todo marker (step 3 marks it done, so the suite punished the required edit); the UNWIRED-state pin now rides b121's open marker instead, per b114's rule that a test which punishes the fix trains people to delete it"
  ]
 }
