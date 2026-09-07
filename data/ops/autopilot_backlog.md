@@ -218,8 +218,11 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       count, the frozen b66b ledger's identical-n/identical-WR signature is
       re-read every run, the reversal is pinned on BOTH metrics with magnitude
       ceilings (a 2x-scale gap reappearing = the double-count is back), the
-      probe is pinned read-only, and the open-todo state is pinned so wiring
-      flat-0.30 fires. Filed b121 (the candidate round) + b122 (reusable rule:
+      probe is pinned read-only, and the UNWIRED state is pinned via b121's
+      open marker (the first draft pinned b119's own todo marker and went red
+      the moment step 3 marked it done — b114's "a suite that punishes the fix
+      trains people to delete the test", caught by verify_head, not by me).
+      Filed b121 (the candidate round) + b122 (reusable rule:
       before trusting a stored arm-vs-arm comparison, verify the arms were
       DIFFERENT functions in the frame that ran — an arm named after a rule it
       could not execute is the b109 disease wearing a decision's clothes).

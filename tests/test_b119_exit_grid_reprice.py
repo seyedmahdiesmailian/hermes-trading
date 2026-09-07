@@ -436,14 +436,25 @@ class TestB119NoLiveChangeShipped(unittest.TestCase):
                      "modify_position"):
             self.assertNotIn(verb, src, f"probe mentions {verb}")
 
-    def test_b119_is_still_an_open_todo_until_a_measured_round_decides_it(self):
-        # The reversal is a FINDING, not a change. If someone wires flat-0.30
-        # (or anything else) into live, this fires and the backlog gets edited
-        # in the open rather than behind a stale pin.
+    def test_the_flat_share_candidate_is_still_an_unwired_todo(self):
+        # The reversal is a FINDING, not a change. b119 itself is DONE (its
+        # measurement shipped), so the thing that must stay open is the DECISION
+        # it produced: b121, the round that would rewire live's partial share.
+        # If someone wires flat-0.30 (or anything else) into live without that
+        # round, this fires and the backlog gets edited in the open rather than
+        # behind a stale pin. (The first draft of this test pinned
+        # "- [ ] b119" instead — i.e. the item's own todo marker — which
+        # contradicted step 3 of the run and went RED the moment the item was
+        # marked done, exactly the b114 lesson about punishing the fix.)
         text = open(os.path.join(ROOT, "data", "ops",
                                  "autopilot_backlog.md")).read()
-        self.assertIn("b119", text)
-        self.assertIn("- [ ] b119", text)
+        self.assertIn("- [x] b119", text,
+                      "b119's measurement is shipped and its ledger is in the "
+                      "repo — the done marker is the record of that")
+        self.assertIn("- [ ] b121", text,
+                      "b121 (the flat_0.30 candidate round) is closed but no "
+                      "live exit change was made in this repo — if the wiring "
+                      "happened, delete this pin IN THE OPEN with the change")
 
 
 if __name__ == "__main__":
