@@ -1,0 +1,89 @@
+{
+ "_note": "b121c: the operational cost side of the share candidate, counted off trade_log.partial_taken (the field b121 added to engines/backtest.py) because exit_reason is structurally blind to the share (step 1's void column).",
+ "_scope": "PROXY for bridge-call volume: the lab cannot see MT5 rejections, retries, or the watchdog loop \u2014 only which exit path each trade took.",
+ "_arms": {
+  "incumbent_live_grade_fn": "engines.trade_management._partial_close_fraction",
+  "flat_0.30": "lambda: (0.30, 'lab_flat_share')"
+ },
+ "_live_min_grade": "B",
+ "cached": {
+  "incumbent_live_grade_fn": {
+   "trades": 109,
+   "partial_close_calls": 70,
+   "one_call_closes_at_tp1": 46,
+   "multi_call_runner_trades": 24,
+   "partial_call_rate": 0.6422,
+   "runner_rate": 0.2202,
+   "exp_R": 0.278,
+   "net_R": 30.3
+  },
+  "flat_0.30": {
+   "trades": 105,
+   "partial_close_calls": 67,
+   "one_call_closes_at_tp1": 0,
+   "multi_call_runner_trades": 67,
+   "partial_call_rate": 0.6381,
+   "runner_rate": 0.6381,
+   "exp_R": 0.278,
+   "net_R": 29.2
+  }
+ },
+ "W5": {
+  "incumbent_live_grade_fn": {
+   "trades": 190,
+   "partial_close_calls": 115,
+   "one_call_closes_at_tp1": 77,
+   "multi_call_runner_trades": 38,
+   "partial_call_rate": 0.6053,
+   "runner_rate": 0.2,
+   "exp_R": 0.221,
+   "net_R": 42.1
+  },
+  "flat_0.30": {
+   "trades": 184,
+   "partial_close_calls": 111,
+   "one_call_closes_at_tp1": 0,
+   "multi_call_runner_trades": 111,
+   "partial_call_rate": 0.6033,
+   "runner_rate": 0.6033,
+   "exp_R": 0.249,
+   "net_R": 45.8
+  }
+ },
+ "W6": {
+  "incumbent_live_grade_fn": {
+   "trades": 198,
+   "partial_close_calls": 125,
+   "one_call_closes_at_tp1": 87,
+   "multi_call_runner_trades": 38,
+   "partial_call_rate": 0.6313,
+   "runner_rate": 0.1919,
+   "exp_R": 0.175,
+   "net_R": 34.7
+  },
+  "flat_0.30": {
+   "trades": 193,
+   "partial_close_calls": 123,
+   "one_call_closes_at_tp1": 0,
+   "multi_call_runner_trades": 123,
+   "partial_call_rate": 0.6373,
+   "runner_rate": 0.6373,
+   "exp_R": 0.21,
+   "net_R": 40.5
+  }
+ },
+ "_ratio": {
+  "cached": {
+   "partial_calls_candidate_over_incumbent": 0.96,
+   "multi_call_runner_trades_candidate_over_incumbent": 2.79
+  },
+  "W5": {
+   "partial_calls_candidate_over_incumbent": 0.97,
+   "multi_call_runner_trades_candidate_over_incumbent": 2.92
+  },
+  "W6": {
+   "partial_calls_candidate_over_incumbent": 0.98,
+   "multi_call_runner_trades_candidate_over_incumbent": 3.24
+  }
+ }
+}

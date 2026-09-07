@@ -114,8 +114,57 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       tests/test_b118_merit_bar_rebaseline.py::
       TestB120StaleHeadlineRule::test_b120_* (b102's discipline: a filed item
       lives in a test name, not only in this file).
-- [ ] b121 TRADER MEASUREMENT — flat_0.30 BEAT THE GRADE-WEIGHTED INCUMBENT ON
-      EVERY AXIS b119 CHECKED (candidate round from b119, 2026-09-07): keeping a
+- [x] b121 TRADER MEASUREMENT — flat_0.30 REPLICATES ON TWO WINDOWS IT WAS
+      NEVER RANKED ON, AND LIVE'S GRADE-GATED SHARE FINISHES LAST OR
+      SECOND-LAST ON BOTH (candidate round from b119, 2026-09-07). DONE
+      2026-09-07: precondition 1 (fresh draw) — scripts/b121_fresh_windows.py
+      cut W5 (2025-04-07..07-09) and W6 (2025-01-06..04-07) out of the broker's
+      deep history, 6000 M15 bars each, strictly before W4, overlap with
+      cached/W1..W4/each other MEASURED zero, bar count and fetch depth
+      IMPORTED from b68l. scripts/b121_flat_share_replication.py scored the
+      same arms on all seven legs, one harness, live gate/trail/floor imported
+      or derived: flat_0.30 REPLICATES (+0.028R W5, +0.035R W6, 2/2 fresh;
+      still 4/4 on the selection set), stays under b119's 0.10R magnitude
+      ceiling, and b66b's crowned constant-1.0 arm loses BOTH fresh windows too
+      (-0.005/-0.014) — the reversal holds out of sample. THE BIGGER FINDING
+      (scripts/b121b_share_sweep.py, the five share points step 1 skipped,
+      merged into one curve per leg with a CHECKED merge — the incumbent row
+      must be byte-identical across the two ledgers or the curve is two spliced
+      funnels): the curve is monotone in the RIDING direction and live's
+      grade-gated rule sits at the WRONG END of it — beaten by all nine flat
+      alternatives on W1/W4/W5 (rank 9/9) and by eight of nine on W6. b66b's
+      "grade-weighted sizing CONFIRMED" is not merely unsupported (b119), its
+      opposite replicates. WHAT THIS ROUND REFUSES TO CLAIM: share=0.0 is best
+      on cached/W1/W4/W5 (+0.066..+0.099R) and WORST on W2/W3/W6
+      (-0.016..-0.051R) — mixed sign across seven windows = b110 says NO LEVER,
+      and the reason is a CONFOUND, not noise: in engines/backtest.py the BE
+      move and the runner trail are both gated on partial_taken > 0, so
+      share=0.0 is not "more riding", it is a different TRADE (no BE, no trail,
+      time-exit-eligible). Decomposition filed as b123. PRECONDITION 2 (the
+      cost side) shipped as b121c below. b122's rule caught a defect in THIS
+      round's own first draft: step 1's exit_reason census reported an
+      IDENTICAL runner-path share for flat_0.1..0.9 and its LARGEST for the
+      arm that never takes a partial — exit_reason is structurally blind to the
+      share (which exit a runner reaches is the price path's business), so the
+      column was void. engines/backtest.py's trade_log now carries
+      partial_taken (additive; every pre-b121 row unchanged, pinned by
+      TestB121CensusIsBlind so the void number can never be re-quoted).
+      b121c's honest census: the candidate does NOT multiply partial calls
+      (0.96-0.98x — the same trades reach TP1 either way); it multiplies the
+      MULTI-CALL tail 2.8-3.2x (live closes 46/77/87 winners in ONE call at
+      TP1; flat_0.30 closes zero). So the operational price is ~3x the trades
+      that need trail modifies plus a final close, not the 5x the founding note
+      guessed. NO live change: engines/trade_management.py untouched, a live
+      exit-behaviour change is a human gate (b89 class). 25 tests in
+      tests/test_b121_flat_share_replication.py (freshness of the new windows,
+      exact reproduction of b119's selection rows, replication on the fresh
+      pair, the magnitude ceiling, the incumbent's last-place rank, the
+      merge-integrity check, the share=0.0 confound pinned in BOTH directions,
+      the void-census pin, the engine-field pin, the call-ratio bands, and the
+      unwired state). b119's carrier pin was EDITED with a named note (it rode
+      "- [ ] b121", which this round closed — the same trap b119 fell into once)
+      and now rides b123. ORIGINAL NOTE follows.
+      keeping a
       0.3 runner on EVERY trade (flat share) rather than only on grade A beat
       live's rule on exp_R in 4/4 independent windows (+0.002..+0.046R), on
       net_R in 3/4, on maxDD in 3/4, with mean hold +0.8 bars and zero holds
@@ -138,6 +187,47 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       TestB119ShareRankingInverted::test_flat_30_percent_beats_the_grade_weighted_incumbent_one_sided
       (b102's discipline: the pin fires if the delta moves, so the round starts
       from a number that still reproduces).
+- [x] b121c TRADER MEASUREMENT — THE OPERATIONAL COST OF THE SHARE CANDIDATE,
+      COUNTED OFF A FIELD THAT CAN SEE IT (precondition 2 of b121, 2026-09-07).
+      DONE 2026-09-07: scripts/b121c_partial_call_census.py + ledger
+      data/backtest/b121c_partial_call_census.json, on the three
+      decision-relevant legs (cached, W5, W6). ANSWER: the candidate's cost is
+      NOT in call COUNT (partial calls 0.96-0.98x the incumbent — the same
+      trades reach TP1 under either rule) but in the multi-call TAIL: trades
+      that survive TP1 and so need trail modifies plus a final close go from
+      24/38/38 to 67/111/123, i.e. 2.79x/2.92x/3.24x. Live today closes 46/77/87
+      winners in ONE call at TP1 (share>=1.0 -> tp1_full); flat_0.30 closes
+      ZERO that way. That is the honest size of the MT5 10026 /
+      `_tp1_exit_closes_all` / watchdog-retry surface a wiring decision buys —
+      ~3x, not the 5x b121's founding note guessed. The lab cannot see
+      rejections or retries; it counts paths, and the ledger says so. Pinned by
+      tests/test_b121_flat_share_replication.py::TestB121cHonestCallCensus
+      (bands both ways: >2.0 and <5.0, plus exp_R rows must reproduce step 1's
+      ledger exactly, so a moved engine cannot splice two funnels).
+- [ ] b123 TRADER MEASUREMENT — THE SHARE AXIS IS CONFOUNDED WITH THE
+      BREAKEVEN/TRAIL AXIS; DECOMPOSE IT BEFORE ANY WIRING PROPOSAL
+      (found by b121b, 2026-09-07): in engines/backtest.py the BE move
+      (`t["be_moved"] = True; t["sl"] = t["entry"]`) and the runner trail
+      (`if trail_after_partial > 0 and t["partial_taken"] > 0`) are BOTH gated
+      on a TP1 partial having happened. So sweeping partial_share from 1.0 down
+      to 0.0 does not move one dial — at share=0.0 the trade loses its
+      breakeven protection and its trail as well, and the curve's left end is a
+      DIFFERENT TRADE, not more of the same. Measured consequence: share=0.0 is
+      the best arm on cached/W1/W4/W5 (+0.066..+0.099R over the incumbent) and
+      the worst on W2/W3/W6 (-0.016..-0.051R) — mixed sign across seven windows,
+      which b110 reads as NO LEVER, but the reason is the confound, not noise.
+      METHOD for the round that takes this: hold the share at the live
+      incumbent's and vary ONLY the exit-protection dial (a BE/trail arm that
+      does not require a partial — one parameter at a time, b72's pure-arm
+      rule), then vary the share with the protection FIXED, on cached + W1..W6
+      with the same harness, and re-run b110's neutrality test on each axis
+      separately. Only a share effect that survives with protection held
+      constant is a candidate at all; today's flat_0.30 delta (+0.028/+0.035R
+      fresh) is small enough that a protection effect of the same size would
+      fully explain it. Name-carrier:
+      tests/test_b121_flat_share_replication.py::
+      TestB121bCurveIsNotALever::test_the_breakeven_and_trail_are_gated_on_the_partial
+      (fires the moment live decouples them, which is when this item is done).
 - [ ] b122 MEASUREMENT PROCEDURE — VERIFY AN ARM IS THE RULE IT IS NAMED FOR
       (reusable rule from b119, 2026-09-07): b66b's "live grade-fn share" arm
       was a lambda that called the live share function, so it LOOKED like the

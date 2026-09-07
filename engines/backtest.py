@@ -80,6 +80,17 @@ def backtest_ohlc(
             losses += 1
         trade_log.append({**{k: t[k] for k in ("entry_index", "side", "entry", "style", "grade")},
                           "orig_sl": t.get("orig_sl"),
+                          # b121: the share the TP1 partial actually took (0.0 =
+                          # the ticket never reached TP1). exit_reason cannot
+                          # answer "how many trades took the partial-close
+                          # path" — which exit a runner reaches is a function of
+                          # the price path, not of the share, so a census built
+                          # on exit_reason is STRUCTURALLY blind to the one
+                          # parameter the share grid varies (measured: identical
+                          # for every flat arm 0.1..0.9). This field is the only
+                          # honest way to price the operational cost (partial
+                          # bridge calls) of a lower share.
+                          "partial_taken": float(t.get("partial_taken") or 0.0),
                           "exit_index": index, "exit": round(exit_price, 2),
                           "pnl": round(net, 2), "exit_reason": reason})
 

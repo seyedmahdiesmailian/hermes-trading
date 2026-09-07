@@ -1344,5 +1344,74 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-09-07T07:14:20.746939+00:00",
+    "raw_text": "[💬 از Gold Forex Signals (free)]\nXAUUSD SELL 4400\nMORE SELL 4405\n\nTP¹ 4397\nTP² 4394\nTP³ 4391\nTP⁴ 4388\nTP⁵ 4385\nTP⁶ 4382\nTP⁷ 4370\n\n\nTP OPEN \n\n\nTP OPEN\n\nSL 4415 SCALPING",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4400.0,
+      "entries": [
+        4400.0,
+        4405.0
+      ],
+      "sl": 4415.0,
+      "tp": 4397.0,
+      "tp2": 4394.0,
+      "lot": 0.0,
+      "rr_ratio": 0.2,
+      "tps": [
+        4397.0,
+        4394.0,
+        4391.0,
+        4388.0,
+        4385.0,
+        4382.0,
+        4370.0
+      ],
+      "ladder_rr": 0.89,
+      "order_type": "market",
+      "confidence": 0.85,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_aligned",
+        "poor_rr_0.2"
+      ],
+      "score": 5.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4400.0,
+        "entries": [
+          4400.0,
+          4405.0
+        ],
+        "sl": 4415.0,
+        "tp": 4397.0,
+        "tp2": 4394.0,
+        "lot": 0.0,
+        "rr_ratio": 0.2,
+        "tps": [
+          4397.0,
+          4394.0,
+          4391.0,
+          4388.0,
+          4385.0,
+          4382.0,
+          4370.0
+        ],
+        "ladder_rr": 0.89,
+        "order_type": "market",
+        "confidence": 0.85,
+        "warnings": []
+      }
+    }
   }
 ]

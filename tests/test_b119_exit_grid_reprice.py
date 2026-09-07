@@ -158,7 +158,12 @@ class TestB119LedgerShape(unittest.TestCase):
 class TestB119ArmIdentity(unittest.TestCase):
     """b66b's winner was not the arm it was named for. Measured, not asserted."""
 
-    def test_pre_b109_trade_dict_makes_the_live_share_fn_constant(self):
+    def test_b122_pre_b109_trade_dict_makes_the_live_share_fn_constant(self):
+        # NAME-CARRIER for b122 (b102's discipline: a filed item lives in a
+        # test name, not only in a commit message). b122's rule — verify an arm
+        # is the rule it is named for — IS this class: the census below replays
+        # the live share function over the real signals under the OLD trade-dict
+        # shape and shows the histogram collapses to one value.
         for leg in LEGS:
             ai = LED[leg]["arm_identity"]
             self.assertTrue(ai["pre_b109_is_constant_1.0"],
@@ -439,22 +444,24 @@ class TestB119NoLiveChangeShipped(unittest.TestCase):
     def test_the_flat_share_candidate_is_still_an_unwired_todo(self):
         # The reversal is a FINDING, not a change. b119 itself is DONE (its
         # measurement shipped), so the thing that must stay open is the DECISION
-        # it produced: b121, the round that would rewire live's partial share.
-        # If someone wires flat-0.30 (or anything else) into live without that
-        # round, this fires and the backlog gets edited in the open rather than
-        # behind a stale pin. (The first draft of this test pinned
-        # "- [ ] b119" instead — i.e. the item's own todo marker — which
-        # contradicted step 3 of the run and went RED the moment the item was
-        # marked done, exactly the b114 lesson about punishing the fix.)
+        # it produced. This pin has moved twice, both times in the open:
+        #   draft 1 rode "- [ ] b119" (its own item) and went red at step 3;
+        #   draft 2 rode "- [ ] b121", which b121's own run closed (the
+        #           replication shipped: flat_0.30 holds on two fresh windows);
+        #   now it rides b123, the round that must decompose the share axis from
+        #           the breakeven/trail axis before ANY wiring proposal exists.
+        # b121's own test file pins the same state, so the carrier cannot be
+        # quietly dropped: deleting either one leaves the other.
         text = open(os.path.join(ROOT, "data", "ops",
                                  "autopilot_backlog.md")).read()
         self.assertIn("- [x] b119", text,
                       "b119's measurement is shipped and its ledger is in the "
                       "repo — the done marker is the record of that")
-        self.assertIn("- [ ] b121", text,
-                      "b121 (the flat_0.30 candidate round) is closed but no "
-                      "live exit change was made in this repo — if the wiring "
-                      "happened, delete this pin IN THE OPEN with the change")
+        self.assertIn("- [ ] b123", text,
+                      "b123 (the share-vs-BE/trail decomposition that must "
+                      "precede any wiring decision) is closed but no live exit "
+                      "change was made in this repo — if the wiring happened, "
+                      "delete this pin IN THE OPEN with the change")
 
 
 if __name__ == "__main__":
