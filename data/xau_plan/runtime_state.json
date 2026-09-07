@@ -1,6 +1,6 @@
 {
-  "active_plan_id": "xau-6005c9e8",
+  "active_plan_id": "xau-57709930",
   "last_step": "monitor",
-  "last_report_key": "reassess:xau-6005c9e8",
-  "last_monitor_action": "wait_for_trigger"
+  "last_report_key": "reassess:xau-57709930",
+  "last_monitor_action": "place_buy_stop"
 }

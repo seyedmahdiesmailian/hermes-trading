@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-07T11:24:34.623564+00:00",
+ "last_run_utc": "2026-09-07T14:30:02.570881+00:00",
  "recent_commits": [
+  "b762f2f autopilot: b127 producer-reproduction tests for frozen ledgers (18 checks, 9 producers, all exact)",
   "afd44e2 autopilot: runtime state files from the post-b118b live cycle (rc=0, no_trade)",
   "732c229 autopilot: b118b lane re-decision on live-parity numbers + the dead b108 producer path it exposed (redeide_b70 typo, never ran since 3003cbb; artifact vindicated by executing its own merit_bar/redecide_b70; b126 dead-path scan ships as the cheap defence; b70 answer holds and firms \u2014 no lane earns a slot, h4pdh 2/4->1/4; new todo b127 producer-reproduction tests)",
   "b1c4ed5 harvest: b123 protection/share decomposition \u2014 finish the abandoned round (engine dials protection_mode+time_stop_gate additive, defaults byte-identical; file b124/b125 todos + b125 name-carrier pin; fix the one-sided trade-count pin that contradicted its own ledger; refresh b93 live_record after storage.py pruning)",
-  "a46be24 autopilot: runtime state files from the post-harvest live cycle (rc=0, no_trade)",
-  "ea1efb3 autopilot: backlog note for the b121 harvest"
+  "a46be24 autopilot: runtime state files from the post-harvest live cycle (rc=0, no_trade)"
  ]
 }

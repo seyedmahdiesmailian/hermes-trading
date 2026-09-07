@@ -41,7 +41,7 @@ class TestB127ProducerReproduction(unittest.TestCase):
         labels = [fn.__name__ for fn in b127.CHECKS]
         self.assertEqual(len(labels), len(set(labels)), "duplicate check names")
         for want in ("b81", "b108", "b114", "b118b", "b118", "b119",
-                     "b121b", "b121c", "b121", "b123"):
+                     "b121b", "b121c", "b121", "b123", "b129"):
             self.assertTrue(any(want in l for l in labels),
                             f"no b127 check covers producer {want}")
 

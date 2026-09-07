@@ -95,6 +95,82 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       delete it (b102's rule). Also decide whether trail_floor should default
       ON in the harness (live-parity says yes; the whole stored ledger says no —
       b110's neutrality test must run before the bar moves).
+- [x] b129 TRADER RESEARCH (b107 exit side) — THE LIVE 36h TIME EXIT HAS NEVER
+      BOUND ON THE FUNNEL'S OWN TRADES, AND TIGHTENING IT IS ONE-SIDEDLY WORSE
+      (the b57 grid re-priced on the corrected engine, 2026-09-07). DONE
+      2026-09-07: scripts/b129_timestop_reprice.py + ledger data/backtest/
+      b129_timestop_reprice.json — 7 stops (0/8/16/24/48/96/144 M15 bars, 144
+      DERIVED from live's 36h via lh.live_time_stop_bars, never a literal) x the
+      TWO b123 time-exit gates, on cached + W1..W6, one harness, share dial
+      HELD at live's grade fn. Integrity: the ts_144 @ no_partial cell is
+      byte-identical to b121's and b123's incumbent rows on all seven legs
+      (raises otherwise). FINDINGS: (1) THE GUARD IS INERT — ts_0 (no time exit
+      at all) differs from the live 144 by EXACTLY 0.000R on all seven legs and
+      holds_over_time_exit is 0 everywhere (max hold 49..112 bars vs a 144-bar
+      exit, mean 8.0-11.2): across ~33,000 bars of live-parity replay the 36h
+      exit has never once closed a funnel trade. That is NOT an argument to
+      delete it — it is a stuck-position safety net, and the lab counts BAR age
+      while live counts WALL-CLK age (weekend gaps make those different rules) →
+      filed b130. Anti-vacuity pinned: the same grid DOES bite (96 bars moves
+      W4 by +0.006R, 8 bars moves 5/6 windows), so the zeros are a property of
+      the population, not of the code. (2) B57'S DIRECTION SURVIVES THE ENGINE
+      FIX — a 2h exit loses on 5 of 6 real windows (-0.024..-0.057R, mean
+      -0.031R), one-sided under b123's rule AND with both fresh windows
+      agreeing. (3) The only one-sidedly BETTER arm is ts_48 (12h) at +0.003R
+      mean / 0.009R max — an order of magnitude under b119's 0.10R ceiling: NO
+      LEVER, the incumbent stays. (4) THE RUNNER EXEMPTION IS INERT ACROSS THE
+      WHOLE GRID, not just at 144 as b123 measured at one arm: the two gates
+      never disagree about where the optimum sits on any leg and the largest
+      age_only-minus-no_partial gap anywhere is 0.006R — b124's parity question
+      is now measured at 14 stops instead of one. TOOLING FINDING (b130's
+      carrier): b123's one_sided() is a >=3/4 majority with <=1 dissent, which
+      is right when every leg produces a non-zero delta, but neutrality() can
+      only count non-zero legs, so on an INERT grid a single +0.006 with five
+      exact zeros passes as unanimous — ts_96 is flagged one_sided on precisely
+      that shape. b123's shipped flags are UNTOUCHED (b127 reproduces them;
+      editing the predicate would move a frozen ledger), so the corrected rule
+      lives here as one_sided_strict()/the "unanimous" flag — proportion PLUS a
+      minimum-evidence floor (>= half the windows, never fewer than 3, non-zero)
+      — and is pinned BOTH ways: ts_96 loses its flag, ts_8 and ts_48 keep
+      theirs. b128's ship-time rule applied to this round's own ledger:
+      check_b129_derived_blocks registers integrity + all six derived blocks in
+      scripts/b127_producer_reproduction.py::CHECKS (19/19 reproductions exact;
+      the measurement half is pinned by cross-ledger integrity, not re-run —
+      b127's "say which half you pin"). NOTHING WIRED: engines/legacy_guards.py
+      and engines/backtest.py untouched; a live time-stop retune is an
+      exit-behaviour change = human gate (b89 class). 14 tests in
+      tests/test_b129_timestop_reprice.py. HARVEST NOTE (this run): the round
+      was left UNCOMMITTED by a dead run — 2 tests red (b42 untracked
+      scripts/b129_timestop_reprice.py + tests/test_b129_timestop_reprice.py;
+      b103 phantom: the prose filed "b130" which existed nowhere), and b128's
+      registration was missing. Fixed by landing the files, filing b130 with
+      its name-carrier (test_b130_a_single_non_zero_leg_is_not_one_sided_evidence)
+      and adding the b129 check. No measurement re-run, no live change.
+- [ ] b130 TRADER PARITY NOTE — THE LAB'S TIME EXIT COUNTS BAR AGE, LIVE'S
+      COUNTS WALL-CLK AGE, AND THE NEUTRALITY PREDICATE NEEDS A DENOMINATOR
+      (filed by b129, 2026-09-07): two halves. (a) PARITY: b129 found the live
+      36h exit is inert on the funnel's trades measured in BARS (max hold 112
+      vs 144), but engines/legacy_guards.evaluate_time_exit measures
+      wall-clock hours, and XAUUSD is closed Sunday night and over holiday
+      gaps, so a position held across a weekend accrues age the lab cannot see
+      — the two rules coincide only because the funnel's holds are short, not
+      because they are the same guard. Before ANY retune of
+      MAX_POSITION_AGE_HOURS, re-run the grid on a bar series with the weekend
+      gap modelled (or measure live's own journal holds) and state which clock
+      the decision rests on. (b) PREDICATE: b123's one_sided() fixed the n=7
+      tautology but says nothing about the DENOMINATOR — on a grid where most
+      arms are byte-identical to the incumbent, one non-zero leg is a 100%
+      majority with zero dissent. b129's one_sided_strict() (proportion PLUS
+      >= max(3, half the windows) non-zero legs) is the corrected shape and
+      lives in scripts/b129_timestop_reprice.py; the generalisation is that any
+      future grid whose arms can be INERT must report n_nonzero next to the
+      flag, not just pos/neg. b123's shipped predicate is deliberately NOT
+      edited (b127 reproduces its frozen ledger's flags), so when this ships,
+      the b123 ledger's _neutrality block must be re-derived in the same commit
+      and its pins EDITED, not deleted. Name-carrier:
+      tests/test_b129_timestop_reprice.py::
+      TestB130OneSidedNeedsNonZeroEvidence::
+      test_b130_a_single_non_zero_leg_is_not_one_sided_evidence.
 - [ ] b120 MEASUREMENT PROCEDURE — "THE DELTA IS NOISE" IS NOT "THE HEADLINE
       STANDS" (reusable rule from b118, 2026-09-07): b109 shipped a backtest
       engine change (LADDER_FIELDS into the trade dict), measured its own effect
@@ -813,6 +889,16 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       (A-trailing variants, time-stops, news-veto) and MEASURE exp_R/DD in
       the lab on cached+fresh sets. Report numbers; wire nothing without the
       b68 merit bar.
+      PROGRESS 2026-09-07: the TIME-STOP leg of this mandate is DONE and
+      reported — b129 re-priced the whole b57 grid on the corrected live-parity
+      engine over cached+W1..W6 and found the live 36h exit INERT (0.000R for
+      removing it entirely), tightening one-sidedly worse, and no arm above
+      b119's 0.10R ceiling. The A-TRAILING leg was measured by b117 (grid FLAT)
+      and the TP-LADDER legs by b119/b121/b123. What remains unmeasured under
+      this mandate: the NEWS-VETO leg (engines/legacy_guards.evaluate_news_lock
+      — b31 fixed its shape, no round has ever priced whether the veto earns its
+      keep on the funnel) and any exit method from the literature not yet in the
+      lab. Keep this item open until the news-veto is priced.
 - [ ] b110 RESEARCH PROCEDURE — PRICE AN ENGINE FIX BY ITS NEUTRALITY, NOT JUST
       ITS LEVEL (reusable procedure from b108, 2026-09-06): when a backtest
       engine defect is fixed, re-running the baseline is only half the job.

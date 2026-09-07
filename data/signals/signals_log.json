@@ -2173,5 +2173,307 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-09-07T12:22:08.349916+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n92 و 87 خرید\nاستاپ 82\nتی پی 97 ، 402 ، 7 ، 12 ، 17",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4392.0,
+      "entries": [
+        4392.0,
+        4387.0
+      ],
+      "sl": 4382.0,
+      "tp": 4397.0,
+      "tp2": 4402.0,
+      "lot": 0.0,
+      "rr_ratio": 0.5,
+      "tps": [
+        4397.0,
+        4402.0,
+        4407.0,
+        4412.0,
+        4417.0
+      ],
+      "ladder_rr": 1.5,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_conflict",
+        "hermes_says_bearish_signal_says_buy",
+        "poor_rr_0.5"
+      ],
+      "score": 2.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4392.0,
+        "entries": [
+          4392.0,
+          4387.0
+        ],
+        "sl": 4382.0,
+        "tp": 4397.0,
+        "tp2": 4402.0,
+        "lot": 0.0,
+        "rr_ratio": 0.5,
+        "tps": [
+          4397.0,
+          4402.0,
+          4407.0,
+          4412.0,
+          4417.0
+        ],
+        "ladder_rr": 1.5,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T12:34:56.066726+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\nهدف اول تاچ شد \n50 پیپ سود 🟢",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4450.0,
+      "entries": [
+        4450.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4450.0,
+        "entries": [
+          4450.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.6,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T12:47:36.832898+00:00",
+    "raw_text": "[💬 از Gold Trader Mo (GTMO)]\n•Live Trade , Live Performance\n👊🏽🧻\nthe name of the game is consistency!! \n\n✔️Smart Capital Management📈\n✔️Disciplined Risk Control📈\n✔️Elite Trading Skills📊\n✔️Precision Entry & Strategy\n✔️100% Hands-Free Growth\n✔️Safety-First Approach\n✔️Transparent Performance\n🤑🔥\n\n• PROFIT RUNNING :-6203$+🧻\n\nFOR MANAGEMENT SERVICE 📈 DM IMMEDIATELY TO BOOK YOUR SLOT ⤵️\n\n✈️**FOREX EXPERTS TEAM**✅",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4100.0,
+      "entries": [
+        4100.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.65,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4100.0,
+        "entries": [
+          4100.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.65,
+        "warnings": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T13:44:47.860166+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\nهدف سوم تاچ شد \n150 پیپ سود 🟢",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 4150.0,
+      "entries": [
+        4150.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.6,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 4150.0,
+        "entries": [
+          4150.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.6,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-07T14:21:21.670700+00:00",
+    "raw_text": "[💬 از RADIN VIP NEW ⚡]\n8 و 18 فروش\nاستاپ 28\nتی پی 398 ، 88 ، 78 ، 68 ، 58",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "SELL",
+      "entry": 4418.0,
+      "entries": [
+        4418.0,
+        4408.0
+      ],
+      "sl": 4428.0,
+      "tp": 4398.0,
+      "tp2": 4388.0,
+      "lot": 0.0,
+      "rr_ratio": 2.0,
+      "tps": [
+        4398.0,
+        4388.0,
+        4378.0,
+        4368.0,
+        4358.0
+      ],
+      "ladder_rr": 4.0,
+      "order_type": "market",
+      "confidence": 0.8,
+      "warnings": [
+        "symbol_defaulted_xauusd"
+      ]
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "high_confidence",
+        "direction_conflict",
+        "hermes_says_bullish_signal_says_sell",
+        "excellent_rr_2.0",
+        "already_in_position"
+      ],
+      "score": 4.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "SELL",
+        "entry": 4418.0,
+        "entries": [
+          4418.0,
+          4408.0
+        ],
+        "sl": 4428.0,
+        "tp": 4398.0,
+        "tp2": 4388.0,
+        "lot": 0.0,
+        "rr_ratio": 2.0,
+        "tps": [
+          4398.0,
+          4388.0,
+          4378.0,
+          4368.0,
+          4358.0
+        ],
+        "ladder_rr": 4.0,
+        "order_type": "market",
+        "confidence": 0.8,
+        "warnings": [
+          "symbol_defaulted_xauusd"
+        ]
+      }
+    }
   }
 ]

@@ -29,6 +29,8 @@ WHAT IS CHECKED (24 reproductions, all pure post-processing — no funnel replay
   b121c ratios(led) == led["_ratio"]
   b123  integrity(), decomposition(), neutrality(), all four share_curve()
         blocks and arm_identity_live_share()
+  b129  integrity() + deltas/neutrality/best_per_gate/gate_gap/verdict
+        (b128's ship-time rule applied to the newest frozen ledger)
   b114  import_closure() and changed_files() re-derived from the ledger's OWN
         recorded boot commit and head (so the drift claim is arithmetic on git,
         not prose)
@@ -67,6 +69,7 @@ LEDGER_121 = os.path.join(BT, "b121_flat_share_replication.json")
 LEDGER_121B = os.path.join(BT, "b121b_share_sweep.json")
 LEDGER_121C = os.path.join(BT, "b121c_partial_call_census.json")
 LEDGER_123 = os.path.join(BT, "b123_protection_share_decomposition.json")
+LEDGER_129 = os.path.join(BT, "b129_timestop_reprice.json")
 
 
 def _load(path: str) -> dict:
@@ -329,6 +332,36 @@ def check_b114_drift_is_arithmetic() -> str:
     return f"b114 closure + drift set ({n} daemons)"
 
 
+def check_b129_derived_blocks() -> str:
+    """b128's ship-time rule applied to the b129 ledger: every DERIVED block
+    (integrity, deltas, neutrality, best_per_gate, gate_gap, verdict) is
+    re-computed from the ledger's own grid by the producer's pure functions.
+    The measurement half (14 arms x 7 legs of funnel replay) is NOT re-run —
+    pinned by its own cross-ledger integrity check instead (b127's rule: say
+    which half a check pins)."""
+    from scripts import b129_timestop_reprice as b129
+    led = _load(LEDGER_129)
+    step1 = _load(LEDGER_121)
+    step3 = _load(LEDGER_123)
+    integ = b129.integrity(led, step1, step3)
+    assert {k: all(v.values()) for k, v in integ.items()} == \
+           {k: all(v.values()) for k, v in led["_integrity"].items()}, \
+        "b129.integrity() disagrees with _integrity — the incumbent no longer " \
+        "reproduces b121/b123, so every delta in this ledger is a splice"
+    assert all(all(v.values()) for v in integ.values()), \
+        "b129.integrity() now FAILS on the shipped ledger"
+    for fn, key in ((b129.deltas, "_delta_exp_R"),
+                    (lambda l: b129.deltas(l, "net_R"), "_delta_net_R"),
+                    (lambda l: b129.deltas(l, "maxDD_R"), "_delta_maxDD_R"),
+                    (b129.neutrality, "_neutrality"),
+                    (b129.best_per_gate, "_best_per_gate"),
+                    (b129.gate_gap, "_gate_gap"),
+                    (b129.verdict, "_verdict")):
+        got = fn(led)
+        assert got == led[key], f"b129 producer {key} no longer reproduces"
+    return f"b129 integrity + 6 derived blocks ({len(led['_neutrality'])} arms)"
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -348,6 +381,7 @@ CHECKS = (
     check_b118b_redecide_and_margins,
     check_b108_producer_still_alive,
     check_b114_drift_is_arithmetic,
+    check_b129_derived_blocks,
 )
 
 
