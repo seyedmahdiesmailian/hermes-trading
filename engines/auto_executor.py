@@ -41,7 +41,15 @@ STYLE_RISK_MULT = {
     "aggressive_value_entry": 0.5,
 }
 STOP_TRADING_REGIMES = {"locked"}   # regimes that block new trades
-TIGHT_REGIMES = {"defensive"}       # reduced sizing regimes
+# b136: "recovery" was MISSING here. engines/risk.assess_account_policy emits
+# four regimes and hands back a risk_multiplier, but the entry path never reads
+# that field — it gates sizing off this set alone (see Check 6 sizing below).
+# So the account-health policy's most cautious tradeable state (drawdown >= 2.5%)
+# was sizing entries at FULL risk, i.e. larger than "defensive". Adding it is a
+# strict TIGHTENING (0.5x, matching the policy's own 0.5 multiplier), never a
+# loosening. scripts/b136_regime_wiring_census.py re-derives the set from the
+# policy emitter and fails loudly if a future regime is born unwired again.
+TIGHT_REGIMES = {"defensive", "recovery"}   # reduced sizing regimes
 
 
 def _now() -> datetime:

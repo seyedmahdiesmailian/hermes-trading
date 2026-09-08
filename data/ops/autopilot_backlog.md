@@ -47,6 +47,32 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b137 REUSABLE PROCEDURE — WIRING CENSUS: EVERY VALUE A POLICY MODULE EMITS
+      MUST BE CONSUMED BY THE PATH IT CLAIMS TO CONTROL (from b136, 2026-09-08):
+      b136 found "recovery" because risk.py computes a risk_multiplier that
+      auto_executor never reads — the two modules agreed on a VOCABULARY
+      (regime names) but not on a CONTRACT (who consumes which field). RULE:
+      for each policy/decision module pair on the live path (risk->sizing,
+      defcon->risk_override, learning->min_rr/risk_mult, calendar->blackout),
+      run a census that (a) DISCOVERS the emitter's output range by calling the
+      real function over branch-hitting probes — never by restating literals
+      (b109/b122), (b) feeds each emitted value through the real consumer and
+      asserts the observable (lot, gate verdict) actually MOVES, and (c) walks
+      real history to report how often each state fires, so an unwired state is
+      ranked by exposure, not just existence. Template:
+      scripts/b136_regime_wiring_census.py + tests/test_b136_regime_wiring.py.
+      Next un-censused pair by b136's own ledger: learning.py's risk_mult vs
+      STYLE_RISK_MULT vs the new TIGHT_REGIMES multiplier — three independent
+      shrink factors multiply into one risk_pct with no test pinning the
+      COMBINED floor; check they can't stack below the broker's
+      min_meaningful_lot and silently zero out the lane (sizing_too_small is a
+      skip, not a trade — but a permanently-too-small lane is dead code that
+      looks alive). SECOND b136 leftover, same class: signal_listener builds
+      its account_policy with regime hardcoded to "normal" (or "halted" from
+      the kill-switch) — so the SIGNAL lane never sees defensive/recovery at
+      all and b136's tightening only bites the plan lane. Wiring drawdown
+      regimes into the signal lane is a TIGHTENING and allowed; do it with a
+      census-style test, not by hand.
 - [ ] b135 MEASUREMENT PROCEDURE — A DECISION TRIGGER MUST NOT OR A SIGN TEST
       WITH A MAGNITUDE TEST (reusable rule from b124, 2026-09-07): b124's
       wording was "the pin fires if the exemption moves the bar ONE-SIDED **or**
@@ -3219,6 +3245,24 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   plus 2 regression tests (76 green).
 
 ## Done
+- [x] 2026-09-08 b136 TRADER CODE REVIEW — ACCOUNT-HEALTH POLICY WAS EMITTING A
+      REGIME THE SIZING PATH IGNORED (fresh review round; top todos were [META]
+      or human-gated): engines/risk.assess_account_policy can emit four regimes
+      with a risk_multiplier, but the live entry path never reads that field —
+      sizing gates off the literal sets STOP/TIGHT_REGIMES in auto_executor
+      alone, and "recovery" (drawdown >= 2.5%) was in NEITHER: at the deepest
+      account stress the bot sized entries at FULL 2% risk, LARGER than
+      "defensive" (0.5x). Fix = add "recovery" to TIGHT_REGIMES (strict
+      tightening, matches the policy's own 0.5 multiplier; normal path
+      bit-identical). Proof: scripts/b136_regime_wiring_census.py walks the real
+      202-cycle deal history (regimes fired: normal 170, defensive 32 — recovery
+      never yet fired, so this was a loaded gun, not an active loss) and
+      DISCOVERS the emittable set from the policy function, then runs the real
+      evaluate_proposal per regime; verdict flipped
+      UNWIRED_REGIME_PRESENT:recovery -> ALL_EMITTABLE_REGIMES_WIRED. 6 new
+      tests (tests/test_b136_regime_wiring.py) pin wiring+ordering, red on the
+      old code (3 failures), green after. Filed b137 (the reusable wiring-census
+      procedure).
 - [x] 2026-09-06 b105 TRADER CODE REVIEW — trade_management.py vs LIVE JOURNAL:
       ladder branches walked against the journal + watchdog log; FOUND A CORE
       BACKTEST PARITY DEFECT — engines/backtest.py booked the post-TP1 runner at

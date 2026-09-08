@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-07T22:29:18.988531+00:00",
+ "last_run_utc": "2026-09-07T23:30:03.395901+00:00",
  "recent_commits": [
+  "fa4d21a autopilot: b91 sweep test \u2014 shared-state claim removed (b96 class); main+alive-owner invariants pinned",
+  "ef34496 autopilot: b124 gate-exemption census \u2014 exemption spares 14/32 wall-old winners, cost 0.003R, trigger fixed to conjunction",
   "0d04314 autopilot: file b134 [META] \u2014 b50-only-failure triage rule (HEAD is wrong, tree is right; commit-then-reverify, never revert good tree work)",
   "ef89fe7 autopilot: b133 done-note + b107 closed (news-veto leg priced: \u00b130min one-sided NEGATIVE -0.0094R mean, no lever, veto stays insurance)",
-  "05a61f9 harvest: b133 \u2014 CDX prefix re-query deepens event archive to 2025-01-19 (145 snaps, 5043 ev, 303 high USD/XAU, all 7 legs covered); veto re-priced: \u00b130min one-sided NEGATIVE mean -0.0094R, no lever; b131 ledger registered in b127 CHECKS; fixed b131 test-file phantom citation (the BROKEN-HEAD cause); fetcher retry/404-split + span-based archive picker",
-  "5a02ea7 autopilot: b132 real event-calendar archive (Wayback FF feed) + news-veto re-priced; lever_test guard; b127 check registered",
-  "abf7c68 autopilot: b131 price the news-veto on the funnel (veto dial + clock fields + inert finding)"
+  "05a61f9 harvest: b133 \u2014 CDX prefix re-query deepens event archive to 2025-01-19 (145 snaps, 5043 ev, 303 high USD/XAU, all 7 legs covered); veto re-priced: \u00b130min one-sided NEGATIVE mean -0.0094R, no lever; b131 ledger registered in b127 CHECKS; fixed b131 test-file phantom citation (the BROKEN-HEAD cause); fetcher retry/404-split + span-based archive picker"
  ]
 }
