@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-08T00:30:02.971508+00:00",
+ "last_run_utc": "2026-09-08T02:30:02.715148+00:00",
  "recent_commits": [
+  "ec65eca autopilot: b137 shrink-stack census - double-count at 0.25x, dead floor lane, style leg un-persisted (b138/b139/b140 filed)",
   "057376a autopilot: b136 wire recovery regime into TIGHT_REGIMES (sizing was full-risk at >=2.5% DD) + census script + 6 tests",
   "fa4d21a autopilot: b91 sweep test \u2014 shared-state claim removed (b96 class); main+alive-owner invariants pinned",
   "ef34496 autopilot: b124 gate-exemption census \u2014 exemption spares 14/32 wall-old winners, cost 0.003R, trigger fixed to conjunction",
-  "0d04314 autopilot: file b134 [META] \u2014 b50-only-failure triage rule (HEAD is wrong, tree is right; commit-then-reverify, never revert good tree work)",
-  "ef89fe7 autopilot: b133 done-note + b107 closed (news-veto leg priced: \u00b130min one-sided NEGATIVE -0.0094R mean, no lever, veto stays insurance)"
+  "0d04314 autopilot: file b134 [META] \u2014 b50-only-failure triage rule (HEAD is wrong, tree is right; commit-then-reverify, never revert good tree work)"
  ]
 }

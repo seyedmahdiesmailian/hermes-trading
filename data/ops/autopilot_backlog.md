@@ -47,7 +47,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b140 TRADER WIRING — SIGNAL LANE NEVER SEES DRAWDOWN REGIMES (b137's
+- [x] b140 TRADER WIRING — SIGNAL LANE NEVER SEES DRAWDOWN REGIMES (b137's
       second leftover, 2026-09-08): signal_listener builds account_policy with
       regime hardcoded "normal" (or "halted" from the kill-switch) — so
       defensive/recovery sizing and STOP_TRADING_REGIMES only bite the PLAN
@@ -56,6 +56,38 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       (allowed), but must ship census-style: probe each regime through the
       real evaluate_signal/executor path and assert the observable moves
       (b136/b137 template), not a hand-typed literal.
+      DONE 2026-09-08 (scripts/b140_signal_lane_regime_census.py +
+      tests/test_b140_signal_lane_regime.py, 13 tests). FINDING THAT CORRECTS
+      b137'S PREMISE: the lane builds TWO policies — run_signal_check already
+      feeds the REAL assess_account_policy regime to the SIZER (locked blocked,
+      defensive/recovery shrank the lot through the real path BEFORE this
+      change), so "trades at full size at 3% drawdown" was false; only the
+      SCORER (check_signals -> evaluate_signal) was blind (hardcoded normal).
+      FIX (tightening only): check_signals now ANDs the real policy's
+      trade_allowed with the kill-switch verdict and passes the real regime
+      name through (kill-switch halt still wins the name); emitter failure is
+      fail-CLOSED to policy_error, never silent normal. Post-fix census: 0
+      blind arms, scorer sees real regime on all 6. SIDE FINDING (filed b141):
+      the first cycle of every UTC day classifies the account "normal" no
+      matter what yesterday did — compute_performance_state's day-rollover
+      zeroes daily_pnl/loss_streak (cold-start column in the census ledger).
+- [ ] b141 TRADER WIRING — DAY-ROLLOVER BLIND WINDOW: FIRST CYCLE OF EVERY UTC
+      DAY CLASSIFIES THE ACCOUNT "normal" (filed by b140, 2026-09-08):
+      compute_performance_state returns daily_pnl=0.0/loss_streak=0 whenever
+      the stored day != today (b88 carried only recent_closed through the
+      rollover, deliberately NOT the two regime inputs), so for ONE cycle per
+      day both lanes see regime "normal" no matter what yesterday did — a
+      signal arriving in that window after a -3% day sizes at full risk.
+      Measured: b140 census ledger `arms[].lane.cold_start_regime` (every
+      deal-derived arm reads "cold"=normal, steady=defensive). FIX OPTIONS
+      (tightening-neutral, needs a census first): recompute yesterday's
+      daily_pnl from the 7-day deal feed on rollover instead of zeroing it,
+      or keep the zero but treat "cold state" as its own regime for sizing.
+      Do NOT simply widen the window to 24h — that changes DEFCON semantics.
+      b102 line: shipping this must EDIT b88's pins
+      (tests/test_b88_defcon_books.py::test_loss_streak_still_resets_on_rollover
+      and ::test_red_cannot_fire_on_a_rollover_cycle), edited not deleted — the
+      reset is a live boundary either way, so the flip has to be dated.
 - [ ] b139 TRADER OBSERVABILITY — execution_style IS NOT PERSISTED ANYWHERE
       (filed by b137, 2026-09-08): the style leg is the ONLY per-trade risk
       damper (STYLE_RISK_MULT 0.5 on aggressive_* entries), yet neither

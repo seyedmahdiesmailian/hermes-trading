@@ -326,6 +326,35 @@ def check_signals(bridge=None) -> list[dict]:
                 "open_positions": _open_ct,
                 "balance": float(acct.get("balance", 0) or 0),
             }
+            # b140 TIGHTENING: the regime used to be hardcoded "normal" here,
+            # so the SCORER never saw drawdown states (locked/defensive/
+            # recovery) even though the sizing lane (run_signal_check ->
+            # _performance_and_policy) did. Wire the real emitter in: kill-
+            # switch halt still wins the NAME ("halted"), but trade_allowed is
+            # now the AND of both gates, and a locked account costs the -5.0
+            # penalty in evaluate_signal's Check 6 exactly like the plan lane.
+            try:
+                from engines.risk import assess_account_policy as _assess
+                _real_pol = _assess(
+                    balance=float(acct.get("balance", 0) or 0),
+                    equity=float(acct.get("equity", 0) or 0),
+                    free_margin=float(acct.get("margin_free", 0) or 0),
+                    margin=float(acct.get("margin", 0) or 0),
+                    daily_pnl=float(_perf.get("daily_pnl", 0) or 0),
+                    loss_streak=int(_perf.get("loss_streak", 0) or 0),
+                    open_positions=_open_ct)
+                account_policy["trade_allowed"] = bool(
+                    account_policy["trade_allowed"]
+                    and _real_pol.get("trade_allowed", True))
+                if not _kill.get("halted", False):
+                    account_policy["regime"] = _real_pol.get("regime", "normal")
+            except Exception as _ae:
+                # fail-CLOSED: an uncomputable regime must not silently
+                # downgrade to "normal" — block like the outer handler does.
+                account_policy = {
+                    "trade_allowed": False, "regime": "policy_error",
+                    "open_positions": 0, "balance": 0,
+                    "policy_error": f"regime:{str(_ae)[:180]}"}
         except Exception as e:
             # b29 FAIL-CLOSED: if the kill-switch/account check itself errors,
             # the previous behavior fell back to trade_allowed=True — a broken

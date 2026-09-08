@@ -89,6 +89,13 @@ ALLOWED = {
     ('test_failclosed_news_spread.py', 'engines.storage.append_execution_log',
      'hermes_runtime'):
         'same as load_current_plan.',
+    ('test_b140_signal_lane_regime.py', 'engines.risk.assess_account_policy',
+     'hermes_runtime'):
+        'patch targets signal_listener.check_signals\'s LAZY b140 import (the '
+        'fail-closed path under test); the sizer\'s module-level binding in '
+        'hermes_runtime stays real because BOTH this test file and the census '
+        'module import hermes_runtime up front, so the patch can never poison '
+        'it even when this file runs alone.',
 }
 
 
