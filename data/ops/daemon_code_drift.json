@@ -1,12 +1,12 @@
 {
   "_note": "b114: does each long-lived trading daemon run the code at HEAD? Python binds at import, so a committed change to the live ladder is inert until the service restarts.",
-  "_generated_at": "2026-09-07T10:36:11.574119+00:00",
-  "head": "b1c4ed5b779f1f7bcff94bb312a676f1ac04364f",
+  "_generated_at": "2026-09-08T10:12:03.687338+00:00",
+  "head": "56c3344a686975ad78e795be6ed9677ed057e752",
   "daemons": {
     "position_daemon.py": {
       "running": true,
       "started_utc": "2026-09-03T14:45:01+00:00",
-      "stale_hours": 91.9,
+      "stale_hours": 115.5,
       "boot_commit": {
         "sha": "29bebc4d4f6f4d278a7dbee86ee7ba3025d9f4fb",
         "committed_at": "2026-09-03T14:37:34+03:30"
@@ -40,6 +40,8 @@
         {
           "file": "engines/auto_executor.py",
           "commits_since_boot": [
+            "848e4de 2026-09-08T07:57:15+03:30",
+            "057376a 2026-09-08T03:54:20+03:30",
             "df4e9d8 2026-09-07T05:55:13+03:30"
           ]
         },
@@ -52,6 +54,8 @@
         {
           "file": "engines/learning.py",
           "commits_since_boot": [
+            "56c3344 2026-09-08T13:40:36+03:30",
+            "0fe6834 2026-09-08T11:44:14+03:30",
             "6b65ef1 2026-09-05T00:57:57+03:30"
           ]
         },
@@ -82,7 +86,7 @@
     "signal_daemon.py": {
       "running": true,
       "started_utc": "2026-09-04T18:44:16+00:00",
-      "stale_hours": 63.9,
+      "stale_hours": 87.5,
       "boot_commit": {
         "sha": "9762faea91e10b7698bb0786b08c76669a313f2f",
         "committed_at": "2026-09-04T21:31:34+03:30"
@@ -124,6 +128,8 @@
         {
           "file": "engines/auto_executor.py",
           "commits_since_boot": [
+            "848e4de 2026-09-08T07:57:15+03:30",
+            "057376a 2026-09-08T03:54:20+03:30",
             "df4e9d8 2026-09-07T05:55:13+03:30"
           ]
         },
@@ -136,6 +142,8 @@
         {
           "file": "engines/learning.py",
           "commits_since_boot": [
+            "56c3344 2026-09-08T13:40:36+03:30",
+            "0fe6834 2026-09-08T11:44:14+03:30",
             "6b65ef1 2026-09-05T00:57:57+03:30"
           ]
         },
@@ -154,6 +162,9 @@
         {
           "file": "engines/signal_listener.py",
           "commits_since_boot": [
+            "1fc110b 2026-09-08T10:36:12+03:30",
+            "848e4de 2026-09-08T07:57:15+03:30",
+            "42cfc1d 2026-09-08T06:26:02+03:30",
             "c32f4e8 2026-09-04T22:14:17+03:30"
           ]
         },
@@ -162,6 +173,13 @@
           "commits_since_boot": [
             "1698e7d 2026-09-07T03:47:27+03:30",
             "c32f4e8 2026-09-04T22:14:17+03:30"
+          ]
+        },
+        {
+          "file": "engines/storage.py",
+          "commits_since_boot": [
+            "1fc110b 2026-09-08T10:36:12+03:30",
+            "848e4de 2026-09-08T07:57:15+03:30"
           ]
         },
         {
@@ -174,6 +192,8 @@
         {
           "file": "hermes_runtime.py",
           "commits_since_boot": [
+            "1fc110b 2026-09-08T10:36:12+03:30",
+            "848e4de 2026-09-08T07:57:15+03:30",
             "df4e9d8 2026-09-07T05:55:13+03:30",
             "d3a0ba0 2026-09-07T02:27:34+03:30"
           ]

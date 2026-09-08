@@ -122,6 +122,22 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       engines.learning.group_positions (the ONE net formula b152 pinned) for
       the money columns; keep the row list for recency display. Label
       "Net P&L" must then actually mean net.
+- [ ] b155 TRADER OPS — DASHBOARD PROCESS IS A DRIFT BLIND SPOT; b154'S FIX
+      IS INERT UNTIL IT REBOOTS (filed by b154, 2026-09-08): b114's census
+      tracks ONLY position_daemon/signal_daemon and its comment claims
+      "hermes_master runs from cron every 15 min ... only the daemons are" a
+      risk — but scripts/dashboard_bot.py is a THIRD long-lived process
+      (`/usr/bin/python3 .../scripts/dashboard_bot.py`, ps start 2026-08-31,
+      8 days) that imports notifier.dashboards at module level and renders
+      every ops panel from a `while True: sleep(5)` loop. So the operator's
+      phone has been showing the PRE-b152, PRE-b154 view for a week, and
+      b154's net-stats fix is committed-but-INERT there exactly like b115's
+      trail. FIX: add dashboard_bot.py to b114's DAEMONS map (entry
+      scripts/dashboard_bot.py, extra notifier/dashboards.py) so its drift
+      shows in data/ops/daemon_code_drift.json, then the operator decides
+      the restart window (autopilot does NOT restart it — hard rule).
+      Verify after reboot: panel shows ~+5.65$ net/29 positions, not
+      +17.89$/40 rows, and no "ناخالص" basis warning.
 - [x] b140 TRADER WIRING — SIGNAL LANE NEVER SEES DRAWDOWN REGIMES (b137's
       second leftover, 2026-09-08): signal_listener builds account_policy with
       regime hardcoded "normal" (or "halted" from the kill-switch) — so
