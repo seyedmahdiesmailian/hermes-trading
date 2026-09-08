@@ -100,8 +100,15 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       re-running scripts/b88_defcon_books.py (~50 min) and
       scripts/b89_window_contract.py in the same change, or those tests go
       red. Budget a full run for this item.
-- [ ] b143 TRADER OBSERVABILITY — risk_ledger.csv HAS NO READER YET (filed by
-      the b139 fix, 2026-09-08): the sidecar now records the per-trade shrink
+- [x] b143 TRADER OBSERVABILITY — risk_ledger.csv HAS NO READER YET (filed by
+      the b139 fix, 2026-09-08): DONE 2026-09-08 — scripts/b143_risk_ledger_reader.py
+      + tests/test_b143_risk_ledger_reader.py (16 tests). FINDING: the reader is
+      honest-zero today (ledger has 0 rows — b139 shipped same day, no executed
+      entry since), and writing the join exposed TWO defects filed as b144: the
+      sidecar has NO ticket column (signal lane unjoinable to realized P&L), and
+      the signal lane's post-stack channel cap is invisible to the row, so
+      lot-below-model must be bucketed by lane, not called a defect.
+      ORIGINAL BRIEF follows: the sidecar now records the per-trade shrink
       stack (style, regime, defcon, learning multipliers) from BOTH lanes, but
       nothing consumes it — an unwritten ledger is data, an unread one is
       theatre. Next step: a small audit script (b137-census shape) that joins
@@ -110,6 +117,33 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       and whether any trade's stack product disagrees with its logged
       risk_usd/lot). That turns b138's pending human decision from an argument
       into a table. Read-only; no gate may change.
+- [ ] b144 TRADER OBSERVABILITY — RISK LEDGER NEEDS A TICKET COLUMN (filed by
+      the b143 reader, 2026-09-08): RISK_LEDGER_FIELDS (engines/storage.py) has
+      plan_id but NO ticket, so a sidecar row cannot be joined to realized P&L
+      on its own. The plan lane survives via execution_log (plan_id is unique
+      per proposal), but EVERY signal-lane row carries plan_id='signal', so the
+      realized-damper question b138 needs — "did the 0.25x double-charge trade
+      actually lose less money?" — is unanswerable for the signal lane, which is
+      the lane that trades most. FIX: add `ticket` to RISK_LEDGER_FIELDS via the
+      b142 schema-migration rule (the sidecar is NEW, so the header regenerates
+      cleanly — but if any row exists by then, treat it as a migration, not an
+      extra key), and have both writers pass the ticket the executor returns.
+      b143's reader already handles the join both ways and will pick the column
+      up with no change. Additive/observability only: no gate may change.
+- [ ] b145 REUSABLE PROCEDURE — A READER THAT JOINS LIVE APPEND-ONLY CSVs MUST
+      EMBED ITS JOIN INPUTS (filed by the b143 reader, 2026-09-08): the b127
+      producer-reproduction contract says an audit artifact must be re-derivable
+      from its own contents. That is easy for a frozen backtest ledger and
+      IMPOSSIBLE for a reader that joins risk_ledger.csv to execution_log.csv and
+      trade_journal.csv, because those files keep growing under the reader — the
+      same script run an hour later produces a different _derived. RULE: when you
+      write an audit/reader script over live CSVs, embed the joined inputs in the
+      artifact (b143 does: rows + execution_log + journal_rows) so _derived is
+      reproducible from the artifact alone, and keep the derivation a PURE
+      function of those inputs (derive(rows, exec_rows, journal)) so a test can
+      replay it. Also: aggregate the journal by position_id and SUM profit over
+      all close-deal rows — a partially-closed position writes several rows and
+      "last row wins" silently under-reports realized P&L.
 - [x] b139 TRADER OBSERVABILITY — execution_style IS NOT PERSISTED ANYWHERE
       (filed by b137, 2026-09-08): the style leg is the ONLY per-trade risk
       damper (STYLE_RISK_MULT 0.5 on aggressive_* entries), yet neither

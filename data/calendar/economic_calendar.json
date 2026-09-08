@@ -185,7 +185,7 @@
       "title": "Trade Balance",
       "currency": "CNY",
       "impact": "low",
-      "date": "2026-09-07T22:03:00-04:00",
+      "date": "2026-09-07T22:35:00-04:00",
       "time": "",
       "forecast": "805B",
       "previous": "767B"
@@ -194,7 +194,7 @@
       "title": "USD-Denominated Trade Balance",
       "currency": "CNY",
       "impact": "low",
-      "date": "2026-09-07T22:04:00-04:00",
+      "date": "2026-09-07T22:35:00-04:00",
       "time": "",
       "forecast": "118.6B",
       "previous": "112.5B"
@@ -722,5 +722,5 @@
       "previous": ""
     }
   ],
-  "cached_at": "2026-09-07T23:00:32.505799+00:00"
+  "cached_at": "2026-09-08T05:08:32.384049+00:00"
 }
