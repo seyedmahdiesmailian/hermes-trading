@@ -87,7 +87,11 @@ class TestB163CensusLedger(unittest.TestCase):
         self.assertEqual(cad["plan_gaps_gt_expiry"], 0)
         self.assertLess(led["cadence"]["max_reassess_gap_h"], 12.0)
 
-    def test_ledger_still_derives_from_its_frozen_rows(self):
+    def test_b164_ledger_still_derives_from_its_frozen_rows(self):
+        # b164 (the procedure b163 filed): the summary blocks must be
+        # re-derivable from the rows the ledger SHIPPED, never re-joined
+        # from the rotating live inputs. Named for b164 per b102's rule:
+        # the commit that parked the procedure needs a test-name pin.
         # b127's producer check runs the same re-derivation; doing it here
         # too keeps this file self-certifying if b127's list is edited.
         from scripts import b163_plan_age_census as b163

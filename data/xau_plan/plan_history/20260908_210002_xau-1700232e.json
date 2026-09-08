@@ -1,5 +1,5 @@
 {
-  "plan_id": "xau-4ee953e1",
+  "plan_id": "xau-1700232e",
   "symbol": "XAUUSD",
   "bias": "bearish",
   "session": "newyork",
@@ -53,9 +53,9 @@
     "smc_poi": "B",
     "smc_signal": "bearish"
   },
-  "created_at": "2026-09-08T21:22:14.078222+00:00",
-  "expires_at": "2026-09-09T09:22:14.078222+00:00",
-  "next_reassessment": "2026-09-08T21:27:14.078222+00:00",
+  "created_at": "2026-09-08T21:00:02.591088+00:00",
+  "expires_at": "2026-09-09T09:00:02.591088+00:00",
+  "next_reassessment": "2026-09-08T21:05:02.591088+00:00",
   "context": {
     "m5_last": 4355.3,
     "h1_last": 4355.3,
@@ -818,129 +818,6 @@
           "weight": 0.0
         }
       }
-    },
-    "macro": {
-      "timestamp": "2026-09-08T21:22:14.317655+00:00",
-      "dxy": {
-        "change_pct": 0.003,
-        "direction": "flat",
-        "available": true,
-        "source": "synthetic"
-      },
-      "silver": {
-        "available": false
-      },
-      "risk_sentiment": {
-        "available": false
-      },
-      "tick_volume": {
-        "volume_ratio": 0.5,
-        "is_high_volume": false,
-        "is_low_volume": true,
-        "available": true
-      },
-      "higher_tf": {
-        "h4": {
-          "price": 4355.3,
-          "high_20": 4510.89,
-          "low_20": 4345.79,
-          "pos_in_range": 0.06,
-          "zone": "discount",
-          "sma10": 4404.53,
-          "trend": "bearish"
-        },
-        "d1": {
-          "price": 4355.3,
-          "high_20": 4697.2,
-          "low_20": 4282.51,
-          "pos_in_range": 0.18,
-          "zone": "discount",
-          "sma10": 4448.2,
-          "trend": "bearish"
-        },
-        "w1": {
-          "price": 4355.3,
-          "high_20": 4403.76,
-          "low_20": 4345.79,
-          "pos_in_range": 0.16,
-          "zone": "discount",
-          "sma10": 4365.92,
-          "trend": "bearish"
-        }
-      },
-      "verdict": {
-        "verdict": "none",
-        "score_long": 0,
-        "score_short": 0,
-        "macro_conflicting": false
-      },
-      "calendar": {
-        "source": "forexfactory",
-        "high_impact": [
-          {
-            "title": "ADP Weekly Employment Change",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-09-09T08:15:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          },
-          {
-            "title": "ADP Weekly Employment Change",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-09-09T08:16:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": "11.8K"
-          },
-          {
-            "title": "ECB President Lagarde Speaks",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-09T13:00:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          }
-        ],
-        "medium_impact": [
-          {
-            "title": "ADP Weekly Employment Change",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-09-09T08:15:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          },
-          {
-            "title": "ADP Weekly Employment Change",
-            "currency": "USD",
-            "impact": "low",
-            "date": "2026-09-09T08:16:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": "11.8K"
-          },
-          {
-            "title": "ECB President Lagarde Speaks",
-            "currency": "EUR",
-            "impact": "low",
-            "date": "2026-09-09T13:00:00-04:00",
-            "time": "",
-            "forecast": "",
-            "previous": ""
-          }
-        ],
-        "total_events": 80,
-        "upcoming_events": 12,
-        "strict_high_count": 0,
-        "window_hours": 24,
-        "fetched_at": "2026-09-08T21:22:14.497440+00:00"
-      },
-      "_fetched_at": 1788902534.4982536
     }
   }
 }

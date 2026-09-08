@@ -42,9 +42,11 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
 
     # ── Check 1: Symbol (must be XAUUSD) ──
     if symbol != "XAUUSD":
+        reasons.append(f"unsupported_symbol:{symbol}")
         return {
             "verdict": "skip",
-            "reason": f"unsupported_symbol:{symbol}",
+            "reason": reasons[-1],
+            "reasons": reasons,
             "score": 0,
             "max_score": max_score,
             "trade_allowed": False,
@@ -58,6 +60,7 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
         return {
             "verdict": "skip",
             "reason": reasons[0],
+            "reasons": reasons,
             "score": score,
             "max_score": max_score,
             "trade_allowed": False,
@@ -75,6 +78,7 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
         return {
             "verdict": "skip",
             "reason": reasons[0],
+            "reasons": reasons,
             "score": score,
             "max_score": max_score,
             "trade_allowed": False,
@@ -155,7 +159,13 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
         reasons.append(macro_filter.get("reason") or "news_blackout")
         return {
             "verdict": "skip",
-            "reason": macro_filter.get("reason", "news_blackout"),
+            # b165: SAME expression as the append above — the old
+            # .get("reason", "news_blackout") disagreed with the list when
+            # the key existed but was empty ("" headline vs
+            # "news_blackout" in reasons), breaking the contract that the
+            # singular headline is always a member of the plural list.
+            "reason": reasons[-1],
+            "reasons": reasons,
             "score": round(min(max_score, max(0, score)), 2),
             "max_score": max_score,
             "trade_allowed": False,

@@ -47,6 +47,61 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b165 TRADER CODE REVIEW — evaluate_signal EARLY RETURNS SHIPPED WITHOUT
+      THE 'reasons' KEY EVERY DOWNSTREAM READER USES (found and fixed by a run
+      killed mid-flight before this one; this run verified + landed it, b46/b144
+      harvest shape): engines/signal_decision.py — all four early-return dicts
+      (unsupported_symbol, low_signal_confidence, invalid_direction, macro
+      news-blackout) carried the singular 'reason' but NOT the plural
+      'reasons', while every consumer reads the plural: signal_daemon.py:111
+      joins reasons[:3] for the Telegram skip alert ('' on a blackout),
+      hermes_runtime.py:746 proposal['skip_reasons'], notifier/dashboards.py
+      :1279 ops panel first-reason line, and scripts/b163_plan_age_census.py
+      align_of() would census a blackout-era decision as ('none', 0.0) — as if
+      Check 4 never ran. Measured on the live journal BEFORE fixing: 1/52 rows
+      (2026-09-04 high_impact_news_blackout) shipped reason-without-reasons;
+      the other three paths are latent (never fired inside the 200-row window).
+      A macro blackout is exactly when the operator asks WHY nothing traded —
+      the panel answered empty. FIX observability-only (verdict/score/reason
+      byte-identical; verified): 'reasons' added to all four returns, and this
+      run additionally healed a leftover inconsistency the parked diff missed
+      — the blackout 'reason' used .get("reason", default) while the appended
+      entry used .get("reason") or default, so an empty-string reason key
+      would make the headline disagree with the list (now reasons[-1], same
+      expression as the append). 5 tests
+      (tests/test_b165_decision_reason_contract.py): return-path census (5,
+      anti-vacuity), both-keys contract on every literal return, headline ∈
+      list on all four paths, blackout score 7.5/skip unchanged, and a
+      post-landing journal-regression pin. Landing ALSO paid b163's b102 debt
+      (b162's rule exercised): HEAD 835061a was BROKEN for two reasons — (1)
+      its commit message parked 'filed b164 procedure' with no b164-named test
+      method; the b163 frozen-rows re-derivation test was renamed
+      test_b164_ledger_still_derives_from_its_frozen_rows (edited, not
+      deleted), and (2) the killed run leaked a hand-made worktree /tmp/b163wt
+      which b50's owner-attributed leak test correctly counted (removed via
+      git worktree remove). This run also filed b166: hand-made diagnostic
+      worktrees need a registered owner.pid or they trip the same leak test.
+- [ ] b166 REUSABLE PROCEDURE — A HAND-MADE DIAGNOSTIC WORKTREE MUST REGISTER
+      AN OWNER PID OR BE REMOVED IN THE SAME RUN (filed by the b165 landing,
+      2026-09-09): b50's test_worktree_is_cleaned_up_after_verification spares
+      /tmp/hermes_headverify_* checkouts whose owner.pid is ALIVE (b96's
+      owner-attributed shape) and counts everything else as a leak. On
+      2026-09-08 a run created /tmp/b163wt by hand (`git worktree add
+      /tmp/b163wt`) for a b163 measurement, was killed at the 55-min limit, and
+      the leftover made the NEXT two HEADs red on a perfectly healthy tree —
+      the same failure b91 fixed for the sanctioned verifier, arriving from
+      OUTSIDE its prefix. RULE: any autopilot run that adds a worktree not
+      created by head_verify.verify_ref must (a) drop an owner.pid file in a
+      temp dir matching WORKTREE_PREFIX before registering (the exact shape
+      tests/test_b91_stale_worktree.py._make_leftover builds), or better (b)
+      register cleanup in the same shell invocation that runs the probe
+      (`git worktree remove --force` in a finally block), or best (c) reuse
+      head_verify.verify_ref itself instead of hand-wiring worktrees. When a
+      run is killed with a leak, the next run REMOVES it (git worktree remove
+      --force <path>) before re-running the suite — do not "fix" the leak test
+      to spare manual paths; the count-them-all default is what caught this.
+      Name-carriers: this item; provenance: git worktree list on 2026-09-09
+      (main only after this run's cleanup).
 - [x] b160 TRADER CODE REVIEW — plan._reanchor_blueprint SIDE ASYMMETRY: BUY
       PICKS NEAREST TP, SELL PICKS FURTHEST, docstring says "furthest"
       (filed and landed by the code-review run, 2026-09-08): engines/plan.py
