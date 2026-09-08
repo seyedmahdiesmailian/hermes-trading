@@ -300,9 +300,10 @@ def read_journal_tickets(path: Path = JOURNAL) -> dict:
                 continue
             agg = by_pos.setdefault(key, {"position_id": key, "close_deals": 0,
                                           "profit": 0.0, "commission": 0.0,
-                                          "swap": 0.0, "closed_at": None})
+                                          "swap": 0.0, "entry_commission": 0.0,
+                                          "closed_at": None})
             agg["close_deals"] += 1
-            for col in ("profit", "commission", "swap"):
+            for col in ("profit", "commission", "swap", "entry_commission"):
                 v = _num(r.get(col), 0.0) or 0.0
                 agg[col] = round(agg[col] + v, 4)
             ct = _num(r.get("close_time"))
@@ -313,7 +314,10 @@ def read_journal_tickets(path: Path = JOURNAL) -> dict:
                 if alt:
                     index.setdefault(alt, key)
     for k, v in by_pos.items():
-        v["realized_net"] = round(v["profit"] + v["commission"] + v["swap"], 4)
+        # b152: entry_commission (broker IN-deal fee, prorated per leg) joins
+        # the net too, so the reader's realized matches learning.group_positions.
+        v["realized_net"] = round(v["profit"] + v["commission"] + v["swap"]
+                                  + v["entry_commission"], 4)
     by_pos["_index"] = index
     return by_pos
 

@@ -49,22 +49,74 @@ def _load_journal() -> list[dict]:
         return list(csv.DictReader(f))
 
 
+# b152: `entry_commission` is APPENDED LAST, never inserted — the same rule
+# b144 proved on the risk ledger: a short row written by a drifted process
+# stays readable under a wider header (the extra key lands as None under
+# DictReader, which readers treat as 0.0), while a mid-tuple column would
+# misalign every field after it. The broker charges commission on the IN deal
+# as well as the OUT deal (b150: -6.12$ of -12.24$ over 30d lived only on IN
+# deals), and journal() writes ONE ROW PER CLOSING DEAL — so without this
+# column every net-P&L consumer (the b151 loop, weekly_report, the b143
+# reader) is blind to exactly half the commission cost.
 JOURNAL_FIELDS = ['ticket', 'close_time', 'side', 'volume', 'price',
                   'profit', 'comment', 'journaled_at', 'position_id',
-                  'commission', 'swap']
+                  'commission', 'swap', 'entry_commission']
 
 
 # Columns that can be backfilled from broker deal history by ticket.
 _BACKFILLABLE = ('position_id', 'commission', 'swap')
 
 
-def _migrate_journal(journal_csv, deals_by_ticket: dict) -> None:
+def _entry_fee_totals(deals: list[dict]) -> dict[str, dict]:
+    """position_id -> {'fee': sum of IN-deal commission, 'vol': sum IN volume}.
+
+    The feed carries the opening deals too (entry == 0/IN); their commission
+    is what the closing-deal rows used to drop (b150)."""
+    out: dict[str, dict] = {}
+    for d in deals:
+        if str(d.get('entry', '')) not in ('0', 'IN'):
+            continue
+        pid = str(d.get('position_id') or d.get('order') or '')
+        if not pid:
+            continue
+        g = out.setdefault(pid, {'fee': 0.0, 'vol': 0.0})
+        try:
+            g['fee'] += float(d.get('commission') or 0)
+            g['vol'] += float(d.get('volume') or 0)
+        except (TypeError, ValueError):
+            pass
+    return out
+
+
+def _entry_fee_share(fees: dict[str, dict], deal: dict) -> str:
+    """This closing deal's slice of its position's IN-deal commission.
+
+    Prorated by volume: a position opened once and closed in three parts
+    bears its entry fee across the three legs in proportion to closed
+    volume, so the shares sum to the broker's exact total (volumes were
+    verified to reconcile on all 29 live positions, b152 probe). Returns
+    '' when the position or its entry deals cannot be resolved — an honest
+    zero at read time, never a guess."""
+    pid = str(deal.get('position_id') or deal.get('order') or '')
+    g = fees.get(pid)
+    if not g or not g['fee'] or not g['vol']:
+        return ''
+    try:
+        v = float(deal.get('volume') or 0)
+    except (TypeError, ValueError):
+        return ''
+    return str(round(g['fee'] * (v / g['vol']), 4))
+
+
+def _migrate_journal(journal_csv, deals_by_ticket: dict,
+                     entry_fees: dict[str, dict] | None = None) -> None:
     """Add missing columns to an existing journal without losing rows.
 
     DictWriter appends by fieldnames, so writing a wider row into a narrower
     legacy header silently misaligns every subsequent column. Rewrite the file
     instead, backfilling position_id/commission/swap from the deal history
-    where the ticket still resolves.
+    where the ticket still resolves, and entry_commission (b152) from the
+    position's IN deals, prorated by volume across its closing legs.
     """
     with journal_csv.open(newline='', encoding='utf-8') as f:
         rows = list(csv.DictReader(f))
@@ -73,6 +125,10 @@ def _migrate_journal(journal_csv, deals_by_ticket: dict) -> None:
         for col in _BACKFILLABLE:
             if not (r.get(col) or '').strip():
                 r[col] = str(d.get(col, '') or '')
+        if entry_fees and not (r.get('entry_commission') or '').strip():
+            r['entry_commission'] = _entry_fee_share(entry_fees, {
+                'position_id': r.get('position_id') or '',
+                'order': '', 'volume': r.get('volume') or 0})
     with journal_csv.open('w', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(f, fieldnames=JOURNAL_FIELDS)
         w.writeheader()
@@ -95,6 +151,10 @@ def journal(bridge, days: int = 30) -> int:
         return 0
     deals = r.get('data', r.get('deals', [])) or []
     deals_by_ticket = {str(d.get('ticket')): d for d in deals}
+    # b152: the broker's IN-deal commission never appears on a closing-deal
+    # row, so the journal folds it into `entry_commission` — prorated by
+    # volume when one position closes in several legs.
+    entry_fees = _entry_fee_totals(deals)
     # Map order-ticket → entry deal type, so we can record the TRADE side
     # (a BUY position is closed by a SELL deal — the closing deal type is the
     # opposite of the trade direction).
@@ -131,9 +191,10 @@ def journal(bridge, days: int = 30) -> int:
             'position_id': str(d.get('position_id') or ''),
             'commission': d.get('commission', ''),
             'swap': d.get('swap', ''),
+            'entry_commission': _entry_fee_share(entry_fees, d),
         })
     journal_csv.parent.mkdir(parents=True, exist_ok=True)
-    _ensure_journal_schema(journal_csv, deals_by_ticket)
+    _ensure_journal_schema(journal_csv, deals_by_ticket, entry_fees)
     if not rows:
         return 0
     with journal_csv.open('a', newline='', encoding='utf-8') as f:
@@ -144,7 +205,8 @@ def journal(bridge, days: int = 30) -> int:
     return len(rows)
 
 
-def _ensure_journal_schema(journal_csv, deals_by_ticket: dict) -> None:
+def _ensure_journal_schema(journal_csv, deals_by_ticket: dict,
+                           entry_fees: dict[str, dict] | None = None) -> None:
     """Migrate a legacy journal file to the current column set, in place.
 
     Re-runs whenever any backfillable column is missing from the header, so
@@ -156,7 +218,7 @@ def _ensure_journal_schema(journal_csv, deals_by_ticket: dict) -> None:
         header = f.readline()
     if all(col in header for col in JOURNAL_FIELDS):
         return
-    _migrate_journal(journal_csv, deals_by_ticket)
+    _migrate_journal(journal_csv, deals_by_ticket, entry_fees)
 
 
 def position_count(rows: list[dict]) -> int:
@@ -207,9 +269,11 @@ def group_positions(rows: list[dict]) -> dict[str, dict]:
                                  'close_time': 0.0, 'side': r.get('side', ''),
                                  'legs': 0})
         g['profit'] += profit
-        # Net = gross P&L + commission + swap. Legacy rows may lack these
-        # columns until migrated, in which case net == gross.
-        g['net'] += profit + _num('commission') + _num('swap')
+        # Net = gross P&L + commission + swap + entry_commission (b152: the
+        # broker's IN-deal fee, prorated to this leg). Legacy rows may lack
+        # these columns until migrated, in which case net == gross.
+        g['net'] += (profit + _num('commission') + _num('swap')
+                     + _num('entry_commission'))
         try:
             g['volume'] = max(g['volume'], float(r.get('volume') or 0))
         except (TypeError, ValueError):
@@ -277,21 +341,15 @@ def analyze() -> dict:
     # avg +0.07$ while the same data per-position-net read 0.679 and -0.11$ —
     # i.e. the loop believed a losing system was profitable and its only
     # defensive trigger (`wr < 0.40 and avg < 0`) could not fire.
+    # b152: the net formula lives in ONE place — group_positions — which now
+    # also folds entry_commission (the broker's IN-deal fee). b151 hand-copied
+    # that formula into stats() and b152 would have had to copy the fix twice;
+    # a duplicated funnel is how the loop went blind in the first place.
     def stats(sub: list[dict]) -> dict:
         legs = [r for r in sub if r.get('profit') not in (None, '')]
         if not legs:
             return {}
-        nets: dict[str, float] = {}
-        for i, r in enumerate(legs):
-            key = str(r.get('position_id') or '').strip() or f'_row{i}_{r.get("ticket")}'
-            try:
-                gross = float(r.get('profit') or 0)
-                comm = float(r.get('commission') or 0)
-                swap = float(r.get('swap') or 0)
-            except (TypeError, ValueError):
-                gross = comm = swap = 0.0
-            nets[key] = nets.get(key, 0.0) + gross + comm + swap
-        profits = list(nets.values())
+        profits = [g['net'] for g in group_positions(legs).values()]
         wins = sum(1 for p in profits if p > 0)
         return {
             'trades': len(profits),

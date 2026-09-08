@@ -47,6 +47,81 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b152 TRADER FEEDBACK LOOP — JOURNAL DROPPED EVERY IN-DEAL COMMISSION
+      (filed by the b150 audit inside commit 0fe6834, never entered as an item;
+      taken by this run 2026-09-08 as the top unblocked TRADER item — b141 is
+      decision-blocked, b138/b125 are human gates). The broker charges
+      commission on the IN deal as well as the OUT deal; journal() writes one
+      row per CLOSING DEAL, so half the fee cost never entered the file.
+      Measured before the fix on the live 30d feed: per-position net +11.77$
+      vs broker all-in +5.65$ on the SAME 29 positions — the b151-corrected
+      loop still saw 6.12$ too much profit, i.e. 2x its real edge. FIX:
+      `entry_commission` appended LAST to JOURNAL_FIELDS (b144's rule — a
+      drifted writer's short row stays readable), each position's IN-deal fee
+      prorated across its closing legs by volume (volumes verified to reconcile
+      on all 29 positions), folded into the ONE net formula. DE-DUPLICATION
+      FINDING: b151 had hand-copied the net arithmetic into analyze().stats()
+      as well as group_positions() — b152 would have needed the same fix
+      twice; stats() now CALLS group_positions and an anti-duplication test
+      pins it (the duplicated funnel is exactly how the loop went blind).
+      ONE-TIME REPAIR: scripts/b152_journal_entry_fee_backfill.py — the live
+      09:00 cycle widened the header but the old migration ran first, so
+      _ensure_journal_schema would skip a header that is now "wide but empty";
+      the script backfills via the tested writer and VERIFIES parity
+      (29/29 positions agree with the broker to <0.01$, ledger
+      data/backtest/b152_entry_fee_backfill.json). 10 tests in
+      tests/test_b152_entry_commission.py; b143's reader updated for parity.
+      Direction is tightening-only: fees are <= 0, so the loop can only see
+      worse (wr unchanged 0.690, avg +0.406 -> +0.195$/position).
+- [ ] b153 REUSABLE PROCEDURE — A HEADER-GATED MIGRATION MUST SHIP WITH ITS
+      OWN BACKFILL (filed by b152, 2026-09-08): _ensure_journal_schema (and
+      every sibling: risk ledger, execution_log) widens a file ONLY while the
+      header is narrower than the shipped schema. Live daemons run OLD code
+      concurrently, so a new column can be added to the HEADER by a foreign
+      cycle before the writer that fills it exists anywhere — the gate then
+      says "already wide" and the column stays empty forever: b142's
+      looks-fixed-still-blind trap, arriving through a door b144 did not
+      guard. RULE: any run that adds a column with migration-on-header must
+      ship, in the SAME commit, an idempotent one-time backfill script that
+      fills existing rows and PRINTS a parity check against the source of
+      truth (b152_journal_entry_fee_backfill.py is the template: it re-runs
+      the tested writer, asserts row count and header, and refuses to write
+      when the bridge feed is unavailable). A schema change without its
+      backfill is half a fix.
+- [x] b154 TRADER OBSERVABILITY — DASHBOARD "Net P&L" IS GROSS PER LEG
+      (filed by b152, 2026-09-08): DONE 2026-09-08. FINDING MEASURED ON THE
+      LIVE FILE BEFORE THE FIX: _stats summed the raw `profit` column per
+      journal ROW — on the identical 29 positions it read gross +17.89$
+      while the broker's all-in per-position net was +5.65$, and win_rate
+      0.744/row vs 0.690/position: the operator's phone carried the b151
+      blindness relocated to the
+      display layer, and the "Today" and day-by-day slices keyed on
+      journaled_at (when the row was WRITTEN), not close_time (when the
+      trade closed). FIX: every aggregate (net, n, wins, pf, exp, best/
+      worst, mdd/curve, streak, by-side, today, days) now flows through
+      _positions_from_rows, which CALLS engines.learning.group_positions —
+      the ONE net formula pinned by b152 (b151's lesson: a hand-copied
+      funnel is how the loop went blind; the spy test
+      test_b154_stats_calls_group_positions_at_runtime pins the CALL, not
+      just the value). The recency list keeps the row shape but shows each
+      leg's NET (_row_net folds commission/swap/entry_commission with an
+      honest zero for legacy rows). Today/day slices moved to close_time
+      (UTC) — pinned by a late-journaling test. If the learning import
+      fails, the panel falls back per-row and DISCLOSES it with a ⚠️ basis
+      line (b49: a degraded number must not look correct). 13 tests in
+      tests/test_b154_dashboard_net_stats.py including an anti-vacuity pin
+      (gross != net on the fixture) and the "+5.90 shows, +7.00 does not"
+      renderer check. ORIGINAL BRIEF follows.
+      notifier/dashboards.py::_stats sums the raw
+      `profit` column per journal ROW — neither commission/swap/
+      entry_commission (b151/b152 net) nor position grouping. On the live file
+      that reads +higher than the broker's +5.65$ even while the loop's own
+      per-position-net is smaller, and today-slice/streak/curve inherit the
+      same gross view. The user's phone shows a rosier book than the
+      auto-trader trades on. FIX: route _stats through
+      engines.learning.group_positions (the ONE net formula b152 pinned) for
+      the money columns; keep the row list for recency display. Label
+      "Net P&L" must then actually mean net.
 - [x] b140 TRADER WIRING — SIGNAL LANE NEVER SEES DRAWDOWN REGIMES (b137's
       second leftover, 2026-09-08): signal_listener builds account_policy with
       regime hardcoded "normal" (or "halted" from the kill-switch) — so

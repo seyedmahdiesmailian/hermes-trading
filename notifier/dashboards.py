@@ -250,20 +250,90 @@ def _journal_rows() -> list:
         return []
 
 
+def _row_net(r: dict) -> float:
+    """Net for a single journal ROW (closing leg): profit + the three fee
+    columns, each read with an honest zero when absent (b142/b152 rule: a
+    pre-migration row lacks the column; missing != zero-cost, but zero is
+    the conservative display for a panel). Used only for the per-leg recency
+    list; every AGGREGATE money figure goes through _positions_from_rows."""
+    total = 0.0
+    for col in ('profit', 'commission', 'swap', 'entry_commission'):
+        try:
+            total += float(r.get(col) or 0)
+        except Exception:
+            pass
+    return total
+
+
+def _group_positions_fn():
+    """The ONE net formula (engines.learning.group_positions) or None.
+
+    b154: the dashboard used to hand-compute money from the raw `profit`
+    column — the same duplicated-funnel disease that made the learning loop
+    blind in b151. Import is at CALL time and the result may fail (missing
+    env, partial checkout); the caller must then disclose the degraded basis
+    rather than silently show gross as net.
+    """
+    try:
+        from engines.learning import group_positions
+        return group_positions
+    except Exception:
+        return None
+
+
+def _positions_from_rows(rows: list[dict]) -> tuple[list[dict], str]:
+    """Journal rows → per-position results + the basis they were computed on.
+
+    Returns (positions_sorted_by_close_time, basis) where basis is
+    'position_net' when engines.learning.group_positions did the arithmetic
+    (profit + commission + swap + entry_commission, grouped by position_id —
+    the ONE formula the auto-trader trades on) and 'gross_fallback' when the
+    import failed, in which case each row stands alone on gross profit — a
+    DISCLOSED overstatement, never a silent one (b49: a fail-safe must not
+    look like a no-op).
+    """
+    gfn = _group_positions_fn()
+    if gfn is not None:
+        pos = list(gfn(rows).values())
+        basis = 'position_net'
+    else:
+        pos = []
+        for r in rows:
+            try:
+                profit = float(r.get('profit') or 0)
+            except (TypeError, ValueError):
+                profit = 0.0
+            try:
+                ct = float(r.get('close_time') or 0)
+            except (TypeError, ValueError):
+                ct = 0.0
+            pos.append({'profit': profit, 'net': _row_net(r),
+                        'close_time': ct,
+                        'side': r.get('side', ''), 'legs': 1})
+        basis = 'gross_fallback'
+    pos.sort(key=lambda p: p.get('close_time') or 0)
+    return pos, basis
+
+
 def _stats() -> dict:
-    """Professional stats from the full journal + today slice."""
+    """Professional stats — PER POSITION and on NET P&L (b154), plus today slice.
+
+    Before b154 this summed the raw `profit` column per journal ROW: neither
+    the fees (b151/b152 net) nor position grouping (a partially-closed
+    position writes several legs). On the live file it showed +17.89$ while
+    the broker's all-in on the same positions was +5.65$ — the operator's
+    phone carried a rosier book than the auto-trader trades on, the exact
+    b151 blindness relocated to the display layer.
+    """
     rows = _journal_rows()
     out = {'n': len(rows), 'today': {'n': 0, 'pnl': 0.0, 'wins': 0},
-           'recent': [], 'days': [], 'curve': ''}
+           'recent': [], 'days': [], 'curve': '', 'basis': 'position_net'}
     if not rows:
         return out
-    pnls, wins = [], 0
-    for r in rows:
-        try:
-            pnls.append(float(r.get('profit') or 0))
-        except Exception:
-            pnls.append(0.0)
-    out['n'] = len(pnls)
+    pos, basis = _positions_from_rows(rows)
+    out['basis'] = basis
+    out['n'] = len(pos)
+    pnls = [p['net'] for p in pos]
     out['wins'] = sum(1 for p in pnls if p > 0)
     out['losses'] = sum(1 for p in pnls if p < 0)
     gross_w = sum(p for p in pnls if p > 0)
@@ -277,7 +347,7 @@ def _stats() -> dict:
     out['avg_loss'] = sum(ls) / len(ls) if ls else 0.0
     out['best'] = max(pnls)
     out['worst'] = min(pnls)
-    # max drawdown on the cumulative curve
+    # max drawdown on the cumulative curve (positions in close-time order)
     cum = peak = 0.0
     mdd = 0.0
     curve = []
@@ -299,31 +369,34 @@ def _stats() -> dict:
     out['streak'] = (streak, kind)
     # by side
     for side in ('BUY', 'SELL'):
-        sp = [float(r.get('profit') or 0) for r in rows if str(r.get('side', '')).upper() == side]
+        sp = [p['net'] for p in pos if str(p.get('side', '')).upper() == side]
         out[f'{side.lower()}_n'] = len(sp)
         out[f'{side.lower()}_pnl'] = sum(sp)
         out[f'{side.lower()}_wr'] = (sum(1 for p in sp if p > 0) / len(sp) * 100) if sp else 0.0
-    # today
+    # today — by position close time (UTC), the same event the ledger dates on
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    for r in rows:
-        if str(r.get('journaled_at', '')).startswith(today):
-            try:
-                p = float(r.get('profit') or 0)
-            except Exception:
-                p = 0.0
+
+    def _utc_day(secs) -> str:
+        try:
+            return datetime.fromtimestamp(float(secs or 0), timezone.utc).strftime('%Y-%m-%d')
+        except Exception:
+            return ''
+    for p in pos:
+        if _utc_day(p.get('close_time')) == today:
             out['today']['n'] += 1
-            out['today']['pnl'] += p
-            out['today']['wins'] += 1 if p > 0 else 0
+            out['today']['pnl'] += p['net']
+            out['today']['wins'] += 1 if p['net'] > 0 else 0
     # last 7 days
     by_day: dict[str, float] = {}
-    for r in rows:
-        d = str(r.get('journaled_at', ''))[:10]
-        try:
-            by_day[d] = by_day.get(d, 0.0) + float(r.get('profit') or 0)
-        except Exception:
+    for p in pos:
+        d = _utc_day(p.get('close_time'))
+        if not d:
             continue
+        by_day[d] = by_day.get(d, 0.0) + p['net']
     out['days'] = sorted(by_day.items())[-7:]
-    # recent list
+    # recent list — recency display keeps the ROW shape (the operator reads
+    # legs by time/comment), but the money shown per leg is that leg's NET,
+    # not the bare `profit` column (b154).
     for r in rows[-10:][::-1]:
         ct = str(r.get('close_time', '')).strip()
         if ct.isdigit():
@@ -332,7 +405,7 @@ def _stats() -> dict:
             when = ct[5:16] or '—'
         try:
             out['recent'].append((when, str(r.get('side', '?')).upper(),
-                                  float(r.get('volume') or 0), float(r.get('profit') or 0),
+                                  float(r.get('volume') or 0), _row_net(r),
                                   str(r.get('comment') or '')))
         except Exception:
             continue
@@ -700,6 +773,10 @@ def _stats_panel_lines(st: dict) -> list:
     lines = []
     if not st['n']:
         return ['ژورنال خالی است — هنوز ترید بسته‌شده‌ای ثبت نشده.']
+    if st.get('basis') and st['basis'] != 'position_net':
+        # b49: a degraded number must say so — gross per leg OVERSTATES.
+        lines.append('⚠️ آمار موقتاً ناخالص و سر‌شماره‌ای است (کارمزد و '
+                     'تجمیع پاها کم است) — موتور محاسبه در دسترس نبود')
     wr = st['wins'] / st['n'] * 100
     pf = '∞' if st['pf'] == float('inf') else _num(st['pf'], 2)
     lines.append(_row('Trades', f"{st['n']} · برد {st['wins']} · باخت {st['losses']} · نرخ برد {wr:.0f}٪ {_bar(wr/100)}"))

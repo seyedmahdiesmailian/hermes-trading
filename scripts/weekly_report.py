@@ -62,7 +62,8 @@ def main():
     def stats(subset):
         if not subset:
             return None
-        # 'net' = gross profit + commission + swap (see learning.group_positions)
+        # 'net' = profit + commission + swap + entry_commission
+        # (see learning.group_positions — the ONE net formula, b152)
         p = [float(r['net']) for r in subset if r.get('net') is not None
              and str(r.get('net')) != '']
         w = [x for x in p if x > 0]
