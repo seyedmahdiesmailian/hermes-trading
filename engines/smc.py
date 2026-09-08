@@ -369,13 +369,26 @@ def grade_poi(
     B:  Moderate (3-4/6)
     C:  Weak (0-2/6)
 
-    b157 FINDING (documented, NOT changed): smc_analyse feeds this only the
-    entry-TF sets (has_ob/has_fvg come from the M5/M15 rows), while
-    _derive_smc_bias merges M5+H1 — POI grade and bias see different worlds.
-    Grep-verified: nothing on the decision path consumes `poi` (only
-    ctx['quality']['smc_poi'], a plan-record label), so wiring H1 into the
-    grade would move a DISPLAYED label with no gate behind it; left for a
-    measured round rather than a cosmetic edit. Filed as follow-up todo.
+    b158 RESOLVED (2026-09-08, measured — scripts/b158_poi_grade_census.py
+    on 930 cached bars, data/backtest/b158_poi_grade_census.json): the
+    TF-mismatch b157 documented is REAL but harmless as shipped, and the
+    merge fix was measured and REJECTED.
+      * Feeding this grade the SAME merged sets _derive_smc_bias gets flips
+        the label on only 3.55% of bars (20 B->A, 11 C->B, 2 A->A+), and the
+        bar where the entry-TF world is EMPTY while H1 carries the bias
+        (the pathology in the item's framing) occurred 0/930 times — the
+        unbounded entry-TF scan (b157 design) keeps has_ob/has_fvg on
+        almost always True, so the merged half adds nothing to distinguish.
+      * The label ranks forward drift monotonically AS SHIPPED (A+ +0.90 >
+        A +0.31 > B +0.26 > C +0.15 ATR/12 bars, separation 0.399); feeding
+        it the merged world is NOT better (separation 0.382).
+    DECISION: inputs stay entry-TF-only (option b's "delete" arm was also
+    rejected: has_ob/has_fvg are saturated, but deleting them moves the
+    whole displayed distribution for zero measured consumer benefit — the
+    label has NO decision consumer, pinned by
+    tests/test_b158_poi_grade_worlds.py). The split worlds are now pinned as
+    INTENT by a behaviour test, not left as a comment anyone could "fix"
+    cosmetically. Wiring `poi` into any gate requires its own funnel round.
     """
     score = 0.0
 

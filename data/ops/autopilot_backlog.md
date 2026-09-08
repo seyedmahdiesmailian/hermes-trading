@@ -47,7 +47,30 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b158 TRADER CODE REVIEW — grade_poi's TF-MISMATCH: POI GRADE AND BIAS SEE
+- [ ] b159 REUSABLE PROCEDURE — A DOCUMENTED CROSS-MODULE MISMATCH IS AN
+      OPTION, NOT A DEFECT: CENSUS DISAGREEMENT RATE + CONSUMER COUNT BEFORE
+      "FIXING" A LABEL (filed by b158, 2026-09-08): b157's review found
+      grade_poi and _derive_smc_bias genuinely see different TF sets and
+      correctly refused to cosmetic-fix it; b158 then measured BOTH fix arms
+      on real bars (flip rate 3.55%, the feared pathology 0/930, ranking
+      power slightly BETTER as shipped) and closed the item as KEEP+PIN.
+      RULE: when a review finds module A's label disagrees with module B's
+      decision input, do NOT open with a patch — open with a two-arm census
+      (status-quo inputs vs the "consistent" inputs) that reports (1) the
+      per-case disagreement/flip rate, (2) the occurrence of the feared
+      pathology on real data, (3) whether the "fixed" version ranks
+      OUTCOMES any better, and (4) the consumer count of the disagreeing
+      field (grep + an AST tripwire like tests/test_b158_poi_grade_worlds.py
+      ::TestB158NoDecisionConsumer). A mismatch with ~0 consumers and a
+      single-digit flip rate is churn bait; pin the split as intent with a
+      behaviour test instead. The trap this closes: the next reader sees the
+      same code smell, skips the census, "tidies" the inputs, and silently
+      moves a displayed distribution that no measurement supports — b110's
+      measure-first rule applied to the DISPLAY layer, where no funnel
+      backtest exists to catch the change. Name-carriers:
+      scripts/b158_poi_grade_census.py (template) +
+      data/backtest/b158_poi_grade_census.json (ledger shape).
+- [x] b158 TRADER CODE REVIEW — grade_poi's TF-MISMATCH: POI GRADE AND BIAS SEE
       DIFFERENT WORLDS (filed by the b157 landing run, 2026-09-08, to make
       engines/smc.py grade_poi's own comment true): b157 verified by grep that
       has_ob/has_fvg in grade_poi feed only the entry-TF sets while
@@ -62,6 +85,21 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       add the pin that grade_poi's inputs and bias's inputs are the SAME sets
       (or a comment + tripwire test that says why not). Small item; do NOT wire
       poi into any gate without its own funnel round.
+      DONE 2026-09-08 (b158): MEASURED BOTH arms before touching anything —
+      scripts/b158_poi_grade_census.py on 930 cached bars
+      (data/backtest/b158_poi_grade_census.json): merging H1 into the grade
+      flips the label on only 3.55% of bars; the C-on-H1-bias pathology in the
+      brief occurred 0/930 real bars (b157's unbounded entry-TF scan keeps
+      has_ob/has_fvg saturated); and the shipped label already ranks forward
+      drift monotonically (A+ +0.90 > A +0.31 > B +0.26 > C +0.15 ATR/12 bars,
+      separation 0.399 vs 0.382 merged). VERDICT: keep the split — inputs stay
+      entry-TF-only (no delete: moving the whole display distribution for zero
+      consumer benefit is churn; no merge: buys nothing), and the split is now
+      pinned as INTENT, not a comment. grade_poi docstring carries the
+      measurement; 6 tests in tests/test_b158_poi_grade_worlds.py (AST pin on
+      the call-site worlds, anti-vacuity synthetic fixture where shipped=B vs
+      merged=A, the no-decision-consumer tripwire with scanner proof, and the
+      ledger re-derivation pin per b127).
 - [x] b152 TRADER FEEDBACK LOOP — JOURNAL DROPPED EVERY IN-DEAL COMMISSION
       (filed by the b150 audit inside commit 0fe6834, never entered as an item;
       taken by this run 2026-09-08 as the top unblocked TRADER item — b141 is

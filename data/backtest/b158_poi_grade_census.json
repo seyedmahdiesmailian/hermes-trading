@@ -1,0 +1,70 @@
+{
+ "dataset": {
+  "bars_scanned": 930,
+  "cached": "data/backtest/ab_aggressive_data.json",
+  "fwd_bars": 12
+ },
+ "entry_tf_blind_bars": 0,
+ "entry_tf_blind_rate": 0.0,
+ "flip_rate": 0.0355,
+ "forward_drift_by_grade_merged": {
+  "A": {
+   "mean_drift_atr": 0.328,
+   "n": 284
+  },
+  "A+": {
+   "mean_drift_atr": 0.868,
+   "n": 67
+  },
+  "B": {
+   "mean_drift_atr": 0.228,
+   "n": 414
+  },
+  "C": {
+   "mean_drift_atr": 0.204,
+   "n": 121
+  }
+ },
+ "forward_drift_by_grade_sq": {
+  "A": {
+   "mean_drift_atr": 0.31,
+   "n": 266
+  },
+  "A+": {
+   "mean_drift_atr": 0.897,
+   "n": 65
+  },
+  "B": {
+   "mean_drift_atr": 0.259,
+   "n": 423
+  },
+  "C": {
+   "mean_drift_atr": 0.151,
+   "n": 132
+  }
+ },
+ "grade_distribution_merged": {
+  "A": 284,
+  "A+": 67,
+  "B": 436,
+  "C": 143
+ },
+ "grade_distribution_sq": {
+  "A": 266,
+  "A+": 65,
+  "B": 445,
+  "C": 154
+ },
+ "item": "b158",
+ "separation_merged": 0.382,
+ "separation_sq": 0.399,
+ "transitions": {
+  "A+->A+": 65,
+  "A->A": 264,
+  "A->A+": 2,
+  "B->A": 20,
+  "B->B": 425,
+  "C->B": 11,
+  "C->C": 143
+ }
+}
