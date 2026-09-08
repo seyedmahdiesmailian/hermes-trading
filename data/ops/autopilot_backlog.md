@@ -122,6 +122,34 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       engines.learning.group_positions (the ONE net formula b152 pinned) for
       the money columns; keep the row list for recency display. Label
       "Net P&L" must then actually mean net.
+- [ ] b157 TRADER CODE REVIEW — engines/smc.py WINDOW PARAMS ARE LIES; STALE
+      FVGs SCORE INTO BIAS UNBOUNDED (filed by b155 harvest run, 2026-09-08):
+      AST-verified dead args in the signal engine. (1) detect_fair_value_gaps
+      (rows, lookback=20): lookback NEVER appears in the body — the scan loop
+      runs over ALL fetched rows, so smc_analyse's "M15 lookback=20" and
+      "H1 lookback=10" calls both silently use the full history; every
+      still-unfilled 3-candle gap from days ago adds ±1.5 to the bias score
+      in _derive_smc_bias (contrast detect_order_blocks, where lookback at
+      least windows the avg-body threshold). (2) detect_order_blocks'
+      atr_mult param is dead too — the threshold is computed from
+      body/range, so callers passing a custom multiplier change nothing.
+      (3) active_killzone_session's "Handle London close overlap" branch is
+      UNREACHABLE (identical condition to the generic check three lines
+      above — a fix that was applied to one and copied nowhere).
+      (4) grade_poi's has_ob/has_fvg feed only the M15 sets while bias merges
+      obs+h1_obs and fvgs+h1_fvgs — POI grade and bias see different worlds.
+      FIX BUDGET: decide per-knob whether the honest change is to IMPLEMENT
+      the window (tighter = fewer stale signals into bias — census first per
+      b110, run_backtest if it moves entries) or DELETE the dead params so
+      the code stops lying; do not silently widen/narrow live behaviour
+      without a measured before/after. Anti-vacuity: a fixture with one
+      ancient unfilled FVG must show it dropping out of bias when the window
+      is honoured (and still counting when deleted-path keeps status quo).
+      LIVE SIZING (measured on data/xau_plan/current_plan.json at file time):
+      5 unfilled FVGs total, oldest at index 44 — with rows[-lookback:]
+      honoured, 0-1 would feed bias instead of 5, i.e. up to ±6.0 of the ±2.0
+      OB-class weight is arriving through the unbounded door on TODAY's bias
+      (bearish 0.371). Not hypothetical; budget a real census before fixing.
 - [ ] b156 REUSABLE PROCEDURE — AN AST IMPORT-CLOSURE WALK MUST RESOLVE
       `from pkg import name` AS SUBMODULES, NOT JUST AS PACKAGES (filed by
       b155, 2026-09-08): b114's drift census walked ImportFrom.module only,
