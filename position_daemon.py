@@ -38,7 +38,8 @@ from engines.bridge_payload import positions_list
 from engines.trade_management import evaluate_trade_management, ladder_fields
 from engines.plan import setup_grade   # b111: ONE grade rule for all producers
 from engines.auto_executor import evaluate_management_action
-from engines.legacy_guards import evaluate_news_lock, evaluate_time_exit
+from engines.legacy_guards import (evaluate_news_lock, evaluate_time_exit,
+                                   is_news_lock)
 
 # b39: LOG_FILE removed — it was a dead import-time binding of
 # paths.logs_dir() (log() below already resolves per call). Keeping it alive
@@ -447,8 +448,10 @@ def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
         if mgmt['action'] == 'move_stop_to_breakeven':
             # news_lock REUSES this action name to move SL to 0.5*ATR — it is
             # NOT the post-TP breakeven, and marking breakeven_active for it
-            # would suppress the real BE move later.
-            if not str(mgmt.get('reason', '')).startswith('news_lock'):
+            # would suppress the real BE move later. b32 wrote this inline;
+            # b167 moved the predicate into legacy_guards so the runtime
+            # fallback path shares it (the drift this bug class keeps causing).
+            if not is_news_lock(mgmt):
                 tracked[tkt_s]['breakeven_active'] = True
         elif mgmt['action'] == 'partial_take_profit':
             filled = list(tracked[tkt_s].get('filled_tp_levels', []))

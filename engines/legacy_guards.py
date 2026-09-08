@@ -23,6 +23,24 @@ NEWS_LOCK_MINUTES_BEFORE = 30      # tighten SL 30 min before high-impact news
 NEWS_TIGHTEN_ATR_MULT = 0.5        # new SL distance = 0.5 * ATR (from current price)
 
 
+def is_news_lock(management: dict | None) -> bool:
+    """b167: the ONE predicate for "this move_stop_to_breakeven is a NEWS LOCK,
+    not the real post-TP1 breakeven".
+
+    evaluate_news_lock REUSES the action name because that is the SL-modify
+    executor's verb. Every caller that marks 'breakeven happened' on seeing
+    move_stop_to_breakeven must therefore exclude the lock — breakeven_active
+    suppresses the real BE branch (`if filled and not breakeven_active`)
+    forever, so a pre-TP1 lock that claimed the flag leaves the runner riding
+    its original stop through the give-back. b32 wrote the exclusion inline in
+    position_daemon; hermes_runtime's fallback path shipped without it (the
+    b109/b111 drift class, on a safety flag). Both callers now use THIS.
+    """
+    if not management:
+        return False
+    return str(management.get("reason", "")).startswith("news_lock")
+
+
 def _parse(ts: str | datetime) -> datetime:
     dt = datetime.fromisoformat(ts) if isinstance(ts, str) else ts
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)

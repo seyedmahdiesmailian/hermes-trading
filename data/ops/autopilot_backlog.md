@@ -47,6 +47,41 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b167 TRADER CODE REVIEW (cross-module parity, 2026-09-09) — THE RUNTIME
+      FALLBACK PATH LET A NEWS LOCK STEAL THE BREAKEVEN FLAG; b32 FIXED IT ONLY
+      IN THE WATCHDOG. hermes_runtime.cycle's manage-fallback wrote
+      breakeven_active=True on ANY move_stop_to_breakeven — but
+      evaluate_news_lock REUSES that action name (reason='news_lock_*') to
+      tighten SL to 0.5*ATR pre-event. b32's own comment says a lock wrongly
+      claiming the flag makes the ladder "look broken-in" and suppresses the
+      REAL post-TP1 BE branch (`if filled and not breakeven_active`) forever —
+      the runner then rides its original stop through the give-back. The
+      fallback path is LIVE code (runs whenever the daemon is >90s stale —
+      exactly when the watchdog's fixed branch cannot help), and it wrote the
+      flag at BOTH sites (in-memory dict + persisted tstate), so the poisoning
+      survived into runtime_state.json across cycles. FIX: one shared
+      predicate legacy_guards.is_news_lock() (b109/b111 ONE-definition rule);
+      position_daemon's b32 inline startswith() replaced by it (behavior
+      byte-identical), both hermes_runtime sites gated by it. Risk-strictly-
+      tighter: a real BE still arms the flag, a news lock no longer does.
+      tests/test_b167_news_lock_breakeven_parity.py (4): RED-proved on the
+      pre-fix HEAD (flag persisted True after a lock cycle), AST pins for the
+      shared predicate + both commit arms gated (orelse-blind arm walk so a
+      sibling elif cannot certify a write); pins the live-daemon b32 branch
+      text too. Suite 1500 OK. Live cycle clean.
+- [ ] b168 REUSABLE PROCEDURE — A FIX TO A SHARED-HAZARD CLASS MUST BE CENSUSED
+      ACROSS EVERY PATH THAT REACHES THE SAME STATE, NOT JUST THE REPORTED ONE
+      (from b167, 2026-09-09): b32 fixed news_lock/breakeven_active confusion
+      in position_daemon and its backlog text said 'this whole bug CLASS' —
+      but hermes_runtime's fallback writes the SAME flag from the SAME action
+      name and was never searched. When a fix is justified as a class fix, the
+      landing diff must include a repo-wide grep for the mutated key
+      (breakeven_active= here) plus the reused identifier, list every writer,
+      and state per writer whether it is covered; a writer left uncovered needs
+      either the same guard or a one-line reason it doesn't apply. The
+      coverage-check grep is cheap; the drift it prevents is a safety flag on
+      the live trade-management path. Codify as a b109-style AST/consistency
+      test when the next sibling drift appears.
 - [x] b165 TRADER CODE REVIEW — evaluate_signal EARLY RETURNS SHIPPED WITHOUT
       THE 'reasons' KEY EVERY DOWNSTREAM READER USES (found and fixed by a run
       killed mid-flight before this one; this run verified + landed it, b46/b144

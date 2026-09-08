@@ -27,7 +27,8 @@ from engines.storage import load_current_plan, save_current_plan, load_runtime_s
 from engines.plan import setup_grade
 from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
 from engines.macro_filter import apply_macro_guard
-from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock
+from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
+                                   is_news_lock)
 from engines.auto_executor import evaluate_proposal, execute_trade, evaluate_management_action
 from engines.kill_switch import check_kill_switch
 
@@ -568,7 +569,11 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                     filled.append(management.get('target_hit'))
                     management['filled_tp_levels'] = filled
                 elif management.get('action') == 'move_stop_to_breakeven':
-                    management['breakeven_active'] = True
+                    # b167: a news lock REUSES this action name (b32's lesson,
+                    # until now enforced only in the watchdog). Claiming the
+                    # flag for it would suppress the REAL post-TP1 breakeven.
+                    if not is_news_lock(management):
+                        management['breakeven_active'] = True
                 elif management.get('action') in {'close_runner', 'close_trade_early'}:
                     management['runner_active'] = False
 
@@ -584,7 +589,11 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                     if management.get('action') == 'partial_take_profit':
                         tstate['filled_tp_levels'] = management.get('filled_tp_levels', tstate.get('filled_tp_levels', []))
                     elif management.get('action') == 'move_stop_to_breakeven':
-                        tstate['breakeven_active'] = True
+                        # b167: gate the PERSISTED flag too — this is the write
+                        # that survives into the next cycle; the in-memory dict
+                        # above is discarded on return.
+                        if not is_news_lock(management):
+                            tstate['breakeven_active'] = True
                     elif management.get('action') in {'close_runner', 'close_trade_early'}:
                         tstate['runner_active'] = False
                 save_runtime_state(_plan_dir(), runtime)
