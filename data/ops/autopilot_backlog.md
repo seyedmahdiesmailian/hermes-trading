@@ -47,8 +47,45 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b137 REUSABLE PROCEDURE — WIRING CENSUS: EVERY VALUE A POLICY MODULE EMITS
-      MUST BE CONSUMED BY THE PATH IT CLAIMS TO CONTROL (from b136, 2026-09-08):
+- [ ] b140 TRADER WIRING — SIGNAL LANE NEVER SEES DRAWDOWN REGIMES (b137's
+      second leftover, 2026-09-08): signal_listener builds account_policy with
+      regime hardcoded "normal" (or "halted" from the kill-switch) — so
+      defensive/recovery sizing and STOP_TRADING_REGIMES only bite the PLAN
+      lane; a signal arriving at 3% drawdown trades at full size. Wiring the
+      real assess_account_policy regime into the signal lane is a TIGHTENING
+      (allowed), but must ship census-style: probe each regime through the
+      real evaluate_signal/executor path and assert the observable moves
+      (b136/b137 template), not a hand-typed literal.
+- [ ] b139 TRADER OBSERVABILITY — execution_style IS NOT PERSISTED ANYWHERE
+      (filed by b137, 2026-09-08): the style leg is the ONLY per-trade risk
+      damper (STYLE_RISK_MULT 0.5 on aggressive_* entries), yet neither
+      execution_log.csv nor trade_journal.csv nor plan_history/*.json carries
+      the field — b137 proved this by scanning all three ledgers (0 hits).
+      Consequence: the realized shrink stack can never be audited per trade,
+      and any future "was the 0.5x style damper actually applied?" question is
+      unanswerable from history. FIX (small, additive, no gate change): append
+      an execution_style column to the execution_log row at proposal time
+      (hermes_runtime._build_proposal already has the plan in hand). Must not
+      rewrite existing rows; old rows stay NULL.
+- [ ] b138 [HUMAN DECISION] — loss_streak>=2 DOUBLE-COUNT: one fact, two
+      modules (filed by b137, 2026-09-08): the same streak turns DEFCON YELLOW
+      (risk_override 0.5) AND pushes account regime to defensive (TIGHT_REGIMES
+      0.5), so entry risk lands at 0.25x from ONE condition — measured through
+      the real evaluate_proposal (tight_defensive_streak probe). Removing or
+      clamping either leg would LOOSEN a risk gate, which autopilot may not do
+      unilaterally (hard rule). Needs mahdi's call: keep 0.25x (conservative,
+      current) or deduplicate to 0.5x. b137's census + test pin the CURRENT
+      behavior either way, so the ledger re-runs will show if it changed.
+- [x] b137 REUSABLE PROCEDURE — WIRING CENSUS: EVERY VALUE A POLICY MODULE EMITS
+      MUST BE CONSUMED BY THE PATH IT CLAIMS TO CONTROL (from b136, 2026-09-08).
+      DONE 2026-09-08: shrink-stack census shipped (scripts/b137_shrink_stack_
+      census.py + tests/test_b137_shrink_stack.py, 12 tests). FINDINGS: all 4
+      dampers ARE wired (each moves the lot through real evaluate_proposal);
+      loss_streak>=2 DOUBLE-COUNTS one fact at 0.25x (filed b138); combined
+      floor 0.0625x = 0.00125 risk_pct is DEAD (silent skip) at every stop
+      distance ever traded (median 10.16); execution_style un-persisted so the
+      style leg is unauditable from history (filed b139); signal-lane regime
+      leftover filed b140.
       b136 found "recovery" because risk.py computes a risk_multiplier that
       auto_executor never reads — the two modules agreed on a VOCABULARY
       (regime names) but not on a CONTRACT (who consumes which field). RULE:
