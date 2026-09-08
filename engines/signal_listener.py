@@ -71,6 +71,34 @@ def _save_state(state: dict):
     paths.write_json_atomic(paths.listener_state(), state)
 
 
+def plan_age_hours(plan: dict, now: datetime | None = None) -> float | None:
+    """b163 OBSERVABILITY: age (h) of the plan whose bias Check 4 just scored
+    against. The b163 census (scripts/b163_plan_age_census.py,
+    data/backtest/b163_plan_age_census.json) joined every logged signal
+    decision to the plan timeline: 46/46 joinable decisions used a plan
+    <=0.28h old, zero past the 12h expires_at, zero past the 2h cadence —
+    the stale-bias pathology the item was filed for does NOT occur while
+    hermes_runtime's cadence holds. The verdict was KEEP+PIN (b158 shape):
+    no behaviour change (never a bonus/penalty rewiring on one-sided
+    evidence), but the age is now RECORDED with each decision so a future
+    cadence break (b114 drift / b154 inert daemon) is visible in the log
+    instead of being census archaeology. Returns None when the plan carries
+    no parsable created_at — recorded honestly as unknown, never 0."""
+    if not plan:
+        return None
+    created = plan.get("created_at")
+    if not created:
+        return None
+    try:
+        c = datetime.fromisoformat(created)
+    except (TypeError, ValueError):
+        return None
+    if c.tzinfo is None:
+        c = c.replace(tzinfo=timezone.utc)
+    now = now or datetime.now(timezone.utc)
+    return round((now - c).total_seconds() / 3600.0, 4)
+
+
 def _log_signal(signal_text: str, parsed: dict, decision: dict):
     """Append to signals log."""
     entry = {
@@ -278,11 +306,13 @@ def check_signals(bridge=None) -> list[dict]:
 
         # Get Hermes current analysis
         hermes_analysis = {}
+        _bias_plan = None  # b163: the plan object whose bias Check 4 scored
         account_policy = {"trade_allowed": True, "regime": "normal", "open_positions": 0}
         try:
             from engines.storage import load_current_plan
             plan = load_current_plan(paths.plan_dir())
             if plan:
+                _bias_plan = plan
                 hermes_analysis = {
                     "bias": plan.get("bias", "neutral"),
                     "quality": plan.get("quality", {}),
@@ -379,6 +409,11 @@ def check_signals(bridge=None) -> list[dict]:
 
         decision = evaluate_signal(parsed_dict, hermes_analysis, account_policy,
                                    macro_filter=_macro_filter)
+        # b163: record how old the plan was whose bias just paid Check 4's
+        # +/- (observability only — the census showed the path is always
+        # fresh; this makes a future cadence break loud in the log itself).
+        decision["bias_plan_age_h"] = plan_age_hours(_bias_plan)
+        decision["bias_plan_id"] = (_bias_plan or {}).get("plan_id")
 
         signal_record = {
             "from": msg["from"],

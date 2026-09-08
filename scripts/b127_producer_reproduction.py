@@ -80,6 +80,7 @@ LEDGER_131 = os.path.join(BT, "b131_news_veto_pricing.json")
 LEDGER_160 = os.path.join(BT, "b160_reanchor_symmetry.json")
 LEDGER_161 = os.path.join(BT, "b161_reanchor_symmetry_verdict.json")
 LEDGER_161_W = os.path.join(BT, "b161_w1_divergence.json")
+LEDGER_163 = os.path.join(BT, "b163_plan_age_census.json")
 
 
 def _load(path: str) -> dict:
@@ -533,6 +534,36 @@ def check_b161_verdict_and_census() -> str:
             "arithmetic (181/182 trades, 1 differing common)")
 
 
+def check_b163_derived_blocks() -> str:
+    """b163's ship-time rule: the plan-age census summary (per-source
+    buckets, stale counts, verdict) is a PURE function of the frozen
+    per-decision rows embedded in the ledger, re-executed through the
+    producer's own derive() (scripts/b163_plan_age_census.py). The join half
+    (reading plan_history/signals_log) is NOT re-run: those files keep
+    growing and the log rotates at 200, so re-joining would certify a
+    different dataset than the one measured; the rows ARE the evidence.
+    Cross-check: the ledger's own row arithmetic (n_decisions per source ==
+    row counts, max_age matches the rows) must be self-consistent."""
+    from scripts import b163_plan_age_census as b163
+    led = _load(LEDGER_163)
+    got = b163.derive(led["rows"])
+    for key in ("decisions_on_timeline", "decisions_on_reassess_bound",
+                "stale_alignment_scores", "bound_over_cadence_pre_history",
+                "stale_decisive_for_verdict", "verdict"):
+        assert got[key] == led[key], f"b163 producer no longer reproduces {key}"
+    cov = [r for r in led["rows"] if r["source"] == "timeline"]
+    assert led["decisions_on_timeline"]["n_decisions"] == len(cov), \
+        "b163 timeline-bucket count disagrees with its own rows"
+    ages = [r["age_h"] for r in cov if r["age_h"] is not None]
+    assert abs(max(ages) - led["decisions_on_timeline"]["max_age_h"]) < 1e-9, \
+        "b163 max_age disagrees with its own rows"
+    assert led["verdict"] == "FRESH_ALWAYS_KEEP_PIN_TRIPWIRE" \
+        and led["stale_alignment_scores"] == 0, \
+        "b163 verdict no longer matches its own stale census"
+    return ("b163 census re-derived from frozen rows (52 decisions, "
+            "46 timeline-joined, max age 0.2787h, 0 stale)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -558,6 +589,7 @@ CHECKS = (
     check_b131_derived_blocks,
     check_b132_derived_blocks,
     check_b161_verdict_and_census,
+    check_b163_derived_blocks,
 )
 
 

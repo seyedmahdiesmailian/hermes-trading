@@ -82,6 +82,13 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
     score += 1.0
 
     # ── Check 4: Direction alignment with Hermes bias ──
+    # b163: the caller's plan bias is UNBOUNDED in age by contract (storage
+    # has no expiry filter here). Census scripts/b163_plan_age_census.py
+    # (data/backtest/b163_plan_age_census.json) joined all 52 logged
+    # decisions to the plan timeline: every joinable one scored a plan
+    # <=0.28h old, zero past the 12h expires_at, zero decisive-from-stale —
+    # so the +/- stays as-is (KEEP+PIN, b158 shape) and the caller now
+    # records the plan age with each decision (signal_listener.plan_age_hours).
     hermes_bias = hermes_analysis.get("bias", "neutral")
     # Normalize: "bullish" -> "BUY", "bearish" -> "SELL"
     bias_to_side = {"bullish": "BUY", "bearish": "SELL", "neutral": "NEUTRAL"}

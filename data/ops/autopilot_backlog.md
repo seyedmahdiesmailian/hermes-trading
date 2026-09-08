@@ -127,8 +127,31 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       b127 producer check green in-tree, ledgers re-merge (delta -0.006/0.000
       x4, census 88/7333=1.2% bound, all BUY), then committed so HEAD matches
       the evidence.
-- [ ] b163 TRADER CODE REVIEW — THE SIGNAL LANE SCORES DIRECTION AGAINST AN
+- [x] b163 TRADER CODE REVIEW — THE SIGNAL LANE SCORES DIRECTION AGAINST AN
       UNBOUNDED-AGE PLAN BIAS (filed by the b161-landing run, 2026-09-08):
+      DONE 2026-09-08 (b163 run): CENSUS verdict = OUTCOME (a) FRESH ALWAYS,
+      KEEP+PIN. scripts/b163_plan_age_census.py joined all 52 logged
+      decisions (data/signals/signals_log.json) to the plan timeline
+      (1514 versions, built on created_at — archive filenames race):
+      46/46 joinable decisions scored a plan <=0.2787h old, ZERO past the
+      12h expires_at, ZERO past the 2h cadence; max plan REBUILD gap over
+      the whole retained history = 0.4998h (none >2h); the 6 pre-retention
+      decisions are bounded by reassessment_log.csv (max bound 2.72h, max
+      era gap 2.94h — still 4x under expiry). Check 4's +/- was decisive
+      for the 6.0 floor on 2 execute verdicts, both on plans <13 min old —
+      a real, fresh agreement, not the pathology. The stale-bias fear is
+      therefore a cadence-break CONSEQUENCE (b114/b154 class), not a live
+      defect: no scoring change ships (Check 4 untouched, expiry semantics
+      untouched). What ships: OBSERVABILITY — every decision now records
+      bias_plan_age_h + bias_plan_id (engines/signal_listener.plan_age_hours,
+      stamped after evaluate_signal), so a future cadence break is loud in
+      the log itself; ledger data/backtest/b163_plan_age_census.json (rows
+      frozen, self-contained); b127 check_b163_derived_blocks re-derives the
+      summary from those rows; 11 tests (tests/
+      test_b163_plan_age_freshness.py) pin the headline numbers, the
+      helper's None-on-garbage (never a silent 0), the AST wiring of the
+      stamp, and Check 4's unchanged 3.0 aligned/conflict gap. B163_OUT
+      registered in b52 the SAME run (b162's rule, exercised). ORIGINAL BRIEF follows.
       engines/signal_listener.check_signals loads load_current_plan() and feeds
       plan['bias'] into evaluate_signal Check 4 (+2.0 alignment / -1.0
       conflict, and the aligned path is the ONLY way to reach the 6.0 execute
@@ -153,6 +176,29 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       ONLY (never a bonus/penalty from a dead plan), never the reverse. Do NOT
       touch any other lane's behaviour and do NOT edit plan expiry semantics.
       Estimated ~20 min: one read-only census script + ledger + pin tests.
+- [ ] b164 REUSABLE PROCEDURE — A CENSUS OVER A ROLLING LOG MUST FREEZE ITS
+      ROWS INTO THE LEDGER AND BE RE-DERIVABLE FROM THEM, NOT RE-JOINED FROM
+      LIVE INPUTS (filed by b163, 2026-09-08): b163's inputs are
+      data/signals/signals_log.json (rotates at 200 entries, _log_signal)
+      and plan_history/ (pruned at PLAN_HISTORY_KEEP=1500) — both mutate
+      between runs. The naive b127 wiring (re-run the producer's join in the
+      test) would certify a DIFFERENT dataset than the one the backlog note
+      quotes, and the pin would drift or fail on an unrelated Tuesday. The
+      shape that works: (1) the producer embeds its compact per-record rows
+      in the ledger JSON; (2) its summary arithmetic lives in a pure
+      derive(rows) separated from run(root) (the IO/join half); (3) b127
+      re-executes derive() on the SHIPPED rows and demands exact equality,
+      plus a self-consistency cross-check (counts/max against the embedded
+      rows); (4) where the rolling window genuinely forgets history (b163's
+      6 pre-retention decisions), bound the age from a sibling append-only
+      log (reassessment_log.csv) and label those rows with their source so
+      they can never certify the pathology they only bound. RULE: whenever a
+      census reads a rotating/pruned file, ship rows+derive, never
+      re-join. Name-carriers: scripts/b163_plan_age_census.py (derive/run
+      split) + scripts/b127_producer_reproduction.py::check_b163_derived_blocks.
+      Estimated: the split costs ~10 extra minutes on any future census of a
+      live log; applying it retroactively is worth it for b140/b149-style
+      censuses whose inputs also rotate.
 - [ ] b159 REUSABLE PROCEDURE — A DOCUMENTED CROSS-MODULE MISMATCH IS AN
       OPTION, NOT A DEFECT: CENSUS DISAGREEMENT RATE + CONSUMER COUNT BEFORE
       "FIXING" A LABEL (filed by b158, 2026-09-08): b157's review found
