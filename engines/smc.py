@@ -22,7 +22,7 @@ from typing import Optional
 # Order Blocks
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def detect_order_blocks(rows: list[dict], lookback: int = 20, atr_mult: float = 1.0) -> list[dict]:
+def detect_order_blocks(rows: list[dict], lookback: int = 20) -> list[dict]:
     """Find unmitigated order blocks.
 
     Bullish OB = last bearish candle before a strong bullish breakout.
@@ -91,11 +91,29 @@ def detect_order_blocks(rows: list[dict], lookback: int = 20, atr_mult: float = 
 # Fair Value Gaps
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def detect_fair_value_gaps(rows: list[dict], lookback: int = 20) -> list[dict]:
-    """Find FVGs (3-candle imbalance patterns).
+def detect_fair_value_gaps(rows: list[dict]) -> list[dict]:
+    """Find FVGs (3-candle imbalance patterns) across ALL fetched rows.
 
     Bullish FVG: candle_3.low > candle_1.high  → gap above (buy-side inefficiency)
     Bearish FVG: candle_3.high < candle_1.low  → gap below (sell-side inefficiency)
+
+    b157 (2026-09-08): this function used to carry a `lookback: int = 20`
+    parameter that never appeared in the body — the scan is, and always was,
+    over the full rows list. The parameter is DELETED (the code stops
+    claiming a window it never ran). scripts/b157_smc_window_census.py +
+    b157_window_funnel.py MEASURED the honest window before deciding:
+    honouring rows[-20:] flips the bias CLASS on 36.8% of 934 historical
+    bars, but funnel exp_R gets WORSE, not better — cached +0.003R (noise),
+    W1 -0.033R, W2 -0.078R, W3 -0.023R (incumbent bars reproduce the b118
+    merit ledger 0.278/0.211/0.230, harness integrity holds). So the stale
+    gaps are not a defect to tighten away: the old regime rewards them. Live
+    behaviour therefore stays EXACTLY as measured for months; re-testing a
+    window is a human-gated bias retune (b89 class), evidence in
+    data/backtest/b157_window_funnel*.json.
+    Observability instead of behaviour: smc_analyse now stamps an
+    `fvg_scan` census (how many unfilled gaps score into bias and how old
+    the oldest is, in bars) so the stale contribution is VISIBLE in every
+    plan instead of inferable from detector indices.
     """
     if len(rows) < 3:
         return []
@@ -138,6 +156,32 @@ def detect_fair_value_gaps(rows: list[dict], lookback: int = 20) -> list[dict]:
                 break
 
     return fvgs
+
+
+def _fvg_scan_census(unfilled_m5: list[dict], unfilled_h1: list[dict],
+                     n_rows: int, n_h1: int) -> dict:
+    """b157 observability: how far back from the last bar do scoring FVGs sit?
+
+    Age is in bars of each timeframe (bar 0 = the freshest close). M5_ADVERTISED
+    / H1_ADVERTISED are the window sizes the deleted `lookback` params claimed;
+    `stale_beyond_advertised` counts unfilled gaps older than that which STILL
+    score ±1.5 into bias (the design, per the b157 note above — the funnel was
+    measured to get WORSE when the window was honoured: cached +0.003R,
+    W1 -0.033R, W2 -0.078R, W3 -0.023R).
+    """
+    M5_ADVERTISED, H1_ADVERTISED = 20, 10
+    ages = [n_rows - f.get("c3_index", n_rows) for f in unfilled_m5]
+    ages += [n_h1 - f.get("c3_index", n_h1) for f in unfilled_h1]
+    stale = (sum(1 for f in unfilled_m5
+                 if n_rows - f.get("c3_index", n_rows) > M5_ADVERTISED)
+             + sum(1 for f in unfilled_h1
+                   if n_h1 - f.get("c3_index", n_h1) > H1_ADVERTISED))
+    return {
+        "unfilled": len(unfilled_m5) + len(unfilled_h1),
+        "stale_beyond_advertised": stale,
+        "oldest_age_bars": max(ages) if ages else None,
+        "advertised_window_bars": M5_ADVERTISED,
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -297,11 +341,10 @@ def active_killzone_session(now: datetime) -> tuple[str, float]:
         start_h = zone["start"][0] + zone["start"][1] / 60.0
         end_h = zone["end"][0] + zone["end"][1] / 60.0
 
+        # b157: a duplicate-condition branch for the 15:00-16:00 zone sat
+        # under this loop, unreachable by construction; deleted, behaviour
+        # identical (KILLZONES already maps that hour).
         if start_h <= hour < end_h:
-            return name, zone["weight"]
-
-        # Handle London close overlap
-        if name == "london_close" and start_h <= hour < end_h:
             return name, zone["weight"]
 
     return "dead", 0.0
@@ -325,6 +368,14 @@ def grade_poi(
     A:  Strong confluence (5/6)
     B:  Moderate (3-4/6)
     C:  Weak (0-2/6)
+
+    b157 FINDING (documented, NOT changed): smc_analyse feeds this only the
+    entry-TF sets (has_ob/has_fvg come from the M5/M15 rows), while
+    _derive_smc_bias merges M5+H1 — POI grade and bias see different worlds.
+    Grep-verified: nothing on the decision path consumes `poi` (only
+    ctx['quality']['smc_poi'], a plan-record label), so wiring H1 into the
+    grade would move a DISPLAYED label with no gate behind it; left for a
+    measured round rather than a cosmetic edit. Filed as follow-up todo.
     """
     score = 0.0
 
@@ -395,7 +446,7 @@ def smc_analyse(rows: list[dict], now: Optional[datetime] = None, h1_rows: Optio
     nearest_fvg = unfilled_fvgs[-1] if unfilled_fvgs else None
 
     # H1 FVGs
-    h1_fvgs = detect_fair_value_gaps(_h1, lookback=10) if _h1 else []
+    h1_fvgs = detect_fair_value_gaps(_h1) if _h1 else []
     h1_unfilled = [f for f in h1_fvgs if not f["filled"]]
 
     # ── 3. Liquidity sweep (M15) ──
@@ -419,6 +470,14 @@ def smc_analyse(rows: list[dict], now: Optional[datetime] = None, h1_rows: Optio
 
     # ── 6. Killzone ──
     killzone_session, killzone_weight = active_killzone_session(now)
+
+    # ── 6b. b157 OBSERVABILITY: how much of the bias weight is stale? ──
+    # The scan is unbounded by design (see detect_fair_value_gaps' b157
+    # note); this census makes the stale contribution VISIBLE per plan.
+    # ADVERTISED_WINDOW_BARS is what the old signature claimed (M5 20 bars /
+    # H1 10); gaps older than it still score, and `stale_*` counts how many.
+    fvg_scan = _fvg_scan_census(unfilled_fvgs, h1_unfilled,
+                                n_rows=len(rows), n_h1=len(_h1 or []))
 
     # ── 7. Bias from SMC signals (now includes H1 OBs/FVGs) ──
     smc_bias, smc_confidence = _derive_smc_bias(
@@ -469,6 +528,7 @@ def smc_analyse(rows: list[dict], now: Optional[datetime] = None, h1_rows: Optio
         "active_fvgs": unfilled_fvgs,
         "nearest_fvg": nearest_fvg,
         "liquidity_sweep": {"swept": swept, "level": swept_level},
+        "fvg_scan": fvg_scan,
         "market_structure": {"phase": structure_phase, "confidence": structure_confidence},
         "premium_discount": pd_zone,
         "killzone": {"session": killzone_session, "weight": killzone_weight},
@@ -505,6 +565,8 @@ def _empty_smc_result(now: datetime) -> dict:
         "order_blocks": [], "active_order_blocks": [], "nearest_ob": None,
         "fvgs": [], "active_fvgs": [], "nearest_fvg": None,
         "liquidity_sweep": {"swept": False, "level": None},
+        "fvg_scan": {"unfilled": 0, "stale_beyond_advertised": 0,
+                     "oldest_age_bars": None, "advertised_window_bars": 20},
         "market_structure": {"phase": "range", "confidence": 0.0},
         "premium_discount": {"zone": "equilibrium", "fib_level": 0.5, "quality": 0},
         "killzone": {"session": "dead", "weight": 0.0},

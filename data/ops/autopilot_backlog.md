@@ -47,6 +47,21 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b158 TRADER CODE REVIEW — grade_poi's TF-MISMATCH: POI GRADE AND BIAS SEE
+      DIFFERENT WORLDS (filed by the b157 landing run, 2026-09-08, to make
+      engines/smc.py grade_poi's own comment true): b157 verified by grep that
+      has_ob/has_fvg in grade_poi feed only the entry-TF sets while
+      _derive_smc_bias merges obs+h1_obs / fvgs+h1_fvgs — a POI graded "C: weak"
+      can sit on a bias carried mostly by H1 structure, and vice versa. Nothing
+      on the DECISION path consumes `poi` today (only ctx['quality']['smc_poi'],
+      a plan-record label), which is exactly why this was not cosmetic-fixed in
+      b157. FIX SHAPE (measure first, b110): decide per outcome — (a) if POI is
+      meant to inform a future gate, merge the H1 sets in and re-census the
+      grade distribution; or (b) if it stays display-only, DELETE the
+      misleading half-world inputs so the grade means what it says. Either way
+      add the pin that grade_poi's inputs and bias's inputs are the SAME sets
+      (or a comment + tripwire test that says why not). Small item; do NOT wire
+      poi into any gate without its own funnel round.
 - [x] b152 TRADER FEEDBACK LOOP — JOURNAL DROPPED EVERY IN-DEAL COMMISSION
       (filed by the b150 audit inside commit 0fe6834, never entered as an item;
       taken by this run 2026-09-08 as the top unblocked TRADER item — b141 is
@@ -122,7 +137,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       engines.learning.group_positions (the ONE net formula b152 pinned) for
       the money columns; keep the row list for recency display. Label
       "Net P&L" must then actually mean net.
-- [ ] b157 TRADER CODE REVIEW — engines/smc.py WINDOW PARAMS ARE LIES; STALE
+- [x] b157 TRADER CODE REVIEW — engines/smc.py WINDOW PARAMS ARE LIES; STALE
       FVGs SCORE INTO BIAS UNBOUNDED (filed by b155 harvest run, 2026-09-08):
       AST-verified dead args in the signal engine. (1) detect_fair_value_gaps
       (rows, lookback=20): lookback NEVER appears in the body — the scan loop
@@ -150,6 +165,14 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       honoured, 0-1 would feed bias instead of 5, i.e. up to ±6.0 of the ±2.0
       OB-class weight is arriving through the unbounded door on TODAY's bias
       (bearish 0.371). Not hypothetical; budget a real census before fixing.
+      DONE 2026-09-08 (b157): DELETED the dead params, kept the unbounded scan
+      — funnel measured one-sidedly WORSE when the window is honoured (cached
+      +0.003R noise, W1 -0.033R, W2 -0.078R, W3 -0.023R vs stored b118 bars,
+      data/backtest/b157_window_funnel*.json), so tightening would be an
+      unmeasured live change; stale contribution now STAMPED per plan via
+      context.smc.fvg_scan (_fvg_scan_census), unreachable killzone branch
+      gone, grade_poi TF-mismatch documented (poi feeds no gate — grep
+      verified), pins in tests/test_b157_smc_window_params.py.
 - [ ] b156 REUSABLE PROCEDURE — AN AST IMPORT-CLOSURE WALK MUST RESOLVE
       `from pkg import name` AS SUBMODULES, NOT JUST AS PACKAGES (filed by
       b155, 2026-09-08): b114's drift census walked ImportFrom.module only,

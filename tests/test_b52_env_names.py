@@ -121,6 +121,7 @@ DOCUMENTED_KNOBS = {
     "HERMES_LAN_IP": "local IP for the WinRM pull URL, default = this box (offsite_backup)",
     "B77_PREFLIGHT_OUT": "b77 pre-flight OUTPUT-FILE redirect (state only, never code) so tests can regenerate the ledger into a temp dir (scripts/b77_decay_preflight.py, b48)",
     "B79_PREFLIGHT_OUT": "b79 fire-rate pre-flight OUTPUT-FILE redirect (state only, never code) so tests can regenerate the ledger into a temp dir (scripts/b79_fire_rate_preflight.py, b48)",
+    "B157_OUT": "b157 window-funnel OUTPUT-FILE redirect (state only, never code) so each measured leg writes its own ledger (scripts/b157_window_funnel.py, same shape as B77/B79, b48)",
     "HERMES_SIGNAL_PENDING_DISABLE": "b71 kill-switch for signal LIMIT parking: '1' disables, default off = enabled (engines/signal_pending.py)",
     "HERMES_PENDING_TTL_MIN": "b70 pending-order lifetime in minutes, default 240, engines/signal_pending.py",
     "HERMES_PENDING_MAX": "b70 max simultaneous parked signal limits, default 2, engines/signal_pending.py",

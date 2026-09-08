@@ -1,0 +1,68 @@
+{
+ "dataset": {
+  "bars": 3000,
+  "first": 1784109600,
+  "last": 1787960700,
+  "tf": "M15"
+ },
+ "historical": {
+  "bars": 934,
+  "bias_flip_bars": 344,
+  "bias_flip_rate": 0.3683,
+  "max_abs_bias_weight_shift": 39.0,
+  "mean_abs_bias_weight_shift": 14.781,
+  "mean_extra_stale_gaps": 4.59,
+  "mean_unfilled_gaps_honoured": 2.32,
+  "mean_unfilled_gaps_status_quo": 6.91,
+  "stale_gap_count_distribution": {
+   "0": 32,
+   "1": 75,
+   "10": 42,
+   "11": 12,
+   "12": 1,
+   "2": 133,
+   "3": 150,
+   "4": 137,
+   "5": 74,
+   "6": 93,
+   "7": 73,
+   "8": 63,
+   "9": 49
+  },
+  "transitions": {
+   "bearish->bullish": 72,
+   "bearish->neutral": 50,
+   "bullish->bearish": 94,
+   "bullish->neutral": 90,
+   "neutral->bearish": 25,
+   "neutral->bullish": 13
+  }
+ },
+ "item": "b157",
+ "live": {
+  "bias": "bearish",
+  "confidence": 0.35882773409578267,
+  "created_at": "2026-09-08T12:45:02.262039+00:00",
+  "fvg_unfilled": 4,
+  "fvg_would_survive_window": 2,
+  "h1_fvg_unfilled": 2,
+  "h1_fvg_would_survive_window": 2,
+  "note": "M5 window is 120 bars; lookback=20 means only gaps whose 3rd candle sits in rows[-20:] (<=100 min old) should score.",
+  "ob_unmitigated": 1,
+  "ob_would_survive_window": 1,
+  "ok": true,
+  "plan_id": "xau-928e1462",
+  "stale_fvg_age_bars": [
+   1,
+   5,
+   81,
+   83
+  ],
+  "stale_fvg_age_minutes": [
+   5,
+   25,
+   405,
+   415
+  ]
+ }
+}

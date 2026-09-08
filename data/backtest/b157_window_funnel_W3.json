@@ -1,0 +1,47 @@
+{
+ "arms": [
+  "incumbent",
+  "windowed"
+ ],
+ "item": "b157",
+ "legs": {
+  "W3": {
+   "_delta_exp_R": -0.023,
+   "incumbent": {
+    "WR%": 67.8,
+    "avg_loss_R": -1.0,
+    "avg_win_R": 0.82,
+    "exp_R": 0.232,
+    "holds_over_time_exit": 0,
+    "maxDD_R": -7.6,
+    "max_hold_bars": 76,
+    "mean_hold_bars": 9.8,
+    "net_R": 47.5,
+    "p95_hold_bars": 27,
+    "trades": 205
+   },
+   "windowed": {
+    "WR%": 66.8,
+    "avg_loss_R": -1.0,
+    "avg_win_R": 0.81,
+    "exp_R": 0.209,
+    "holds_over_time_exit": 0,
+    "maxDD_R": -6.8,
+    "max_hold_bars": 108,
+    "mean_hold_bars": 10.1,
+    "net_R": 43.5,
+    "p95_hold_bars": 27,
+    "trades": 208
+   }
+  }
+ },
+ "verdict": {
+  "better_legs": 0,
+  "direction": "windowed WORSE",
+  "note": "one-sidedness rule needs >=3 non-zero legs to be a decision (b129's one_sided_strict floor); below that this is a direction report, not a verdict.",
+  "per_leg_delta_exp_R": {
+   "W3": -0.023
+  },
+  "worse_legs": 1
+ }
+}
