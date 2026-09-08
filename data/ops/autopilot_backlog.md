@@ -190,6 +190,17 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       Pin to add: a test that detects a foreign session (mtime of a tracked
       file newer than this run's start while git index.lock is absent) and
       reports it as an ops warning rather than silently committing through it.
+      MEASURED CONSEQUENCE THE SAME RUN: verify_head.sh STAGE 1 (the b42/b44
+      import checks) runs in the MAIN tree, so it reads the foreign session's
+      untracked files and calls a perfectly good HEAD BROKEN — it then paged
+      ops and left the push-gate stamp stale (b45 refuses to push an
+      unverified HEAD, so my commit sits unpushed through no fault of its
+      own). Stage 2 (head_verify.py, full suite in a clean detached worktree)
+      is immune by construction: a worktree of HEAD cannot see another
+      worktree's untracked files. FIX SHAPE (not done this run, [META]):
+      stage 1 must run its untracked-file check against HEAD's tree, or the
+      script must distinguish "HEAD is broken" from "the working tree is
+      dirty with someone else's files" and only page for the former.
 - [ ] b145 REUSABLE PROCEDURE — A READER THAT JOINS LIVE APPEND-ONLY CSVs MUST
       EMBED ITS JOIN INPUTS (filed by the b143 reader, 2026-09-08): the b127
       producer-reproduction contract says an audit artifact must be re-derivable
