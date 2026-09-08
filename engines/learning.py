@@ -270,10 +270,28 @@ def analyze() -> dict:
     if not rows:
         return out
 
+    # b151: stats are per POSITION and on NET P&L, not per closing leg on gross.
+    # The journal writes one row per closing deal (b75), so a position taken
+    # into several TPs contributes several rows; and `profit` excludes
+    # commission/swap. On the leg/gross view the loop read win_rate 0.737 and
+    # avg +0.07$ while the same data per-position-net read 0.679 and -0.11$ —
+    # i.e. the loop believed a losing system was profitable and its only
+    # defensive trigger (`wr < 0.40 and avg < 0`) could not fire.
     def stats(sub: list[dict]) -> dict:
-        profits = [float(r['profit'] or 0) for r in sub if r.get('profit') not in (None, '')]
-        if not profits:
+        legs = [r for r in sub if r.get('profit') not in (None, '')]
+        if not legs:
             return {}
+        nets: dict[str, float] = {}
+        for i, r in enumerate(legs):
+            key = str(r.get('position_id') or '').strip() or f'_row{i}_{r.get("ticket")}'
+            try:
+                gross = float(r.get('profit') or 0)
+                comm = float(r.get('commission') or 0)
+                swap = float(r.get('swap') or 0)
+            except (TypeError, ValueError):
+                gross = comm = swap = 0.0
+            nets[key] = nets.get(key, 0.0) + gross + comm + swap
+        profits = list(nets.values())
         wins = sum(1 for p in profits if p > 0)
         return {
             'trades': len(profits),
