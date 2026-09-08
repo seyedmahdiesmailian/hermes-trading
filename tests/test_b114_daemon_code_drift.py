@@ -85,6 +85,64 @@ class TestB114ProbeMachinery(unittest.TestCase):
         self.assertIn("signal_daemon.py", probe.DAEMONS)
         self.assertNotIn("hermes_master.py", probe.DAEMONS)
 
+    def test_b155_the_dashboard_bot_is_in_the_census(self):
+        # b155: scripts/dashboard_bot.py is a THIRD long-lived process
+        # (systemd hermes-dashboard, Restart=always) that binds
+        # notifier.dashboards at import. Before b155 the census claimed
+        # "only the daemons are" a risk and its own comment was the lie:
+        # the operator's phone kept rendering the PRE-b152/b154 panel for a
+        # week while every drift report said "clean". The entry must be the
+        # path systemd actually execs, and the panel module must be in the
+        # closure by whatever route (extra or import walk).
+        probe = _load_probe()
+        self.assertIn("dashboard_bot.py", probe.DAEMONS)
+        spec = probe.DAEMONS["dashboard_bot.py"]
+        self.assertEqual(spec["entry"], "scripts/dashboard_bot.py")
+        closure = probe.import_closure(spec["entry"], spec["extra"])
+        self.assertIn("notifier/dashboards.py", closure,
+                      "the dashboard's render module is invisible to the "
+                      "census — b155's blind spot is back")
+        # reality-binding: the entry string must match the actual process
+        # line AND the systemd unit's ExecStart, not a hand-typed guess.
+        start = probe.process_start_utc("dashboard_bot.py")
+        if start is not None:
+            led = _read(LIVE)
+            self.assertIn("dashboard_bot.py", led["daemons"],
+                          "the drift probe has not been re-run since b155 "
+                          "added the third daemon")
+            unit_path = os.path.expanduser(
+                "~/.config/systemd/user/hermes-dashboard.service")
+            if os.path.exists(unit_path):
+                body = open(unit_path).read()
+                self.assertIn(spec["entry"], body,
+                              "the census entry no longer matches what "
+                              "systemd actually execs")
+
+    def test_b155_import_closure_sees_from_package_submodules(self):
+        # The deeper defect b155 caught while wiring the third daemon: the
+        # old walk resolved ONLY the dotted module in `from pkg import name`
+        # (i.e. pkg/__init__.py) and never the submodule, so every file
+        # imported that way was invisible to drift — including
+        # engines/paths.py in ALL THREE processes, engines/broker_clock.py
+        # in the watchdog and engines/signal_pending.py in the listener.
+        # Pin the names the fix restored, and pin the anti-vacuity: a
+        # stdlib name imported the same way (pathlib) must NOT appear.
+        probe = _load_probe()
+        pos = probe.import_closure("position_daemon.py", [])
+        self.assertIn("engines/paths.py", pos,
+                      "b155: engines/paths.py (from engines import paths) "
+                      "fell out of the watchdog closure again")
+        self.assertIn("engines/broker_clock.py", pos)
+        sig = probe.import_closure("signal_daemon.py", [])
+        self.assertIn("engines/signal_pending.py", sig)
+        self.assertIn("notifier/dashboards.py", sig)
+        bot = probe.import_closure("scripts/dashboard_bot.py", [])
+        self.assertIn("engines/paths.py", bot)
+        for name, closure in (("pos", pos), ("sig", sig), ("bot", bot)):
+            self.assertNotIn("pathlib.py", closure,
+                             f"{name}: the submodule walk stopped dropping "
+                             "names that have no repo file")
+
     def test_b114_the_import_closure_finds_the_ladder_module(self):
         # If the closure silently stopped resolving engines/*, the probe would
         # report "no drift" forever — the vacuity this family exists to catch.

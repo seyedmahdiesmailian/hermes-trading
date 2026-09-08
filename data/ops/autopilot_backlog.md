@@ -122,8 +122,50 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       engines.learning.group_positions (the ONE net formula b152 pinned) for
       the money columns; keep the row list for recency display. Label
       "Net P&L" must then actually mean net.
-- [ ] b155 TRADER OPS — DASHBOARD PROCESS IS A DRIFT BLIND SPOT; b154'S FIX
-      IS INERT UNTIL IT REBOOTS (filed by b154, 2026-09-08): b114's census
+- [ ] b156 REUSABLE PROCEDURE — AN AST IMPORT-CLOSURE WALK MUST RESOLVE
+      `from pkg import name` AS SUBMODULES, NOT JUST AS PACKAGES (filed by
+      b155, 2026-09-08): b114's drift census walked ImportFrom.module only,
+      which binds pkg/__init__.py — every submodule imported through
+      `from engines import paths` style was invisible to it, so the census
+      could print "clean" while a file the process actually loaded had moved
+      under it (measured: engines/paths.py, engines/broker_clock.py,
+      engines/signal_pending.py, notifier/dashboards.py — one of them, 3b56148,
+      is a REAL commit that touched a file in the watchdog's true closure and
+      never appeared in the drift set). RULE: any AST-based import walker must
+      resolve THREE shapes — plain `import a.b` (a/b.py or a/b/__init__.py),
+      `from a import b` (a/__init__.py AND a/b.py AND a/b/__init__.py), and
+      relative imports with the level prefix — and its test must pin an
+      ANTI-VACUITY in both directions: a known submodule imported by name must
+      appear, and a stdlib name imported the same way (pathlib via
+      `from pathlib import Path`) must NOT (existence-check is the drop
+      mechanism; if it leaks, closures bloat and every drift report becomes
+      noise). Name-carriers:
+      tests/test_b114_daemon_code_drift.py::
+      test_b155_import_closure_sees_from_package_submodules. Before trusting
+      ANY "no drift" verdict from a closure-based tool (b114, b127's check,
+      future import-graph audits), read the walker for the ImportFrom.names
+      loop — a missing one is a census that is silently under-counting.
+- [x] b155 TRADER OPS — DASHBOARD PROCESS IS A DRIFT BLIND SPOT; b154'S FIX
+      IS INERT UNTIL IT REBOOTS (filed by b154, 2026-09-08): DONE 2026-09-08.
+      FINDING BIGGER THAN THE BRIEF: while wiring the third daemon into
+      b114's DAEMONS map (scripts/dashboard_bot.py + notifier/dashboards.py,
+      entry verified against the systemd ExecStart), the import-closure walk
+      turned out to be SYSTEMATICALLY BLIND to `from pkg import name` — it
+      resolved only the dotted module (pkg/__init__.py) and never the
+      submodule, so engines/paths.py, engines/broker_clock.py,
+      engines/signal_pending.py and notifier/dashboards.py could NEVER show
+      up as drift in any census since b114 shipped. The walk now queues each
+      imported name as a candidate submodule (existence-checked; anti-vacuity
+      pin: pathlib.py must not appear). Measured after the fix: the watchdog
+      8 closure files changed since boot (was 7 — engines/paths.py 3b56148
+      was the hidden one), signal 12, and the dashboard bot 9 files over
+      187.7h stale — b154's net-stats fix confirmed INERT until the operator
+      restarts hermes-dashboard (autopilot does NOT restart — hard rule).
+      b127's arithmetic check adapts automatically (iterates the ledger's own
+      daemons); ledger data/ops/daemon_code_drift.json regenerated on HEAD
+      0f2460b. 2 new tests in tests/test_b114_daemon_code_drift.py. Filed
+      b156 (the reusable closure rule). ORIGINAL BRIEF follows.
+      b114's census
       tracks ONLY position_daemon/signal_daemon and its comment claims
       "hermes_master runs from cron every 15 min ... only the daemons are" a
       risk — but scripts/dashboard_bot.py is a THIRD long-lived process
@@ -1145,6 +1187,13 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       same closure — but it must NOT be sold as a ~20R exit improvement, and any
       "live underperforms the funnel on the runner leg" round should read
       data/backtest/b117_trail_reprice.json before blaming anything.
+      B155 UPDATE (2026-09-08): the census now covers a THIRD service —
+      systemd hermes-dashboard (scripts/dashboard_bot.py, 187.7h stale,
+      9 closure files changed since boot). b154's dashboard net-stats fix is
+      inert on the operator's phone until that one restarts too, so the
+      guarded restart window should include `systemctl --user restart
+      hermes-dashboard` (read-only autopilot rule: it measures, never
+      restarts).
 - [ ] b116 MEASUREMENT PROCEDURE — BEFORE QUOTING LIVE BEHAVIOUR, ASK WHICH
       COMMIT THE RUNNING PROCESS BOOTED FROM (reusable procedure from b114,
       2026-09-07): b113 says a census must be taken in the frame the gate runs

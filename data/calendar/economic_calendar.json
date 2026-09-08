@@ -344,16 +344,16 @@
       "previous": "11.8K"
     },
     {
-      "title": "ECB President Lagarde Speaks",
+      "title": "German Buba President Nagel Speaks",
       "currency": "EUR",
-      "impact": "medium",
+      "impact": "low",
       "date": "2026-09-09T13:00:00-04:00",
       "time": "",
       "forecast": "",
       "previous": ""
     },
     {
-      "title": "German Buba President Nagel Speaks",
+      "title": "ECB President Lagarde Speaks",
       "currency": "EUR",
       "impact": "low",
       "date": "2026-09-09T13:00:00-04:00",
@@ -722,5 +722,5 @@
       "previous": ""
     }
   ],
-  "cached_at": "2026-09-08T05:08:32.384049+00:00"
+  "cached_at": "2026-09-08T11:15:03.958906+00:00"
 }

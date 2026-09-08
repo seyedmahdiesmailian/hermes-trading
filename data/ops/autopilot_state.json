@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-08T09:30:03.377457+00:00",
+ "last_run_utc": "2026-09-08T11:11:59.527179+00:00",
  "recent_commits": [
+  "0f2460b autopilot: b154 backlog close-out (dated finding on the gross-per-row live measurement) + file b155 (dashboard_bot.py is a third long-lived process invisible to b114's drift census \u2014 b154's fix is inert on the operator's phone until it reboots)",
+  "56c3344 autopilot: b154 dashboard Net P&L was gross-per-row (live: +17.89$ shown vs broker +5.65$ on the same 29 positions) \u2014 every aggregate now routes through learning.group_positions, the ONE net formula (b152), with a spy pin on the CALL not just the value; today/day slices moved from journaled_at to close_time (UTC); recency list shows per-leg net; degraded import path falls back per-row and DISCLOSES a basis warning (b49). 13 tests. Lands the verified uncommitted b152 work it was filed from (b46/b47 harvest: backfill script + ledger + 10 tests passed the full suite pre-commit)",
   "564485d autopilot: b141 rollover blind-window census (fix NOT shipped, decision-blocked)",
   "0fe6834 b151 TRADER FEEDBACK LOOP \u2014 THE LEARNING LOOP WAS BLIND TO LOSSES (found by ops audit, not autopilot): analyze().stats() averaged gross 'profit' over journal ROWS (legs), so a 3-leg position counted 3x and commission/swap were ignored. Live shape: leg/gross said win_rate 0.737 avg +0.07$ while per-position/net said 0.679 avg -0.11$ \u2014 the loop's ONLY defensive trigger (wr<0.40 AND avg<0) could never fire, and learning_state.json proves it never has since 2026-08-29 through a losing stretch. stats() now groups by position_id and sums profit+commission+swap; tighten-only semantics unchanged (fix can only make the loop see WORSE). 8 tests in test_b151. Also lands the audit trail: b147 ladder-gate counterfactual (loosening RR to ladder = -73$ on every measured window, do NOT), b149 rejected-signal replay (13 replayable: 11 TP1 / 2 SL, +52$/0.01lot \u2014 the user's complaint is REAL and now pinned), b150 commission audit (journal misses every IN-deal commission: -6.06$ of -12.12$ over 30d \u2014 filed, not yet folded).",
-  "7dcb194 autopilot: b148 note \u2014 verify_head stage 1 runs in the main tree, so a foreign session's untracked files falsely call a good HEAD BROKEN; head_verify stage 2 certified 1fc110b OK (1417 tests)",
-  "1fc110b autopilot: b144 risk_ledger ticket column + header migration (rescue staged work from killed run; rename 2 test methods for b102 pin rule; file b148 concurrent-session hazard)",
-  "429c7dd autopilot: b143 risk_ledger reader (reconcile + damper mix + ticket join); file b144/b145"
+  "7dcb194 autopilot: b148 note \u2014 verify_head stage 1 runs in the main tree, so a foreign session's untracked files falsely call a good HEAD BROKEN; head_verify stage 2 certified 1fc110b OK (1417 tests)"
  ]
 }

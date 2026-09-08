@@ -30,9 +30,15 @@ sys.path.insert(0, _ROOT)
 
 OUT = os.path.join(_ROOT, "data", "ops", "daemon_code_drift.json")
 
-# The two long-lived trading processes (systemd services). hermes_master runs
-# from cron every 15 min, so it always boots from current code and is NOT a
-# drift risk — only the daemons are.
+# The long-lived processes (systemd services, Restart=always). hermes_master
+# runs from cron every 15 min, so it always boots from current code and is NOT
+# a drift risk — only the daemons are.
+# b155: scripts/dashboard_bot.py is a THIRD such process (systemd
+# hermes-dashboard, `while True: sleep(5)` rendering every ops panel from
+# notifier/dashboards.py imported at module level). Before b155 the census
+# claimed "only the daemons are" a risk and silently excluded it, so the
+# operator's phone kept showing the PRE-b152/b154 view for a week while every
+# drift report said "clean". Autopilot measures; the operator restarts.
 DAEMONS = {
     "position_daemon.py": {"entry": "position_daemon.py",
                            "extra": ["engines/trade_management.py",
@@ -42,6 +48,8 @@ DAEMONS = {
                          "extra": ["engines/signal_parser.py",
                                    "engines/signal_decision.py",
                                    "engines/signal_listener.py"]},
+    "dashboard_bot.py": {"entry": "scripts/dashboard_bot.py",
+                         "extra": ["notifier/dashboards.py"]},
 }
 
 
@@ -84,7 +92,18 @@ def commit_at_or_before(when: datetime) -> dict:
 
 def import_closure(entry: str, extra: list[str]) -> list[str]:
     """Transitive repo-local import closure of one entry module (stdlib and
-    third-party names dropped), plus the explicitly listed runtime deps."""
+    third-party names dropped), plus the explicitly listed runtime deps.
+
+    b155: `from pkg import name` binds BOTH pkg/__init__.py AND pkg/name.py.
+    The old walk resolved only the dotted module in ImportFrom.module, so
+    every submodule imported that way was INVISIBLE to the drift census
+    (engines/paths.py in all three processes, engines/broker_clock.py in the
+    watchdog, engines/signal_pending.py in the signal listener,
+    notifier/dashboards.py in the dashboard bot): a commit touching such a
+    file could never show up as drift, so the census could print "clean" on a
+    tree that had moved. The walk now queues each imported name as a
+    candidate submodule too — existence-checked, so stdlib/third-party names
+    are still dropped exactly as before."""
     seen: set[str] = set()
     queue = [entry]
     while queue:
@@ -99,20 +118,33 @@ def import_closure(entry: str, extra: list[str]) -> list[str]:
             continue
         for node in ast.walk(tree):
             mods: list[str] = []
+            submodules: list[str] = []
             if isinstance(node, ast.Import):
                 mods = [a.name for a in node.names]
             elif isinstance(node, ast.ImportFrom) and node.module:
                 if node.level:  # relative import inside a package
                     pkg = os.path.dirname(rel)
                     mods = [os.path.normpath(os.path.join(
-                        pkg, *[""] * (node.level - 1), node.module))]
+                        pkg, *[ ] * (node.level - 1), node.module))]
+                    base = pkg
                 else:
                     mods = [node.module]
+                    base = ""
+                for a in node.names:
+                    if a.name == "*":
+                        continue
+                    pkgdir = os.path.normpath(os.path.join(
+                        base, node.module.replace(".", "/")))
+                    submodules.append(os.path.join(pkgdir, a.name))
             for m in mods:
                 parts = m.split(".")
                 cand = os.path.join(*parts) + ".py"
                 cand_pkg = os.path.join(*parts, "__init__.py")
                 for c in (cand, cand_pkg):
+                    if os.path.exists(os.path.join(_ROOT, c)) and c not in seen:
+                        queue.append(c)
+            for sm in submodules:
+                for c in (sm + ".py", os.path.join(sm, "__init__.py")):
                     if os.path.exists(os.path.join(_ROOT, c)) and c not in seen:
                         queue.append(c)
     for e in extra:
