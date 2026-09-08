@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-08T04:30:02.544374+00:00",
+ "last_run_utc": "2026-09-08T05:26:01.450859+00:00",
  "recent_commits": [
+  "429c7dd autopilot: b143 risk_ledger reader (reconcile + damper mix + ticket join); file b144/b145",
   "848e4de autopilot: b139 risk_stack sidecar ledger \u2014 execution_style + shrink stack now persisted per trade (b142 option b, both lanes)",
   "4b97fbd autopilot: b142 filed \u2014 b139's proposed fix is a no-op trap (append_csv_row cannot migrate a header); tripwire test + b141 edit-not-delete line",
   "42cfc1d autopilot: harvest b140 \u2014 land signal-lane regime census files (b42 untracked) + b141 edit-not-delete line (b102)",
-  "ec65eca autopilot: b137 shrink-stack census - double-count at 0.25x, dead floor lane, style leg un-persisted (b138/b139/b140 filed)",
-  "057376a autopilot: b136 wire recovery regime into TIGHT_REGIMES (sizing was full-risk at >=2.5% DD) + census script + 6 tests"
+  "ec65eca autopilot: b137 shrink-stack census - double-count at 0.25x, dead floor lane, style leg un-persisted (b138/b139/b140 filed)"
  ]
 }

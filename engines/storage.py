@@ -101,12 +101,69 @@ def append_reassessment_log(base_dir: str | Path | None, row: dict):
 # (learning's join, dashboards, weekly_report) reads the file as if the field
 # never existed. A new file gets its header on creation, and the fieldnames
 # below are FIXED so a future row can never silently redefine the schema.
+# b144: `ticket` is the last column. It is what makes a sidecar row joinable
+# to realized P&L on its OWN key — without it every signal-lane row carries
+# plan_id='signal' and the b138 question ("did the 0.25x double-charge trade
+# actually lose less money?") is unanswerable for the lane that trades most.
+# Appending it to the END of the tuple keeps the old 18-column header a strict
+# prefix of the new one, so _migrate_risk_ledger_header can widen existing rows
+# losslessly (b142's rule: adding a column is a schema migration).
 RISK_LEDGER_FIELDS = (
     "at", "lane", "plan_id", "side", "lot", "entry", "sl", "tp",
     "grade", "base_risk_pct", "learning_risk_mult", "execution_style",
     "style_mult", "defcon_override", "regime", "regime_mult",
-    "final_risk_pct", "risk_usd",
+    "final_risk_pct", "risk_usd", "ticket",
 )
+
+
+def _risk_ledger_header(path: Path) -> list[str] | None:
+    """The header line of an existing ledger, or None if absent/empty."""
+    if not path.exists() or path.stat().st_size == 0:
+        return None
+    with path.open(newline="", encoding="utf-8") as f:
+        line = f.readline().strip()
+    return next(csv.reader([line])) if line else None
+
+
+def _migrate_risk_ledger_header(path: Path) -> None:
+    """Widen an existing ledger to RISK_LEDGER_FIELDS without losing a row.
+
+    learning.py's _migrate_journal is the precedent: DictWriter appends BY
+    POSITION, so writing a 19-wide row under an 18-wide header silently
+    misaligns nothing but simply hides the extra value under csv's None
+    restkey (b142's no-op trap). Rewrite the file instead.
+
+    Refuses (raises) rather than destroying data when the on-disk header is
+    not a strict prefix of the shipped schema — an unknown column means an
+    unknown writer, and guessing is worse than not auditing. The caller
+    swallows the exception: a missing audit row is honest, a corrupt ledger
+    is not.
+    """
+    header = _risk_ledger_header(path)
+    if header is None or tuple(header) == RISK_LEDGER_FIELDS:
+        return
+    want = list(RISK_LEDGER_FIELDS)
+    if header != want[:len(header)]:
+        raise RuntimeError(
+            f"risk_ledger header {header} is not a prefix of {want}")
+    size_before = path.stat().st_size
+    with path.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    tmp = path.with_suffix(".csv.tmp")
+    with tmp.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=want, extrasaction="ignore")
+        writer.writeheader()
+        for r in rows:
+            writer.writerow({k: r.get(k, "") for k in want})
+    # Race guard: the live daemons still run pre-b144 code and append to this
+    # same file. If a row landed while we were rewriting, replacing would
+    # silently drop it — an audit ledger that loses a trade is worse than one
+    # that gains none. Bail out (the caller swallows it) and let the next
+    # entry retry.
+    if path.stat().st_size != size_before:
+        tmp.unlink(missing_ok=True)
+        raise RuntimeError("risk_ledger changed during migration; retry later")
+    tmp.replace(path)
 
 
 def append_risk_ledger(base_dir: str | Path | None, row: dict):
@@ -115,6 +172,7 @@ def append_risk_ledger(base_dir: str | Path | None, row: dict):
     paths = ensure_xau_plan_dirs(base_dir)
     path = paths["risk_ledger_path"]
     path.parent.mkdir(parents=True, exist_ok=True)
+    _migrate_risk_ledger_header(path)
     with path.open("a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(RISK_LEDGER_FIELDS),
                                 extrasaction="ignore")

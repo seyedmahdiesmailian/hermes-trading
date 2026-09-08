@@ -393,13 +393,20 @@ def check_signals(bridge=None) -> list[dict]:
     return signals_found
 
 
-def _log_signal_risk_stack(eval_result: dict, command: dict) -> None:
+def _log_signal_risk_stack(eval_result: dict, command: dict,
+                           ticket=None) -> None:
     """b139: persist the per-trade shrink stack for a signal-lane entry.
 
     The signal lane's execution_log rows carry plan_id='signal' and are
     SKIPPED by learning.py's join, so a per-trade style audit needs BOTH
     call sites (this one and hermes_runtime's plan lane), not just one.
-    Observability only: never let a ledger failure touch the trade path.
+    b144: `ticket` is the join key that makes this row reachable from
+    realized P&L without a timestamp guess — every signal row used to say
+    plan_id='signal', so the lane that trades most was unauditable. For the
+    market path it is the deal/order ticket the broker returned; for the
+    limit path it is the pending order ticket (which the entry deal's `order`
+    field points back to). Observability only: never let a ledger failure
+    touch the trade path.
     """
     try:
         from engines import paths
@@ -411,7 +418,8 @@ def _log_signal_risk_stack(eval_result: dict, command: dict) -> None:
             lot=command.get("lot"), entry=command.get("entry"),
             sl=command.get("sl"), tp=command.get("tp"),
             grade=eval_result.get("grade", "signal"),
-            risk_usd=eval_result.get("risk_usd", 0)))
+            risk_usd=eval_result.get("risk_usd", 0),
+            ticket=ticket))
     except Exception:
         pass
 
@@ -621,7 +629,8 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 "result_ok": pres.get("ok", False),
                 "ticket": pres.get("ticket"),
             })
-            _log_signal_risk_stack(eval_result, command)
+            _log_signal_risk_stack(eval_result, command,
+                                   ticket=pres.get("ticket"))
             continue
 
         result = execute_trade(command, bridge, dry_run=dry_run)
@@ -662,7 +671,8 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             "result_ok": result.get("ok", False),
             "ticket": (result.get("result") or {}).get("ticket"),
         })
-        _log_signal_risk_stack(eval_result, command)
+        _log_signal_risk_stack(eval_result, command,
+                               ticket=(result.get("result") or {}).get("ticket"))
 
     return {
         "ok": True,

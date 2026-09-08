@@ -117,8 +117,43 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       and whether any trade's stack product disagrees with its logged
       risk_usd/lot). That turns b138's pending human decision from an argument
       into a table. Read-only; no gate may change.
-- [ ] b144 TRADER OBSERVABILITY — RISK LEDGER NEEDS A TICKET COLUMN (filed by
-      the b143 reader, 2026-09-08): RISK_LEDGER_FIELDS (engines/storage.py) has
+- [x] b144 TRADER OBSERVABILITY — RISK LEDGER NEEDS A TICKET COLUMN (filed by
+      the b143 reader, 2026-09-08): DONE 2026-09-08. FINDING: the work was
+      ALREADY IN THE TREE, STAGED BUT UNCOMMITTED, by a run killed at ~06:30 UTC
+      (b46/b36 shape again — invisible to cron, git_sync and verify_head, all of
+      which read only HEAD, while the backlog still said todo); this run verified
+      it end-to-end, fixed the one thing that made it unshippable, and landed it.
+      WHAT SHIPPED: `ticket` appended LAST to RISK_LEDGER_FIELDS (last, not
+      inserted: the live daemons still run pre-b144 code and append 18-value
+      rows, and csv only folds EXTRA values under the None restkey, so a short
+      row stays readable while a mid-tuple column would misalign every field
+      after it for as long as the daemons drift); storage
+      ._migrate_risk_ledger_header widens an existing 18-column file in place
+      (learning._migrate_journal is the precedent), REFUSES a header that is not
+      a strict prefix of the shipped schema, and ABORTS if the file changed size
+      mid-rewrite (a concurrent daemon append must never be dropped — an audit
+      ledger that loses a trade is worse than one that gains none); both lanes
+      pass the SAME expression execution_log already records (plan lane
+      execution_result['result']['ticket'], signal market path
+      result['result']['ticket'], signal limit path pres['ticket'] = the PENDING
+      order ticket); b143's reader now joins on the row's own ticket
+      (join_path='row_ticket') and falls back to the plan_id join only for
+      pre-b144 rows, reporting an unresolved limit ticket as realized=None
+      instead of guessing at a fill. 20 tests (tests/test_b144_risk_ledger_ticket.py):
+      schema shape + prefix property, migration losslessness, no-.tmp-left,
+      foreign-header refusal (file byte-identical), the racing-append abort, AST
+      wiring pins on both lanes, b122 identity pin (the ledger ticket IS the
+      execution_log ticket expression), reader joinability, and a no-gate-changed
+      pin (the shared _append_csv_row stays untouched; the write stays AFTER
+      execute_trade). THE BLOCKER THAT HAD TO BE FIXED FIRST: HEAD was RED —
+      b102's non-widening rule flags any prose that says "Filed as bNN" unless a
+      TEST METHOD NAME carries bNN, and the parked b143 docstring said exactly
+      that while the new test's methods were bare (test_ticket_is_a_named_column…
+      ). Two methods renamed to test_b144_* (b103's own self-scan and b50's
+      suite-inside-HEAD both went green on the fix; b134's triage rule confirmed
+      the diagnosis — only the HEAD-embedded suite was failing, so the tree was
+      right and HEAD was stale). ORIGINAL BRIEF follows.
+      RISK_LEDGER_FIELDS (engines/storage.py) has
       plan_id but NO ticket, so a sidecar row cannot be joined to realized P&L
       on its own. The plan lane survives via execution_log (plan_id is unique
       per proposal), but EVERY signal-lane row carries plan_id='signal', so the
@@ -130,6 +165,31 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       extra key), and have both writers pass the ticket the executor returns.
       b143's reader already handles the join both ways and will pick the column
       up with no change. Additive/observability only: no gate may change.
+- [ ] b148 [META] HARNESS HAZARD — TWO AGENT SESSIONS EDIT THE SAME WORKING
+      TREE CONCURRENTLY; COMMIT BY EXPLICIT PATH, NEVER `git add -A`
+      (found 2026-09-08 during the b144 landing): while this run was verifying,
+      `scripts/` gained files it never wrote (b146_ladder_gate_counterfactual.py,
+      b146_journal_commission_audit.py), one of them was RENAMED to
+      b147_..._counterfactual.py BETWEEN two `git status` calls six seconds
+      apart, and two `tmp_*.py` files appeared and vanished mid-suite — so a
+      second live session (a manual/Telegram-side agent, not this cron run) was
+      editing the repo. Consequences measured this run: (1) the b42 untracked
+      tripwire went RED on files that are not mine, which is the ONLY reason the
+      working-tree suite is not fully green; (2) the standing instruction
+      `git add -A` would have swept another session's in-flight scratch code —
+      half-renamed, untested, possibly importing a module it was about to delete —
+      into my commit and into HEAD, where cron's git_sync would have pushed it.
+      RULE for any run that finds foreign dirty files: commit YOUR files by
+      explicit path (`git add <f1> <f2> …`), never `-A`, and say so in the
+      report; verify_head.sh is the arbiter because a clean worktree of HEAD
+      cannot see another worktree's untracked files. Do NOT delete or revert the
+      foreign files — they are someone's live work. Open question for the owner:
+      either serialize autopilot runs (a lockfile in scripts/autopilot.sh held
+      for the whole agent lifetime) or give concurrent sessions separate
+      worktrees; today nothing prevents two agents from editing one tree.
+      Pin to add: a test that detects a foreign session (mtime of a tracked
+      file newer than this run's start while git index.lock is absent) and
+      reports it as an ops warning rather than silently committing through it.
 - [ ] b145 REUSABLE PROCEDURE — A READER THAT JOINS LIVE APPEND-ONLY CSVs MUST
       EMBED ITS JOIN INPUTS (filed by the b143 reader, 2026-09-08): the b127
       producer-reproduction contract says an audit artifact must be re-derivable

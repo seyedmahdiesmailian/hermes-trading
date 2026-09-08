@@ -25,18 +25,19 @@ consumed it. This is the consumer, and it asks three questions of every row:
      loss_streak>=2 double-charge at 0.25x) turned from an argument into a
      table of realized frequency.
 
-TWO DEFECTS THIS READER FOUND BY HAVING TO WRITE THE JOIN (both reported,
-neither fixed here — a fix would touch the live write path):
+TWO DEFECTS THIS READER FOUND BY HAVING TO WRITE THE JOIN:
 
-  (a) THE LEDGER HAS NO TICKET COLUMN. b143's brief says "join risk_ledger rows
-      to trade_journal tickets". There is no direct key: RISK_LEDGER_FIELDS
-      (engines/storage.py) carries plan_id, not ticket. The join therefore
-      goes risk_ledger -> execution_log (on at+plan_id+side+lot) -> ticket ->
-      trade_journal. For the PLAN lane plan_id is unique per proposal, so the
-      join is exact. For the SIGNAL lane every row carries plan_id='signal',
-      so the join is by timestamp proximity and is NOT provably one-to-one.
-      A realized-P&L audit of the signal lane is therefore still unanswerable
-      from the sidecar alone. Filed as b144.
+  (a) THE LEDGER HAD NO TICKET COLUMN. [FIXED by b144, 2026-09-08: `ticket` is
+      now in RISK_LEDGER_FIELDS, both lane writers pass the broker ticket, and
+      an existing 18-column file is widened by storage's header migration —
+      b142's rule. join_to_tickets below prefers the row's own ticket and falls
+      back to the plan_id join only for pre-b144 rows.] Before that there was
+      no direct key: RISK_LEDGER_FIELDS (engines/storage.py) carried plan_id,
+      not ticket, so the join went risk_ledger -> execution_log (on
+      at+plan_id+side+lot) -> ticket -> trade_journal. The plan lane survived
+      (plan_id is unique per proposal), but EVERY signal-lane row carried
+      plan_id='signal', so the realized-P&L question b138 needs was
+      unanswerable for the lane that trades most.
 
   (b) THE SIGNAL LANE CAPS THE LOT AFTER THE STACK IS COMPUTED, and the cap is
       invisible to the ledger. engines/signal_listener.run_signal_check clamps
@@ -319,10 +320,19 @@ def read_journal_tickets(path: Path = JOURNAL) -> dict:
 
 def join_to_tickets(rows: list[dict], exec_rows: list[dict],
                     journal: dict) -> list[dict]:
-    """Attach a ticket + realized P&L to each sidecar row where the join is
-    PROVABLE (plan lane: plan_id is unique per proposal). Signal-lane rows are
-    reported as unjoinable-by-key, because plan_id='signal' repeats — that is
-    defect (a) above, and guessing by timestamp would be a fabricated join."""
+    """Attach a ticket + realized P&L to each sidecar row.
+
+    b144 changed the primary path: the row carries its OWN `ticket` now, so a
+    row joins directly — no key ambiguity, and the SIGNAL lane (plan_id
+    repeats as 'signal') is finally auditable, which was the whole point.
+    Rows written BEFORE b144 have an empty ticket cell; those fall back to
+    the old plan-lane plan_id join (exact there, since plan_id is unique per
+    proposal) and are reported joinable=False on the signal lane rather than
+    matched by timestamp, which would be a fabricated join.
+
+    A limit-order row's ticket is the PENDING order ticket, not the position
+    ticket the journal keys on, so it may resolve to nothing — that reports
+    realized=None honestly instead of guessing at a fill."""
     by_plan: dict[str, list[dict]] = {}
     for e in exec_rows:
         by_plan.setdefault(str(e.get("plan_id")), []).append(e)
@@ -331,14 +341,28 @@ def join_to_tickets(rows: list[dict], exec_rows: list[dict],
     for r in rows:
         pid = str(r.get("plan_id"))
         info = {"at": r.get("at"), "lane": r.get("lane"), "plan_id": pid,
-                "joinable": False, "ticket": None, "realized_net": None}
-        if r.get("lane") == "plan":
+                "joinable": False, "ticket": None, "realized_net": None,
+                "join_path": None}
+        own = str(r.get("ticket") or "").strip()
+        if own:
+            info.update(joinable=True, ticket=own, join_path="row_ticket")
+            pos = journal.get(index.get(own, own))
+            if pos is not None:
+                info["position_id"] = pos.get("position_id")
+                info["close_deals"] = pos.get("close_deals")
+                info["realized_net"] = pos.get("realized_net")
+            else:
+                info["join_note"] = ("ticket resolves to no journal row "
+                                     "(open position, or a pending-order "
+                                     "ticket that is not the position key)")
+        elif r.get("lane") == "plan":
             cands = [e for e in by_plan.get(pid, [])
                      if str(e.get("result_ok")).lower() == "true"
                      and str(e.get("ticket") or "").strip()]
             if len(cands) == 1:
                 t = str(cands[0]["ticket"]).strip()
-                info.update(joinable=True, ticket=t)
+                info.update(joinable=True, ticket=t,
+                            join_path="plan_id_fallback")
                 pos = journal.get(index.get(t, t))
                 if pos is not None:
                     info["position_id"] = pos.get("position_id")
@@ -349,8 +373,8 @@ def join_to_tickets(rows: list[dict], exec_rows: list[dict],
             else:
                 info["join_error"] = "no executed execution_log row for plan_id"
         else:
-            info["join_error"] = ("signal lane: plan_id is not unique — no key "
-                                  "joins the sidecar to a ticket (defect (a))")
+            info["join_error"] = ("no ticket column value (pre-b144 row) and "
+                                  "signal-lane plan_id is not unique")
         out.append(info)
     return out
 
