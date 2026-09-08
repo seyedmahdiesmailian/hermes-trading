@@ -1,3 +1,4 @@
 at,lane,plan_id,side,lot,entry,sl,tp,grade,base_risk_pct,learning_risk_mult,execution_style,style_mult,defcon_override,regime,regime_mult,final_risk_pct,risk_usd,ticket
 2026-09-08T07:00:02.130487+00:00,plan,xau-53c22a23,SELL,0.02,4403.63,4413.13,4388.9,B,0.02,1.0,aggressive_discount_entry,0.5,,defensive,0.5,0.005,24.95,105180034
 2026-09-08T09:30:02.761249+00:00,plan,xau-39b5ede8,SELL,0.03,4392.91,4400.39,4381.32,B,0.02,1.0,aggressive_discount_entry,0.5,,defensive,0.5,0.005,25.03,105222761
+2026-09-08T18:05:18.454879+00:00,plan,xau-f3b667f2,SELL,0.03,4386.72,4394.0,4375.44,A,0.02,1.0,aggressive_discount_entry,0.5,,defensive,0.5,0.005,24.91,105396538

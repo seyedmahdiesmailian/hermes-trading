@@ -77,6 +77,9 @@ LEDGER_129 = os.path.join(BT, "b129_timestop_reprice.json")
 LEDGER_130 = os.path.join(BT, "b130_wall_clock_parity.json")
 LEDGER_132 = os.path.join(BT, "b132_news_veto_real_calendar.json")
 LEDGER_131 = os.path.join(BT, "b131_news_veto_pricing.json")
+LEDGER_160 = os.path.join(BT, "b160_reanchor_symmetry.json")
+LEDGER_161 = os.path.join(BT, "b161_reanchor_symmetry_verdict.json")
+LEDGER_161_W = os.path.join(BT, "b161_w1_divergence.json")
 
 
 def _load(path: str) -> dict:
@@ -499,6 +502,37 @@ def check_b131_derived_blocks() -> str:
             f"({len(led['_neutrality'])} arms)")
 
 
+def check_b161_verdict_and_census() -> str:
+    """b161's ship-time rule: the merged 5-leg verdict is a PURE function of
+    the five per-leg b160 ledgers and is re-executed here via the producer's
+    own merge() (scripts/b161_merge_verdict.py). The measurement half (2 arms
+    x 5 legs of funnel replay) is NOT re-run — each leg file's internal
+    self-consistency (delta == symmetric - incumbent) is asserted inside
+    merge() itself, and the W1 divergence probe ledger is pinned by shape
+    arithmetic below (only_in_A + common == n_A etc), not by replaying W1.
+    """
+    from scripts import b161_merge_verdict as b161
+    led = _load(LEDGER_161)
+    got = b161.merge()
+    for key in ("legs", "verdict"):
+        assert got[key] == led[key], f"b161 producer no longer reproduces {key}"
+    # cross-leg provenance: the merge reads the cached leg from b160's own
+    # ledger — if that file moved under the merge, the pin below catches it.
+    cached_src = _load(LEDGER_160)["legs"]["cached"]
+    for arm in ("incumbent", "symmetric"):
+        assert cached_src[arm]["exp_R"] == led["legs"]["cached"][arm]["exp_R"], \
+            "b161 cached leg diverged from b160's own ledger"
+    w1 = _load(LEDGER_161_W)
+    assert (w1["n_incumbent"] - len(w1["only_in_incumbent"]) ==
+            w1["n_symmetric"] - len(w1["only_in_symmetric"])), \
+        "b161 W1 divergence probe book arithmetic is inconsistent"
+    assert w1["n_incumbent"] == led["legs"]["W1"]["incumbent"]["trades"] \
+        and w1["n_symmetric"] == led["legs"]["W1"]["symmetric"]["trades"], \
+        "b161 W1 divergence probe disagrees with the verdict's W1 trade counts"
+    return ("b161 verdict re-merged from 5 leg files + W1 probe book "
+            "arithmetic (181/182 trades, 1 differing common)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -523,6 +557,7 @@ CHECKS = (
     check_b124_derived_blocks,
     check_b131_derived_blocks,
     check_b132_derived_blocks,
+    check_b161_verdict_and_census,
 )
 
 

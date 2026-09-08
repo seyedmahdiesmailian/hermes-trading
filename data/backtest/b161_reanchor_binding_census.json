@@ -1,0 +1,495 @@
+{
+ "item": "b161_binding_census",
+ "legs": {
+  "W1": {
+   "bound_share": 0.014,
+   "by_side": {
+    "BUY": [
+     {
+      "index": 30,
+      "rr_inc": 1.551,
+      "rr_sym": 1.938
+     },
+     {
+      "index": 33,
+      "rr_inc": 1.55,
+      "rr_sym": 1.928
+     },
+     {
+      "index": 54,
+      "rr_inc": 1.55,
+      "rr_sym": 1.709
+     },
+     {
+      "index": 1100,
+      "rr_inc": 1.55,
+      "rr_sym": 1.861
+     },
+     {
+      "index": 1209,
+      "rr_inc": 1.551,
+      "rr_sym": 1.561
+     },
+     {
+      "index": 1486,
+      "rr_inc": 1.55,
+      "rr_sym": 1.591
+     },
+     {
+      "index": 1508,
+      "rr_inc": 1.551,
+      "rr_sym": 1.889
+     },
+     {
+      "index": 1509,
+      "rr_inc": 1.55,
+      "rr_sym": 1.93
+     },
+     {
+      "index": 1618,
+      "rr_inc": 1.55,
+      "rr_sym": 1.978
+     },
+     {
+      "index": 1655,
+      "rr_inc": 1.55,
+      "rr_sym": 1.743
+     },
+     {
+      "index": 2626,
+      "rr_inc": 1.549,
+      "rr_sym": 1.756
+     },
+     {
+      "index": 2639,
+      "rr_inc": 1.549,
+      "rr_sym": 1.757
+     },
+     {
+      "index": 2689,
+      "rr_inc": 1.551,
+      "rr_sym": 1.806
+     },
+     {
+      "index": 2984,
+      "rr_inc": 1.55,
+      "rr_sym": 1.655
+     },
+     {
+      "index": 4026,
+      "rr_inc": 1.55,
+      "rr_sym": 1.831
+     },
+     {
+      "index": 5040,
+      "rr_inc": 1.551,
+      "rr_sym": 1.828
+     },
+     {
+      "index": 5269,
+      "rr_inc": 1.55,
+      "rr_sym": 2.208
+     },
+     {
+      "index": 5305,
+      "rr_inc": 1.55,
+      "rr_sym": 1.735
+     },
+     {
+      "index": 5331,
+      "rr_inc": 1.55,
+      "rr_sym": 1.699
+     },
+     {
+      "index": 5479,
+      "rr_inc": 1.551,
+      "rr_sym": 1.729
+     }
+    ]
+   },
+   "n_bound": 20,
+   "n_common": 1429,
+   "n_signals": 1429
+  },
+  "W2": {
+   "bound_share": 0.00712,
+   "by_side": {
+    "BUY": [
+     {
+      "index": 447,
+      "rr_inc": 1.55,
+      "rr_sym": 2.732
+     },
+     {
+      "index": 671,
+      "rr_inc": 1.55,
+      "rr_sym": 1.636
+     },
+     {
+      "index": 2572,
+      "rr_inc": 1.55,
+      "rr_sym": 1.582
+     },
+     {
+      "index": 2771,
+      "rr_inc": 1.549,
+      "rr_sym": 1.598
+     },
+     {
+      "index": 2931,
+      "rr_inc": 1.551,
+      "rr_sym": 1.891
+     },
+     {
+      "index": 2937,
+      "rr_inc": 1.551,
+      "rr_sym": 1.883
+     },
+     {
+      "index": 3962,
+      "rr_inc": 1.55,
+      "rr_sym": 1.712
+     },
+     {
+      "index": 5003,
+      "rr_inc": 1.55,
+      "rr_sym": 1.565
+     },
+     {
+      "index": 5282,
+      "rr_inc": 1.549,
+      "rr_sym": 1.832
+     },
+     {
+      "index": 5605,
+      "rr_inc": 1.55,
+      "rr_sym": 1.931
+     },
+     {
+      "index": 5606,
+      "rr_inc": 1.55,
+      "rr_sym": 1.91
+     }
+    ]
+   },
+   "n_bound": 11,
+   "n_common": 1544,
+   "n_signals": 1544
+  },
+  "W3": {
+   "bound_share": 0.00849,
+   "by_side": {
+    "BUY": [
+     {
+      "index": 787,
+      "rr_inc": 1.55,
+      "rr_sym": 1.817
+     },
+     {
+      "index": 798,
+      "rr_inc": 1.55,
+      "rr_sym": 1.719
+     },
+     {
+      "index": 2043,
+      "rr_inc": 1.551,
+      "rr_sym": 1.611
+     },
+     {
+      "index": 2344,
+      "rr_inc": 1.549,
+      "rr_sym": 1.794
+     },
+     {
+      "index": 2349,
+      "rr_inc": 1.55,
+      "rr_sym": 1.841
+     },
+     {
+      "index": 2352,
+      "rr_inc": 1.55,
+      "rr_sym": 1.86
+     },
+     {
+      "index": 2773,
+      "rr_inc": 1.551,
+      "rr_sym": 1.651
+     },
+     {
+      "index": 3213,
+      "rr_inc": 1.55,
+      "rr_sym": 2.231
+     },
+     {
+      "index": 3476,
+      "rr_inc": 1.55,
+      "rr_sym": 1.731
+     },
+     {
+      "index": 4401,
+      "rr_inc": 1.551,
+      "rr_sym": 1.587
+     },
+     {
+      "index": 4793,
+      "rr_inc": 1.551,
+      "rr_sym": 1.657
+     },
+     {
+      "index": 4856,
+      "rr_inc": 1.549,
+      "rr_sym": 1.788
+     },
+     {
+      "index": 4857,
+      "rr_inc": 1.55,
+      "rr_sym": 1.644
+     },
+     {
+      "index": 4941,
+      "rr_inc": 1.549,
+      "rr_sym": 1.605
+     },
+     {
+      "index": 5016,
+      "rr_inc": 1.55,
+      "rr_sym": 3.161
+     }
+    ]
+   },
+   "n_bound": 15,
+   "n_common": 1767,
+   "n_signals": 1767
+  },
+  "W4": {
+   "bound_share": 0.01662,
+   "by_side": {
+    "BUY": [
+     {
+      "index": 690,
+      "rr_inc": 1.552,
+      "rr_sym": 1.807
+     },
+     {
+      "index": 692,
+      "rr_inc": 1.552,
+      "rr_sym": 1.663
+     },
+     {
+      "index": 719,
+      "rr_inc": 1.55,
+      "rr_sym": 1.925
+     },
+     {
+      "index": 754,
+      "rr_inc": 1.55,
+      "rr_sym": 1.779
+     },
+     {
+      "index": 755,
+      "rr_inc": 1.55,
+      "rr_sym": 2.035
+     },
+     {
+      "index": 898,
+      "rr_inc": 1.551,
+      "rr_sym": 1.673
+     },
+     {
+      "index": 1711,
+      "rr_inc": 1.551,
+      "rr_sym": 1.842
+     },
+     {
+      "index": 1831,
+      "rr_inc": 1.551,
+      "rr_sym": 1.638
+     },
+     {
+      "index": 1949,
+      "rr_inc": 1.549,
+      "rr_sym": 1.71
+     },
+     {
+      "index": 2386,
+      "rr_inc": 1.548,
+      "rr_sym": 1.887
+     },
+     {
+      "index": 2600,
+      "rr_inc": 1.55,
+      "rr_sym": 1.645
+     },
+     {
+      "index": 2845,
+      "rr_inc": 1.554,
+      "rr_sym": 1.802
+     },
+     {
+      "index": 3138,
+      "rr_inc": 1.55,
+      "rr_sym": 1.799
+     },
+     {
+      "index": 3185,
+      "rr_inc": 1.549,
+      "rr_sym": 1.915
+     },
+     {
+      "index": 3296,
+      "rr_inc": 1.551,
+      "rr_sym": 1.561
+     },
+     {
+      "index": 3298,
+      "rr_inc": 1.552,
+      "rr_sym": 1.819
+     },
+     {
+      "index": 3672,
+      "rr_inc": 1.55,
+      "rr_sym": 1.644
+     },
+     {
+      "index": 3865,
+      "rr_inc": 1.548,
+      "rr_sym": 1.884
+     },
+     {
+      "index": 3866,
+      "rr_inc": 1.553,
+      "rr_sym": 1.809
+     },
+     {
+      "index": 3915,
+      "rr_inc": 1.548,
+      "rr_sym": 1.557
+     },
+     {
+      "index": 4074,
+      "rr_inc": 1.549,
+      "rr_sym": 1.733
+     },
+     {
+      "index": 4080,
+      "rr_inc": 1.549,
+      "rr_sym": 1.751
+     },
+     {
+      "index": 4089,
+      "rr_inc": 1.55,
+      "rr_sym": 1.561
+     },
+     {
+      "index": 4090,
+      "rr_inc": 1.55,
+      "rr_sym": 1.67
+     },
+     {
+      "index": 4167,
+      "rr_inc": 1.548,
+      "rr_sym": 1.637
+     },
+     {
+      "index": 4547,
+      "rr_inc": 1.549,
+      "rr_sym": 1.745
+     },
+     {
+      "index": 5002,
+      "rr_inc": 1.55,
+      "rr_sym": 1.772
+     },
+     {
+      "index": 5007,
+      "rr_inc": 1.55,
+      "rr_sym": 1.764
+     },
+     {
+      "index": 5840,
+      "rr_inc": 1.55,
+      "rr_sym": 2.07
+     }
+    ]
+   },
+   "n_bound": 29,
+   "n_common": 1745,
+   "n_signals": 1745
+  },
+  "cached": {
+   "bound_share": 0.01533,
+   "by_side": {
+    "BUY": [
+     {
+      "index": 988,
+      "rr_inc": 1.55,
+      "rr_sym": 1.988
+     },
+     {
+      "index": 1331,
+      "rr_inc": 1.55,
+      "rr_sym": 1.652
+     },
+     {
+      "index": 1831,
+      "rr_inc": 1.55,
+      "rr_sym": 1.76
+     },
+     {
+      "index": 1884,
+      "rr_inc": 1.55,
+      "rr_sym": 1.743
+     },
+     {
+      "index": 2081,
+      "rr_inc": 1.551,
+      "rr_sym": 1.698
+     },
+     {
+      "index": 2140,
+      "rr_inc": 1.55,
+      "rr_sym": 1.786
+     },
+     {
+      "index": 2141,
+      "rr_inc": 1.55,
+      "rr_sym": 1.776
+     },
+     {
+      "index": 2142,
+      "rr_inc": 1.551,
+      "rr_sym": 1.739
+     },
+     {
+      "index": 2377,
+      "rr_inc": 1.549,
+      "rr_sym": 1.646
+     },
+     {
+      "index": 2449,
+      "rr_inc": 1.549,
+      "rr_sym": 1.561
+     },
+     {
+      "index": 2546,
+      "rr_inc": 1.55,
+      "rr_sym": 1.731
+     },
+     {
+      "index": 2569,
+      "rr_inc": 1.551,
+      "rr_sym": 1.625
+     },
+     {
+      "index": 2570,
+      "rr_inc": 1.55,
+      "rr_sym": 1.644
+     }
+    ]
+   },
+   "n_bound": 13,
+   "n_common": 848,
+   "n_signals": 848
+  }
+ }
+}

@@ -1,0 +1,57 @@
+{
+ "item": "b161_w1_divergence",
+ "leg": "W1",
+ "n_incumbent": 181,
+ "n_symmetric": 182,
+ "only_in_incumbent": [
+  {
+   "entry_index": 2987,
+   "side": "BUY",
+   "tp": null,
+   "pnl_R": 0.759,
+   "exit_reason": "tp1_full"
+  },
+  {
+   "entry_index": 3004,
+   "side": "BUY",
+   "tp": null,
+   "pnl_R": 0.764,
+   "exit_reason": "tp1_full"
+  }
+ ],
+ "only_in_symmetric": [
+  {
+   "entry_index": 2993,
+   "side": "BUY",
+   "tp": null,
+   "pnl_R": 0.761,
+   "exit_reason": "tp1_full"
+  },
+  {
+   "entry_index": 3005,
+   "side": "BUY",
+   "tp": null,
+   "pnl_R": 0.764,
+   "exit_reason": "tp1_full"
+  },
+  {
+   "entry_index": 3011,
+   "side": "BUY",
+   "tp": null,
+   "pnl_R": -1.012,
+   "exit_reason": "sl"
+  }
+ ],
+ "differing_common": [
+  {
+   "entry_index": 2984,
+   "side": "BUY",
+   "tp_inc": null,
+   "tp_sym": null,
+   "pnl_inc": 8.92,
+   "pnl_sym": 9.54,
+   "exit_inc": "tp1_full",
+   "exit_sym": "tp1_full"
+  }
+ ]
+}

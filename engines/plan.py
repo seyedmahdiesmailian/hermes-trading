@@ -88,8 +88,17 @@ def _reanchor_blueprint(bp: dict, price: float, atr: float, min_rr: float | None
 
     When price has already run past the plan zones, the structural invalidation
     is far and the first TP is close, so RR collapses (poor_rr / invalid_geometry
-    blockers). Tighten the stop to ~2 ATR and pick the furthest valid target so
-    the trade keeps sane geometry; if nothing works, mark the blueprint blocked.
+    blockers). Tighten the stop to ~2 ATR and pick a valid target so the trade
+    keeps sane geometry; if nothing works, mark the blueprint blocked.
+
+    SIDE ASYMMETRY IS INTENT, MEASURED (b160/b161, 2026-09-08): SELL picks the
+    FURTHEST candidate, BUY the NEAREST. Symmetrising BUY (max instead of min)
+    was A/B'd on the live-parity funnel over cached + W1..W4: it binds on only
+    0.7-1.7% of BUY signals (data/backtest/b161_reanchor_binding_census.json),
+    never beats the incumbent on any leg (deltas 0.000 x4, W1 -0.006R), so the
+    asymmetry costs nothing and the geometry here must NOT be "tidied" without
+    a new multi-leg measurement. Pinned by
+    tests/test_b161_reanchor_symmetry_verdict.py.
 
     b54: min_rr None-resolved at CALL time (a default bound at def-time would
     make the sweep's monkeypatch of REANCHOR_MIN_RR a silent no-op).

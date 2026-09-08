@@ -67,7 +67,29 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       direction report, not a verdict (b129 floor), and there is nothing to
       fix while the pick is inert. Ledger:
       data/backtest/b160_reanchor_symmetry.json.
-- [ ] b161 TRADER RESEARCH — GIVE THE REANCHOR-SYMMETRY QUESTION A >=3-LEG
+- [ ] b162 REUSABLE PROCEDURE — A TRIPWIRE'S COVERAGE WINDOW IS THE AUDIT'S
+      FIRST QUESTION: RUN NEW CODE PAST THE TRIPWIRES THE PREV COMMIT ALREADY
+      FAILED (filed by b161, 2026-09-08): b160 shipped B160_OUT (its own
+      script), and b161 — running that script — watched tests.test_b52_env_names
+      go RED on it. PROVED NOT A MY-CHANGE ARTIFACT: `git stash && git checkout
+      4604a3a` (the exact HEAD b160 shipped) and the SAME test fails the SAME
+      way. The tripwire scans ("*.py", "scripts/*.py", engines, notifier);
+      b157's B157_OUT was registered because b157 touched engines/ code and
+      the tripwire bit in its own run — a change that touches ONLY scripts/
+      can dodge the same tripwire if the suite's scripts-glob coverage started
+      after it, so the failing test was never re-run before commit. RULE: when
+      a run creates or modifies lab scripts and any KNOWN tripwire scans them,
+      run that tripwire test BEFORE committing and, if it was already red at
+      HEAD, register the names in the same commit and state in the note whose
+      debt is being paid (b161 did exactly that: "b160 shipped the knob
+      unregistered"). The general shape: an unregistered env name is b52's
+      dead-name failure mode (silent default / tokenless 401); a red-at-HEAD
+      tripwire is also a harvest signal — add the offender to the next
+      harvest's fix list instead of leaving HEAD failing. Name-carriers:
+      tests/test_b52_env_names.py registry entry "B160_OUT" and this item.
+      Estimated: ~5 min per offender; low value per instance, but it keeps
+      HEAD's suite honest so a real red never hides in known noise.
+- [x] b161 TRADER RESEARCH — GIVE THE REANCHOR-SYMMETRY QUESTION A >=3-LEG
       VERDICT OR RETIRE IT (filed by b160, 2026-09-08): b160 measured the
       cached leg only (delta 0.000, pick inert). If anyone wants to know
       whether the dormant BUY-nearest asymmetry (plan._reanchor_blueprint)
@@ -78,6 +100,59 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       as closed-by-evidence, so a future review does not re-open it.
       Estimated ~25 min/leg on cached-class hardware; do NOT change
       production geometry on cached-only evidence.
+      DONE 2026-09-08 (b161): VERDICT = RETIRE, CLOSED BY EVIDENCE. Five legs
+      (cached + W1..W4, B160_OUT per-leg ledgers merged by
+      scripts/b161_merge_verdict.py -> data/backtest/
+      b161_reanchor_symmetry_verdict.json): deltas 0.000/-0.006/0.000/0.000/
+      0.000 — the symmetric arm is better on 0/5 legs, worse on 1 (W1), zero-
+      effect on 4 (byte-identical books). Binding census (scripts/
+      b161_reanchor_binding_census.py): the nearest-vs-furthest pick differs
+      on 88/7333 signals = 1.2%, ALL BUY (SELL branch untouched by the arm,
+      as designed). W1's -0.006R root-caused (scripts/b161_w1_divergence_
+      probe.py): ONE bound signal (entry_index 2984, rr 1.55->1.655) whose
+      longer TP cascades through the one-position-at-a-time slot book (2
+      incumbent trades swap for 3 symmetric ones) — an ordering artifact, not
+      a systematic cost. NO geometry change ships; the plan.py docstring now
+      states the asymmetry as MEASURED INTENT with the evidence pointer, and
+      9 tests (tests/test_b161_reanchor_symmetry_verdict.py) + a b127 check
+      pin the deltas, the census, the BUY-min/SELL-max AST shape (a cosmetic
+      "symmetry fix" without a fresh >=3-leg verdict goes RED), and an
+      anti-vacuity fixture where the arms provably differ. Side catch: the
+      b52 tripwire found B160_OUT shipped UNREGISTERED by b160 — registered
+      this run.
+      LANDED 2026-09-08 (b161-landing run, b46 harvest): the work was in the
+      tree UNCOMMITTED (HEAD 4604a3a still shipped the question open, b42's
+      untracked-files test + b50's suite-in-HEAD both RED for exactly that
+      reason). Verified end-to-end before landing: the 9 b161 tests + b52 +
+      b127 producer check green in-tree, ledgers re-merge (delta -0.006/0.000
+      x4, census 88/7333=1.2% bound, all BUY), then committed so HEAD matches
+      the evidence.
+- [ ] b163 TRADER CODE REVIEW — THE SIGNAL LANE SCORES DIRECTION AGAINST AN
+      UNBOUNDED-AGE PLAN BIAS (filed by the b161-landing run, 2026-09-08):
+      engines/signal_listener.check_signals loads load_current_plan() and feeds
+      plan['bias'] into evaluate_signal Check 4 (+2.0 alignment / -1.0
+      conflict, and the aligned path is the ONLY way to reach the 6.0 execute
+      floor with a mid-confidence signal), but NEVER checks the plan's age —
+      while the plan lane itself expires at expires_at (orchestrator.
+      route_runtime_step, 12h) and rebuilds every cron tick. When
+      hermes_runtime's cadence breaks (the b114 drift class, the b154 inert-
+      daemon class), current_plan.json can carry a DAYS-OLD bias and the signal
+      lane will still pay +2.0 for agreeing with it or -1.0 for disagreeing:
+      a stale "bullish" from before a trend reversal would auto-boost longs
+      into a falling market. This is a SCORING input, not a gate, so today the
+      direction of harm is unmeasured. CENSUS FIRST (b110/b140 shape):
+      data/signals/signals_log.json carries 200 decision records with
+      timestamps, and data/xau_plan/plan_history/* filenames carry the
+      wall-clock stamp of every plan version — join them to report the
+      plan-age distribution AT decision time, and count the decisions whose
+      alignment score (+/-) came from a plan older than one reassessment
+      cadence (say 2h) or even than expires_at (12h). Then decide per outcome:
+      (a) if ages are always fresh, PIN the freshness with a tripwire (the
+      b158 KEEP+PIN close); (b) if stale ages occur, the tightening-neutral
+      fix is to treat a plan past expires_at as bias='neutral' for Check 4
+      ONLY (never a bonus/penalty from a dead plan), never the reverse. Do NOT
+      touch any other lane's behaviour and do NOT edit plan expiry semantics.
+      Estimated ~20 min: one read-only census script + ledger + pin tests.
 - [ ] b159 REUSABLE PROCEDURE — A DOCUMENTED CROSS-MODULE MISMATCH IS AN
       OPTION, NOT A DEFECT: CENSUS DISAGREEMENT RATE + CONSUMER COUNT BEFORE
       "FIXING" A LABEL (filed by b158, 2026-09-08): b157's review found

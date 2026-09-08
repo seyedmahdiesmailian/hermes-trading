@@ -1,0 +1,130 @@
+{
+ "arms": [
+  "incumbent",
+  "symmetric (BUY picks max rr)"
+ ],
+ "interpretation": "The symmetric arm never beats the incumbent on any of the five legs (cached/W2/W3/W4 byte-identical books, W1 -0.006R via a 1-vs-2-trade slot cascade \u2014 see scripts/b161_w1_divergence_probe.py). The asymmetry is REAL in code, DORMANT in practice: the incumbent BUY rr max caps at 1.554 on every leg, so the nearest-pick almost never binds, and where it does bind the incumbent's pick is not worse. RETIRE the question: no geometry change ships; the docstring (which promised 'furthest' for both sides) is corrected to state the measured asymmetry instead.",
+ "item": "b161",
+ "legs": {
+  "W1": {
+   "buy_rr_max_incumbent": 1.551,
+   "buy_rr_max_symmetric": 2.208,
+   "buy_share_rr_above_1_6_symmetric": 0.0401,
+   "delta_exp_R": -0.006,
+   "identical_book": false,
+   "incumbent": {
+    "WR%": 65.2,
+    "exp_R": 0.211,
+    "maxDD_R": -6.1,
+    "net_R": 38.2,
+    "trades": 181
+   },
+   "symmetric": {
+    "WR%": 64.8,
+    "exp_R": 0.205,
+    "maxDD_R": -6.1,
+    "net_R": 37.2,
+    "trades": 182
+   }
+  },
+  "W2": {
+   "buy_rr_max_incumbent": 1.551,
+   "buy_rr_max_symmetric": 2.732,
+   "buy_share_rr_above_1_6_symmetric": 0.0081,
+   "delta_exp_R": 0.0,
+   "identical_book": true,
+   "incumbent": {
+    "WR%": 65.3,
+    "exp_R": 0.23,
+    "maxDD_R": -5.1,
+    "net_R": 39.9,
+    "trades": 173
+   },
+   "symmetric": {
+    "WR%": 65.3,
+    "exp_R": 0.23,
+    "maxDD_R": -5.1,
+    "net_R": 39.9,
+    "trades": 173
+   }
+  },
+  "W3": {
+   "buy_rr_max_incumbent": 1.551,
+   "buy_rr_max_symmetric": 3.161,
+   "buy_share_rr_above_1_6_symmetric": 0.0123,
+   "delta_exp_R": 0.0,
+   "identical_book": true,
+   "incumbent": {
+    "WR%": 67.8,
+    "exp_R": 0.232,
+    "maxDD_R": -7.6,
+    "net_R": 47.5,
+    "trades": 205
+   },
+   "symmetric": {
+    "WR%": 67.8,
+    "exp_R": 0.232,
+    "maxDD_R": -7.6,
+    "net_R": 47.5,
+    "trades": 205
+   }
+  },
+  "W4": {
+   "buy_rr_max_incumbent": 1.554,
+   "buy_rr_max_symmetric": 2.07,
+   "buy_share_rr_above_1_6_symmetric": 0.0204,
+   "delta_exp_R": 0.0,
+   "identical_book": true,
+   "incumbent": {
+    "WR%": 68.9,
+    "exp_R": 0.233,
+    "maxDD_R": -5.9,
+    "net_R": 41.2,
+    "trades": 177
+   },
+   "symmetric": {
+    "WR%": 68.9,
+    "exp_R": 0.233,
+    "maxDD_R": -5.9,
+    "net_R": 41.2,
+    "trades": 177
+   }
+  },
+  "cached": {
+   "buy_rr_max_incumbent": 1.551,
+   "buy_rr_max_symmetric": 1.988,
+   "buy_share_rr_above_1_6_symmetric": 0.0223,
+   "delta_exp_R": 0.0,
+   "identical_book": true,
+   "incumbent": {
+    "WR%": 70.6,
+    "exp_R": 0.278,
+    "maxDD_R": -2.3,
+    "net_R": 30.3,
+    "trades": 109
+   },
+   "symmetric": {
+    "WR%": 70.6,
+    "exp_R": 0.278,
+    "maxDD_R": -2.3,
+    "net_R": 30.3,
+    "trades": 109
+   }
+  }
+ },
+ "question": "does plan._reanchor_blueprint's BUY-nearest / SELL-furthest asymmetry cost exp_R vs a symmetric furthest-for-both pick?",
+ "verdict": {
+  "b129_floor_met": false,
+  "legs_symmetric_better": 0,
+  "legs_symmetric_worse": 1,
+  "legs_zero": 4,
+  "per_leg_delta_exp_R": {
+   "W1": -0.006,
+   "W2": 0.0,
+   "W3": 0.0,
+   "W4": 0.0,
+   "cached": 0.0
+  },
+  "symmetric_better_on_any_leg": false
+ }
+}
