@@ -100,6 +100,28 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       re-running scripts/b88_defcon_books.py (~50 min) and
       scripts/b89_window_contract.py in the same change, or those tests go
       red. Budget a full run for this item.
+      PROGRESS 2026-09-08 (b141 run — CENSUS DELIVERED, fix NOT shipped):
+      scripts/b141_rollover_blind_window_census.py +
+      tests/test_b141_rollover_census.py (8 tests) measure all three consumers
+      (assess_account_policy, compute_insights, check_kill_switch) on the SAME
+      rollover state, replaying the real 7-day deal feed day by day, plus a
+      synthetic sweep of yesterday's loss from 0 to 1.4x the kill leg (legs
+      READ from the modules, not restated). FINDINGS: (1) the window is real
+      and live — the 2026-09-08 rollover went steady=defensive (yesterday
+      -104.05$, streak 1) -> cold=normal, i.e. 1 of 4 measured boundaries was
+      blind; (2) the sweep says EVERY loss level from 0.25% to 7% of balance
+      is regime-blind and DEFCON-blind at rollover (28/28 steps), so this is
+      not a tail case; (3) DECISION-BLOCKING: option A (carry daily_pnl/
+      loss_streak) restores steady regime AND defcon on 28/28 steps, but it
+      also arms check_kill_switch's daily-loss halt at >=5.25% of balance
+      where the cold cycle arms nothing — a 4h cooldown human gate that does
+      not exist today, so option A is NOT tightening-neutral and needs مهدی's
+      call; option B (cold flag) arms nothing but restores 0/28 regimes — the
+      consumers we measured do not read a flag at all, so as briefed it is a
+      NO-OP, and shipping B would require new consumer code, not a wiring
+      change. NEXT RUN: take the A-vs-B decision to the human gate (b141 is
+      now a decision item, not a measurement item), and if A is approved,
+      budget a full run for the b88/b89 pin edits + re-derivation.
 - [x] b143 TRADER OBSERVABILITY — risk_ledger.csv HAS NO READER YET (filed by
       the b139 fix, 2026-09-08): DONE 2026-09-08 — scripts/b143_risk_ledger_reader.py
       + tests/test_b143_risk_ledger_reader.py (16 tests). FINDING: the reader is

@@ -1,0 +1,2980 @@
+{
+ "_built_at": "2026-09-08T08:14:28.502459+00:00",
+ "_note": "b141: what the first cycle of each UTC day loses, measured through the real compute_performance_state / assess_account_policy / compute_insights / check_kill_switch on the real 7-day deal feed, plus a SYNTHETIC threshold sweep (the feed has no losing day). Prices the two fix options; ships NEITHER. Read-only; kill-switch probes ran under a throwaway data root.",
+ "_thresholds": {
+  "daily_loss_pct": 0.05,
+  "cooldown_hours": 4,
+  "consecutive_losses_limit": 4
+ },
+ "_balance_used": 5005.65,
+ "_feed_days": 7,
+ "_deal_count": 46,
+ "derived": {
+  "n_boundaries": 4,
+  "n_days_in_feed": 5,
+  "blind_regime_boundaries": [
+   "2026-09-08"
+  ],
+  "blind_count": 1,
+  "option_a_restores_steady_regime": 1,
+  "option_a_restores_steady_defcon": 1,
+  "option_a_arms_kill_switch_that_cold_did_not": [],
+  "option_b_arms_kill_switch_that_cold_did_not": [],
+  "rows": [
+   {
+    "rollover_day": "2026-09-02",
+    "prev_day": "2026-09-01",
+    "steady": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "steady_daily_pnl": -47.1,
+    "steady_loss_streak": 0,
+    "cold_daily_pnl": 0.0,
+    "cold_loss_streak": 0,
+    "cold_window_deals": 10,
+    "cycle2_daily_pnl": 11.7,
+    "cycle2_regime": "normal"
+   },
+   {
+    "rollover_day": "2026-09-03",
+    "prev_day": "2026-09-02",
+    "steady": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "steady_daily_pnl": 11.7,
+    "steady_loss_streak": 0,
+    "cold_daily_pnl": 0.0,
+    "cold_loss_streak": 0,
+    "cold_window_deals": 10,
+    "cycle2_daily_pnl": 206.57,
+    "cycle2_regime": "normal"
+   },
+   {
+    "rollover_day": "2026-09-07",
+    "prev_day": "2026-09-03",
+    "steady": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "steady_daily_pnl": 206.57,
+    "steady_loss_streak": 0,
+    "cold_daily_pnl": 0.0,
+    "cold_loss_streak": 0,
+    "cold_window_deals": 10,
+    "cycle2_daily_pnl": -104.05,
+    "cycle2_regime": "defensive"
+   },
+   {
+    "rollover_day": "2026-09-08",
+    "prev_day": "2026-09-07",
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "steady_daily_pnl": -104.05,
+    "steady_loss_streak": 1,
+    "cold_daily_pnl": 0.0,
+    "cold_loss_streak": 0,
+    "cold_window_deals": 10,
+    "cycle2_daily_pnl": -74.06,
+    "cycle2_regime": "defensive"
+   }
+  ]
+ },
+ "synthetic_sweep": {
+  "note": "synthetic sweep: yesterday's realised loss as a fraction of balance, replayed through the real consumers at a UTC midnight rollover. Not observed history.",
+  "risk_daily_loss_legs_pct": [
+   0.01,
+   0.03
+  ],
+  "kill_daily_loss_leg_pct": 0.05,
+  "rows": [
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0025,
+    "yesterday_loss_usd": -12.51,
+    "legs_crossed": [],
+    "steady_daily_pnl": -12.5,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.005,
+    "yesterday_loss_usd": -25.03,
+    "legs_crossed": [],
+    "steady_daily_pnl": -25.04,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0075,
+    "yesterday_loss_usd": -37.54,
+    "legs_crossed": [],
+    "steady_daily_pnl": -37.54,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.01,
+    "yesterday_loss_usd": -50.06,
+    "legs_crossed": [],
+    "steady_daily_pnl": -50.06,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0125,
+    "yesterday_loss_usd": -62.57,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -62.58,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.015,
+    "yesterday_loss_usd": -75.08,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -75.08,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0175,
+    "yesterday_loss_usd": -87.6,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -87.6,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.02,
+    "yesterday_loss_usd": -100.11,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -100.1,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0225,
+    "yesterday_loss_usd": -112.63,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -112.62,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.025,
+    "yesterday_loss_usd": -125.14,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -125.14,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0275,
+    "yesterday_loss_usd": -137.66,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -137.66,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.03,
+    "yesterday_loss_usd": -150.17,
+    "legs_crossed": [
+     0.01
+    ],
+    "steady_daily_pnl": -150.16,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "defensive",
+      "trade_allowed": true,
+      "risk_multiplier": 0.75
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0325,
+    "yesterday_loss_usd": -162.68,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -162.68,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.035,
+    "yesterday_loss_usd": -175.2,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -175.2,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0375,
+    "yesterday_loss_usd": -187.71,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -187.72,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.04,
+    "yesterday_loss_usd": -200.23,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -200.22,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0425,
+    "yesterday_loss_usd": -212.74,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -212.74,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.045,
+    "yesterday_loss_usd": -225.25,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -225.24,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0475,
+    "yesterday_loss_usd": -237.77,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -237.78,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.05,
+    "yesterday_loss_usd": -250.28,
+    "legs_crossed": [
+     0.01,
+     0.03
+    ],
+    "steady_daily_pnl": -250.28,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0525,
+    "yesterday_loss_usd": -262.8,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -262.8,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_5.3%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_5.3%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.055,
+    "yesterday_loss_usd": -275.31,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -275.32,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_5.5%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_5.5%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0575,
+    "yesterday_loss_usd": -287.82,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -287.82,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_5.7%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_5.7%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.06,
+    "yesterday_loss_usd": -300.34,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -300.34,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.0%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.0%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0625,
+    "yesterday_loss_usd": -312.85,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -312.86,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.3%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.3%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.065,
+    "yesterday_loss_usd": -325.37,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -325.38,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.5%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.5%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.0675,
+    "yesterday_loss_usd": -337.88,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -337.88,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.7%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_6.7%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   },
+   {
+    "synthetic": true,
+    "yesterday_loss_pct_of_balance": 0.07,
+    "yesterday_loss_usd": -350.4,
+    "legs_crossed": [
+     0.01,
+     0.03,
+     0.05
+    ],
+    "steady_daily_pnl": -350.4,
+    "steady_loss_streak": 2,
+    "cold_daily_pnl": 0.0,
+    "steady": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_7.0%"
+     }
+    },
+    "cold": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    },
+    "option_a": {
+     "policy": {
+      "regime": "locked",
+      "trade_allowed": false,
+      "risk_multiplier": 0.0
+     },
+     "defcon": {
+      "defcon": "YELLOW",
+      "risk_override": 0.5,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": true,
+      "reason": "daily_loss_7.0%"
+     }
+    },
+    "option_b": {
+     "policy": {
+      "regime": "normal",
+      "trade_allowed": true,
+      "risk_multiplier": 1.0
+     },
+     "defcon": {
+      "defcon": "GREEN",
+      "risk_override": null,
+      "trade_allowed": true
+     },
+     "kill": {
+      "halted": false,
+      "reason": null
+     }
+    }
+   }
+  ],
+  "streak_arm": {
+   "arm": "streak_only",
+   "synthetic": true,
+   "yesterday_loss_pct_of_balance": 0.004,
+   "steady_loss_streak": 2,
+   "cold_loss_streak": 0,
+   "steady": {
+    "policy": {
+     "regime": "defensive",
+     "trade_allowed": true,
+     "risk_multiplier": 0.75
+    },
+    "defcon": {
+     "defcon": "YELLOW",
+     "risk_override": 0.5,
+     "trade_allowed": true
+    },
+    "kill": {
+     "halted": false,
+     "reason": null
+    }
+   },
+   "cold": {
+    "policy": {
+     "regime": "normal",
+     "trade_allowed": true,
+     "risk_multiplier": 1.0
+    },
+    "defcon": {
+     "defcon": "GREEN",
+     "risk_override": null,
+     "trade_allowed": true
+    },
+    "kill": {
+     "halted": false,
+     "reason": null
+    }
+   },
+   "option_a": {
+    "policy": {
+     "regime": "defensive",
+     "trade_allowed": true,
+     "risk_multiplier": 0.75
+    },
+    "defcon": {
+     "defcon": "YELLOW",
+     "risk_override": 0.5,
+     "trade_allowed": true
+    },
+    "kill": {
+     "halted": false,
+     "reason": null
+    }
+   },
+   "option_b": {
+    "policy": {
+     "regime": "normal",
+     "trade_allowed": true,
+     "risk_multiplier": 1.0
+    },
+    "defcon": {
+     "defcon": "GREEN",
+     "risk_override": null,
+     "trade_allowed": true
+    },
+    "kill": {
+     "halted": false,
+     "reason": null
+    }
+   }
+  },
+  "regime_blind_loss_pcts": [
+   0.0025,
+   0.005,
+   0.0075,
+   0.01,
+   0.0125,
+   0.015,
+   0.0175,
+   0.02,
+   0.0225,
+   0.025,
+   0.0275,
+   0.03,
+   0.0325,
+   0.035,
+   0.0375,
+   0.04,
+   0.0425,
+   0.045,
+   0.0475,
+   0.05,
+   0.0525,
+   0.055,
+   0.0575,
+   0.06,
+   0.0625,
+   0.065,
+   0.0675,
+   0.07
+  ],
+  "defcon_blind_loss_pcts": [
+   0.0025,
+   0.005,
+   0.0075,
+   0.01,
+   0.0125,
+   0.015,
+   0.0175,
+   0.02,
+   0.0225,
+   0.025,
+   0.0275,
+   0.03,
+   0.0325,
+   0.035,
+   0.0375,
+   0.04,
+   0.0425,
+   0.045,
+   0.0475,
+   0.05,
+   0.0525,
+   0.055,
+   0.0575,
+   0.06,
+   0.0625,
+   0.065,
+   0.0675,
+   0.07
+  ],
+  "optA_regime_matches_steady": 28,
+  "optA_defcon_matches_steady": 28,
+  "optA_kill_halts": [
+   0.0525,
+   0.055,
+   0.0575,
+   0.06,
+   0.0625,
+   0.065,
+   0.0675,
+   0.07
+  ],
+  "optB_kill_halts": [],
+  "optB_regime_matches_steady": 0,
+  "optB_defcon_matches_steady": 0,
+  "steady_kill_halts": [
+   0.0525,
+   0.055,
+   0.0575,
+   0.06,
+   0.0625,
+   0.065,
+   0.0675,
+   0.07
+  ],
+  "n_rows": 28
+ },
+ "verdict": "OPTION_A_RESTORES_EVERY_BLIND_REGIME_AND_ARMS_NOTHING (1/1 blind boundaries restored, 1/1 DEFCON)",
+ "_deals_embedded": [
+  {
+   "ticket": 98499134,
+   "time": 1788243302,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103636278
+  },
+  {
+   "ticket": 98499344,
+   "time": 1788243591,
+   "profit": 14.4,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103636278
+  },
+  {
+   "ticket": 98499696,
+   "time": 1788243677,
+   "profit": 10.76,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103636278
+  },
+  {
+   "ticket": 98501207,
+   "time": 1788245106,
+   "profit": 0.27,
+   "entry": 1,
+   "comment": "[sl 4439.75]",
+   "position_id": 103636278
+  },
+  {
+   "ticket": 98503418,
+   "time": 1788246903,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103640711
+  },
+  {
+   "ticket": 98503445,
+   "time": 1788246908,
+   "profit": 1.75,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103640711
+  },
+  {
+   "ticket": 98504641,
+   "time": 1788247806,
+   "profit": 4.8,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103640711
+  },
+  {
+   "ticket": 98505189,
+   "time": 1788248355,
+   "profit": 0.42,
+   "entry": 1,
+   "comment": "[sl 4430.84]",
+   "position_id": 103640711
+  },
+  {
+   "ticket": 98511551,
+   "time": 1788251402,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103649120
+  },
+  {
+   "ticket": 98511859,
+   "time": 1788251455,
+   "profit": -105.15,
+   "entry": 1,
+   "comment": "[sl 4431.83]",
+   "position_id": 103649120
+  },
+  {
+   "ticket": 98524143,
+   "time": 1788255002,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103661982
+  },
+  {
+   "ticket": 98535085,
+   "time": 1788258605,
+   "profit": 10.2,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103661982
+  },
+  {
+   "ticket": 98535655,
+   "time": 1788258631,
+   "profit": 5.65,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103661982
+  },
+  {
+   "ticket": 98635102,
+   "time": 1788277503,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103775507
+  },
+  {
+   "ticket": 98638516,
+   "time": 1788278144,
+   "profit": 2.96,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103775507
+  },
+  {
+   "ticket": 98639660,
+   "time": 1788278341,
+   "profit": 6.84,
+   "entry": 1,
+   "comment": "HermesPartial",
+   "position_id": 103775507
+  },
+  {
+   "ticket": 98799563,
+   "time": 1788318002,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103941623
+  },
+  {
+   "ticket": 98799579,
+   "time": 1788318005,
+   "profit": 14.08,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 103941623
+  },
+  {
+   "ticket": 98809262,
+   "time": 1788321602,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103951497
+  },
+  {
+   "ticket": 98809821,
+   "time": 1788321727,
+   "profit": 21.81,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 103951497
+  },
+  {
+   "ticket": 98816329,
+   "time": 1788324303,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103958601
+  },
+  {
+   "ticket": 98816451,
+   "time": 1788324434,
+   "profit": 9.93,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 103958601
+  },
+  {
+   "ticket": 98822588,
+   "time": 1788326102,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103964980
+  },
+  {
+   "ticket": 98825359,
+   "time": 1788327481,
+   "profit": -35.16,
+   "entry": 1,
+   "comment": "[sl 4313.79]",
+   "position_id": 103964980
+  },
+  {
+   "ticket": 98834334,
+   "time": 1788330603,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 103976964
+  },
+  {
+   "ticket": 98834383,
+   "time": 1788330604,
+   "profit": 1.04,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 103976964
+  },
+  {
+   "ticket": 99121609,
+   "time": 1788415202,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 104278658
+  },
+  {
+   "ticket": 99122845,
+   "time": 1788415938,
+   "profit": 70.84,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 104278658
+  },
+  {
+   "ticket": 99128242,
+   "time": 1788418802,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 104285338
+  },
+  {
+   "ticket": 99133464,
+   "time": 1788420910,
+   "profit": 71.63,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 104285338
+  },
+  {
+   "ticket": 99135844,
+   "time": 1788422402,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 104292973
+  },
+  {
+   "ticket": 99136854,
+   "time": 1788422817,
+   "profit": -102.88,
+   "entry": 1,
+   "comment": "[sl 4431.33]",
+   "position_id": 104292973
+  },
+  {
+   "ticket": 99154806,
+   "time": 1788428702,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 104312573
+  },
+  {
+   "ticket": 99170108,
+   "time": 1788433405,
+   "profit": 84.24,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 104312573
+  },
+  {
+   "ticket": 99298502,
+   "time": 1788458403,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 104484332
+  },
+  {
+   "ticket": 99301256,
+   "time": 1788458672,
+   "profit": 82.74,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 104484332
+  },
+  {
+   "ticket": 99692701,
+   "time": 1788768902,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 104905967
+  },
+  {
+   "ticket": 99694222,
+   "time": 1788769678,
+   "profit": -99.28,
+   "entry": 1,
+   "comment": "[sl 4408.46]",
+   "position_id": 104905967
+  },
+  {
+   "ticket": 99838872,
+   "time": 1788801302,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 105056349
+  },
+  {
+   "ticket": 99845655,
+   "time": 1788803150,
+   "profit": 43.05,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 105056349
+  },
+  {
+   "ticket": 99851338,
+   "time": 1788804003,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 105068963
+  },
+  {
+   "ticket": 99876585,
+   "time": 1788814530,
+   "profit": -47.82,
+   "entry": 1,
+   "comment": "[sl 4408.50]",
+   "position_id": 105068963
+  },
+  {
+   "ticket": 99908348,
+   "time": 1788841387,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 105127383
+  },
+  {
+   "ticket": 99940851,
+   "time": 1788857757,
+   "profit": -89.1,
+   "entry": 1,
+   "comment": "[sl 4417.83]",
+   "position_id": 105127383
+  },
+  {
+   "ticket": 99958461,
+   "time": 1788861602,
+   "profit": 0.0,
+   "entry": 0,
+   "comment": "Hermes",
+   "position_id": 105180034
+  },
+  {
+   "ticket": 99969042,
+   "time": 1788863866,
+   "profit": 15.04,
+   "entry": 1,
+   "comment": "HermesClose",
+   "position_id": 105180034
+  }
+ ]
+}

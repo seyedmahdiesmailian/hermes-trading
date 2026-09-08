@@ -2717,5 +2717,56 @@
         "warnings": []
       }
     }
+  },
+  {
+    "timestamp": "2026-09-08T06:14:42.350194+00:00",
+    "raw_text": "[💬 از Gold Trader Mo (GTMO)]\n🔔ACCOUNT MANAGEMENT PERFORMANCE 🎭\n\n➡️  PROFIT:-  1236$ ❤️‍🔥📈\n\n➡️ CAPITAL:- 2000$ 💸 🧻 🫴\n\nWORK DONE BY 📝👇\n\n✈️@Team_Forex_Experts✅",
+    "parsed": {
+      "symbol": "XAUUSD",
+      "side": "BUY",
+      "entry": 1236.0,
+      "entries": [
+        1236.0
+      ],
+      "sl": 0.0,
+      "tp": 0.0,
+      "tp2": 0.0,
+      "lot": 0.0,
+      "rr_ratio": 0,
+      "tps": [],
+      "ladder_rr": 0,
+      "order_type": "market",
+      "confidence": 0.65,
+      "warnings": []
+    },
+    "decision": {
+      "verdict": "skip",
+      "reasons": [
+        "medium_confidence",
+        "hermes_neutral",
+        "missing_sl"
+      ],
+      "score": 3.0,
+      "max_score": 10.0,
+      "trade_allowed": false,
+      "signal": {
+        "symbol": "XAUUSD",
+        "side": "BUY",
+        "entry": 1236.0,
+        "entries": [
+          1236.0
+        ],
+        "sl": 0.0,
+        "tp": 0.0,
+        "tp2": 0.0,
+        "lot": 0.0,
+        "rr_ratio": 0,
+        "tps": [],
+        "ladder_rr": 0,
+        "order_type": "market",
+        "confidence": 0.65,
+        "warnings": []
+      }
+    }
   }
 ]

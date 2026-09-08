@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-08T05:26:01.450859+00:00",
+ "last_run_utc": "2026-09-08T07:25:12.553557+00:00",
  "recent_commits": [
+  "7dcb194 autopilot: b148 note \u2014 verify_head stage 1 runs in the main tree, so a foreign session's untracked files falsely call a good HEAD BROKEN; head_verify stage 2 certified 1fc110b OK (1417 tests)",
+  "1fc110b autopilot: b144 risk_ledger ticket column + header migration (rescue staged work from killed run; rename 2 test methods for b102 pin rule; file b148 concurrent-session hazard)",
   "429c7dd autopilot: b143 risk_ledger reader (reconcile + damper mix + ticket join); file b144/b145",
   "848e4de autopilot: b139 risk_stack sidecar ledger \u2014 execution_style + shrink stack now persisted per trade (b142 option b, both lanes)",
-  "4b97fbd autopilot: b142 filed \u2014 b139's proposed fix is a no-op trap (append_csv_row cannot migrate a header); tripwire test + b141 edit-not-delete line",
-  "42cfc1d autopilot: harvest b140 \u2014 land signal-lane regime census files (b42 untracked) + b141 edit-not-delete line (b102)",
-  "ec65eca autopilot: b137 shrink-stack census - double-count at 0.25x, dead floor lane, style leg un-persisted (b138/b139/b140 filed)"
+  "4b97fbd autopilot: b142 filed \u2014 b139's proposed fix is a no-op trap (append_csv_row cannot migrate a header); tripwire test + b141 edit-not-delete line"
  ]
 }
