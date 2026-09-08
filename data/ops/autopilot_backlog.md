@@ -99,6 +99,45 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       an execution_style column to the execution_log row at proposal time
       (hermes_runtime._build_proposal already has the plan in hand). Must not
       rewrite existing rows; old rows stay NULL.
+      PROGRESS 2026-09-08 (b142 finding, item stays todo): the fix AS WRITTEN
+      IS A NO-OP TRAP. engines/storage._append_csv_row writes the header ONLY
+      when the file does not exist, and the live execution_log.csv exists with
+      12 columns (pinned: every one of its 27 rows is exactly 12 fields, CRLF,
+      header at git 8fbde21). Appending a 13th key therefore writes the VALUE
+      but never the COLUMN NAME: csv.DictReader — the reader used by every
+      consumer (learning.py's exec join, notifier/dashboards,
+      scripts/weekly_report, b70, b111, b137) — folds the extra field under the
+      None restkey, so the audit question stays unanswerable while the CSV
+      LOOKS fixed. Measured in /tmp with the real _append_csv_row (probe
+      output: row 2 -> {..., None: ['aggressive_discount_entry']}). The fix
+      must therefore be a SCHEMA MIGRATION, not an extra key: either (a) teach
+      _append_csv_row to rewrite the header when a row carries keys the header
+      lacks (touches the shared writer used by BOTH lanes and rewrites the live
+      header line — needs its own test + a b42-style pin that old rows keep
+      NULL), or (b) record the damper stack per trade in a NEW sidecar ledger
+      (e.g. data/xau_plan/risk_ledger.csv) written at the same call sites,
+      leaving execution_log.csv byte-stable. (b) is smaller and cannot break a
+      reader; pick (b) unless a consumer must see the field inline. Also note
+      the signal lane's rows carry plan_id='signal' and are SKIPPED by
+      learning.py's join, so a per-trade style audit needs both call sites
+      (hermes_runtime ~709 and signal_listener ~589/624), not just the plan
+      lane _build_proposal mentions here.
+- [ ] b142 REUSABLE PROCEDURE — "ADD A COLUMN TO THE CSV LOG" IS A SCHEMA
+      MIGRATION, NOT AN EXTRA KEY (filed by the b139 probe, 2026-09-08):
+      engines/storage._append_csv_row writes the header ONLY when the file does
+      not exist, so appending a row with a NEW key to an existing ledger writes
+      the value without the column name, and csv.DictReader folds it under the
+      None restkey — every consumer (learning, dashboards, weekly_report, the
+      bNN censuses) then reads the file as if the field were never added. The
+      CSV LOOKS fixed and the audit question stays unanswerable: the worst kind
+      of observability fix. RULE: before adding a field to any existing CSV
+      ledger, (1) check whether the writer can migrate the header at all,
+      (2) if not, choose a sidecar ledger or a real migration with its own
+      test, and (3) prove the field is READABLE by a DictReader round-trip on
+      a file seeded with an OLD-schema row — never prove it by asserting the
+      dict you passed to the writer. Name-carrier:
+      tests/test_b142_csv_schema.py::test_b142_a_new_key_on_an_existing_ledger
+      _is_invisible_to_DictReader.
 - [ ] b138 [HUMAN DECISION] — loss_streak>=2 DOUBLE-COUNT: one fact, two
       modules (filed by b137, 2026-09-08): the same streak turns DEFCON YELLOW
       (risk_override 0.5) AND pushes account regime to defensive (TIGHT_REGIMES
