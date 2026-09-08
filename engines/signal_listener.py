@@ -393,6 +393,29 @@ def check_signals(bridge=None) -> list[dict]:
     return signals_found
 
 
+def _log_signal_risk_stack(eval_result: dict, command: dict) -> None:
+    """b139: persist the per-trade shrink stack for a signal-lane entry.
+
+    The signal lane's execution_log rows carry plan_id='signal' and are
+    SKIPPED by learning.py's join, so a per-trade style audit needs BOTH
+    call sites (this one and hermes_runtime's plan lane), not just one.
+    Observability only: never let a ledger failure touch the trade path.
+    """
+    try:
+        from engines import paths
+        from engines.storage import append_risk_ledger
+        append_risk_ledger(paths.plan_dir(), dict(
+            eval_result.get("risk_stack") or {},
+            at=datetime.now(timezone.utc).isoformat(), lane="signal",
+            plan_id="signal", side=command.get("side"),
+            lot=command.get("lot"), entry=command.get("entry"),
+            sl=command.get("sl"), tp=command.get("tp"),
+            grade=eval_result.get("grade", "signal"),
+            risk_usd=eval_result.get("risk_usd", 0)))
+    except Exception:
+        pass
+
+
 def run_signal_check(bridge, dry_run: bool = False) -> dict:
     """Main entry for integration with hermes_master.
 
@@ -598,6 +621,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 "result_ok": pres.get("ok", False),
                 "ticket": pres.get("ticket"),
             })
+            _log_signal_risk_stack(eval_result, command)
             continue
 
         result = execute_trade(command, bridge, dry_run=dry_run)
@@ -638,6 +662,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             "result_ok": result.get("ok", False),
             "ticket": (result.get("result") or {}).get("ticket"),
         })
+        _log_signal_risk_stack(eval_result, command)
 
     return {
         "ok": True,

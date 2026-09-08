@@ -294,8 +294,25 @@ def evaluate_proposal(
     _risk_override = (_defcon_insights or {}).get("risk_override")
     if _risk_override is not None:
         risk_pct *= float(_risk_override)
-    if regime in TIGHT_REGIMES:
-        risk_pct *= 0.5  # reduce size in defensive mode
+    _regime_mult = 0.5 if regime in TIGHT_REGIMES else 1.0
+    if _regime_mult != 1.0:
+        risk_pct *= _regime_mult  # reduce size in defensive mode
+    # b139: the four dampers that just multiplied into this lot, captured AT
+    # THE SOURCE. execution_log.csv cannot carry them (its header is frozen at
+    # 12 columns and engines/storage._append_csv_row only writes a header when
+    # the file is new — b142's no-op trap), so the stack rides out on the
+    # return dict and the callers write it to the risk_ledger.csv sidecar.
+    # Additive key only: no gate, no verdict, no lot changes shape here.
+    risk_stack = {
+        "base_risk_pct": MAX_RISK_PER_TRADE_PCT,
+        "learning_risk_mult": float(_ls.get("risk_mult", 1.0)),
+        "execution_style": str(proposal.get("execution_style") or ""),
+        "style_mult": _style_mult,
+        "defcon_override": (None if _risk_override is None
+                            else float(_risk_override)),
+        "regime": regime,
+        "regime_mult": _regime_mult,
+    }
 
     stop_distance = abs(entry - sl)
     # Broker specs (CapitalXtend XAUUSD): point = 0.01 ($0.01 move)
@@ -352,6 +369,9 @@ def evaluate_proposal(
         "grade": grade,
         "risk_pct": risk_pct,
         "risk_usd": sizing.get("risk_usd", 0),
+        # b139: per-trade audit trail for the shrink stack (see above). The
+        # callers persist it to data/xau_plan/risk_ledger.csv.
+        "risk_stack": dict(risk_stack, final_risk_pct=risk_pct),
     }
 
 

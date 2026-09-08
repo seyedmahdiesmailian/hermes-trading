@@ -23,7 +23,7 @@ from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
 from engines.trade_management import evaluate_trade_management, ladder_fields
 from engines.risk import assess_account_policy, compute_performance_state
-from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log
+from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log, append_risk_ledger
 from engines.plan import setup_grade
 from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
 from engines.macro_filter import apply_macro_guard
@@ -721,6 +721,21 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                     # exact journal→plan linkage (was time-proximity heuristic)
                     'ticket': ((execution_result.get('result') or {}).get('ticket')),
                 })
+                # b139: per-trade risk-stack audit (execution_style + the other
+                # three dampers), written to its own sidecar ledger — see
+                # engines/storage.append_risk_ledger for why not inline.
+                # Observability only: a ledger failure must never touch a trade.
+                try:
+                    append_risk_ledger(_plan_dir(), dict(
+                        eval_result.get('risk_stack') or {},
+                        at=now.isoformat(), lane='plan',
+                        plan_id=plan.get('plan_id'), side=cmd.get('side'),
+                        lot=cmd.get('lot'), entry=cmd.get('entry'),
+                        sl=cmd.get('sl'), tp=cmd.get('tp'),
+                        grade=eval_result.get('grade'),
+                        risk_usd=eval_result.get('risk_usd')))
+                except Exception:
+                    pass
         else:
             proposal['skip_reason'] = eval_result.get('reason')
             proposal['skip_reasons'] = eval_result.get('reasons', [])

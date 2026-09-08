@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-08T02:30:02.715148+00:00",
+ "last_run_utc": "2026-09-08T03:23:44.788973+00:00",
  "recent_commits": [
+  "4b97fbd autopilot: b142 filed \u2014 b139's proposed fix is a no-op trap (append_csv_row cannot migrate a header); tripwire test + b141 edit-not-delete line",
+  "42cfc1d autopilot: harvest b140 \u2014 land signal-lane regime census files (b42 untracked) + b141 edit-not-delete line (b102)",
   "ec65eca autopilot: b137 shrink-stack census - double-count at 0.25x, dead floor lane, style leg un-persisted (b138/b139/b140 filed)",
   "057376a autopilot: b136 wire recovery regime into TIGHT_REGIMES (sizing was full-risk at >=2.5% DD) + census script + 6 tests",
-  "fa4d21a autopilot: b91 sweep test \u2014 shared-state claim removed (b96 class); main+alive-owner invariants pinned",
-  "ef34496 autopilot: b124 gate-exemption census \u2014 exemption spares 14/32 wall-old winners, cost 0.003R, trigger fixed to conjunction",
-  "0d04314 autopilot: file b134 [META] \u2014 b50-only-failure triage rule (HEAD is wrong, tree is right; commit-then-reverify, never revert good tree work)"
+  "fa4d21a autopilot: b91 sweep test \u2014 shared-state claim removed (b96 class); main+alive-owner invariants pinned"
  ]
 }

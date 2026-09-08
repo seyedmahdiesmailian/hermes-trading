@@ -21,6 +21,7 @@ def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
     performance_state_path = root / "performance_state.json"
     execution_log_path = root / "execution_log.csv"
     reassessment_log_path = root / "reassessment_log.csv"
+    risk_ledger_path = root / "risk_ledger.csv"
     pending_orders_path = root / "pending_orders.json"
     plan_history_dir.mkdir(parents=True, exist_ok=True)
     return {
@@ -31,6 +32,7 @@ def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
         "performance_state_path": performance_state_path,
         "execution_log_path": execution_log_path,
         "reassessment_log_path": reassessment_log_path,
+        "risk_ledger_path": risk_ledger_path,
         "pending_orders_path": pending_orders_path,
     }
 
@@ -89,6 +91,36 @@ def append_execution_log(base_dir: str | Path | None, row: dict):
 def append_reassessment_log(base_dir: str | Path | None, row: dict):
     paths = ensure_xau_plan_dirs(base_dir)
     _append_csv_row(paths["reassessment_log_path"], row)
+
+
+# b139: the per-trade risk-shrink stack lives in its OWN ledger, not in
+# execution_log.csv. Why a sidecar (b142's rule): _append_csv_row writes a
+# header only when the file is new, so adding a 13th key to the existing
+# 12-column execution_log would write values under a column name nobody ever
+# writes — csv.DictReader folds them into the None restkey and every consumer
+# (learning's join, dashboards, weekly_report) reads the file as if the field
+# never existed. A new file gets its header on creation, and the fieldnames
+# below are FIXED so a future row can never silently redefine the schema.
+RISK_LEDGER_FIELDS = (
+    "at", "lane", "plan_id", "side", "lot", "entry", "sl", "tp",
+    "grade", "base_risk_pct", "learning_risk_mult", "execution_style",
+    "style_mult", "defcon_override", "regime", "regime_mult",
+    "final_risk_pct", "risk_usd",
+)
+
+
+def append_risk_ledger(base_dir: str | Path | None, row: dict):
+    """Append one per-trade risk-stack audit row (b139). Additive, read-only
+    for every gate: nothing on the entry path consumes this file."""
+    paths = ensure_xau_plan_dirs(base_dir)
+    path = paths["risk_ledger_path"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(RISK_LEDGER_FIELDS),
+                                extrasaction="ignore")
+        if not path.exists() or path.stat().st_size == 0:
+            writer.writeheader()
+        writer.writerow({k: row.get(k, "") for k in RISK_LEDGER_FIELDS})
 
 
 def load_runtime_state(base_dir: str | Path | None = None) -> dict:

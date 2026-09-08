@@ -117,19 +117,29 @@ class TestAppendCsvRowCannotMigrateTheHeader(unittest.TestCase):
 
 
 class TestB139StillNeedsADecision(unittest.TestCase):
-    def test_b139_is_still_parked_as_a_todo(self):
-        """This round filed the trap; it did NOT ship the fix. If b139 closes
-        without this pin being edited, the closure happened on the no-op
-        shape and the audit question is still unanswerable."""
+    def test_b139_is_closed_via_the_sidecar_not_a_header_migration(self):
+        """EDITED 2026-09-08 (b102 rule — edited, not deleted). b139 shipped
+        the SAME DAY this tripwire was filed, via option (b): a sidecar ledger
+        (data/xau_plan/risk_ledger.csv, storage.append_risk_ledger) written at
+        both lane call sites. The original pin demanded [ ] on b139; the real
+        risk it guarded against — b139 closing on the NO-OP shape (a 13th key
+        on execution_log.csv) — is now guarded differently: the trap test
+        above must stay green (the shared writer still cannot migrate), AND
+        the live execution_log.csv must STILL be 12-wide. If a future round
+        ships option (a), the trap test's own docstring demands a dated edit."""
         text = (REPO / "data" / "ops" / "autopilot_backlog.md").read_text(
             encoding="utf-8")
         line = next((ln for ln in text.splitlines()
                      if "b139 TRADER OBSERVABILITY" in ln), None)
         self.assertIsNotNone(line, "b139 must stay filed")
-        self.assertIn("[ ]", line,
-                      "b139 shipped — if it shipped via option (a) the header "
-                      "test above must be EDITED with a dated note, not "
-                      "deleted (b102)")
+        self.assertIn("[x]", line, "b139's closure note vanished?")
+        # the shipped shape: sidecar exists, main ledger untouched
+        self.assertTrue((REPO / "engines" / "storage.py").read_text(
+            encoding="utf-8").find("append_risk_ledger") > 0)
+        self.assertEqual(len(_live_header()), 12,
+                         "execution_log.csv gained a column — option (a) "
+                         "shipped; the trap test above must be EDITED with a "
+                         "dated note (b102), never deleted")
 
 
 if __name__ == "__main__":

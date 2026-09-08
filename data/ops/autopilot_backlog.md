@@ -88,7 +88,29 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       (tests/test_b88_defcon_books.py::test_loss_streak_still_resets_on_rollover
       and ::test_red_cannot_fire_on_a_rollover_cycle), edited not deleted — the
       reset is a live boundary either way, so the flip has to be dated.
-- [ ] b139 TRADER OBSERVABILITY — execution_style IS NOT PERSISTED ANYWHERE
+      PROGRESS 2026-09-08 (b139 run, reading only): the blind window is WIDER
+      than the regime alone — the rollover dict's daily_pnl=0.0 also feeds
+      check_kill_switch's daily-loss trigger (hermes_runtime line ~438 reads
+      performance['daily_pnl']), so the first cycle of each UTC day is blind to
+      the DAILY-LOSS kill switch too, not just to the regime. Any fix must
+      census all three consumers (policy regime, DEFCON, kill switch) on the
+      same rollover state, and note that engines/risk.py's sha256 is stamped
+      by BOTH b88 and b89 ledgers (test_ledger_built_against_the_fixed_code_
+      path + test_b89 sha pins) — editing the rollover branch REQUIRES
+      re-running scripts/b88_defcon_books.py (~50 min) and
+      scripts/b89_window_contract.py in the same change, or those tests go
+      red. Budget a full run for this item.
+- [ ] b143 TRADER OBSERVABILITY — risk_ledger.csv HAS NO READER YET (filed by
+      the b139 fix, 2026-09-08): the sidecar now records the per-trade shrink
+      stack (style, regime, defcon, learning multipliers) from BOTH lanes, but
+      nothing consumes it — an unwritten ledger is data, an unread one is
+      theatre. Next step: a small audit script (b137-census shape) that joins
+      risk_ledger rows to trade_journal tickets and reports the REALIZED
+      multiplier mix (how often each damper fired, the product distribution,
+      and whether any trade's stack product disagrees with its logged
+      risk_usd/lot). That turns b138's pending human decision from an argument
+      into a table. Read-only; no gate may change.
+- [x] b139 TRADER OBSERVABILITY — execution_style IS NOT PERSISTED ANYWHERE
       (filed by b137, 2026-09-08): the style leg is the ONLY per-trade risk
       damper (STYLE_RISK_MULT 0.5 on aggressive_* entries), yet neither
       execution_log.csv nor trade_journal.csv nor plan_history/*.json carries
@@ -99,31 +121,29 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       an execution_style column to the execution_log row at proposal time
       (hermes_runtime._build_proposal already has the plan in hand). Must not
       rewrite existing rows; old rows stay NULL.
-      PROGRESS 2026-09-08 (b142 finding, item stays todo): the fix AS WRITTEN
-      IS A NO-OP TRAP. engines/storage._append_csv_row writes the header ONLY
-      when the file does not exist, and the live execution_log.csv exists with
-      12 columns (pinned: every one of its 27 rows is exactly 12 fields, CRLF,
-      header at git 8fbde21). Appending a 13th key therefore writes the VALUE
-      but never the COLUMN NAME: csv.DictReader — the reader used by every
-      consumer (learning.py's exec join, notifier/dashboards,
-      scripts/weekly_report, b70, b111, b137) — folds the extra field under the
-      None restkey, so the audit question stays unanswerable while the CSV
-      LOOKS fixed. Measured in /tmp with the real _append_csv_row (probe
-      output: row 2 -> {..., None: ['aggressive_discount_entry']}). The fix
-      must therefore be a SCHEMA MIGRATION, not an extra key: either (a) teach
-      _append_csv_row to rewrite the header when a row carries keys the header
-      lacks (touches the shared writer used by BOTH lanes and rewrites the live
-      header line — needs its own test + a b42-style pin that old rows keep
-      NULL), or (b) record the damper stack per trade in a NEW sidecar ledger
-      (e.g. data/xau_plan/risk_ledger.csv) written at the same call sites,
-      leaving execution_log.csv byte-stable. (b) is smaller and cannot break a
-      reader; pick (b) unless a consumer must see the field inline. Also note
-      the signal lane's rows carry plan_id='signal' and are SKIPPED by
-      learning.py's join, so a per-trade style audit needs both call sites
-      (hermes_runtime ~709 and signal_listener ~589/624), not just the plan
-      lane _build_proposal mentions here.
-- [ ] b142 REUSABLE PROCEDURE — "ADD A COLUMN TO THE CSV LOG" IS A SCHEMA
+      DONE 2026-09-08 (option (b), sidecar): evaluate_proposal now returns a
+      risk_stack captured AT THE SOURCE (base_risk_pct, learning_risk_mult,
+      execution_style, style_mult, defcon_override, regime, regime_mult,
+      final_risk_pct) on the execute path, and BOTH call sites (hermes_runtime
+      plan lane, signal_listener limit+market paths via _log_signal_risk_stack)
+      write it to a NEW ledger data/xau_plan/risk_ledger.csv
+      (storage.append_risk_ledger — fixed RISK_LEDGER_FIELDS, extrasaction=
+      ignore, header on creation; execution_log.csv stays byte-stable).
+      Ledger failure is swallowed (observability must never touch a trade).
+      11 tests (tests/test_b139_risk_ledger.py): stack product == final_risk_pct,
+      style_mult read from the module not a literal, DictReader round-trip with
+      NO None restkey (b142's proof rule), AST pin that both lanes call the
+      writer, and a no-gate-changed pin (lot == shared sizing model's answer
+      for the stack's final_risk_pct). Filed b143 (the ledger has no reader
+      yet).
+- [x] b142 REUSABLE PROCEDURE — "ADD A COLUMN TO THE CSV LOG" IS A SCHEMA
       MIGRATION, NOT AN EXTRA KEY (filed by the b139 probe, 2026-09-08):
+      DONE 2026-09-08: the rule shipped and was APPLIED the same day — b139's
+      fix chose the sidecar path and its test proves readability by a DictReader
+      round-trip asserting NO None restkey (tests/test_b139_risk_ledger.py::
+      TestLedgerIsReadable), plus a fixed-fieldnames writer (extrasaction=
+      ignore) so a future row cannot silently redefine the schema.
+      ORIGINAL NOTE follows.
       engines/storage._append_csv_row writes the header ONLY when the file does
       not exist, so appending a row with a NEW key to an existing ledger writes
       the value without the column name, and csv.DictReader folds it under the
