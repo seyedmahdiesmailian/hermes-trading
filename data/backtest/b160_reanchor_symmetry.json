@@ -1,0 +1,76 @@
+{
+ "arms": [
+  "incumbent",
+  "symmetric"
+ ],
+ "item": "b160",
+ "legs": {
+  "cached": {
+   "_delta_exp_R": 0.0,
+   "_signals_incumbent": {
+    "BUY": {
+     "max": 1.551,
+     "mean": 1.55,
+     "n": 537,
+     "share_above_1_6": 0.0
+    },
+    "SELL": {
+     "max": 1.552,
+     "mean": 1.55,
+     "n": 311,
+     "share_above_1_6": 0.0
+    }
+   },
+   "_signals_symmetric": {
+    "BUY": {
+     "max": 1.988,
+     "mean": 1.554,
+     "n": 537,
+     "share_above_1_6": 0.0223
+    },
+    "SELL": {
+     "max": 1.552,
+     "mean": 1.55,
+     "n": 311,
+     "share_above_1_6": 0.0
+    }
+   },
+   "incumbent": {
+    "WR%": 70.6,
+    "avg_loss_R": -1.01,
+    "avg_win_R": 0.81,
+    "exp_R": 0.278,
+    "holds_over_time_exit": 0,
+    "maxDD_R": -2.3,
+    "max_hold_bars": 78,
+    "mean_hold_bars": 9.1,
+    "net_R": 30.3,
+    "p95_hold_bars": 29,
+    "trades": 109
+   },
+   "symmetric": {
+    "WR%": 70.6,
+    "avg_loss_R": -1.01,
+    "avg_win_R": 0.81,
+    "exp_R": 0.278,
+    "holds_over_time_exit": 0,
+    "maxDD_R": -2.3,
+    "max_hold_bars": 78,
+    "mean_hold_bars": 9.1,
+    "net_R": 30.3,
+    "p95_hold_bars": 29,
+    "trades": 109
+   }
+  }
+ },
+ "verdict": {
+  "better_legs": 0,
+  "direction": "NO EFFECT",
+  "note": "b129 floor: >=3 non-zero legs to be a decision; below that this is a direction report. A no-effect leg means the nearest-TP pick never bound (the b84 manufactured spike swallows it).",
+  "per_leg_delta_exp_R": {
+   "cached": 0.0
+  },
+  "worse_legs": 0,
+  "zero_legs": 1
+ }
+}

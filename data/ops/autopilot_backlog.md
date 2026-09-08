@@ -47,6 +47,37 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b160 TRADER CODE REVIEW — plan._reanchor_blueprint SIDE ASYMMETRY: BUY
+      PICKS NEAREST TP, SELL PICKS FURTHEST, docstring says "furthest"
+      (filed and landed by the code-review run, 2026-09-08): engines/plan.py
+      lines 110 vs 118 — SELL uses max(cands,key=rr) (furthest target), BUY
+      uses min(cands,key=rr) (nearest) while the function's own docstring
+      promises "pick the furthest valid target" for both sides. Measured
+      BEFORE touching anything (b110): scripts/b160_reanchor_symmetry_ab.py
+      monkey-patches BUY to max(cands) and reruns the sanctioned live-parity
+      funnel (backtest_real.strategy_signal + b71 harness) on the cached leg,
+      b157 pattern, zero production change.
+      DONE 2026-09-08: THE ASYMMETRY IS REAL IN CODE BUT DORMANT IN PRACTICE —
+      incumbent BUY rr max 1.551 / SELL max 1.552 (0% above 1.6; b84's
+      manufactured spike confirmed again), symmetric arm produces rr up to
+      1.988 on 2.2% of BUY signals yet the funnel's book is UNCHANGED
+      (109 trades, exp_R 0.278, net_R 30.3, DD -2.3 both arms, delta 0.000).
+      Nearest-pick never binds because natural levels essentially never clear
+      the floor before padding. NO behaviour change ships: one leg is a
+      direction report, not a verdict (b129 floor), and there is nothing to
+      fix while the pick is inert. Ledger:
+      data/backtest/b160_reanchor_symmetry.json.
+- [ ] b161 TRADER RESEARCH — GIVE THE REANCHOR-SYMMETRY QUESTION A >=3-LEG
+      VERDICT OR RETIRE IT (filed by b160, 2026-09-08): b160 measured the
+      cached leg only (delta 0.000, pick inert). If anyone wants to know
+      whether the dormant BUY-nearest asymmetry (plan._reanchor_blueprint)
+      ever costs money, run scripts/b160_reanchor_symmetry_ab.py on W1..W4
+      (fresh windows, b121._rows_for) and apply b129's one-sided rule to the
+      four deltas; if all four legs are zero again, RETIRE the question (the
+      asymmetry is provably inert on the current funnel) and cite this item
+      as closed-by-evidence, so a future review does not re-open it.
+      Estimated ~25 min/leg on cached-class hardware; do NOT change
+      production geometry on cached-only evidence.
 - [ ] b159 REUSABLE PROCEDURE — A DOCUMENTED CROSS-MODULE MISMATCH IS AN
       OPTION, NOT A DEFECT: CENSUS DISAGREEMENT RATE + CONSUMER COUNT BEFORE
       "FIXING" A LABEL (filed by b158, 2026-09-08): b157's review found
