@@ -155,7 +155,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       pricing and b193's veto shipped exactly this ambiguity). Fold the b171
       writer-census rule in: a fix that never fires is either inert or unwired and
       only the fire count tells which. [TRADER-adjacent measurement procedure]
-- [ ] b196 TRADER SIZING DEFECT (b136 CLASS, found by code review 2026-09-09, NOT
+- [x] b196 TRADER SIZING DEFECT (b136 CLASS, found by code review 2026-09-09, NOT
       yet fixed — time-boxed out of the b196 run; budget a FULL run): the entry
       sizer ignores the account's OWN base risk. engines/risk._base_risk_pct
       (the one policy hermes_runtime computes EVERY cycle, line ~400, and hands
@@ -200,6 +200,45 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       MAX_RISK_PER_TRADE_PCT as the explicit CEILING the tier base is clamped
       under (never raise a gate: min(policy_base, MAX) — the >=5000 tier is
       tightening-only vs today; the <800 tier is 2x tightening). [TRADER]
+      (done 2026-09-09, this run: WIRED. engines/auto_executor sizes from
+      min(account_policy["base_risk_pct"], MAX) — policy base present and
+      valid → tiered; missing/garbage/0 → MAX fallback = byte-identical
+      pre-fix behaviour (fail-closed = never a silent 0-lot, never looser
+      than MAX). risk_stack["base_risk_pct"] now records the base that
+      ACTUALLY sized the lot (b139 product stays true, verified). Census
+      step 1 done: the live risk_ledger's last row (2026-09-09 18:15,
+      risk_usd 99.88 at final 0.02) back-derives balance ~4994 — BELOW the
+      5000 tier edge, so it sized identically pre/post-fix; the ledger
+      window (b139 started 09-08) simply never caught a >=5k row. The
+      defect bites exactly when the account crosses 5000 (it has before),
+      where live would size 2.0% against the policy's 1.5%. The funnel A/B
+      (step 2) is STRUCTURALLY impossible: engines/backtest{,_real}.py
+      contain ZERO risk_pct/lot references (grep-verified) — the live-parity
+      funnel prices the SIGNAL lane in R-multiples and never calls the
+      sizer, so it cannot separate base=2% vs base=tiered at all; exp_R is
+      sizing-independent by construction, and the DD-control claim follows
+      arithmetically (every tier <= MAX ⇒ every
+      lot <= its pre-fix lot). Pins edited-dated-not-deleted (b88):
+      test_b136 normal-path pin 0.02→0.015 + _result_for now carries the
+      real policy base; b137 combined_factor denominator = the base that
+      sized (floor 0.00125→0.0009375 re-derived by re-running the census,
+      b127/b128 rule), b136 history_walk base-aware; b136+b137+b140 ledgers
+      regenerated from the real path. 9 new tests (tests/
+      test_b196_base_risk_wiring.py) incl. the <800-tier finding that a 1%
+      base + 10pt stop sizes below the broker min lot → fail-closed SKIP,
+      and the clamp proof min(tier,MAX)==tier at every boundary. 1642 green,
+      live cycle rc=0 (monitor lane, no order endpoint touched).)
+- [ ] b197 TRADER OBSERVABILITY (from b196, 2026-09-09): the tiered base now
+      drives sizing, but nothing in the ops reports states WHICH base a live
+      entry used vs the MAX ceiling — the first >=5000 entry post-fix silently
+      runs a 25% smaller lot than every pre-fix trade and the only place that
+      reveals it is risk_ledger.csv's base_risk_pct column (18 rows deep,
+      nobody reads it raw). b143's reader already computes the base per row;
+      add a one-line "sizing epoch" note to its summary (rows where
+      base_risk_pct < MAX are post-b196 tiered sizing) and one to the daily
+      ops brief, so a lot that looks 'wrong' vs history is self-explaining
+      instead of triggering a manual forensic pass. Read-only reporting; no
+      sizing path, no gate. [TRADER hygiene]
 - [x] (ARCHIVE TEXT of the DONE b189 item above — re-checked 2026-09-09: b189
       shipped per the top-of-file entry; this box was left unticked by mistake
       and made every autopilot run re-read a finished item as "top todo")

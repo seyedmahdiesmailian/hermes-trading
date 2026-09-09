@@ -295,7 +295,24 @@ def evaluate_proposal(
         }
 
     # ── Calculate position size ──
-    risk_pct = MAX_RISK_PER_TRADE_PCT * float(_ls.get("risk_mult", 1.0))  # adaptive multiplier (≤1.0)
+    # b196 (2026-09-09): the sizer must start from the account's OWN base
+    # (engines/risk.assess_account_policy emits the balance-tiered
+    # base_risk_pct every cycle) instead of the flat MAX. Before this fix the
+    # policy's base had ZERO readers in the executor — the b136
+    # "computed/reported/never-wired" class on the BASE leg: at balance
+    # >=5000 the policy doc says 1.5% but every entry sized 2% (33% looser).
+    # Fail-closed contract: MAX_RISK_PER_TRADE_PCT stays the explicit CEILING
+    # (min(policy_base, MAX) — every tier is ≤ MAX, so the fix is
+    # tightening-only), and a policy dict without the key (legacy/test
+    # callers) falls back to MAX = today's behaviour, never a silent 0.
+    _policy_base = account_policy.get("base_risk_pct")
+    try:
+        _policy_base = float(_policy_base) if _policy_base else 0.0
+    except (TypeError, ValueError):
+        _policy_base = 0.0
+    base_pct = min(_policy_base, MAX_RISK_PER_TRADE_PCT) if _policy_base > 0 \
+        else MAX_RISK_PER_TRADE_PCT
+    risk_pct = base_pct * float(_ls.get("risk_mult", 1.0))  # adaptive multiplier (≤1.0)
     # b53: per-entry-style risk (see STYLE_RISK_MULT). The style tag comes
     # from the monitor decision via _build_proposal; missing tag = full risk.
     _style_mult = STYLE_RISK_MULT.get(str(proposal.get("execution_style") or ""), 1.0)
@@ -314,7 +331,12 @@ def evaluate_proposal(
     # return dict and the callers write it to the risk_ledger.csv sidecar.
     # Additive key only: no gate, no verdict, no lot changes shape here.
     risk_stack = {
-        "base_risk_pct": MAX_RISK_PER_TRADE_PCT,
+        # b196: the BASE that actually sized this lot — the policy's tiered
+        # base when present (clamped), else the MAX fallback. Stays the
+        # product-consistent first leg for b139's risk_ledger (test_b139
+        # multiplies the stack legs and demands final_risk_pct back), so a
+        # ledger row now reveals the true base, not a constant.
+        "base_risk_pct": base_pct,
         "learning_risk_mult": float(_ls.get("risk_mult", 1.0)),
         "execution_style": str(proposal.get("execution_style") or ""),
         "style_mult": _style_mult,

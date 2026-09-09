@@ -139,7 +139,15 @@ def regime_walk(deals: list[dict], start_balance: float) -> list[dict]:
         bal = round(bal + float(d.get("profit") or 0.0), 2)
         day = datetime.fromtimestamp(float(d["time"]), tz=timezone.utc).date().isoformat()
         state = compute_performance_state(state, day, bal, [d])
-        risk_usd = round(bal * AE.MAX_RISK_PER_TRADE_PCT, 2)
+        # b196 (2026-09-09, edited not deleted): the executor now sizes from
+        # the policy's own tiered base clamped under MAX, so the walk's
+        # risk projection must use the SAME base the sizer would use — not
+        # the flat MAX the pre-fix sizer used.
+        base_pct = min(float(assess_account_policy(
+            balance=bal, equity=bal, free_margin=bal, margin=0.0,
+            daily_pnl=0.0, loss_streak=0,
+            open_positions=0)["base_risk_pct"]), AE.MAX_RISK_PER_TRADE_PCT)
+        risk_usd = round(bal * base_pct, 2)
         for tag, eq in (("flat", bal), ("max_adverse", round(bal - risk_usd, 2))):
             pol = assess_account_policy(
                 balance=bal, equity=eq, free_margin=eq, margin=0.0,
@@ -155,8 +163,11 @@ def regime_walk(deals: list[dict], start_balance: float) -> list[dict]:
                 "risk_multiplier": pol["risk_multiplier"],
                 "trade_allowed": pol["trade_allowed"],
                 "policy_base_risk_pct": pol["base_risk_pct"],
+                # b196: the executed base is the policy tier clamped under
+                # MAX — what the sizer now actually starts from.
                 "executor_risk_pct_if_executed": round(
-                    AE.MAX_RISK_PER_TRADE_PCT
+                    min(float(pol["base_risk_pct"]),
+                        AE.MAX_RISK_PER_TRADE_PCT)
                     * (0.5 if pol["regime"] in AE.TIGHT_REGIMES else 1.0), 6),
             })
     return out

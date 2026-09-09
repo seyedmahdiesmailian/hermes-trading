@@ -1,6 +1,6 @@
 {
  "_note": "b137 census: every factor that multiplies into entry risk_pct, probed through the real evaluate_proposal. Read-only; no order endpoint touched; the learning probe writes to a temp root.",
- "_at": "2026-09-08T01:12:59.857343+00:00",
+ "_at": "2026-09-09T20:03:53.061576+00:00",
  "_frame": {
   "blueprint": {
    "side": "SELL",
@@ -12,8 +12,8 @@
   "balance": 5000.0,
   "static_cap_pct": 0.02,
   "min_meaningful_lot": 0.01,
-  "journal_rows": 37,
-  "execution_log_stops": 26,
+  "journal_rows": 44,
+  "execution_log_stops": 33,
   "learning_floor_is_discovered_not_copied": true
  },
  "grid": [
@@ -24,10 +24,10 @@
    "learning_mult": 1.0,
    "execute": true,
    "reason": "auto_approved",
-   "risk_pct": 0.02,
+   "risk_pct": 0.015,
    "combined_factor": 1.0,
-   "risk_usd": 100.0,
-   "lot": 0.1,
+   "risk_usd": 75.0,
+   "lot": 0.07,
    "probe": "base_normal",
    "why": "the reference: no damper fires"
   },
@@ -38,10 +38,10 @@
    "learning_mult": 1.0,
    "execute": true,
    "reason": "auto_approved",
-   "risk_pct": 0.01,
+   "risk_pct": 0.0075,
    "combined_factor": 0.5,
-   "risk_usd": 50.0,
-   "lot": 0.05,
+   "risk_usd": 37.5,
+   "lot": 0.03,
    "probe": "tight_defensive_dailyloss",
    "why": "regime leg alone (DEFCON stays GREEN)"
   },
@@ -52,10 +52,10 @@
    "learning_mult": 1.0,
    "execute": true,
    "reason": "auto_approved",
-   "risk_pct": 0.005,
+   "risk_pct": 0.00375,
    "combined_factor": 0.25,
-   "risk_usd": 25.0,
-   "lot": 0.02,
+   "risk_usd": 18.75,
+   "lot": 0.01,
    "probe": "tight_defensive_streak",
    "why": "regime leg fired BY loss_streak \u2014 DEFCON YELLOW fires on the same fact"
   },
@@ -66,10 +66,10 @@
    "learning_mult": 1.0,
    "execute": true,
    "reason": "auto_approved",
-   "risk_pct": 0.01,
+   "risk_pct": 0.0075,
    "combined_factor": 0.5,
-   "risk_usd": 50.0,
-   "lot": 0.05,
+   "risk_usd": 37.5,
+   "lot": 0.03,
    "probe": "defcon_yellow_sldom",
    "why": "DEFCON leg alone (regime stays normal)"
   },
@@ -80,10 +80,10 @@
    "learning_mult": 1.0,
    "execute": true,
    "reason": "auto_approved",
-   "risk_pct": 0.01,
+   "risk_pct": 0.0075,
    "combined_factor": 0.5,
-   "risk_usd": 50.0,
-   "lot": 0.05,
+   "risk_usd": 37.5,
+   "lot": 0.03,
    "probe": "recovery",
    "why": "the b136 regime"
   },
@@ -94,10 +94,10 @@
    "learning_mult": 1.0,
    "execute": true,
    "reason": "auto_approved",
-   "risk_pct": 0.01,
+   "risk_pct": 0.0075,
    "combined_factor": 0.5,
-   "risk_usd": 50.0,
-   "lot": 0.05,
+   "risk_usd": 37.5,
+   "lot": 0.03,
    "probe": "style_half",
    "why": "STYLE_RISK_MULT leg alone"
   },
@@ -108,10 +108,10 @@
    "learning_mult": 0.5,
    "execute": true,
    "reason": "auto_approved",
-   "risk_pct": 0.01,
+   "risk_pct": 0.0075,
    "combined_factor": 0.5,
-   "risk_usd": 50.0,
-   "lot": 0.05,
+   "risk_usd": 37.5,
+   "lot": 0.03,
    "probe": "learning_floor",
    "why": "learning leg at its clamped floor (0.0 is clamped up by apply())"
   },
@@ -662,27 +662,132 @@
    "stack_as_shipped": 1.0,
    "stack_with_learning_floor": 0.5,
    "stack_with_style": 0.25
+  },
+  {
+   "deal_ticket": 99940851,
+   "day": "2026-09-08",
+   "balance": 5002.85,
+   "loss_streak": 0,
+   "daily_pnl": 0.0,
+   "regime": "normal",
+   "defcon": "GREEN",
+   "tight_mult": 1.0,
+   "defcon_mult": 1.0,
+   "stack_as_shipped": 1.0,
+   "stack_with_learning_floor": 0.5,
+   "stack_with_style": 0.25
+  },
+  {
+   "deal_ticket": 99969042,
+   "day": "2026-09-08",
+   "balance": 5017.89,
+   "loss_streak": 0,
+   "daily_pnl": 15.04,
+   "regime": "normal",
+   "defcon": "GREEN",
+   "tight_mult": 1.0,
+   "defcon_mult": 1.0,
+   "stack_as_shipped": 1.0,
+   "stack_with_learning_floor": 0.5,
+   "stack_with_style": 0.25
+  },
+  {
+   "deal_ticket": 100001682,
+   "day": "2026-09-08",
+   "balance": 4993.44,
+   "loss_streak": 1,
+   "daily_pnl": -9.41,
+   "regime": "normal",
+   "defcon": "GREEN",
+   "tight_mult": 1.0,
+   "defcon_mult": 1.0,
+   "stack_as_shipped": 1.0,
+   "stack_with_learning_floor": 0.5,
+   "stack_with_style": 0.25
+  },
+  {
+   "deal_ticket": 100173627,
+   "day": "2026-09-08",
+   "balance": 5012.7,
+   "loss_streak": 0,
+   "daily_pnl": 9.85,
+   "regime": "normal",
+   "defcon": "GREEN",
+   "tight_mult": 1.0,
+   "defcon_mult": 1.0,
+   "stack_as_shipped": 1.0,
+   "stack_with_learning_floor": 0.5,
+   "stack_with_style": 0.25
+  },
+  {
+   "deal_ticket": 100186657,
+   "day": "2026-09-08",
+   "balance": 5051.78,
+   "loss_streak": 0,
+   "daily_pnl": 48.93,
+   "regime": "normal",
+   "defcon": "GREEN",
+   "tight_mult": 1.0,
+   "defcon_mult": 1.0,
+   "stack_as_shipped": 1.0,
+   "stack_with_learning_floor": 0.5,
+   "stack_with_style": 0.25
+  },
+  {
+   "deal_ticket": 100214887,
+   "day": "2026-09-09",
+   "balance": 5006.93,
+   "loss_streak": 0,
+   "daily_pnl": 0.0,
+   "regime": "normal",
+   "defcon": "GREEN",
+   "tight_mult": 1.0,
+   "defcon_mult": 1.0,
+   "stack_as_shipped": 1.0,
+   "stack_with_learning_floor": 0.5,
+   "stack_with_style": 0.25
+  },
+  {
+   "deal_ticket": 100468656,
+   "day": "2026-09-09",
+   "balance": 4911.83,
+   "loss_streak": 1,
+   "daily_pnl": -95.1,
+   "regime": "defensive",
+   "defcon": "GREEN",
+   "tight_mult": 0.5,
+   "defcon_mult": 1.0,
+   "stack_as_shipped": 0.5,
+   "stack_with_learning_floor": 0.25,
+   "stack_with_style": 0.125
   }
  ],
  "traded_stop_distances": [
   5.84,
   6.19,
   6.19,
+  6.3,
   6.54,
   6.61,
   7.06,
   7.26,
+  7.28,
+  7.48,
   7.89,
   8.57,
   8.57,
   8.57,
+  8.76,
   8.78,
   9.29,
+  9.5,
   10.16,
   10.59,
   10.78,
+  11.21,
   11.99,
   13.91,
+  14.74,
   14.93,
   16.47,
   16.52,
@@ -816,37 +921,37 @@
    "tight_defensive_dailyloss": {
     "combined_factor": 0.5,
     "moved": true,
-    "lot": 0.05,
+    "lot": 0.03,
     "executed": true
    },
    "defcon_yellow_sldom": {
     "combined_factor": 0.5,
     "moved": true,
-    "lot": 0.05,
+    "lot": 0.03,
     "executed": true
    },
    "style_half": {
     "combined_factor": 0.5,
     "moved": true,
-    "lot": 0.05,
+    "lot": 0.03,
     "executed": true
    },
    "learning_floor": {
     "combined_factor": 0.5,
     "moved": true,
-    "lot": 0.05,
+    "lot": 0.03,
     "executed": true
    },
    "recovery": {
     "combined_factor": 0.5,
     "moved": true,
-    "lot": 0.05,
+    "lot": 0.03,
     "executed": true
    },
    "tight_defensive_streak": {
     "combined_factor": 0.25,
     "moved": true,
-    "lot": 0.02,
+    "lot": 0.01,
     "executed": true
    }
   },
@@ -861,26 +966,35 @@
   },
   "floor": {
    "combined_factor_analytic": 0.0625,
-   "risk_pct_analytic": 0.00125,
+   "risk_pct_analytic": 0.0009375,
    "stack_all_executed": false,
    "stack_all_reason": "sizing_below_min_meaningful_lot",
    "probe_agrees_with_arithmetic": true,
-   "median_traded_stop_distance": 10.159999999999854,
+   "median_traded_stop_distance": 9.289999999999964,
    "lane_alive_at_median": false,
    "stops_where_lane_is_dead": [
+    "5.84",
+    "6.19",
+    "6.30",
     "6.54",
     "6.61",
     "7.06",
     "7.26",
+    "7.28",
+    "7.48",
     "7.89",
     "8.57",
+    "8.76",
     "8.78",
     "9.29",
+    "9.50",
     "10.16",
     "10.59",
     "10.78",
+    "11.21",
     "11.99",
     "13.91",
+    "14.74",
     "14.93",
     "16.47",
     "16.52",
@@ -892,12 +1006,16 @@
    ],
    "per_stop": {
     "5.84": {
-     "lot_at_floor": 0.01,
-     "lane_alive": true
+     "lot_at_floor": 0.0,
+     "lane_alive": false
     },
     "6.19": {
-     "lot_at_floor": 0.01,
-     "lane_alive": true
+     "lot_at_floor": 0.0,
+     "lane_alive": false
+    },
+    "6.30": {
+     "lot_at_floor": 0.0,
+     "lane_alive": false
     },
     "6.54": {
      "lot_at_floor": 0.0,
@@ -915,6 +1033,14 @@
      "lot_at_floor": 0.0,
      "lane_alive": false
     },
+    "7.28": {
+     "lot_at_floor": 0.0,
+     "lane_alive": false
+    },
+    "7.48": {
+     "lot_at_floor": 0.0,
+     "lane_alive": false
+    },
     "7.89": {
      "lot_at_floor": 0.0,
      "lane_alive": false
@@ -923,11 +1049,19 @@
      "lot_at_floor": 0.0,
      "lane_alive": false
     },
+    "8.76": {
+     "lot_at_floor": 0.0,
+     "lane_alive": false
+    },
     "8.78": {
      "lot_at_floor": 0.0,
      "lane_alive": false
     },
     "9.29": {
+     "lot_at_floor": 0.0,
+     "lane_alive": false
+    },
+    "9.50": {
      "lot_at_floor": 0.0,
      "lane_alive": false
     },
@@ -943,11 +1077,19 @@
      "lot_at_floor": 0.0,
      "lane_alive": false
     },
+    "11.21": {
+     "lot_at_floor": 0.0,
+     "lane_alive": false
+    },
     "11.99": {
      "lot_at_floor": 0.0,
      "lane_alive": false
     },
     "13.91": {
+     "lot_at_floor": 0.0,
+     "lane_alive": false
+    },
+    "14.74": {
      "lot_at_floor": 0.0,
      "lane_alive": false
     },
@@ -986,10 +1128,10 @@
    }
   },
   "exposure": {
-   "journal_samples": 37,
+   "journal_samples": 44,
    "regime_fire_counts": {
-    "normal": 32,
-    "defensive": 5
+    "normal": 38,
+    "defensive": 6
    },
    "samples_where_both_live_dampers_shrank": 0,
    "style_leg_is_unmeasurable_from_history": true
@@ -997,7 +1139,7 @@
   "verdict": {
    "unwired_factors": "NONE \u2014 every damper moves the lot",
    "double_count": "loss_streak>=2 charges 0.25x (regime 0.5x x defcon 0.5x) \u2014 one fact, two modules",
-   "floor": "floor 0.0625x = 0.00125 risk_pct; at the median traded stop (10.16) that is lot 0.0 -> lane DEAD (silent skip)",
+   "floor": "floor 0.0625x = 0.00094 risk_pct; at the median traded stop (9.29) that is lot 0.0 -> lane DEAD (silent skip)",
    "style_leg": "execution_style is NOT persisted in execution_log or the journal, so the only per-trade damper cannot be audited from history (filed b139)",
    "action": "MEASURED, NOTHING WIRED: removing the double-count would LOOSEN a risk gate (human decision, b138); the floor is a skip not an alarm, so a deeper stack would silence the lane quietly (b139 observability)."
   }

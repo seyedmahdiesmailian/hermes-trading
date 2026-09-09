@@ -1,6 +1,6 @@
 {
  "_note": "b136 census: does every regime risk.assess_account_policy can emit actually change the live entry path? Read-only; no order endpoint touched.",
- "_at": "2026-09-08T00:04:27.897766+00:00",
+ "_at": "2026-09-09T20:16:52.687843+00:00",
  "_frame": {
   "source_of_deals": "trade_journal.csv (long window) + /api/history/deals (live 30d feed)",
   "chain": "engines.risk.compute_performance_state -> engines.risk.assess_account_policy (the live functions)",
@@ -9,8 +9,8 @@
    "max_adverse"
   ],
   "max_risk_per_trade_pct": 0.02,
-  "journal_rows": 37,
-  "live_deal_rows": 64
+  "journal_rows": 44,
+  "live_deal_rows": 78
  },
  "journal_walk": [
   {
@@ -25,21 +25,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96021722,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5009.9,
-   "equity": 4909.7,
+   "equity": 4934.75,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96021723,
@@ -53,21 +53,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96021723,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5023.95,
-   "equity": 4923.47,
+   "equity": 4948.59,
    "daily_pnl": 14.05,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96058333,
@@ -81,21 +81,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96058333,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5013.53,
-   "equity": 4913.26,
+   "equity": 4938.33,
    "daily_pnl": 3.63,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98072921,
@@ -109,21 +109,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98072921,
    "day": "2026-08-28",
    "excursion": "max_adverse",
    "balance": 5027.57,
-   "equity": 4927.02,
+   "equity": 4952.16,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98084590,
@@ -137,21 +137,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98084590,
    "day": "2026-08-28",
    "excursion": "max_adverse",
    "balance": 5070.89,
-   "equity": 4969.47,
+   "equity": 4994.83,
    "daily_pnl": 43.32,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200524,
@@ -165,21 +165,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200524,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5074.49,
-   "equity": 4973.0,
+   "equity": 4998.37,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200669,
@@ -193,21 +193,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200669,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5081.81,
-   "equity": 4980.17,
+   "equity": 5005.58,
    "daily_pnl": 7.32,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203175,
@@ -221,21 +221,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203175,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5080.25,
-   "equity": 4978.64,
+   "equity": 5004.05,
    "daily_pnl": 5.76,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203263,
@@ -249,21 +249,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203263,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5083.13,
-   "equity": 4981.47,
+   "equity": 5006.88,
    "daily_pnl": 8.64,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203591,
@@ -277,21 +277,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203591,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5081.54,
-   "equity": 4979.91,
+   "equity": 5005.32,
    "daily_pnl": 7.05,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98367013,
@@ -305,21 +305,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98367013,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5113.66,
-   "equity": 5011.39,
+   "equity": 5036.96,
    "daily_pnl": 39.17,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98368015,
@@ -333,21 +333,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98368015,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5119.21,
-   "equity": 5016.83,
+   "equity": 5042.42,
    "daily_pnl": 44.72,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98371735,
@@ -361,21 +361,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98371735,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5024.83,
-   "equity": 4924.33,
+   "equity": 4949.46,
    "daily_pnl": -49.66,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499344,
@@ -389,21 +389,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499344,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5039.23,
-   "equity": 4938.45,
+   "equity": 4963.64,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499696,
@@ -417,21 +417,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499696,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5049.99,
-   "equity": 4948.99,
+   "equity": 4974.24,
    "daily_pnl": 10.76,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98501207,
@@ -445,21 +445,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98501207,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5050.26,
-   "equity": 4949.25,
+   "equity": 4974.51,
    "daily_pnl": 11.03,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98503445,
@@ -473,21 +473,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98503445,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5052.01,
-   "equity": 4950.97,
+   "equity": 4976.23,
    "daily_pnl": 12.78,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98504641,
@@ -501,21 +501,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98504641,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5056.81,
-   "equity": 4955.67,
+   "equity": 4980.96,
    "daily_pnl": 17.58,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98505189,
@@ -529,21 +529,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98505189,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5057.23,
-   "equity": 4956.09,
+   "equity": 4981.37,
    "daily_pnl": 18.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98511859,
@@ -725,21 +725,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98809821,
    "day": "2026-09-02",
    "excursion": "max_adverse",
    "balance": 5013.62,
-   "equity": 4913.35,
+   "equity": 4938.42,
    "daily_pnl": 21.81,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98816451,
@@ -753,21 +753,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98816451,
    "day": "2026-09-02",
    "excursion": "max_adverse",
    "balance": 5023.55,
-   "equity": 4923.08,
+   "equity": 4948.2,
    "daily_pnl": 31.74,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98825359,
@@ -837,21 +837,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99122845,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5060.27,
-   "equity": 4959.06,
+   "equity": 4984.37,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99133464,
@@ -865,21 +865,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99133464,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5131.9,
-   "equity": 5029.26,
+   "equity": 5054.92,
    "daily_pnl": 71.63,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99136854,
@@ -893,21 +893,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99136854,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5029.02,
-   "equity": 4928.44,
+   "equity": 4953.58,
    "daily_pnl": -31.25,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99170108,
@@ -921,21 +921,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99170108,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5113.26,
-   "equity": 5010.99,
+   "equity": 5036.56,
    "daily_pnl": 52.99,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99301256,
@@ -949,21 +949,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99301256,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5196.0,
-   "equity": 5092.08,
+   "equity": 5118.06,
    "daily_pnl": 135.73,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99694222,
@@ -977,21 +977,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99694222,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5096.72,
-   "equity": 4994.79,
+   "equity": 5020.27,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99845655,
@@ -1005,21 +1005,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99845655,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5139.77,
-   "equity": 5036.97,
+   "equity": 5062.67,
    "daily_pnl": 43.05,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99876585,
@@ -1033,21 +1033,217 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99876585,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5091.95,
-   "equity": 4990.11,
+   "equity": 5015.57,
    "daily_pnl": -4.77,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 99940851,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5002.85,
+   "equity": 5002.85,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 99940851,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5002.85,
+   "equity": 4927.81,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 99969042,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5017.89,
+   "equity": 5017.89,
+   "daily_pnl": 15.04,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 99969042,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5017.89,
+   "equity": 4942.62,
+   "daily_pnl": 15.04,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100001682,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 4993.44,
+   "equity": 4993.44,
+   "daily_pnl": -9.41,
+   "loss_streak": 1,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
    "executor_risk_pct_if_executed": 0.02
+  },
+  {
+   "deal_ticket": 100001682,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 4993.44,
+   "equity": 4893.57,
+   "daily_pnl": -9.41,
+   "loss_streak": 1,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.02
+  },
+  {
+   "deal_ticket": 100173627,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5012.7,
+   "equity": 5012.7,
+   "daily_pnl": 9.85,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100173627,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5012.7,
+   "equity": 4937.51,
+   "daily_pnl": 9.85,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100186657,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5051.78,
+   "equity": 5051.78,
+   "daily_pnl": 48.93,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100186657,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5051.78,
+   "equity": 4976.0,
+   "daily_pnl": 48.93,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100214887,
+   "day": "2026-09-09",
+   "excursion": "flat",
+   "balance": 5006.93,
+   "equity": 5006.93,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100214887,
+   "day": "2026-09-09",
+   "excursion": "max_adverse",
+   "balance": 5006.93,
+   "equity": 4931.83,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100468656,
+   "day": "2026-09-09",
+   "excursion": "flat",
+   "balance": 4911.83,
+   "equity": 4911.83,
+   "daily_pnl": -95.1,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.01
+  },
+  {
+   "deal_ticket": 100468656,
+   "day": "2026-09-09",
+   "excursion": "max_adverse",
+   "balance": 4911.83,
+   "equity": 4813.59,
+   "daily_pnl": -95.1,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.01
   }
  ],
  "live_walk": [
@@ -1063,21 +1259,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96013648,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5000.0,
-   "equity": 4900.0,
+   "equity": 4925.0,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96014759,
@@ -1091,21 +1287,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96014759,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5000.0,
-   "equity": 4900.0,
+   "equity": 4925.0,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96021722,
@@ -1119,21 +1315,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96021722,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5009.9,
-   "equity": 4909.7,
+   "equity": 4934.75,
    "daily_pnl": 9.9,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96021723,
@@ -1147,21 +1343,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96021723,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5023.95,
-   "equity": 4923.47,
+   "equity": 4948.59,
    "daily_pnl": 23.95,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96024102,
@@ -1175,21 +1371,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96024102,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5023.95,
-   "equity": 4923.47,
+   "equity": 4948.59,
    "daily_pnl": 23.95,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96058333,
@@ -1203,21 +1399,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 96058333,
    "day": "2026-08-21",
    "excursion": "max_adverse",
    "balance": 5013.53,
-   "equity": 4913.26,
+   "equity": 4938.33,
    "daily_pnl": 13.53,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98071925,
@@ -1231,21 +1427,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98071925,
    "day": "2026-08-28",
    "excursion": "max_adverse",
    "balance": 5013.53,
-   "equity": 4913.26,
+   "equity": 4938.33,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98072921,
@@ -1259,21 +1455,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98072921,
    "day": "2026-08-28",
    "excursion": "max_adverse",
    "balance": 5027.57,
-   "equity": 4927.02,
+   "equity": 4952.16,
    "daily_pnl": 14.04,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98074573,
@@ -1287,21 +1483,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98074573,
    "day": "2026-08-28",
    "excursion": "max_adverse",
    "balance": 5027.57,
-   "equity": 4927.02,
+   "equity": 4952.16,
    "daily_pnl": 14.04,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98084590,
@@ -1315,21 +1511,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98084590,
    "day": "2026-08-28",
    "excursion": "max_adverse",
    "balance": 5070.89,
-   "equity": 4969.47,
+   "equity": 4994.83,
    "daily_pnl": 57.36,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200436,
@@ -1343,21 +1539,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200436,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5070.89,
-   "equity": 4969.47,
+   "equity": 4994.83,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200524,
@@ -1371,21 +1567,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200524,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5074.49,
-   "equity": 4973.0,
+   "equity": 4998.37,
    "daily_pnl": 3.6,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200669,
@@ -1399,21 +1595,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98200669,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5081.81,
-   "equity": 4980.17,
+   "equity": 5005.58,
    "daily_pnl": 10.92,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203171,
@@ -1427,21 +1623,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203171,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5081.81,
-   "equity": 4980.17,
+   "equity": 5005.58,
    "daily_pnl": 10.92,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203175,
@@ -1455,21 +1651,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203175,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5080.25,
-   "equity": 4978.64,
+   "equity": 5004.05,
    "daily_pnl": 9.36,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203263,
@@ -1483,21 +1679,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203263,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5083.13,
-   "equity": 4981.47,
+   "equity": 5006.88,
    "daily_pnl": 12.24,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203591,
@@ -1511,21 +1707,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98203591,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5081.54,
-   "equity": 4979.91,
+   "equity": 5005.32,
    "daily_pnl": 10.65,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98359644,
@@ -1539,21 +1735,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98359644,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5081.54,
-   "equity": 4979.91,
+   "equity": 5005.32,
    "daily_pnl": 10.65,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98367011,
@@ -1567,21 +1763,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98367011,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5081.54,
-   "equity": 4979.91,
+   "equity": 5005.32,
    "daily_pnl": 10.65,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98367013,
@@ -1595,21 +1791,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98367013,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5113.66,
-   "equity": 5011.39,
+   "equity": 5036.96,
    "daily_pnl": 42.77,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98368015,
@@ -1623,21 +1819,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98368015,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5119.21,
-   "equity": 5016.83,
+   "equity": 5042.42,
    "daily_pnl": 48.32,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98371735,
@@ -1651,21 +1847,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98371735,
    "day": "2026-08-31",
    "excursion": "max_adverse",
    "balance": 5024.83,
-   "equity": 4924.33,
+   "equity": 4949.46,
    "daily_pnl": -46.06,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499134,
@@ -1679,21 +1875,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499134,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5024.83,
-   "equity": 4924.33,
+   "equity": 4949.46,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499344,
@@ -1707,21 +1903,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499344,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5039.23,
-   "equity": 4938.45,
+   "equity": 4963.64,
    "daily_pnl": 14.4,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499696,
@@ -1735,21 +1931,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98499696,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5049.99,
-   "equity": 4948.99,
+   "equity": 4974.24,
    "daily_pnl": 25.16,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98501207,
@@ -1763,21 +1959,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98501207,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5050.26,
-   "equity": 4949.25,
+   "equity": 4974.51,
    "daily_pnl": 25.43,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98503418,
@@ -1791,21 +1987,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98503418,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5050.26,
-   "equity": 4949.25,
+   "equity": 4974.51,
    "daily_pnl": 25.43,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98503445,
@@ -1819,21 +2015,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98503445,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5052.01,
-   "equity": 4950.97,
+   "equity": 4976.23,
    "daily_pnl": 27.18,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98504641,
@@ -1847,21 +2043,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98504641,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5056.81,
-   "equity": 4955.67,
+   "equity": 4980.96,
    "daily_pnl": 31.98,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98505189,
@@ -1875,21 +2071,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98505189,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5057.23,
-   "equity": 4956.09,
+   "equity": 4981.37,
    "daily_pnl": 32.4,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98511551,
@@ -1903,21 +2099,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98511551,
    "day": "2026-09-01",
    "excursion": "max_adverse",
    "balance": 5057.23,
-   "equity": 4956.09,
+   "equity": 4981.37,
    "daily_pnl": 32.4,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98511859,
@@ -2211,21 +2407,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98809821,
    "day": "2026-09-02",
    "excursion": "max_adverse",
    "balance": 5013.62,
-   "equity": 4913.35,
+   "equity": 4938.42,
    "daily_pnl": 35.89,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98816329,
@@ -2239,21 +2435,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98816329,
    "day": "2026-09-02",
    "excursion": "max_adverse",
    "balance": 5013.62,
-   "equity": 4913.35,
+   "equity": 4938.42,
    "daily_pnl": 35.89,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98816451,
@@ -2267,21 +2463,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98816451,
    "day": "2026-09-02",
    "excursion": "max_adverse",
    "balance": 5023.55,
-   "equity": 4923.08,
+   "equity": 4948.2,
    "daily_pnl": 45.82,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98822588,
@@ -2295,21 +2491,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98822588,
    "day": "2026-09-02",
    "excursion": "max_adverse",
    "balance": 5023.55,
-   "equity": 4923.08,
+   "equity": 4948.2,
    "daily_pnl": 45.82,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 98825359,
@@ -2435,21 +2631,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99122845,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5060.27,
-   "equity": 4959.06,
+   "equity": 4984.37,
    "daily_pnl": 70.84,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99128242,
@@ -2463,21 +2659,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99128242,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5060.27,
-   "equity": 4959.06,
+   "equity": 4984.37,
    "daily_pnl": 70.84,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99133464,
@@ -2491,21 +2687,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99133464,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5131.9,
-   "equity": 5029.26,
+   "equity": 5054.92,
    "daily_pnl": 142.47,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99135844,
@@ -2519,21 +2715,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99135844,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5131.9,
-   "equity": 5029.26,
+   "equity": 5054.92,
    "daily_pnl": 142.47,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99136854,
@@ -2547,21 +2743,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99136854,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5029.02,
-   "equity": 4928.44,
+   "equity": 4953.58,
    "daily_pnl": 39.59,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99154806,
@@ -2575,21 +2771,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99154806,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5029.02,
-   "equity": 4928.44,
+   "equity": 4953.58,
    "daily_pnl": 39.59,
    "loss_streak": 1,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99170108,
@@ -2603,21 +2799,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99170108,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5113.26,
-   "equity": 5010.99,
+   "equity": 5036.56,
    "daily_pnl": 123.83,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99298502,
@@ -2631,21 +2827,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99298502,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5113.26,
-   "equity": 5010.99,
+   "equity": 5036.56,
    "daily_pnl": 123.83,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99301256,
@@ -2659,21 +2855,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99301256,
    "day": "2026-09-03",
    "excursion": "max_adverse",
    "balance": 5196.0,
-   "equity": 5092.08,
+   "equity": 5118.06,
    "daily_pnl": 206.57,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99692701,
@@ -2687,21 +2883,21 @@
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99692701,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5196.0,
-   "equity": 5092.08,
+   "equity": 5118.06,
    "daily_pnl": 0.0,
    "loss_streak": 0,
    "regime": "normal",
    "risk_multiplier": 1.0,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.02
+   "executor_risk_pct_if_executed": 0.015
   },
   {
    "deal_ticket": 99694222,
@@ -2715,21 +2911,21 @@
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99694222,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5096.72,
-   "equity": 4994.79,
+   "equity": 5020.27,
    "daily_pnl": -99.28,
    "loss_streak": 1,
    "regime": "defensive",
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99838872,
@@ -2743,21 +2939,21 @@
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99838872,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5096.72,
-   "equity": 4994.79,
+   "equity": 5020.27,
    "daily_pnl": -99.28,
    "loss_streak": 1,
    "regime": "defensive",
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99845655,
@@ -2771,21 +2967,21 @@
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99845655,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5139.77,
-   "equity": 5036.97,
+   "equity": 5062.67,
    "daily_pnl": -56.23,
    "loss_streak": 0,
    "regime": "defensive",
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99851338,
@@ -2799,21 +2995,21 @@
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99851338,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5139.77,
-   "equity": 5036.97,
+   "equity": 5062.67,
    "daily_pnl": -56.23,
    "loss_streak": 0,
    "regime": "defensive",
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99876585,
@@ -2827,20 +3023,412 @@
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
-   "executor_risk_pct_if_executed": 0.01
+   "executor_risk_pct_if_executed": 0.0075
   },
   {
    "deal_ticket": 99876585,
    "day": "2026-09-07",
    "excursion": "max_adverse",
    "balance": 5091.95,
-   "equity": 4990.11,
+   "equity": 5015.57,
    "daily_pnl": -104.05,
    "loss_streak": 1,
    "regime": "defensive",
    "risk_multiplier": 0.75,
    "trade_allowed": true,
    "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99908348,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5091.95,
+   "equity": 5091.95,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 99908348,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5091.95,
+   "equity": 5015.57,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 99940851,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5002.85,
+   "equity": 5002.85,
+   "daily_pnl": -89.1,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99940851,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5002.85,
+   "equity": 4927.81,
+   "daily_pnl": -89.1,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99958461,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5002.85,
+   "equity": 5002.85,
+   "daily_pnl": -89.1,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99958461,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5002.85,
+   "equity": 4927.81,
+   "daily_pnl": -89.1,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99969042,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5017.89,
+   "equity": 5017.89,
+   "daily_pnl": -74.06,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99969042,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5017.89,
+   "equity": 4942.62,
+   "daily_pnl": -74.06,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99999159,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5017.89,
+   "equity": 5017.89,
+   "daily_pnl": -74.06,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 99999159,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5017.89,
+   "equity": 4942.62,
+   "daily_pnl": -74.06,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 100001682,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 4993.44,
+   "equity": 4993.44,
+   "daily_pnl": -98.51,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.01
+  },
+  {
+   "deal_ticket": 100001682,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 4993.44,
+   "equity": 4893.57,
+   "daily_pnl": -98.51,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.01
+  },
+  {
+   "deal_ticket": 100166659,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 4993.44,
+   "equity": 4993.44,
+   "daily_pnl": -98.51,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.01
+  },
+  {
+   "deal_ticket": 100166659,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 4993.44,
+   "equity": 4893.57,
+   "daily_pnl": -98.51,
+   "loss_streak": 1,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.01
+  },
+  {
+   "deal_ticket": 100173627,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5012.7,
+   "equity": 5012.7,
+   "daily_pnl": -79.25,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 100173627,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5012.7,
+   "equity": 4937.51,
+   "daily_pnl": -79.25,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 100180442,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5012.7,
+   "equity": 5012.7,
+   "daily_pnl": -79.25,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 100180442,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5012.7,
+   "equity": 4937.51,
+   "daily_pnl": -79.25,
+   "loss_streak": 0,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.0075
+  },
+  {
+   "deal_ticket": 100186657,
+   "day": "2026-09-08",
+   "excursion": "flat",
+   "balance": 5051.78,
+   "equity": 5051.78,
+   "daily_pnl": -40.17,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100186657,
+   "day": "2026-09-08",
+   "excursion": "max_adverse",
+   "balance": 5051.78,
+   "equity": 4976.0,
+   "daily_pnl": -40.17,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100213207,
+   "day": "2026-09-09",
+   "excursion": "flat",
+   "balance": 5051.78,
+   "equity": 5051.78,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100213207,
+   "day": "2026-09-09",
+   "excursion": "max_adverse",
+   "balance": 5051.78,
+   "equity": 4976.0,
+   "daily_pnl": 0.0,
+   "loss_streak": 0,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100214887,
+   "day": "2026-09-09",
+   "excursion": "flat",
+   "balance": 5006.93,
+   "equity": 5006.93,
+   "daily_pnl": -44.85,
+   "loss_streak": 1,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100214887,
+   "day": "2026-09-09",
+   "excursion": "max_adverse",
+   "balance": 5006.93,
+   "equity": 4931.83,
+   "daily_pnl": -44.85,
+   "loss_streak": 1,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100466296,
+   "day": "2026-09-09",
+   "excursion": "flat",
+   "balance": 5006.93,
+   "equity": 5006.93,
+   "daily_pnl": -44.85,
+   "loss_streak": 1,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100466296,
+   "day": "2026-09-09",
+   "excursion": "max_adverse",
+   "balance": 5006.93,
+   "equity": 4931.83,
+   "daily_pnl": -44.85,
+   "loss_streak": 1,
+   "regime": "normal",
+   "risk_multiplier": 1.0,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.015,
+   "executor_risk_pct_if_executed": 0.015
+  },
+  {
+   "deal_ticket": 100468656,
+   "day": "2026-09-09",
+   "excursion": "flat",
+   "balance": 4911.83,
+   "equity": 4911.83,
+   "daily_pnl": -139.95,
+   "loss_streak": 2,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
+   "executor_risk_pct_if_executed": 0.01
+  },
+  {
+   "deal_ticket": 100468656,
+   "day": "2026-09-09",
+   "excursion": "max_adverse",
+   "balance": 4911.83,
+   "equity": 4813.59,
+   "daily_pnl": -139.95,
+   "loss_streak": 2,
+   "regime": "defensive",
+   "risk_multiplier": 0.75,
+   "trade_allowed": true,
+   "policy_base_risk_pct": 0.02,
    "executor_risk_pct_if_executed": 0.01
   }
  ],
@@ -2900,10 +3488,10 @@
   },
   "unwired_regimes": [],
   "regime_fire_counts": {
-   "normal": 170,
-   "defensive": 32
+   "normal": 192,
+   "defensive": 52
   },
-  "sample_cycles": 202,
+  "sample_cycles": 244,
   "unwired_size_effect": {},
   "verdict": "ALL_EMITTABLE_REGIMES_WIRED"
  }

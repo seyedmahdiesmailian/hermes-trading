@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T18:30:03.519076+00:00",
+ "last_run_utc": "2026-09-09T19:30:03.088724+00:00",
  "recent_commits": [
+  "1604f5a autopilot: b196 filed \u2014 sizing base-rate defect (executor ignores policy base_risk_pct, b136 class); archive hygiene: b189 original-text box re-ticked",
   "d99b08b autopilot: b194 re-price under veto-fixed funnel \u2014 VERDICT ALIVE_AND_INERT (bar stands, seam proven firing via census)",
   "8dcaddd b192 backlog note",
   "8d8d71a b192: signal parser sanity guard - bare-number entry must be same order of magnitude as the market (a 1236$ P&L promo parsed as BUY@1236; time-stamped replay of all 52 logged signals: 45 unchanged, 1 ad killed, 6 corrected)",
-  "3c25fb8 autopilot: b193 landing \u2014 parked merge-parity work verified green (b86/b158/b42 pins follow the one-definition seam; gate 0.35 untouched, runtime re-inline now forbidden)",
-  "9caad90 autopilot: b191 stamp (verify_head OK c312b1d, runtime drift)"
+  "3c25fb8 autopilot: b193 landing \u2014 parked merge-parity work verified green (b86/b158/b42 pins follow the one-definition seam; gate 0.35 untouched, runtime re-inline now forbidden)"
  ]
 }

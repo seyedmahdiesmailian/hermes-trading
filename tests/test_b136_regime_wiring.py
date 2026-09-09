@@ -52,6 +52,14 @@ def _result_for(regime: str):
         pol = {"trade_allowed": regime not in STOP_TRADING_REGIMES,
                "regime": regime, "open_positions": 0, "balance": 5000.0,
                "risk_multiplier": mult}
+        # b196 (2026-09-09, edited not deleted — b88 rule): the real policy
+        # carries a balance-tiered base_risk_pct and the executor now SIZES
+        # FROM IT (clamped under MAX). A hand-built pol without the key would
+        # silently test only the fallback, so carry the true base in — the
+        # same one assess_account_policy emits at this balance.
+        pol["base_risk_pct"] = assess_account_policy(
+            balance=5000.0, equity=5000.0, free_margin=5000.0, margin=0.0,
+            daily_pnl=0.0, loss_streak=0, open_positions=0)["base_risk_pct"]
         perf = compute_performance_state(
             {}, datetime.now(timezone.utc).date().isoformat(), 5000.0, [])
         return AE.evaluate_proposal({"blueprint": dict(_blueprint()),
@@ -98,8 +106,12 @@ class B136RegimeWiring(unittest.TestCase):
         """Regression: the tightening must not have shrunk the normal path."""
         res = _result_for("normal")
         self.assertTrue(res["execute"])
-        self.assertAlmostEqual(res["risk_pct"], AE.MAX_RISK_PER_TRADE_PCT,
-                               places=9)
+        # b196 (2026-09-09, edited not deleted — b88 rule): this pin used to
+        # demand MAX (0.02). That WAS the b136 defect on the BASE leg: the
+        # policy's balance-tiered base had no reader. Post-fix the normal path
+        # sizes at the POLICY's own base — min(0.015 tier at 5k, MAX 0.02) =
+        # 0.015. The test's meaning survives intact: no regime damper fires.
+        self.assertAlmostEqual(res["risk_pct"], 0.015, places=9)
 
 
 if __name__ == "__main__":

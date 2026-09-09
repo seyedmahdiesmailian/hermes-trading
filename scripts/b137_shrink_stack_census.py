@@ -268,6 +268,12 @@ def _proposal_result(style: str, regime_probe: dict, learning_mult: float,
         else:
             os.environ["HERMES_DATA_ROOT"] = old
     risk_pct = res.get("risk_pct")
+    # b196 (2026-09-09, edited not deleted — b88 rule): the denominator used
+    # to be the flat MAX (0.02) because that WAS the base. Now the executor
+    # sizes from the policy's own tiered base (BALANCE 5000 -> 0.015), so the
+    # damper-product semantics of combined_factor are preserved by dividing
+    # by the base that actually sized the lot, not by MAX.
+    base = float(pol.get("base_risk_pct") or AE.MAX_RISK_PER_TRADE_PCT)
     return {
         "style": style or "(untagged)",
         "regime": pol["regime"],
@@ -276,7 +282,7 @@ def _proposal_result(style: str, regime_probe: dict, learning_mult: float,
         "execute": bool(res.get("execute")),
         "reason": res.get("reason"),
         "risk_pct": risk_pct,
-        "combined_factor": (round(float(risk_pct) / AE.MAX_RISK_PER_TRADE_PCT, 6)
+        "combined_factor": (round(float(risk_pct) / base, 6)
                             if risk_pct else None),
         "risk_usd": res.get("risk_usd"),
         "lot": (res.get("command") or {}).get("lot"),
@@ -469,7 +475,12 @@ def derive(grid: list[dict], hist: list[dict], stops: list[float],
                and v["trade_allowed"]]           # RED (0.0) blocks, never sizes
     min_defcon = min(yellows) if yellows else 1.0
     floor_factor = round(learning_floor * min_style * tight * min_defcon, 8)
-    floor_risk_pct = round(AE.MAX_RISK_PER_TRADE_PCT * floor_factor, 8)
+    # b196 (2026-09-09, edited not deleted): the floor rides on the base that
+    # actually sizes — the policy tier at this balance, clamped under MAX —
+    # not the flat MAX the executor used before the wiring fix.
+    floor_base = min(float(RISK._base_risk_pct(balance)),
+                     AE.MAX_RISK_PER_TRADE_PCT)
+    floor_risk_pct = round(floor_base * floor_factor, 8)
     stack_all = by_probe.get("stack_all") or {}
     alive = {}
     for stop in sorted(set([round(s, 2) for s in stops])):
@@ -528,12 +539,13 @@ def derive(grid: list[dict], hist: list[dict], stops: list[float],
             "samples_where_both_live_dampers_shrank": both,
             "style_leg_is_unmeasurable_from_history": True,
         },
-        "verdict": _verdict(movement, double_count, floor_factor, alive, med),
+        "verdict": _verdict(movement, double_count, floor_factor, alive, med,
+                            floor_risk_pct),
     }
 
 
 def _verdict(movement: dict, double_count: dict, floor_factor, alive: dict,
-             med) -> dict:
+             med, floor_risk_pct=None) -> dict:
     out = {}
     unwired = sorted(k for k, v in movement.items() if not v["moved"])
     out["unwired_factors"] = unwired or "NONE — every damper moves the lot"
@@ -544,8 +556,11 @@ def _verdict(movement: dict, double_count: dict, floor_factor, alive: dict,
         if double_count["is_double_counted"] else "no overlap measured")
     if floor_factor and med is not None:
         lot = alive.get(f"{med:.2f}", {}).get("lot_at_floor")
+        # b196: print the SAME number the ledger stores (risk_pct_analytic,
+        # built on the clamped tiered base) — the old MAX-based literal made
+        # the verdict text contradict its own data field after the fix.
         out["floor"] = (f"floor {floor_factor:.4f}x = "
-                        f"{AE.MAX_RISK_PER_TRADE_PCT * floor_factor:.5f} risk_pct; "
+                        f"{floor_risk_pct:.5f} risk_pct; "
                         f"at the median traded stop ({med:.2f}) that is lot "
                         f"{lot} -> lane "
                         f"{'ALIVE' if lot and lot >= 0.01 else 'DEAD (silent skip)'}")
