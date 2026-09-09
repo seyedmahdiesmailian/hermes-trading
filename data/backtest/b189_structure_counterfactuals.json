@@ -1,0 +1,80 @@
+{
+  "legs": 45,
+  "skip": {
+    "incomplete": 528,
+    "stale_at_birth": 126,
+    "no_room": 14
+  },
+  "rules": {
+    "A_immediate": {
+      "fills": 45,
+      "decided": 45,
+      "win_rate": 0.356,
+      "net_R": 0.43,
+      "net_R_per_fill": 0.009
+    },
+    "G_one_close": {
+      "fills": 45,
+      "decided": 45,
+      "win_rate": 0.444,
+      "net_R": 16.78,
+      "net_R_per_fill": 0.373
+    },
+    "C_confirm3": {
+      "fills": 38,
+      "decided": 37,
+      "win_rate": 0.622,
+      "net_R": 50.09,
+      "net_R_per_fill": 1.318
+    },
+    "H_time_gate": {
+      "fills": 18,
+      "decided": 18,
+      "win_rate": 0.667,
+      "net_R": 51.45,
+      "net_R_per_fill": 2.858
+    },
+    "I_zone_depth": {
+      "fills": 37,
+      "decided": 36,
+      "win_rate": 0.639,
+      "net_R": 51.16,
+      "net_R_per_fill": 1.383
+    }
+  },
+  "serial_1_slot": {
+    "A_immediate": {
+      "taken": 8,
+      "win": 0.5,
+      "net_R": 4.9
+    },
+    "G_one_close": {
+      "taken": 8,
+      "win": 0.5,
+      "net_R": 6.4
+    },
+    "C_confirm3": {
+      "taken": 8,
+      "win": 0.5,
+      "net_R": 1.1
+    },
+    "H_time_gate": {
+      "taken": 6,
+      "win": 0.5,
+      "net_R": 4.6
+    },
+    "I_zone_depth": {
+      "taken": 8,
+      "win": 0.5,
+      "net_R": 1.1
+    }
+  },
+  "verdict": "Parallel fills overstate rules; with the real single slot all rules converge to +0.05..+0.29 R/wk. The binding constraint is NO_SLOTS + few triggers, not entry-rule quality. b187 confirm stays (best per-trade win 0.62 in parallel view). Structural moves: (1) widen MAX_OPEN_POSITIONS with per-trade risk cap, (2) channel-signal lane shares the slot - needs priority rule, (3) stale-at-birth fix (deployed) raises usable plan count.",
+  "signal_counterfactual": {
+    "valid_geometry_measurable": 6,
+    "win": 5,
+    "net_R": 0.04,
+    "conflicts_among_valid": 0,
+    "note": "conflict-veto never killed a valid-geometry signal; vetoed 9 were stale/invalid anyway"
+  }
+}
