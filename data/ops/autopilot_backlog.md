@@ -155,7 +155,55 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       pricing and b193's veto shipped exactly this ambiguity). Fold the b171
       writer-census rule in: a fix that never fires is either inert or unwired and
       only the fire count tells which. [TRADER-adjacent measurement procedure]
-- [ ] (original text below) b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
+- [ ] b196 TRADER SIZING DEFECT (b136 CLASS, found by code review 2026-09-09, NOT
+      yet fixed — time-boxed out of the b196 run; budget a FULL run): the entry
+      sizer ignores the account's OWN base risk. engines/risk._base_risk_pct
+      (the one policy hermes_runtime computes EVERY cycle, line ~400, and hands
+      to evaluate_proposal as account_policy) says the per-trade base is
+      balance-tiered: <800 -> 1.0%, <1500 -> 1.5%, <5000 -> 2.0%, >=5000 -> 1.5%
+      (VERIFIED by probe: _base_risk_pct(4897.79)=0.02, (5000)=0.015, (799)=0.01).
+      But auto_executor.evaluate_proposal sizes from the flat constant
+      MAX_RISK_PER_TRADE_PCT=0.02 (line ~298) and records THAT as
+      risk_stack["base_risk_pct"] (line ~317) — the policy's base_risk_pct field
+      has ZERO readers in the executor (b171 writer-census: policy writes it,
+      only scripts/b136+b143 READ it, no gate consumes it). Consequence: at
+      balance >= 5000 (live balance 4897.79 — $102 away, and the account crossed
+      5k before), every entry risks 2.0% where the shipped policy says 1.5%: a
+      33% LOOSER sizing than the account-health doc the operator reads, exactly
+      the b136 "computed, reported, never wired" shape, on the BASE not just the
+      multiplier. At <800 it would size 2x the intended 1%.
+      WHY NOT SHIPPED IN THIS RUN: the fix (risk_pct =
+      float(account_policy.get("base_risk_pct") or MAX_RISK_PER_TRADE_PCT) * ...)
+      is one line BUT (a) it reads a policy field no executor path has ever
+      consumed — fail-closed contract: a policy dict missing the key (tests build
+      minimal pol dicts, test_b53 _pol() has no base_risk_pct) must not silently
+      trade at full 2%, decide: fall back to MAX (current behaviour, lenient) or
+      block sizing (tightening); (b) it MOVES lots (0.04->0.03 tier shape at 5k+)
+      so it must be certified on the live-parity funnel via
+      engines/backtest_real.run_backtest, not argued; (c) pins break by design:
+      tests/test_b136_regime_wiring.py line ~101 asserts
+      res["risk_pct"] == AE.MAX_RISK_PER_TRADE_PCT on a 5000-bal policy (post-fix
+      that's 0.015), and scripts/b137_shrink_stack_census.py derives EVERY
+      combined_factor as risk_pct / AE.MAX_RISK_PER_TRADE_PCT (line ~279) and the
+      floor lane as MAX*floor_factor (line ~472) — at BALANCE=5000 the base leg
+      becomes 0.75x and its frozen ledger + tests/test_b137 pins must be
+      RE-DERIVED, not edited (b127/b128 reproduction rule). b139's risk_ledger
+      sidecar keeps a frozen 12-col header — base_risk_pct column stays, but the
+      AUDIT reader b143 must know the pre/post-fix epoch (b145 join rule).
+      NEXT RUN ORDER: 1) census which balance tiers the live journal ever traded
+      in (trade_journal balances vs _base_risk_pct); 2) funnel A/B under
+      run_backtest: base=2.0% flat (today) vs base=tiered policy, report exp_R
+      AND max-DD (the point of the fix is DD control at 5k+, not return);
+      3) if tiered wins-or-neutral on exp_R and cuts modeled DD, ship + edit the
+      b136/b137 pins DATED (b88 rule: edited not deleted) + re-run
+      b136/b137 census scripts to regenerate ledgers; 4) keep
+      MAX_RISK_PER_TRADE_PCT as the explicit CEILING the tier base is clamped
+      under (never raise a gate: min(policy_base, MAX) — the >=5000 tier is
+      tightening-only vs today; the <800 tier is 2x tightening). [TRADER]
+- [x] (ARCHIVE TEXT of the DONE b189 item above — re-checked 2026-09-09: b189
+      shipped per the top-of-file entry; this box was left unticked by mistake
+      and made every autopilot run re-read a finished item as "top todo")
+      b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
       BACKTEST_REAL DOES NOT MODEL THE b187 ENTRY TRIGGER: THE LAB BAR IS
       NOW PRICED ON A RULE LIVE NEVER RUNS. b187 shipped the M5 3-close
       confirmation into hermes_runtime.cycle (which fetches 12 bridge rows,

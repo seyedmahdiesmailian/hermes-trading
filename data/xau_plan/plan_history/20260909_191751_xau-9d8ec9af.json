@@ -1045,10 +1045,10 @@
       }
     },
     "macro": {
-      "timestamp": "2026-09-09T19:17:51.622838+00:00",
+      "timestamp": "2026-09-09T19:00:03.182557+00:00",
       "dxy": {
-        "change_pct": 0.021,
-        "direction": "up",
+        "change_pct": 0.002,
+        "direction": "flat",
         "available": true,
         "source": "synthetic"
       },
@@ -1059,44 +1059,44 @@
         "available": false
       },
       "tick_volume": {
-        "volume_ratio": 0.15,
+        "volume_ratio": 0.0,
         "is_high_volume": false,
         "is_low_volume": true,
         "available": true
       },
       "higher_tf": {
         "h4": {
-          "price": 4400.04,
+          "price": 4403.26,
           "high_20": 4449.35,
           "low_20": 4341.15,
-          "pos_in_range": 0.54,
+          "pos_in_range": 0.57,
           "zone": "equilibrium",
-          "sma10": 4391.14,
+          "sma10": 4391.46,
           "trend": "bullish"
         },
         "d1": {
-          "price": 4400.04,
+          "price": 4403.26,
           "high_20": 4697.2,
           "low_20": 4282.51,
-          "pos_in_range": 0.28,
+          "pos_in_range": 0.29,
           "zone": "equilibrium",
-          "sma10": 4428.75,
+          "sma10": 4429.07,
           "trend": "bearish"
         },
         "w1": {
-          "price": 4400.04,
+          "price": 4403.26,
           "high_20": 4432.18,
           "low_20": 4375.08,
-          "pos_in_range": 0.44,
+          "pos_in_range": 0.49,
           "zone": "equilibrium",
-          "sma10": 4411.31,
+          "sma10": 4412.52,
           "trend": "bearish"
         }
       },
       "verdict": {
         "verdict": "none",
         "score_long": 0,
-        "score_short": 1,
+        "score_short": 0,
         "macro_conflicting": false
       },
       "calendar": {
@@ -1208,9 +1208,9 @@
         "upcoming_events": 17,
         "strict_high_count": 5,
         "window_hours": 24,
-        "fetched_at": "2026-09-09T19:17:51.804861+00:00"
+        "fetched_at": "2026-09-09T19:00:03.312611+00:00"
       },
-      "_fetched_at": 1788981471.8057024
+      "_fetched_at": 1788980403.3130255
     }
   }
 }
