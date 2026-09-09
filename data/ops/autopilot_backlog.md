@@ -47,7 +47,9 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
+- [x] b189 TRADER PARITY DEFECT (2026-09-09, DONE) — FOUND AND FIXED: the trigger gap was NOT a missing arg (strategy_signal already forwarded m5_rows= since 2026-09-06; the census re-derivation ran on that code) — the REAL gap was that run_backtest never FED it: M5 legs passed [] and the cached M15 legs had no M5 source at all. Now wired live-parity: settled_m5_rows() is the shared filter (imported by hermes_runtime), m5_window_for() mirrors it over cached streams, M5 legs slice their own closed rows, M15 legs derive 4 synthetic M5 rows from the entry stream (exact in test lanes, marked _derived_m5), explicit m5_stream= feeds real closes. PRICED via scripts/b189_trigger_parity.py (run_backtest only): cached leg 102/0.254 -> 104/0.280 with real M5 closes (b118/b117 pins stayed green — suppression only); the live-parity M5 leg (6500 M5 bars, first time the trigger is priced there): 166 trades exp_R 0.197 vs 159/0.212 unconfirmed — on the true entry TF the b187 trigger costs -0.015R and ADDS 7 trades (late M5 closes sometimes push reward>R), i.e. the +49% requote win was an M15-proxy artifact; trigger stays live (never weaken shipped logic) but its lab merit is ~neutral, pending re-baseline below.
+  [NEW TODO b190] re-run scripts/b117_trail_reprice.py + scripts/b118_merit_bar_rebaseline.py under the wired funnel and refresh the merit-bar citation; b188 residual items unchanged.
+- [ ] (original text below) b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
       BACKTEST_REAL DOES NOT MODEL THE b187 ENTRY TRIGGER: THE LAB BAR IS
       NOW PRICED ON A RULE LIVE NEVER RUNS. b187 shipped the M5 3-close
       confirmation into hermes_runtime.cycle (which fetches 12 bridge rows,

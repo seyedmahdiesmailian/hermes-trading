@@ -1,0 +1,127 @@
+{
+ "_note": "b189: the b187 M5 3-close confirmation priced inside the live-parity funnel (engines.backtest_real.run_backtest). arm A = pre-b189-parity control on the cached M15 leg; arm B = same leg priced on real M5 closes; arm C = the live-parity M5 leg (entry TF == live TIMEFRAME) with the trigger; arm D = the same M5 bars without confirmation rows (the pullback lane cannot fire).",
+ "_source": {
+  "m15_leg": "data/backtest/ab_aggressive_data.json",
+  "m5_leg": "data/backtest/robustness_data_M5.json",
+  "m5_closes": "data/backtest/b182_m5_bars.json",
+  "m5_closes_span": [
+   1775697000,
+   1788937500
+  ],
+  "m5_closes_bars": 30000
+ },
+ "_gates": {
+  "min_rr": 0.0,
+  "live_min_rr": 1.5,
+  "min_grade": "B",
+  "spread": 0.2,
+  "trail_mult": 0.3,
+  "trail_floor": 3.0
+ },
+ "A_m15_no_trigger_rows": {
+  "trades": 102,
+  "exp_R": 0.254,
+  "WR%": 69.6,
+  "avg_win_R": 0.81,
+  "avg_loss_R": -1.01,
+  "net_R": 25.9,
+  "maxDD_R": -2.5,
+  "mean_hold_bars": 9.2,
+  "p95_hold_bars": 21,
+  "max_hold_bars": 78,
+  "holds_over_time_exit": 0,
+  "_leg": "cached M15",
+  "_bars": 3000,
+  "_time_stop_bars": 144
+ },
+ "B_m15_real_m5_closes": {
+  "trades": 104,
+  "exp_R": 0.28,
+  "WR%": 71.2,
+  "avg_win_R": 0.8,
+  "avg_loss_R": -1.01,
+  "net_R": 29.2,
+  "maxDD_R": -2.4,
+  "mean_hold_bars": 9.3,
+  "p95_hold_bars": 29,
+  "max_hold_bars": 78,
+  "holds_over_time_exit": 0,
+  "_leg": "cached M15",
+  "_bars": 3000,
+  "_time_stop_bars": 144
+ },
+ "C_m5_live_parity": {
+  "trades": 166,
+  "exp_R": 0.197,
+  "WR%": 66.3,
+  "avg_win_R": 0.81,
+  "avg_loss_R": -1.0,
+  "net_R": 32.6,
+  "maxDD_R": -4.8,
+  "mean_hold_bars": 9.3,
+  "p95_hold_bars": 27,
+  "max_hold_bars": 55,
+  "holds_over_time_exit": 0,
+  "_leg": "M5 live-parity",
+  "_bars": 6500,
+  "_time_stop_bars": 432
+ },
+ "D_m5_no_trigger_rows": {
+  "trades": 159,
+  "exp_R": 0.212,
+  "WR%": 67.3,
+  "avg_win_R": 0.8,
+  "avg_loss_R": -1.0,
+  "net_R": 33.7,
+  "maxDD_R": -4.0,
+  "mean_hold_bars": 9.4,
+  "p95_hold_bars": 27,
+  "max_hold_bars": 55,
+  "holds_over_time_exit": 0,
+  "_leg": "M5 live-parity",
+  "_bars": 6500,
+  "_time_stop_bars": 432
+ },
+ "_comparison": {
+  "m15_leg": {
+   "pre_b189_parity": {
+    "trades": 102,
+    "exp_R": 0.254,
+    "net_R": 25.9,
+    "WR%": 69.6,
+    "maxDD_R": -2.5,
+    "mean_hold_bars": 9.2
+   },
+   "with_trigger": {
+    "trades": 104,
+    "exp_R": 0.28,
+    "net_R": 29.2,
+    "WR%": 71.2,
+    "maxDD_R": -2.4,
+    "mean_hold_bars": 9.3
+   }
+  },
+  "m5_leg": {
+   "with_trigger": {
+    "trades": 166,
+    "exp_R": 0.197,
+    "net_R": 32.6,
+    "WR%": 66.3,
+    "maxDD_R": -4.8,
+    "mean_hold_bars": 9.3
+   },
+   "no_trigger_control": {
+    "trades": 159,
+    "exp_R": 0.212,
+    "net_R": 33.7,
+    "WR%": 67.3,
+    "maxDD_R": -4.0,
+    "mean_hold_bars": 9.4
+   }
+  },
+  "m15_d_exp_R_trigger_vs_none": 0.026,
+  "m15_d_trades": 2,
+  "m5_d_exp_R_trigger_vs_none": -0.015,
+  "m5_d_trades": 7
+ }
+}

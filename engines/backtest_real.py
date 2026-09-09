@@ -1,6 +1,7 @@
 """Real backtest engine — fetches OHLC from Bridge and runs strategy backtest."""
 from __future__ import annotations
 
+import bisect
 import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -36,7 +37,48 @@ def fetch_all_ohlc(bridge, symbol: str = "XAUUSD", timeframe: str = "H1", count:
     return all_rows
 
 
-def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar_index: int, m15_window: list[dict] | None = None, range_kill_conf: float = 0.35) -> dict | None:
+def settled_m5_rows(m5_stream: list[dict] | None, now_epoch: int,
+                    limit: int = 12) -> list[dict]:
+    """b189 — the M5 window hermes_runtime.cycle hands to the monitor.
+
+    Live fetches the last 12 M5 rows and KEEPS only settled ones:
+    `bar_time + 300 <= now` (the bridge returns the FORMING bar last, and
+    counting its close would be lookahead). This is that filter, verbatim, so
+    the lab's trigger window is the same set of bars live could have seen at
+    this decision moment — no more, no less.
+
+    `now_epoch` is the decision moment. For a backtest bar that opened at
+    `bar_time` and spans `span` seconds, the decision runs on the bar's CLOSE,
+    i.e. at `bar_time + span` — which is why an M5 entry stream's current bar
+    counts as settled here (it closed at exactly that instant).
+    """
+    if not m5_stream:
+        return []
+    out = [r for r in m5_stream
+           if isinstance(r.get("time"), (int, float))
+           and r["time"] + M5_BAR_SECONDS <= now_epoch]
+    return out[-limit:]
+
+
+M5_BAR_SECONDS = 300  # live TIMEFRAME='M5'; hermes_runtime uses `+ 300 <= now`
+
+
+def m5_window_for(m5_stream: list[dict], m5_times: list[int],
+                  decision_epoch) -> list[dict]:
+    """b189 — the settled-M5 window live would hold at `decision_epoch`.
+
+    ONE implementation of the slice, shared by `run_backtest`'s signal_fn and
+    by `scripts.b81_lane_rescore.funnel_fn`, so the two lab paths cannot drift
+    into pricing the b187 trigger off different bar sets (the b109/b169 class).
+    """
+    if not m5_stream or not isinstance(decision_epoch, (int, float)):
+        return []
+    cut = bisect.bisect_right(m5_times, int(decision_epoch))
+    return settled_m5_rows(m5_stream[max(0, cut - 12):cut], int(decision_epoch))
+
+
+
+def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar_index: int, m15_window: list[dict] | None = None, range_kill_conf: float = 0.35, m5_rows: list[dict] | None = None, derive_m5: bool = True) -> dict | None:
     """Strategy function for backtest — runs the EXACT live funnel.
 
     No hand-copied gates: builds the plan with build_plan_from_context and
@@ -44,6 +86,17 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
     hermes_runtime.cycle uses. Live only ever executes on
     action == 'market_entry_now' (_build_proposal ignores pending actions),
     so that is the only signal the backtest may emit. Parity by construction.
+
+    b187 PARITY (this is the fix for todo b189): live's monitor call gets
+    `m5_rows=` the settled M5 closes, because b187 replaced the zone-touch
+    trigger with an M5 3-close confirmation. Until now the backtest called
+    evaluate_monitor_cycle WITHOUT them, so `m5_confirmation` could never pass
+    and every in-zone (pullback) signal the funnel still emitted was priced on
+    a rule live never runs. `m5_rows` is threaded through here exactly as
+    hermes_runtime threads it into the same function; when it is not supplied,
+    it is DERIVED from the entry window whenever that window is itself an M5
+    stream (live-parity), and left empty otherwise — so an M15 leg without an
+    M5 source reproduces the pre-b189 numbers byte-identically.
     """
     m15_window = m15_window or []
     if bar_index < 30 or len(h1_window) < 10 or len(m15_window) < 30:
@@ -51,6 +104,27 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
 
     try:
         now = datetime.fromtimestamp(row.get("time", 0), tz=timezone.utc)
+        # b189: the live-parity entry stream IS M5 (hermes_runtime TIMEFRAME),
+        # so when no explicit window was supplied, derive the settled-M5 rows
+        # from the tail of the entry window exactly as hermes_runtime builds
+        # them: the decision runs on the current bar's close (its open + 300),
+        # so the current row is settled and older rows are too; a forming row
+        # cannot appear in a closed-bar backtest window at all. Any other
+        # spacing (M15 legs) derives NOTHING — the trigger stays unfired and
+        # every stored pre-b189 M15 number is byte-identical.
+        if m5_rows is None and derive_m5:
+            _rt = row.get("time")
+            if isinstance(_rt, (int, float)) and len(m15_window) >= 2:
+                _tail = m15_window[-20:]
+                _g = sorted(int(_tail[i + 1]["time"]) - int(_tail[i]["time"])
+                            for i in range(len(_tail) - 1)
+                            if isinstance(_tail[i].get("time"), (int, float))
+                            and isinstance(_tail[i + 1].get("time"), (int, float)))
+                _g = [x for x in _g if x > 0]
+                if _g and _g[len(_g) // 2] == M5_BAR_SECONDS:
+                    m5_rows = settled_m5_rows(m15_window,
+                                              int(_rt) + M5_BAR_SECONDS) or None
+
         # session detection identical to live _detect_session:
         # 0-7 asia, 7-13 london, 13-24 newyork
         h = now.hour
@@ -79,7 +153,8 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         ctx.setdefault("quality", {})["smc_confidence"] = merged.get("confidence")
 
         plan = build_plan_from_context(ctx, now=now)
-        decision = evaluate_monitor_cycle(plan, price=float(row.get("close", 0)), now=now)
+        decision = evaluate_monitor_cycle(plan, price=float(row.get("close", 0)),
+                                          now=now, m5_rows=m5_rows)
         if decision.get("action") != "market_entry_now":
             return None
         bp = decision.get("blueprint") or {}
@@ -132,7 +207,12 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
                  trail_floor: float = 0.0,           # b117: live's absolute $ floor
                                                      # under the trail distance
                                                      # (max(risk*mult, 3.0)); 0 = off
-                 time_stop_bars: int = 0) -> dict:   # b57: dead-trade time stop
+                 time_stop_bars: int = 0,
+                 # b189: an explicit M5 stream to price the b187 trigger against
+                 # (needed when the ENTRY stream is coarser than M5, e.g. the
+                 # M15 legs cached in data/backtest). None = derive from the
+                 # entry stream when it is itself M5, else no trigger rows.)
+                 m5_stream: list[dict] | None = None) -> dict:   # b57: dead-trade time stop
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
@@ -160,6 +240,27 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
     # was O(n) per bar (6500 bars → O(n^2) scan). Precompute once.
     row_index = {id(r): i for i, r in enumerate(m15_data)}
 
+    # b189: the decision moment on a backtest bar is its CLOSE, so the live
+    # `now` for the settled-M5 filter is bar_time + bar spacing. Median spacing
+    # of the entry stream (lab_harness.bar_seconds' robust convention) is the
+    # only honest reading of a dataset that carries no explicit timeframe tag.
+    _gaps = sorted(int(m15_data[i + 1]["time"]) - int(m15_data[i]["time"])
+                   for i in range(len(m15_data) - 1)
+                   if isinstance(m15_data[i].get("time"), (int, float))
+                   and isinstance(m15_data[i + 1].get("time"), (int, float)))
+    _gaps = [g for g in _gaps if g > 0]
+    bar_spacing = _gaps[len(_gaps) // 2] if _gaps else M5_BAR_SECONDS
+    # b189: which stream prices the trigger? None = auto (an M5 entry stream IS
+    # live's TIMEFRAME, so its own closed rows do); an explicit [] = "price the
+    # funnel with NO confirmation rows" (the pre-b187 arm, an A/B control);
+    # a real list = price against that M5 source (e.g. an M15 leg measured
+    # against the broker's M5 closes). m5_times must be ascending, which every
+    # bridge/cached dataset is.
+    if m5_stream is None:
+        m5_stream = m15_data if bar_spacing == M5_BAR_SECONDS else []
+    m5_stream = m5_stream or []
+    m5_times = [int(r.get("time", 0)) for r in m5_stream]
+
     def signal_fn(row):
         idx = row_index.get(id(row), 0)
         # Slice H1 and H4 windows up to this bar's approximate time —
@@ -168,8 +269,15 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         h1_window = [r for r in h1_data if r.get("time", 0) <= bar_time][-80:]
         h4_window = [r for r in h4_data if r.get("time", 0) <= bar_time][-80:]
         m15_window = m15_data[max(0, idx - 120):idx + 1]
+        # b189: the live decision moment is the bar's CLOSE, so a row counts as
+        # settled when its own close happened at or before that instant. With
+        # no M5 source at all (an M15 leg with m5_stream=None) the window is
+        # empty, the b187 trigger can never fire, and the run reproduces the
+        # pre-b189 numbers byte-identically.
+        _m5 = m5_window_for(m5_stream, m5_times,
+                            (bar_time or 0) + bar_spacing)
         return strategy_signal(row, h1_window, h4_window, idx, m15_window=m15_window,
-                               range_kill_conf=range_kill_conf)
+                               range_kill_conf=range_kill_conf, m5_rows=_m5)
 
     result = backtest_ohlc(
         m15_data,

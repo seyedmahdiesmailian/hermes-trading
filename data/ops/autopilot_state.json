@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T09:30:54.988168+00:00",
+ "last_run_utc": "2026-09-09T10:30:52.215801+00:00",
  "recent_commits": [
-  "a65b26d b185 ANALYSIS EDGE (first measurement of smc.py bias ever)",
-  "94775e2 harvest b172 + land it: report-dict census \u2014 walker now honors caller flags= (census(flags=[NEW_KEY]) returned fake DEAD-NO-WRITER zeros, RED-proof test 1); FLAGS extended with skip_reason/skip_reasons/reasons; MEASURED skip_reason LIVE, reasons LIVE, skip_reasons WRITE-ONLY \u2014 defect filed as b185 (pin test_b185_defect_filed_with_named_pin, b171 landing pin test_b171_filed_b172_and_it_landed heals HEAD's b102 red); 7 b172 tests",
-  "37cefb3 b183 filed: 0.01-lot trades still ride the old full-exit lane (unsplittable volume) \u2014 decide sizing\u00d7exit interaction after ~30 new-policy trades",
-  "5f6b064 b184 GATE RECALIBRATION \u2014 b147's 'do not loosen' RE-MEASURED under the b182 exit, and it HOLDS",
-  "173c193 b182 pins \u2014 the exit policy made b111's second-order divergences visible"
+  "9d1a35a autopilot: b187-requote \u2014 HEAD was BROKEN since 00ce842: b117/b118 re-derivation pins caught the funnel move (M5 confirmation not modelled in backtest_real: census 306->255, bar 0.278/109 -> 0.254/102); pins re-quoted with frozen pre-b187 history rows pinned in place, gap parked as todo b189; harvest commit 97cf1c6 restored b42/b102 (b185 reader tests + census flip untracked 3h)",
+  "97cf1c6 harvest: b185 pin-flip parked 3h uncommitted (census skip_reasons WRITE-ONLY->LIVE + 13 reader tests, matching _skip_reason_detail already in HEAD) + b128 ledger-registration harvest (b141/b84/b86/b88/b137/b140 CHECKS now in b127, mkdtemp leak fix)",
+  "0e44f76 b188(a): stale-at-birth directional plans forced neutral (69% of plan_history was born dead)",
+  "e00719b b188 backlog: stale-at-birth plans / bias echo / dead reassess / TP geometry (measured, unfixed)",
+  "00ce842 b187 ENTRY TRIGGER: M5 3-close confirmation replaces zone-touch (measured 38.5% -> 49.2% paired win, b01=8 b10=1)"
  ]
 }
