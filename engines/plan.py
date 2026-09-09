@@ -263,11 +263,19 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
         }
 
     if price < zones["long_entry_low"]:
+        # b193b: this used to return `place_buy_limit` - a phantom. No code path
+        # ever places a resting order (hermes_runtime only proposes on
+        # market_order/market_entry_now), so 53 log lines said "buy limit" while
+        # nothing was pending. A resting limit would also re-admit exactly the
+        # adverse selection b187 killed: it fills as price pushes INTO the zone
+        # without any M5 confirmation. Honest state: wait for the pullback, and
+        # let the in-zone branch above handle it once confirmed.
         return {
-            "action": "place_buy_limit",
+            "action": "wait_for_pullback",
+            "reason": "below_long_zone",
             "zone": "discount",
-            "entry_price": zones["long_entry_low"],
-            "execution_style": "pullback_limit",
+            "target_entry": zones["long_entry_low"],
+            "execution_style": "pullback_wait",
             "at": now.isoformat(),
         }
 
@@ -323,10 +331,15 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
         }
 
     if price <= zones["short_entry_high"]:
+        # b193b: phantom, mirror of the limit branches - no resting stop order is
+        # ever placed by the runtime. The breakout intent is only executable as
+        # an aggressive market entry (above), which b193 gates on m5_ok. Here
+        # the honest state is: waiting, not "order pending".
         return {
-            "action": "place_buy_stop",
+            "action": "wait_for_trigger",
+            "reason": "breakout_unconfirmed",
             "zone": classify_price_location(price, zones),
-            "entry_price": breakout_trigger,
+            "target_entry": breakout_trigger,
             "execution_style": "breakout_continuation",
             "at": now.isoformat(),
         }
@@ -367,11 +380,15 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
         }
 
     if price > zones["short_entry_high"]:
+        # b193b: mirror of the buy-side phantom-limit fix. Never placed, and a
+        # resting sell-limit would fill on unconfirmed pushes back into the
+        # short zone - the adverse selection b187 removed. Wait honestly.
         return {
-            "action": "place_sell_limit",
+            "action": "wait_for_pullback",
+            "reason": "above_short_zone",
             "zone": "premium",
-            "entry_price": zones["short_entry_high"],
-            "execution_style": "pullback_limit",
+            "target_entry": zones["short_entry_high"],
+            "execution_style": "pullback_wait",
             "at": now.isoformat(),
         }
 
@@ -435,10 +452,12 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
         }
 
     if price >= zones["long_entry_low"]:
+        # b193b: phantom sell-stop, mirror of the buy side - never placed.
         return {
-            "action": "place_sell_stop",
+            "action": "wait_for_trigger",
+            "reason": "breakout_unconfirmed",
             "zone": classify_price_location(price, zones),
-            "entry_price": breakout_trigger,
+            "target_entry": breakout_trigger,
             "execution_style": "breakout_continuation",
             "at": now.isoformat(),
         }

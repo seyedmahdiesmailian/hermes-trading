@@ -160,8 +160,12 @@ def evaluate_monitor_cycle(plan: dict, price: float, now: datetime | None = None
     # b193: the aggressive lanes (premium/value/breakout/discount entries OUTSIDE
     # the zone) used to hardcode trigger_ok=True and bypass b187. Backtest + live
     # (2026-09-08/09: -95/-45/-24$ unconfirmed vs +19$ confirmed) killed them:
-    # they now need the same M5 reversal confirmation. Fail-closed without rows.
-    m5_ok = m5_confirmation(m5_rows, plan.get("bias", "")) if m5_rows is not None else True
+    # they now need the same M5 reversal confirmation.
+    # b193b FAIL-CLOSED FIX: `if m5_rows is not None else True` leaked a
+    # fail-OPEN when callers passed None (dashboards/probes/any future caller) —
+    # missing data must never mean "confirmed". Empty or absent rows => no
+    # aggressive entry, same as the pullback branch above.
+    m5_ok = m5_confirmation(m5_rows, plan.get("bias", ""))
     decision = decide_execution_action(plan, price=price, trigger_ok=trigger_ok, now=now,
                                        m5_ok=m5_ok)
     if decision.get("action") in {"market_order", "market_entry_now"} and not _passes_quality_gate(plan):

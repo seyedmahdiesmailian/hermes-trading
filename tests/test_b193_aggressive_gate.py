@@ -9,7 +9,10 @@ the one confirmed pullback won +19$. These tests pin:
   1. evaluate_monitor_cycle: price above the long zone (premium branch) with
      UNSETTLING/bearish M5 closes must NOT produce market_entry_now;
   2. the same geometry with confirmed (rising) closes still enters;
-  3. fail-closed: m5_rows=[] means no aggressive entry (visibility, not luck);
+  3. fail-closed: m5_rows=[] OR None means no aggressive entry (visibility, not
+     luck). b193b pinned this: the first cut of the gate read
+     `... if m5_rows is not None else True`, which fail-OPENED for any caller
+     that passed None (dashboards.py, probe scripts, any future caller).
   4. explicit trigger_ok= legacy callers keep old behavior for pullback,
      but m5_ok still gates aggressive (default True only for direct
      decide_execution_action callers).
@@ -60,6 +63,18 @@ class TestB193AggressiveGate(unittest.TestCase):
         out = evaluate_monitor_cycle(_plan(), price=PRICE_ABOVE_ZONE, now=NOW,
                                      m5_rows=[])
         self.assertNotEqual(out.get("action"), "market_entry_now")
+
+    def test_fail_closed_when_rows_argument_is_none(self):
+        # b193b: missing data must never mean "confirmed". A caller that passes
+        # no M5 rows at all (dashboards, probes, future paths) must get the
+        # same closed gate as an empty list - not a silent fail-open.
+        for bias_rows in (None, []):
+            out = evaluate_monitor_cycle(_plan(), price=PRICE_ABOVE_ZONE,
+                                         now=NOW, m5_rows=bias_rows)
+            self.assertNotEqual(out.get("action"), "market_entry_now",
+                                f"aggressive entry allowed with m5_rows={bias_rows!r}")
+            self.assertNotEqual(out.get("execution_style"),
+                                "aggressive_premium_entry")
 
     def test_pullback_lane_behavior_unchanged(self):
         # in-zone without confirmation stays the b187 wait_for_trigger path
