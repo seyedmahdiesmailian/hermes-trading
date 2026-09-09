@@ -4439,3 +4439,5 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
 - [x] b191b TP GEOMETRY (done 2026-09-09): plan ladder beats ATR-clamps 0.96-1.61 vs raw 2.08 serial R/wk; tp1=mid worse; keep raw geometry, gate unchanged.
 
 - [x] b192 SIGNAL PARSER SANITY (done 2026-09-09): bare-number entry needs same-order-of-magnitude guard; promo "PROFIT 1236$" became BUY@1236; time-stamped replay of 52 logged signals: 45 unchanged, 1 ad killed, 6 corrected; 4 regression tests; deployed+restarted signal daemon.
+
+- [x] b193 AGGRESSIVE LANE GATE (done 2026-09-09): plan.py x4 trigger_ok=True bypassed b187; backtest aggressive-no-confirm 25% win -0.67R/trade (n=20/45 legs), live -95/-45/-24$ vs +19$ confirmed. All four lanes now need m5_ok (same 3 monotone settled closes, fail-closed). scripts/b193_aggressive_lane_audit.py + data/backtest/b193_aggressive_lane.json + tests/test_b193_aggressive_gate.py. 161 targeted tests OK.
