@@ -134,6 +134,40 @@ def _partial_close_fraction(trade: dict) -> tuple[float, str]:
 
     if grade >= 3 and momentum >= 0.8 and rr_remaining >= 2.0 and structure == "healthy":
         return 0.3, "strong_runner_keep_more"
+    # b182 (2026-09-09): the full exit at TP1 is SUPERSEDED on the b60
+    # midpoint ladder. b55's evidence was taken while TP1 still meant the
+    # FINAL target; b60 moved TP1 to the midpoint (broker TP = final), so
+    # "close everything at TP1" now realizes +0.75R on a 1.5R plan and
+    # leaves the rest unvisited. Live audit of the last 33 positions (broker
+    # deals, net per position): 22 wins +$653 (avg +29.7) vs 11 losses
+    # -$659 (avg -59.9) — payoff 0.50, exactly half, because every winner
+    # was amputated mid-flight. scripts/b182_exit_policy_backtest.py (26
+    # live trades joined to broker fills + 656 replay legs, real M5 bars,
+    # SL-first ambiguity rule, commission in): take 50% at TP1-mid, keep the
+    # rest for the broker TP under the existing BE/lock machinery —
+    # live +3.8R → +4.2..4.8R, replay_all -93.2R → -33.2..-41.4R, wins 9/9
+    # weekly slices vs P0_live, and it is the only family that lifts the
+    # average winner (+0.81R → +0.98R) WITHOUT dropping the win rate.
+    # The single-target geometry (no levels beyond the one being hit —
+    # b55's world, the parity backtest's shape) keeps 1.0.
+    try:
+        entry = float(trade.get("entry_price") or trade.get("entry") or 0.0)
+    except (TypeError, ValueError):
+        entry = 0.0
+    try:
+        vol = float(trade.get("volume") or trade.get("lots") or 0.0)
+    except (TypeError, ValueError):
+        vol = 0.0
+    levels = [float(x) for x in (trade.get("tp_levels") or [])]
+    pending = _next_unfilled_target(trade)
+    # b182a: a 0.01-lot position CANNOT be halved — volume_step is 0.01, so
+    # the bridge would send a 100% partial close and the broker rejects it
+    # (retcode 10026, the exact failure b55 documented). Under 0.02 lots the
+    # full close at TP1 stands. Unknown volume (parity-backtest dicts) also
+    # keeps the legacy behaviour: do not invent splittability.
+    if vol >= 0.02 and entry > 0 and pending is not None and any(
+            abs(lvl - entry) > abs(pending - entry) + 1e-9 for lvl in levels):
+        return 0.5, "half_at_tp1_run_rest"
     if grade <= 1 or momentum <= 0.4 or rr_remaining <= 1.2 or structure == "failing":
         return 1.0, "weak_full_exit_at_tp1"
     return 1.0, "balanced_full_exit_at_tp1"
