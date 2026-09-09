@@ -780,6 +780,29 @@ def check_b140_derive_and_self_check() -> str:
             f"0 problems)")
 
 
+def check_b198_derived_blocks() -> str:
+    """b198 (b188(c) census) ships rows+derive per b164: the transition
+    matrix, episode-reversal count and verdict are re-executed from the
+    frozen rows embedded in the ledger — the rolling reassessment_log.csv is
+    NOT re-read, so the backlog number can never drift with new log rows.
+    Cross-check: episode and row arithmetic must agree with the rows."""
+    from scripts import b198_reassess_flip_census as b198
+    led = _load(os.path.join(BT, "b198_reassess_flip_census.json"))
+    got = b198.derive(led["rows"])
+    for key in ("n_events", "transition_matrix", "noop_pct", "direct_flips",
+                "n_episodes", "episode_reversals_via_neutral",
+                "sticky_per_b188c", "flickering"):
+        assert got[key] == led[key], f"b198 producer no longer reproduces {key}"
+    assert sum(got["transition_matrix"].values()) == got["n_events"] == len(led["rows"]), \
+        "b198 matrix/row arithmetic disagrees"
+    assert led["sticky_per_b188c"] is False \
+        and led["episode_reversals_via_neutral"] >= 10, \
+        "b198 verdict no longer matches its own rows"
+    return (f"b198 reassess census re-derived from frozen rows "
+            f"({got['n_events']} events, {got['episode_reversals_via_neutral']} "
+            f"episode reversals, 1 direct flip)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -816,6 +839,7 @@ CHECKS = (
     check_b88_defcon_verdict,
     check_b137_self_check_still_clean,
     check_b140_derive_and_self_check,
+    check_b198_derived_blocks,
 )
 
 

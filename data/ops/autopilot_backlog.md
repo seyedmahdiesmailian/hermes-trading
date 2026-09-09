@@ -4464,6 +4464,15 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       bearish->bullish flip. The loop recomputes score but direction is sticky.
       Either wire a flip path (re-anchor zones + invalidate old pending orders) or
       cut reassess to hourly to halve the log noise.
+      DONE 2026-09-10 (b198 census, scripts/b198_reassess_flip_census.py +
+      tests/test_b198_reassess_flip_census.py + b127 check): PREMISE FALSE —
+      event-matrix artifact. Over 1283 events there are 19 EPISODE-level
+      reversals (dir→neutral→dir) vs the 1 direct flip counted; median
+      directional run is 2 events (FLICKER, not stickiness; 82% of rows are
+      no-ops). Both proposed fixes are no-ops or gate-weakening: the plan lane
+      never rests a broker order (nothing to invalidate — b193b) and already
+      rebuilds zones every reassess by construction; cutting cadence to hourly
+      would stale the M5 zones, not just the log. NO live change; pinned.
   (d) TP2 DISTANCE vs NOISE: plan.py ladder puts far target ~9.2$ median vs 43.7$
       daily range; b186 proved re-geometry alone is a WASH (-1.08R -> -1.08R) once
       entry is corrected by b187, so do NOT re-tune targets without re-running
