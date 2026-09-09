@@ -624,6 +624,7 @@ def check_b143_derived_blocks() -> str:
 LEDGER_141 = os.path.join(BT, "b141_rollover_blind_window_census.json")
 LEDGER_190 = os.path.join(BT, "b190_merit_bar_live_trigger.json")
 LEDGER_191 = os.path.join(BT, "b191_m5_window_lab.json")
+LEDGER_194 = os.path.join(BT, "b194_veto_fire_census.json")
 LEDGER_84 = os.path.join(BT, "b84_rr_gate_books.json")
 LEDGER_86 = os.path.join(BT, "b86_range_kill_books.json")
 LEDGER_88 = os.path.join(BT, "b88_defcon_books.json")
@@ -697,6 +698,28 @@ def check_b191_m5_window_blocks() -> str:
     return (f"b191 M5-entry bar + trigger delta + b190 cross-band "
             f"({n_quotable}/{len(led['_legs'])} legs quotable, "
             f"anchor {led['M5W0_anchor']['anchor_ok']})")
+
+
+def check_b194_veto_fire_verdict() -> str:
+    """b194's verdict block (the ALIVE_AND_INERT reading of the byte-
+    identical re-price) is pure arithmetic on the censused arms plus the
+    two current ledgers; the funnel replay itself is NOT re-run (b127's
+    rule). This is the proof behind the CURRENT merit-bar citation — a rot
+    here means the bar was re-priced on an unproven seam."""
+    from scripts import b194_veto_fire_census as b194
+    led = _load(LEDGER_194)
+    led190 = _load(LEDGER_190)
+    led191 = _load(LEDGER_191)
+    got = b194.compare_to_stored(led, led190, led191)
+    assert got == led["_compare"], ("b194.compare_to_stored() no longer "
+                                    "reproduces the stored verdict — the "
+                                    "census rows or the cited ledgers moved")
+    assert got["_verdict"] == "ALIVE_AND_INERT", (
+        f"b194's verdict flipped to {got['_verdict']!r}: the byte-identical "
+        "merit bar is no longer proven inert-but-alive")
+    return (f"b194 veto-fire verdict ALIVE_AND_INERT "
+            f"({got['_total_vetoes']} vetoes, "
+            f"{len(led['_arms'])} arms all row-matched)")
 
 
 def _books_verdict_check(mod_name: str, script: str, ledger: str) -> str:
@@ -787,6 +810,7 @@ CHECKS = (
     check_b141_rollover_blocks,
     check_b190_merit_bar_blocks,
     check_b191_m5_window_blocks,
+    check_b194_veto_fire_verdict,
     check_b84_rr_gate_verdict,
     check_b86_range_kill_verdict,
     check_b88_defcon_verdict,

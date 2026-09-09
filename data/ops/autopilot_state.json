@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T16:30:03.177198+00:00",
+ "last_run_utc": "2026-09-09T17:22:50.093858+00:00",
  "recent_commits": [
+  "8dcaddd b192 backlog note",
+  "8d8d71a b192: signal parser sanity guard - bare-number entry must be same order of magnitude as the market (a 1236$ P&L promo parsed as BUY@1236; time-stamped replay of all 52 logged signals: 45 unchanged, 1 ad killed, 6 corrected)",
+  "3c25fb8 autopilot: b193 landing \u2014 parked merge-parity work verified green (b86/b158/b42 pins follow the one-definition seam; gate 0.35 untouched, runtime re-inline now forbidden)",
   "9caad90 autopilot: b191 stamp (verify_head OK c312b1d, runtime drift)",
-  "c312b1d autopilot: b191 M5-entry window lab \u2014 true live-parity bar (band 0.14-0.33, trigger delta mixed-sign neutral on entry TF)",
-  "c201fc3 autopilot: b191 parked-lab hygiene \u2014 HEAD was RED after the b190 harvest: b190's test docstring claims 'FILED AS b191' but no checkbox item and no named pin existed (b102/b103 4 failures). Registered b191 as a real todo + tests/test_b191_m5_window_lab_pin.py (2 tests, spared-direction)",
-  "2dff7a6 harvest: b190 merit-bar live-trigger probe (run_backtest-only, coverage-gated bar), b127 CHECKS registration, b189 m5_window_for docstring truth",
-  "2788b42 b191b: TP geometry probe - plan ladder beats all ATR clamps, keep raw"
+  "c312b1d autopilot: b191 M5-entry window lab \u2014 true live-parity bar (band 0.14-0.33, trigger delta mixed-sign neutral on entry TF)"
  ]
 }

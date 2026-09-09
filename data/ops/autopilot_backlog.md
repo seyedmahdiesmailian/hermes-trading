@@ -119,6 +119,42 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       the same re-check. PRICING THE GAP ITSELF (on/off A/B via the seam) was tried
       this round and is too slow for an autopilot window (~30 min/leg) — fold it
       into the re-run rather than a separate probe.
+- [x] b194 RE-PRICE UNDER THE VETO-FIXED FUNNEL (2026-09-09, DONE — VERDICT ALIVE_AND_INERT, the bar STANDS and the identity is now PROVEN, not assumed) — re-ran
+      scripts/b190_merit_bar_live_trigger.py and scripts/b191_m5_window_lab.py on
+      HEAD after b193: every leg, both arms, BYTE-IDENTICAL to the stored ledgers
+      (cached 0.254/0.280, W1 0.197, W2 0.245; M5W band 0.142-0.328; anchor_ok
+      True; M5 caches reused, no re-fetch). A byte-identical re-run has TWO causes
+      — the fix changes no trades, or the fix is not reached (the b189/b193 drift
+      class resurrected) — so this round shipped the discriminator:
+      scripts/b194_veto_fire_census.py wraps engines.backtest_real.apply_smc_merge
+      with a PASS-THROUGH counter and replays cached-M15 + M5W1, both arms,
+      through run_backtest (HARD RULE kept; zero new bridge calls). VERDICT
+      ALIVE_AND_INERT: the seam FIRES inside the lab funnel (72/71 vetoes on the
+      cached arms, 281 on each M5W1 arm, 705 total, vetoes land on SMC-flipped
+      biases as b193 predicted) yet every arm's trades/exp_R match the stored row
+      exactly — the vetoed bars never convert to trades because the rest of the
+      gauntlet (grade-B, min_rr, geometry) already rejects them, the same
+      trade-level neutrality b193 measured for LIVE (0/477 stale plans reached
+      execution). CONSEQUENCE: the cited merit bar needs NO re-quote (nothing
+      moved), no b68 arm delta since 0e44f76 needs the >0.02R re-check, and the
+      b193 fix is certified tightening-neutral by measurement, not by argument.
+      Pre-veto ledgers FROZEN beside the new ones (b194_pre_veto_b19{0,1}_ledger.json)
+      so the byte-identity is checkable forever; 12 tests
+      (tests/test_b194_veto_fire_census.py: verdict reproduction per b127, per-arm
+      anti-vacuity vetoes>0, cited-number pins, AST run_backtest-only, proxy
+      delegates+restores); b127 CHECKS registered (35/35 exact). b188 residual
+      items unchanged.
+  [NEW TODO b195] REUSABLE PROCEDURE — A BYTE-IDENTICAL RE-RUN AFTER A PARITY FIX
+      IS AMBIGUOUS: IT MEANS "INERT" ONLY IF YOU PROVED THE SEAM FIRED. Census the
+      fix-point (wrap the shared function with a pass-through counter that
+      delegates to the REAL implementation and restores in a finally), replay the
+      legs, and record calls/vetoes/rows per arm: vetoes>0 + rows match =
+      ALIVE_AND_INERT (certified no-op); vetoes==0 = DEAD_WIRE (defect report, not
+      a re-quote); rows differ = DRIFT. b194 is the template — the discriminator
+      belongs in EVERY future "the fix changed nothing" claim (b189's trigger
+      pricing and b193's veto shipped exactly this ambiguity). Fold the b171
+      writer-census rule in: a fix that never fires is either inert or unwired and
+      only the fire count tells which. [TRADER-adjacent measurement procedure]
 - [ ] (original text below) b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
       BACKTEST_REAL DOES NOT MODEL THE b187 ENTRY TRIGGER: THE LAB BAR IS
       NOW PRICED ON A RULE LIVE NEVER RUNS. b187 shipped the M5 3-close

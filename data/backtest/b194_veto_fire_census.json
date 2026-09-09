@@ -1,0 +1,89 @@
+{
+ "_note": "b194: fire census on the b193 seam (apply_smc_merge wrapped by a pass-through counter) over one M15 and one M5-entry leg, both arms, run_backtest only \u2014 the non-vacuity proof behind the byte-identical re-price.",
+ "_arms": [
+  [
+   "cached",
+   "control"
+  ],
+  [
+   "cached",
+   "wired"
+  ],
+  [
+   "M5W1",
+   "control"
+  ],
+  [
+   "M5W1",
+   "wired"
+  ]
+ ],
+ "control_cached": {
+  "calls": 2090,
+  "directional_in": 1755,
+  "vetoes": 72,
+  "vetoes_by_bias": {
+   "neutral": 63,
+   "bearish": 5,
+   "bullish": 4
+  },
+  "trades": 102,
+  "exp_R": 0.254
+ },
+ "wired_cached": {
+  "calls": 2052,
+  "directional_in": 1720,
+  "vetoes": 71,
+  "vetoes_by_bias": {
+   "neutral": 63,
+   "bullish": 4,
+   "bearish": 4
+  },
+  "trades": 104,
+  "exp_R": 0.28
+ },
+ "control_M5W1": {
+  "calls": 5111,
+  "directional_in": 4136,
+  "vetoes": 281,
+  "vetoes_by_bias": {
+   "neutral": 273,
+   "bearish": 5,
+   "bullish": 3
+  },
+  "trades": 130,
+  "exp_R": 0.201
+ },
+ "wired_M5W1": {
+  "calls": 5058,
+  "directional_in": 4084,
+  "vetoes": 281,
+  "vetoes_by_bias": {
+   "neutral": 273,
+   "bearish": 5,
+   "bullish": 3
+  },
+  "trades": 133,
+  "exp_R": 0.202
+ },
+ "_compare": {
+  "control_cached": {
+   "vetoes": 72,
+   "row_matches_stored": true
+  },
+  "wired_cached": {
+   "vetoes": 71,
+   "row_matches_stored": true
+  },
+  "control_M5W1": {
+   "vetoes": 281,
+   "row_matches_stored": true
+  },
+  "wired_M5W1": {
+   "vetoes": 281,
+   "row_matches_stored": true
+  },
+  "_verdict": "ALIVE_AND_INERT",
+  "_total_vetoes": 705
+ }
+}
