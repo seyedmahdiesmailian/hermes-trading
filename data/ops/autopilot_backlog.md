@@ -103,7 +103,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       touched); stale_rates/stale_tick measured DEAD-NO-WRITER (test
       vocabulary only) and pinned as such. 14 tests
       (tests/test_b171_flag_gate_census.py).
-- [ ] b185 TRADER OBSERVABILITY — skip_reasons IS WRITE-ONLY: THE MULTI-GATE
+- [x] b185 TRADER OBSERVABILITY — skip_reasons IS WRITE-ONLY: THE MULTI-GATE
       REJECTION LIST NEVER REACHES A HUMAN (filed by the b172 census,
       2026-09-09): hermes_runtime.py:677 (macro veto) and :782 (entry
       vetoes) copy evaluate_proposal's plural `reasons` into
@@ -117,6 +117,14 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       (tightening-neutral: adds strings, never removes a block). Flip
       tests/test_b172_report_dict_census.py's WRITE-ONLY pin in the SAME
       commit (b102 rule: the pin and the finding move together).
+      DONE 2026-09-09 (this run): reader shipped as
+      hermes_runtime._skip_reason_detail(proposal, brief) — one Persian
+      supplementary line 'دلایل تکمیلی: …' appended under the skip brief,
+      deduped against the rendered brief and the singular headline so
+      single-gate cycles stay byte-identical; reader-side only, no gate,
+      threshold or verdict touched. Census pin flipped WRITE-ONLY -> LIVE
+      in the same commit (test_skip_reasons_now_live_after_b185), behaviour
+      proof tests/test_b185_skip_reasons_reader.py (13).
 - [x] b172 REUSABLE PROCEDURE — A WRITER-ONLY VETO IS THE MIRROR OF A DEAD
       GATE: CENSUS REPORT-DICT FLAGS TOO, NOT JUST GATE KEYS (filed by the
       b171 run, 2026-09-09): DONE 2026-09-09 (harvested landing):
@@ -4214,3 +4222,26 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   so more trades splittable, (c) 0.01-lot TP1 at 60% depth instead of 50%.
   Harness exists: b182/b184 simulator, P5_mid_cut is already coded there.
   (found by b182, 2026-09-09)
+
+- [ ] b188 ANALYSIS RESIDUAL DEFECTS (measured by b185/b186/b187, NOT yet fixed):
+  (a) STALE-AT-BIRTH PLANS: 159/231 directional plans (69%) have invalidation already
+      breached at creation - the plan is born dead and can never trade, but it still
+      pollutes plan_history stats and any future hit-rate measurement. Fix: at
+      build_live_plan, if price is beyond invalidation, emit bias=neutral (no_trade)
+      instead of a directional plan. Harness: scripts/b185_analysis_hit_rate.py marks
+      them (skip_reason stale).
+  (b) BIAS = 1-DAY MOMENTUM ECHO: directional bias agrees with 24-48h forward move
+      74.6%, but naive 'yesterday direction' wins the same window 85.3% (small n=130,
+      September was one-directional - treat as suggestive). Either flip the trigger to
+      EARLY (b187 confirmation partially did this - it now waits for a reversal CLOSE
+      inside the zone) or make bias explicitly contrarian-late. Decide after ~60
+      live b187 trades, not before.
+  (c) REASSESS LOOP NEVER REVERSES: 1220 reassessment events, exactly 1 real
+      bearish->bullish flip. The loop recomputes score but direction is sticky.
+      Either wire a flip path (re-anchor zones + invalidate old pending orders) or
+      cut reassess to hourly to halve the log noise.
+  (d) TP2 DISTANCE vs NOISE: plan.py ladder puts far target ~9.2$ median vs 43.7$
+      daily range; b186 proved re-geometry alone is a WASH (-1.08R -> -1.08R) once
+      entry is corrected by b187, so do NOT re-tune targets without re-running
+      scripts/b186_plan_geometry.py after b187 data accumulates.
+  (found by b185/b186/b187, 2026-09-09)
