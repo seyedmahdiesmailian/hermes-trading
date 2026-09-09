@@ -1,0 +1,52 @@
+{
+ "plans_total": 771,
+ "directional": 129,
+ "skipped": {
+  "not_directional": 540,
+  "bad_geometry": 95,
+  "no_walk_room": 7
+ },
+ "T1_direction": {
+  "n": 129,
+  "p_bias_matches_window_drift": 0.744,
+  "se": 0.038,
+  "z_vs_coin": 6.36,
+  "persistence_baseline": 0.853,
+  "bias_beyond_momentum": -0.109
+ },
+ "T2_levels_race": {
+  "triggered": 129,
+  "decided": 129,
+  "p_actual": 0.24,
+  "p_random_walk": 0.547,
+  "edge": -0.307
+ },
+ "T1_grade=A": {
+  "n": 13,
+  "dir": 0.846
+ },
+ "T1_grade=B": {
+  "n": 49,
+  "dir": 0.633
+ },
+ "T1_grade=C": {
+  "n": 67,
+  "dir": 0.806
+ },
+ "T1_bias=bearish": {
+  "n": 129,
+  "dir": 0.744
+ },
+ "T1_session=asia": {
+  "n": 37,
+  "dir": 0.622
+ },
+ "T1_session=london": {
+  "n": 29,
+  "dir": 0.552
+ },
+ "T1_session=newyork": {
+  "n": 63,
+  "dir": 0.905
+ }
+}
