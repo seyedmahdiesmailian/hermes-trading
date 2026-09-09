@@ -86,14 +86,74 @@ def compute_xau_position_size(
     return {"lot": lot, "risk_usd": risk_usd, "meaningful": True, "reason": None, "capped": capped}
 
 
-def evaluate_monitor_cycle(plan: dict, price: float, now: datetime | None = None, trigger_ok: bool | None = None) -> dict:
+# ── b187: M5 confirmation gate ────────────────────────────────────────────
+# "Price is inside the zone" was never a trigger: the zone is a pullback
+# level, so touching it means price is still moving AGAINST the bias, and
+# the market immediately selects the losers (measured on 65 live-parity
+# legs: 38% race win, every follow-through loser). A real trigger is a
+# close-based reversal: N consecutive M5 CLOSES moving WITH the bias while
+# price is still in the zone. Live-parity backtest (data/backtest/
+# b187_entry_confirmation.json): 3 closes -> 49% win, McNemar b01=8 b10=1
+# (converts 8 losers into winners, costs 1). Pinned by
+# tests/test_b187_m5_confirmation.py.
+CONFIRM_CANDIDATES = ("close", "Close", "c")
+M5_CONFIRM_CLOSES = 3  # consecutive M5 closes moving WITH the bias
+
+
+def _closes(m5_rows, n: int) -> list[float]:
+    """Last n settled M5 closes as floats, or [] if unavailable."""
+    if not m5_rows or len(m5_rows) < n:
+        return []
+    out = []
+    for row in m5_rows[-n:]:
+        v: object = None
+        if isinstance(row, dict):
+            for key in CONFIRM_CANDIDATES:
+                if row.get(key) is not None:
+                    v = row[key]
+                    break
+        else:
+            # bridge tuple layout: (time, high, low, close)
+            try:
+                v = row[3]
+            except (TypeError, IndexError, KeyError):
+                v = None
+        if not isinstance(v, (int, float)) or float(v) <= 0:
+            return []
+        out.append(float(v))
+    return out
+
+
+def m5_confirmation(m5_rows, bias: str) -> bool:
+    closes = _closes(m5_rows, M5_CONFIRM_CLOSES)
+    if not closes:
+        return False
+    if bias == "bullish":
+        return all(closes[i] < closes[i + 1] for i in range(len(closes) - 1))
+    if bias == "bearish":
+        return all(closes[i] > closes[i + 1] for i in range(len(closes) - 1))
+    return False
+
+
+def evaluate_monitor_cycle(plan: dict, price: float, now: datetime | None = None,
+                           trigger_ok: bool | None = None, m5_rows=None) -> dict:
     now = now or datetime.now(timezone.utc)
     if trigger_ok is None:
         zone = plan.get("zones", {})
-        trigger_ok = bool(
+        in_zone = bool(
             (zone.get("long_entry_low") is not None and zone.get("long_entry_low") <= price <= zone.get("long_entry_high")) or
             (zone.get("short_entry_low") is not None and zone.get("short_entry_low") <= price <= zone.get("short_entry_high"))
         )
+        # b187: zone touch alone is adverse selection, not a trigger.
+        trigger_ok = in_zone and m5_confirmation(m5_rows, plan.get("bias", ""))
+        if in_zone and not trigger_ok:
+            return {
+                "action": "wait_for_trigger",
+                "reason": "m5_confirmation_pending",
+                "price": price,
+                "plan_id": plan.get("plan_id"),
+                "at": now.isoformat(),
+            }
     decision = decide_execution_action(plan, price=price, trigger_ok=trigger_ok, now=now)
     if decision.get("action") in {"market_order", "market_entry_now"} and not _passes_quality_gate(plan):
         decision = {

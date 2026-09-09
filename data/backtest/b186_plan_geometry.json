@@ -1,0 +1,224 @@
+{
+ "skipped": {
+  "stale_or_priced_in": 159,
+  "incomplete": 541,
+  "no_room": 9
+ },
+ "legs": 65,
+ "results": {
+  "all": {
+   "V0_as_is|P0_live": {
+    "n": 65,
+    "total_R": -21.4,
+    "avg_R": -0.329,
+    "win%": 38.5,
+    "med_stop_atr": null
+   },
+   "V0_as_is|P2_be_lock": {
+    "n": 65,
+    "total_R": -24.0,
+    "avg_R": -0.369,
+    "win%": 29.2,
+    "med_stop_atr": null
+   },
+   "V0_as_is|P3_ride": {
+    "n": 65,
+    "total_R": -24.5,
+    "avg_R": -0.378,
+    "win%": 24.6,
+    "med_stop_atr": null
+   },
+   "V1_stop1.5atr|P0_live": {
+    "n": 65,
+    "total_R": -21.4,
+    "avg_R": -0.329,
+    "win%": 38.5,
+    "med_stop_atr": null
+   },
+   "V1_stop1.5atr|P2_be_lock": {
+    "n": 65,
+    "total_R": -24.0,
+    "avg_R": -0.369,
+    "win%": 29.2,
+    "med_stop_atr": null
+   },
+   "V1_stop1.5atr|P3_ride": {
+    "n": 65,
+    "total_R": -24.5,
+    "avg_R": -0.378,
+    "win%": 24.6,
+    "med_stop_atr": null
+   },
+   "V2_stop2.0atr|P0_live": {
+    "n": 65,
+    "total_R": -22.5,
+    "avg_R": -0.346,
+    "win%": 38.5,
+    "med_stop_atr": null
+   },
+   "V2_stop2.0atr|P2_be_lock": {
+    "n": 65,
+    "total_R": -24.4,
+    "avg_R": -0.376,
+    "win%": 29.2,
+    "med_stop_atr": null
+   },
+   "V2_stop2.0atr|P3_ride": {
+    "n": 65,
+    "total_R": -25.0,
+    "avg_R": -0.385,
+    "win%": 24.6,
+    "med_stop_atr": null
+   },
+   "V3_far2.5R|P0_live": {
+    "n": 65,
+    "total_R": -24.8,
+    "avg_R": -0.381,
+    "win%": 18.5,
+    "med_stop_atr": null
+   },
+   "V3_far2.5R|P2_be_lock": {
+    "n": 65,
+    "total_R": -24.5,
+    "avg_R": -0.378,
+    "win%": 24.6,
+    "med_stop_atr": null
+   },
+   "V3_far2.5R|P3_ride": {
+    "n": 65,
+    "total_R": -24.5,
+    "avg_R": -0.378,
+    "win%": 24.6,
+    "med_stop_atr": null
+   },
+   "V4_wide+far|P0_live": {
+    "n": 65,
+    "total_R": -24.8,
+    "avg_R": -0.381,
+    "win%": 18.5,
+    "med_stop_atr": null
+   },
+   "V4_wide+far|P2_be_lock": {
+    "n": 65,
+    "total_R": -25.0,
+    "avg_R": -0.385,
+    "win%": 24.6,
+    "med_stop_atr": null
+   },
+   "V4_wide+far|P3_ride": {
+    "n": 65,
+    "total_R": -25.0,
+    "avg_R": -0.385,
+    "win%": 24.6,
+    "med_stop_atr": null
+   }
+  },
+  "gate_proxy_rrtp1>=1": {
+   "V0_as_is|P0_live": {
+    "n": 3,
+    "total_R": -0.0,
+    "avg_R": -0.003,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V0_as_is|P2_be_lock": {
+    "n": 3,
+    "total_R": -1.0,
+    "avg_R": -0.338,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V0_as_is|P3_ride": {
+    "n": 3,
+    "total_R": -1.0,
+    "avg_R": -0.338,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V1_stop1.5atr|P0_live": {
+    "n": 3,
+    "total_R": -0.0,
+    "avg_R": -0.006,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V1_stop1.5atr|P2_be_lock": {
+    "n": 3,
+    "total_R": -1.0,
+    "avg_R": -0.339,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V1_stop1.5atr|P3_ride": {
+    "n": 3,
+    "total_R": -1.0,
+    "avg_R": -0.339,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V2_stop2.0atr|P0_live": {
+    "n": 3,
+    "total_R": -0.5,
+    "avg_R": -0.171,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V2_stop2.0atr|P2_be_lock": {
+    "n": 3,
+    "total_R": -1.3,
+    "avg_R": -0.421,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V2_stop2.0atr|P3_ride": {
+    "n": 3,
+    "total_R": -1.3,
+    "avg_R": -0.421,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V3_far2.5R|P0_live": {
+    "n": 3,
+    "total_R": 0.5,
+    "avg_R": 0.161,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V3_far2.5R|P2_be_lock": {
+    "n": 3,
+    "total_R": -1.0,
+    "avg_R": -0.338,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V3_far2.5R|P3_ride": {
+    "n": 3,
+    "total_R": -1.0,
+    "avg_R": -0.338,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V4_wide+far|P0_live": {
+    "n": 3,
+    "total_R": 0.5,
+    "avg_R": 0.163,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V4_wide+far|P2_be_lock": {
+    "n": 3,
+    "total_R": -1.3,
+    "avg_R": -0.421,
+    "win%": 33.3,
+    "med_stop_atr": null
+   },
+   "V4_wide+far|P3_ride": {
+    "n": 3,
+    "total_R": -1.3,
+    "avg_R": -0.421,
+    "win%": 33.3,
+    "med_stop_atr": null
+   }
+  }
+ }
+}

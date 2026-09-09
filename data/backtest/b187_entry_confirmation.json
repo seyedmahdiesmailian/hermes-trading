@@ -1,0 +1,48 @@
+{
+ "legs": 65,
+ "skipped": {
+  "stale_at_birth": 159,
+  "incomplete": 541,
+  "no_room": 9
+ },
+ "results": {
+  "A_immediate": {
+   "traded": 65,
+   "decided": 65,
+   "wins": 25,
+   "win_rate": 0.385,
+   "vs_random_walk": -0.188
+  },
+  "B_confirm2": {
+   "traded": 58,
+   "decided": 58,
+   "wins": 26,
+   "win_rate": 0.448,
+   "vs_random_walk": -0.125
+  },
+  "C_confirm_m5": {
+   "traded": 37,
+   "decided": 36,
+   "wins": 24,
+   "win_rate": 0.667,
+   "vs_random_walk": 0.094
+  }
+ },
+ "live_parity": {
+  "note": "DEPLOYED FILTER = live-parity variant: monitor polls every 15 min; entry only on a tick where price is in the zone at a bar CLOSE and the last 3 settled M5 closes all move WITH the bias. No touch-close memory (unlike the fill-at-touch variants above). Paired McNemar on the same 65 legs: baseline immediate-entry win 25/65=0.385.",
+  "n3_wait48": {
+   "fills": 65,
+   "win_rate": 0.492,
+   "b01": 8,
+   "b10": 1
+  },
+  "n2_wait_any": {
+   "fills": 65,
+   "win_rate": 0.431,
+   "b01": 3,
+   "b10": 0
+  },
+  "selected": "n=3 (orchestrator.M5_CONFIRM_CLOSES=3): +10.7pp over baseline, converts 8 losers for 1 winner"
+ },
+ "verdict": "Zone touch is adverse selection, not a trigger (38.5% win vs 57% random-walk benchmark). M5 3-close confirmation restores 49-67% win across fill models and is deployed at engines/orchestrator.py evaluate_monitor_cycle via hermes_runtime.cycle. Aggressive premium/discount paths in plan.py bypass confirmation - known, measured as not binding in production (market_entry_now only)."
+}

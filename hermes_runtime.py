@@ -72,6 +72,18 @@ def _data_list(resp: dict) -> list:
     return data if isinstance(data, list) else []
 
 
+def _bar_time(row) -> int | None:
+    """Open-epoch of an M5 bar, in either bridge shape (dict row or
+    (time, high, low, close) tuple). None when unparseable."""
+    try:
+        if isinstance(row, dict):
+            t = row.get('time', row.get('Time'))
+            return int(t) if t is not None else None
+        return int(row[0])
+    except (TypeError, ValueError, IndexError, KeyError):
+        return None
+
+
 def _account_obj(account: dict):
     data = account.get('data', account) if isinstance(account, dict) else {}
     return SimpleNamespace(
@@ -413,6 +425,45 @@ def _build_proposal(plan: dict, monitor: dict, policy: dict, tick_price: float) 
     }
 
 
+def _skip_reason_detail(proposal: dict, brief: str) -> str:
+    """b185: render the plural rejection list as ONE supplementary line.
+
+    The b172 census measured proposal['skip_reasons'] WRITE-ONLY: written at
+    677 (macro veto) and 782 (entry vetoes) from evaluate_proposal's `reasons`,
+    read by nothing — when the singular headline was a translated label
+    ('daily_loss_limit') or a monitor veto line, the LIST carried facts the
+    brief dropped (the actual loss pct, the failing grade, a fail-closed gate
+    error's text). This is that missing reader. Observability only: it can add
+    one string to the brief, never remove a block or touch a verdict.
+
+    Dedupe rules (keep single-gate cycles byte-identical): an entry that is
+    already a substring of the rendered brief (e.g. poor_rr_1.20 printed as
+    the headline, a macro reason already shown by the monitor veto line) or
+    contained in the singular skip_reason itself is dropped.
+    """
+    rs = proposal.get('skip_reasons')
+    if not isinstance(rs, (list, tuple)):
+        return ''
+    _sr = str(proposal.get('skip_reason') or '').lower()
+    hay = str(brief or '').lower()
+    parts = []
+    for item in rs:
+        if item is None:
+            continue
+        s = ' '.join(str(item).split())
+        if not s:
+            continue
+        low = s.lower()
+        if (_sr and low in _sr) or low in hay:
+            continue
+        parts.append(s[:60])
+        if len(parts) >= 4:
+            break
+    if not parts:
+        return ''
+    return "دلایل تکمیلی: " + " · ".join(parts[:4])
+
+
 def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_calendar: dict | None = None) -> dict:
     """Main autonomous trading cycle.
 
@@ -622,7 +673,19 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # evaluate_proposal's position_limit blocks it — the guard failure is a
     # VISIBILITY problem, not a gate-bypass one.)
     guard_note = _guard_brief_line(guard_status_last, None) if positions else ''
-    monitor = evaluate_monitor_cycle(plan, price=price, now=now)
+    # b187: the entry trigger needs real M5 confirmation, not just "price is in
+    # the zone". Fetch settled M5 closes (the bridge returns the forming bar
+    # last - counting it would be lookahead) and hand them to the monitor.
+    m5_confirm_rows = []
+    try:
+        _now_epoch = int(now.timestamp())
+        for _row in _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, 12)):
+            _bt = _bar_time(_row)
+            if _bt is not None and _bt + 300 <= _now_epoch:
+                m5_confirm_rows.append(_row)
+    except Exception:  # noqa: BLE001 - fail-closed: no rows => no trigger
+        m5_confirm_rows = []
+    monitor = evaluate_monitor_cycle(plan, price=price, now=now, m5_rows=m5_confirm_rows)
     # Stale plan (price ran far from zones) → force reassess next cycle
     if 'plan_stale' in str(monitor.get('reason', '')):
         plan['next_reassessment'] = now.isoformat()
@@ -799,6 +862,20 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         _base = _sr.split('_')[0] + ('_' + _sr.split('_')[1] if _sr.startswith('poor_rr') or _sr.startswith('sizing') else '')
         _label = _reason_fa.get(_sr) or _reason_fa.get(_base) or _sr
         brief += f"\n\n⚠️ اجرا نشد: {_label}"
+        # b185 OBSERVABILITY: the plural rejection list (written at 677/782
+        # from evaluate_proposal's `reasons`) was measured WRITE-ONLY by the
+        # b172 census — zero production readers. It carries gate CONTEXT the
+        # singular headline drops: on `daily_loss_limit` the list holds the
+        # actual loss pct, on `setup_grade_C` the failing grade, on
+        # defcon/cooldown/learning blocks the level or the gate error. This
+        # is the reader. Observability only: appends one detail string,
+        # never removes a block, never touches a gate/verdict/sizing path.
+        # Deduped against the brief-so-far so paths where the headline IS
+        # the raw reason (poor_rr, market_closed) or the monitor veto line
+        # already printed it (macro_blackout) stay byte-identical.
+        _detail = _skip_reason_detail(proposal, brief)
+        if _detail:
+            brief += "\n" + _detail
 
     payload = {
         'ok': True, 'step': 'monitor', 'plan_id': plan.get('plan_id'),
