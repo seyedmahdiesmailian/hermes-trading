@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T05:35:19.849731+00:00",
+ "last_run_utc": "2026-09-09T09:30:54.988168+00:00",
  "recent_commits": [
-  "173c193 b182 pins \u2014 the exit policy made b111's second-order divergences visible",
-  "52827ad b182 TRADER EXIT \u2014 THE AMPUTATED WINNER: half at TP1-mid, ride the rest",
-  "e7ad1e1 autopilot: b171 flag-gate census both ways \u2014 found write-only entry vetoes (spread_blocked/calendar_unavailable/macro_blocked had zero brief readers); reader-side fix in render_monitor_brief + b172 filed",
-  "5b2aa5d autopilot: b170 backlog note + filed b171 (writer-census rule for flag-keyed gates)",
-  "539953b autopilot: b170 macro-veto wiring \u2014 apply_macro_guard now sets blocked_by_macro (Check 7's flag had ZERO producers repo-wide, b132's pin certified a dead wire); evaluate_proposal's three Check-1 exits now carry 'reasons' (b165 defect class one module over); runtime records skip_reason=macro_blackout on a blocked plan proposal so a blackout-that-killed-a-setup is distinguishable from no-setup; all tightening-neutral; 7 tests (test_b170_macro_veto_wiring)"
+  "a65b26d b185 ANALYSIS EDGE (first measurement of smc.py bias ever)",
+  "94775e2 harvest b172 + land it: report-dict census \u2014 walker now honors caller flags= (census(flags=[NEW_KEY]) returned fake DEAD-NO-WRITER zeros, RED-proof test 1); FLAGS extended with skip_reason/skip_reasons/reasons; MEASURED skip_reason LIVE, reasons LIVE, skip_reasons WRITE-ONLY \u2014 defect filed as b185 (pin test_b185_defect_filed_with_named_pin, b171 landing pin test_b171_filed_b172_and_it_landed heals HEAD's b102 red); 7 b172 tests",
+  "37cefb3 b183 filed: 0.01-lot trades still ride the old full-exit lane (unsplittable volume) \u2014 decide sizing\u00d7exit interaction after ~30 new-policy trades",
+  "5f6b064 b184 GATE RECALIBRATION \u2014 b147's 'do not loosen' RE-MEASURED under the b182 exit, and it HOLDS",
+  "173c193 b182 pins \u2014 the exit policy made b111's second-order divergences visible"
  ]
 }

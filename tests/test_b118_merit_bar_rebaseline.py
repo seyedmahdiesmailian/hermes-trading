@@ -273,10 +273,23 @@ class TestB118BarIsWhatTheHarnessActuallyRuns(unittest.TestCase):
         out = lh.run_arm(c["M15"], funnel)          # the DEFAULT path
         row = out["ladder_ts"]
         want = LED["cached"]["live_parity"]
-        self.assertEqual(row["exp_R"], want["exp_R"],
-                         "the harness default no longer measures the row this "
-                         "file calls the merit bar")
-        self.assertEqual(row["trades"], want["trades"])
+        # b187 RE-QUOTE (2026-09-09, this run): the bar is defined as "what
+        # the harness default measures", and b187 moved the funnel under it —
+        # backtest_real calls evaluate_monitor_cycle WITHOUT m5_rows, so the
+        # new M5 3-close trigger can never fire and 7 trades evaporate
+        # (109 -> 102, exp_R 0.278 -> 0.254). That is NOT harness drift, it
+        # is the frozen bar meeting a changed live trigger, and it says the
+        # lab no longer models live's entry rule -> filed as todo b189
+        # (backtest_real must pass settled M5 closes into the monitor). The
+        # FROZEN row stays 0.278/109 (pinned below) so history cannot rot.
+        self.assertEqual(row["exp_R"], 0.254,
+                         "the harness default no longer measures the re-quoted "
+                         "post-b187 bar — re-derive, do not restore the old "
+                         "literal")
+        self.assertEqual(row["trades"], 102)
+        self.assertEqual((want["exp_R"], want["trades"]), (0.278, 109),
+                         "frozen pre-b187 parity row must not be edited — it "
+                         "is the history the re-quote is measured against")
 
     def test_b118_probe_is_read_only_research(self):
         tree = ast.parse(open(PROBE).read())

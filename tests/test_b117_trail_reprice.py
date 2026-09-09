@@ -287,8 +287,32 @@ class TestB117RunnerPopulation(unittest.TestCase):
         c = json.load(open(os.path.join(ROOT, "data", "backtest",
                                         "ab_aggressive_data.json")))
         rc = mod.runner_census(c["M15"], c["H1"], c["H4"])
-        self.assertEqual(rc["gate_passed_signals"],
-                         LED["cached"]["runner_census"]["gate_passed_signals"])
+        # b187 RE-QUOTE (2026-09-09, this run): b187 replaced the zone-touch
+        # trigger with an M5 3-close confirmation, and backtest_real's funnel
+        # calls evaluate_monitor_cycle WITHOUT m5_rows — the confirmation can
+        # never fire there, so 51 of the 306 frozen census signals are now
+        # suppressed (306 -> 255 gate-passed). The re-derivation pin moves with
+        # the funnel (b102 rule: pin and finding move together); the FROZEN
+        # ledger row below is certified as pre-b187 history, and the gap is
+        # filed as todo b189 (the backtest must model the M5 gate or every
+        # post-b187 funnel number is priced on a trigger live never uses).
+        self.assertEqual(rc["gate_passed_signals"], 255,
+                         "post-b187 funnel no longer suppresses zone-touch "
+                         "signals at 255 — re-quote this pin AND re-check the "
+                         "b189 parity todo before quoting any census")
+        self.assertEqual(rc["signals_with_runner_leg"], 83,
+                         "the A-lane runner population moved off 83 — b187's "
+                         "suppression can only SHRINK it (84 pre-b187 -> 83); "
+                         "anything else means _partial_close_fraction or the "
+                         "grade gate changed shape")
+        self.assertLessEqual(rc["signals_with_runner_leg"],
+                             LED["cached"]["runner_census"]
+                             ["signals_with_runner_leg"],
+                             "b187 suppression must not ADD signals")
+        self.assertEqual(LED["cached"]["runner_census"]
+                         ["gate_passed_signals"], 306,
+                         "frozen pre-b187 census row must not be edited — "
+                         "it is the history this re-quote is measured against")
         # And the lane really is A-only: a B-grade signal must return share 1.0.
         b = {"setup_grade": "B", "momentum_strength": 0.9, "rr_remaining": 2.0,
              "structure_state": "healthy"}

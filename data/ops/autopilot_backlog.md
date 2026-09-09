@@ -47,6 +47,31 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
+      BACKTEST_REAL DOES NOT MODEL THE b187 ENTRY TRIGGER: THE LAB BAR IS
+      NOW PRICED ON A RULE LIVE NEVER RUNS. b187 shipped the M5 3-close
+      confirmation into hermes_runtime.cycle (which fetches 12 bridge rows,
+      filters to SETTLED bars, passes m5_rows into evaluate_monitor_cycle),
+      but engines/backtest_real.strategy_signal calls
+      evaluate_monitor_cycle WITHOUT m5_rows — there the gate can never
+      pass, so every zone-touch entry the funnel still emits is a fill live
+      would have suppressed. MEASURED (cached leg, re-derivation pins
+      updated today): gate-passed census signals 306 -> 255 (b187's
+      suppression is live in the lab too — it fires at bar-level through the
+      price check) yet the merit bar only moved 109 trades -> 102 / exp_R
+      0.278 -> 0.254, because strategy_signal never sees m5_rows: the two
+      halves of live (runtime vs monitor) are NOT wired the same way in the
+      lab. Fix: pass the settled M5 window through strategy_signal the way
+      hermes_runtime does (the m15_window arg is already the M5 ENTRY stream
+      in live-parity runs — slice the last 3-4 rows, exclude the forming
+      bar, hand them to evaluate_monitor_cycle), then re-run
+      scripts/b118_merit_bar_rebaseline.py + scripts/b117_trail_reprice.py
+      to re-derive the bar from the TRUE post-b187 funnel, and re-price the
+      b187 win (its 49% figure came from b187_entry_confirmation.py's
+      hand-rolled race, not the live-parity funnel — HARD RULE: funnel
+      measurements must come from run_backtest). Until then every
+      post-b187 exp_R quote in this repo carries an unpriced trigger gap.
+
 - [x] b170 TRADER CODE REVIEW (2026-09-09) — THE NEWS BLACKOUT HAD A VETO DOOR
       THAT NOBODY COULD OPEN, AND THE ENTRY GAUNTLET'S FIRST THREE EXITS WERE
       MUTE. auto_executor Check 7 rejects a proposal carrying
