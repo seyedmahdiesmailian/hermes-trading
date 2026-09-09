@@ -4194,3 +4194,13 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       news blackout was dead in production; removed 7 dead functions;
       backtest now runs the EXACT live funnel (parity by construction, no hand-copied
       gates) → 26 trades / 61% WR / +92.39 USD on 7.4 days of real M15 data. 52 tests green.
+
+- [ ] b183 TRADER SIZING×EXIT: 0.01-lot trades cannot halve (volume_step), so they still
+  take b55 full-exit at TP1-mid (+0.75R winners) while 0.02+ lots ride the b182
+  half+runner lane (+1.0R). execution_log live lot mix: 0.01..0.17 — the small
+  ones now systematically under-earn. Decide with data: group broker deals by
+  lot size, compare realized R per lane post-b182 (needs ~30 trades of the new
+  policy); options: (a) accept (floor protects capital), (b) raise min-risk lot
+  so more trades splittable, (c) 0.01-lot TP1 at 60% depth instead of 50%.
+  Harness exists: b182/b184 simulator, P5_mid_cut is already coded there.
+  (found by b182, 2026-09-09)
