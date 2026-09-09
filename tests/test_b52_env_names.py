@@ -124,6 +124,8 @@ DOCUMENTED_KNOBS = {
     "B157_OUT": "b157 window-funnel OUTPUT-FILE redirect (state only, never code) so each measured leg writes its own ledger (scripts/b157_window_funnel.py, same shape as B77/B79, b48)",
     "B160_OUT": "b160 reanchor-symmetry A/B OUTPUT-FILE redirect (state only, never code) so each measured leg writes its own ledger (scripts/b160_reanchor_symmetry_ab.py, same shape as B157_OUT; registration landed in b161 — b160 shipped the knob unregistered and its run predated this tripwire catching scripts/)",
     "B163_OUT": "b163 plan-age-census OUTPUT-FILE redirect (state only, never code) so tests can regenerate the ledger into a temp dir (scripts/b163_plan_age_census.py, same shape as B160_OUT; registered in the SAME run that shipped the knob, per b162's rule)",
+    "B198_OUT": "b198 reassess-flip-census ledger redirect (state only, never code) so a test can re-run the census into a temp dir (scripts/b198_reassess_flip_census.py, same shape as B163_OUT; registered the run b52 caught it unregistered)",
+    "B198_LOG": "b198 reassess-flip-census INPUT-log redirect (read-only source, the rolling reassessment CSV) so a test can replay the census on a frozen fixture instead of the mutating live log (scripts/b198_reassess_flip_census.py)",
     "HERMES_SIGNAL_PENDING_DISABLE": "b71 kill-switch for signal LIMIT parking: '1' disables, default off = enabled (engines/signal_pending.py)",
     "HERMES_PENDING_TTL_MIN": "b70 pending-order lifetime in minutes, default 240, engines/signal_pending.py",
     "HERMES_PENDING_MAX": "b70 max simultaneous parked signal limits, default 2, engines/signal_pending.py",

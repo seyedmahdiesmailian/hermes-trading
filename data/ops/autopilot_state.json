@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T20:30:02.690150+00:00",
+ "last_run_utc": "2026-09-09T22:30:02.312949+00:00",
  "recent_commits": [
-  "3b9215d autopilot: b196 wire the account's tiered base_risk_pct into entry sizing (b136 class, tightening-only; +9 tests; b136/b137/b140 ledgers re-derived)",
-  "ed438d0 b193 follow-up: track autopilot's b196 test file (b42 untracked guard); fix b91 sweep assertion NameError (WORKTREE_PREFIX referenced bare - only fires once the sweep actually removes stale /tmp worktrees, which it now must: 22 accumulated)",
-  "9e4697e b193 backlog entry",
-  "6f83de6 b193: aggressive entry lane gated by M5 confirmation (untested path: 25% win, -0.67R/trade backtest; -95/-45/-24$ live vs +19$ confirmed)",
-  "1604f5a autopilot: b196 filed \u2014 sizing base-rate defect (executor ignores policy base_risk_pct, b136 class); archive hygiene: b189 original-text box re-ticked"
+  "baba431 autopilot: b188(c) reassess-flip census \u2014 premise FALSE (19 episode reversals vs 1 direct flip; flicker not stickiness); no live change; b127 check + 7 tests",
+  "bc8a2e1 autopilot: b197 sizing-epoch observability (b143 summary+derive, digest line, b127 check, +17 tests; read-only reporting, no sizing path)",
+  "3c93c17 b193b follow-up: track autopilot's b197 sizing-epoch test (written 21:05 UTC, caught mid-flight by the 21:12 verify; passes standalone)",
+  "9995923 b193b: fail-closed aggressive gate for m5_rows=None + kill 4 phantom resting-order actions (never placed; re-admitted b187 adverse selection); wait states with target_entry instead",
+  "3b9215d autopilot: b196 wire the account's tiered base_risk_pct into entry sizing (b136 class, tightening-only; +9 tests; b136/b137/b140 ledgers re-derived)"
  ]
 }

@@ -42,7 +42,8 @@ os.chdir(_ROOT)
 
 from engines import lab_harness as lh                    # noqa: E402
 from engines.auto_executor import MIN_SETUP_GRADE         # noqa: E402
-from engines.backtest_real import strategy_signal         # noqa: E402
+from engines.backtest_real import (strategy_signal,      # noqa: E402
+                                   m5_window_for, M5_BAR_SECONDS)
 from scripts import b68l_windows as wl                    # noqa: E402
 
 OUT = "data/backtest/b81_lane_rescore.json"
@@ -59,19 +60,64 @@ PROVENANCE = {
 }
 
 
-def funnel_fn(m15, h1, h4):
-    """The exact live-parity funnel, evaluated once per leg (b76: same bars)."""
+# b194: the M5 confirmation source for M15-spaced legs. b187 made the live
+# trigger an M5 3-close confirmation, and b193b made it fail-CLOSED when no
+# M5 rows are visible. An M15 leg has no M5 stream of its own, so a funnel
+# measured without one prices trades live can never take — b194 measured
+# exactly that: the cached M15 leg goes 102 trades -> 0 under the shipped
+# gate. `m5_stream` threads the broker's settled M5 bars (b182_m5_bars covers
+# the whole cached window) through the SAME window builder live uses, so the
+# leg is scored against the rule live actually runs. Default None keeps every
+# pre-b194 call site byte-identical on purpose; nothing silently changes under
+# a ledger that was certified without it.
+M5_SOURCE = "data/backtest/b182_m5_bars.json"
+
+
+def m5_source_rows(path: str = M5_SOURCE) -> list[dict]:
+    """The broker's settled M5 OHLC, as dicts `m5_window_for` can bisect.
+    Same normalisation b189's arm-B used (tuple rows -> dict rows)."""
+    blob = json.load(open(os.path.join(_ROOT, path)))
+    blob = blob["bars"] if isinstance(blob, dict) else blob
+    out = []
+    for r in blob:
+        if isinstance(r, dict):
+            out.append(r)
+        else:
+            out.append({"time": r[0], "high": r[1], "low": r[2], "close": r[3]})
+    return out
+
+
+def funnel_fn(m15, h1, h4, m5_stream=None):
+    """The exact live-parity funnel, evaluated once per leg (b76: same bars).
+
+    m5_stream=None -> no confirmation rows (pre-b194 behavior, byte-identical).
+    Pass m5_source_rows() to score an M15-spaced leg against b187's trigger.
+    """
     h1t = [r.get("time", 0) for r in h1]
     h4t = [r.get("time", 0) for r in h4]
     idx = {r["time"]: n for n, r in enumerate(m15)}
+    m5t = [int(r.get("time", 0)) for r in (m5_stream or [])]
+    # The decision moment is the entry bar's CLOSE, so the settled-M5 window is
+    # cut at time + bar_spacing — exactly what engines.backtest_real.run_backtest
+    # does. Inferred from the entry stream's own spacing (b189 rule), never a
+    # hardcoded 900 that would silently rot if a leg changed timeframe.
+    gaps = sorted(int(m15[i + 1]["time"]) - int(m15[i]["time"])
+                  for i in range(len(m15) - 1)
+                  if isinstance(m15[i].get("time"), (int, float))
+                  and isinstance(m15[i + 1].get("time"), (int, float)))
+    gaps = [g for g in gaps if g > 0]
+    bar_spacing = gaps[len(gaps) // 2] if gaps else M5_BAR_SECONDS
     sigs = {}
     for i, row in enumerate(m15):
         bt = row.get("time", 0)
         j1 = bisect.bisect_right(h1t, bt)
         j4 = bisect.bisect_right(h4t, bt)
+        _m5 = (m5_window_for(m5_stream, m5t, int(bt) + bar_spacing)
+               if m5_stream else None)
         s = strategy_signal(row, h1[max(0, j1 - 80):j1],
                             h4[max(0, j4 - 80):j4], i,
-                            m15_window=m15[max(0, i - 120):i + 1])
+                            m15_window=m15[max(0, i - 120):i + 1],
+                            m5_rows=_m5, derive_m5=_m5 is None)
         if s:
             sigs[i] = s
 

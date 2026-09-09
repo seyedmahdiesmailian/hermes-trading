@@ -97,15 +97,19 @@ def trail_floor(mult: float = 0.30) -> float:
     return float(_trail_params(t)[0])
 
 
-def runner_census(m15, h1, h4) -> dict:
+def runner_census(m15, h1, h4, m5_stream=None) -> dict:
     """How many funnel signals even SURVIVE to a state where a trail can act?
 
     Post-b105 the trail only exists for a trade whose TP1 partial left a
     runner, i.e. share < 1.0, which b109 proved == grade A. Count it directly
     through the real live function instead of asserting it.
+
+    b194: m5_stream threads the broker's settled M5 closes through the funnel
+    so an M15-spaced leg is counted against the trigger LIVE actually runs
+    (b187+b193b). Default None keeps the frozen ledger's convention.
     """
     from engines.trade_management import _partial_close_fraction
-    funnel = b81.funnel_fn(m15, h1, h4)
+    funnel = b81.funnel_fn(m15, h1, h4, m5_stream=m5_stream)
     total = 0
     runner = 0
     for row in m15:

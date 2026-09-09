@@ -269,24 +269,26 @@ class TestB118BarIsWhatTheHarnessActuallyRuns(unittest.TestCase):
         from engines import lab_harness as lh
         c = json.load(open(os.path.join(ROOT, "data", "backtest",
                                         "ab_aggressive_data.json")))
-        funnel = mod.b81.funnel_fn(c["M15"], c["H1"], c["H4"])
+        funnel = mod.b81.funnel_fn(c["M15"], c["H1"], c["H4"],
+                                   m5_stream=mod.b81.m5_source_rows())
         out = lh.run_arm(c["M15"], funnel)          # the DEFAULT path
         row = out["ladder_ts"]
         want = LED["cached"]["live_parity"]
-        # b187 RE-QUOTE (2026-09-09, this run): the bar is defined as "what
-        # the harness default measures", and b187 moved the funnel under it —
-        # backtest_real calls evaluate_monitor_cycle WITHOUT m5_rows, so the
-        # new M5 3-close trigger can never fire and 7 trades evaporate
-        # (109 -> 102, exp_R 0.278 -> 0.254). That is NOT harness drift, it
-        # is the frozen bar meeting a changed live trigger, and it says the
-        # lab no longer models live's entry rule -> filed as todo b189
-        # (backtest_real must pass settled M5 closes into the monitor). The
-        # FROZEN row stays 0.278/109 (pinned below) so history cannot rot.
-        self.assertEqual(row["exp_R"], 0.254,
+        # b194 RE-QUOTE (this run): b193b closed the fail-open hole, so the
+        # old no-M5 funnel now emits ZERO trades on an M15-spaced leg — the
+        # 102/0.254 bar was priced on a trigger live cannot run at all. With
+        # the broker's settled M5 closes threaded through the same window
+        # builder live uses (b81.m5_source_rows, covering the whole cached
+        # window), the harness default measures 57 trades at exp_R 0.219 —
+        # byte-identical to b189's independently-derived arm B
+        # (b189_trigger_parity), which is the cross-check that this is the
+        # live-parity number, not a knob turned until a test passes. The
+        # FROZEN row stays 0.278/109 so history cannot rot.
+        self.assertEqual(row["exp_R"], 0.219,
                          "the harness default no longer measures the re-quoted "
                          "post-b187 bar — re-derive, do not restore the old "
                          "literal")
-        self.assertEqual(row["trades"], 102)
+        self.assertEqual(row["trades"], 57)
         self.assertEqual((want["exp_R"], want["trades"]), (0.278, 109),
                          "frozen pre-b187 parity row must not be edited — it "
                          "is the history the re-quote is measured against")

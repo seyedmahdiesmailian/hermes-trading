@@ -47,6 +47,25 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b199 REPAIR BROKEN HEAD baba431 — b193b's fail-CLOSED M5 gate silently unpriced every
+      b81.funnel_fn ledger (M15 legs carry no M5 stream -> strategy_signal emits 0 trades ->
+      b119 knob probe read None==None, verify_head called HEAD BROKEN). Harvested the prior
+      killed run's parked M5-parity threading (b81.funnel_fn(m5_stream=) via live's own
+      m5_window_for + b182 settled bars; re-quotes b117/b118 to 57/0.219 — byte-identical to
+      b189's independently-derived arm B, the cross-check that this is live-parity not a knob
+      turned until green; b119 anti-vacuity probe moved 24->12 bars where the exit genuinely
+      BINDS under the new book, exp_R 0.219->0.239, max_hold proof pinned). Plus two tripwire
+      debts: b52 registered b198's unregistered B198_OUT/B198_LOG knobs (the b162 rule
+      re-asserted), b50's leaked diagnostic worktrees from the prior run removed (registered
+      as b200 todo). 82 targeted tests OK; full-suite verdict = verify_head on the fresh commit.
+      [TRADER: lab parity with live's shipped gate, merit bar re-priced]
+- [ ] b200 REUSABLE PROCEDURE — A DIAGNOSTIC/HAND-MADE WORKTREE IS A LEAK UNTIL REGISTERED
+      (filed by b199, 2026-09-09): b193's run left /tmp/b193wt2/b193wt3/prewt/prewt2 attached;
+      b50's unowned-leftover test went red on a healthy repo two rounds later, and the sweep in
+      head_verify only matches ITS OWN prefix (hermes_headverify_), so manual worktrees are
+      invisible to it. Any run that does `git worktree add` outside head_verify must remove it
+      in the same commit's cleanup step, or leave a .hermes_owner stamp the b50 test can prove
+      dead. Low priority [META].
 - [x] b189 TRADER PARITY DEFECT (2026-09-09, DONE) — FOUND AND FIXED: the trigger gap was NOT a missing arg (strategy_signal already forwarded m5_rows= since 2026-09-06; the census re-derivation ran on that code) — the REAL gap was that run_backtest never FED it: M5 legs passed [] and the cached M15 legs had no M5 source at all. Now wired live-parity: settled_m5_rows() is the shared filter (imported by hermes_runtime), m5_window_for() mirrors it over cached streams, M5 legs slice their own closed rows, M15 legs derive 4 synthetic M5 rows from the entry stream (exact in test lanes, marked _derived_m5), explicit m5_stream= feeds real closes. PRICED via scripts/b189_trigger_parity.py (run_backtest only): cached leg 102/0.254 -> 104/0.280 with real M5 closes (b118/b117 pins stayed green — suppression only); the live-parity M5 leg (6500 M5 bars, first time the trigger is priced there): 166 trades exp_R 0.197 vs 159/0.212 unconfirmed — on the true entry TF the b187 trigger costs -0.015R and ADDS 7 trades (late M5 closes sometimes push reward>R), i.e. the +49% requote win was an M15-proxy artifact; trigger stays live (never weaken shipped logic) but its lab merit is ~neutral, pending re-baseline below.
   [NEW TODO b190] re-run scripts/b117_trail_reprice.py + scripts/b118_merit_bar_rebaseline.py under the wired funnel and refresh the merit-bar citation; b188 residual items unchanged.
 - [x] b190 RE-BASELINE (2026-09-09, DONE, mixed finding) — the merit bar re-priced under the b189-WIRED funnel. b117/b118 cannot do this themselves: they run `b81.funnel_fn`, which calls strategy_signal WITHOUT m5_rows (and derives nothing on M15 windows), so re-running them reproduces the PRE-WIRING 0.254/102 byte-identically — a plain "re-run the scripts" would have certified the wrong bar. New probe scripts/b190_merit_bar_live_trigger.py (run_backtest only, HARD RULE kept): per leg (cached+W1..W4) control m5_stream=[] vs wired broker-M5-closes-at-decision-moment (one fresh read-only get_rates fetch cached to b190_m5_closes.json; 60000-bar M5 cap discovered MEASURED, back to ~2025-11-03). INTEGRITY: cached control reproduces 102/0.254 AND cached wired reproduces b189's arm B 104/0.280 exactly — the two rounds slice the trigger identically. FINDING: the b187 trigger's lab merit is MIXED-SIGN, near-neutral — cached +0.026R, W1 -0.007R, W2 -0.050R (covered legs; d_trades +2/+6/+7: confirmation releases late reward>R entries as often as it suppresses). NEW CITABLE BAR (wired, coverage-gated): cached 0.280 | W1 0.197 | W2 0.245; the ~0.20-0.28 band every round compares against STANDS. HONESTY GATE: W3 coverage 0.72, W4 0.00 (predate M5 history) — bar() REFUSES to quote a leg below 0.9 coverage (None + stored _m5_coverage), because a wired number that silently means "no trigger" is the b116 class; pinned by tests/test_b190_merit_bar_live_trigger.py (12), post-processing registered in b127 CHECKS (b128 rule). Docstring lie healed the same commit: m5_window_for claimed b81.funnel_fn shares it — it never did; the note now states which ledgers are trigger-less. b188 residual items unchanged; the b187 trigger stays LIVE (never weaken shipped logic).

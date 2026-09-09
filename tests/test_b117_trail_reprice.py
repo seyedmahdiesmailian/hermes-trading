@@ -286,25 +286,27 @@ class TestB117RunnerPopulation(unittest.TestCase):
         mod = _load_probe()
         c = json.load(open(os.path.join(ROOT, "data", "backtest",
                                         "ab_aggressive_data.json")))
-        rc = mod.runner_census(c["M15"], c["H1"], c["H4"])
-        # b187 RE-QUOTE (2026-09-09, this run): b187 replaced the zone-touch
-        # trigger with an M5 3-close confirmation, and backtest_real's funnel
-        # calls evaluate_monitor_cycle WITHOUT m5_rows — the confirmation can
-        # never fire there, so 51 of the 306 frozen census signals are now
-        # suppressed (306 -> 255 gate-passed). The re-derivation pin moves with
-        # the funnel (b102 rule: pin and finding move together); the FROZEN
-        # ledger row below is certified as pre-b187 history, and the gap is
-        # filed as todo b189 (the backtest must model the M5 gate or every
-        # post-b187 funnel number is priced on a trigger live never uses).
-        self.assertEqual(rc["gate_passed_signals"], 255,
-                         "post-b187 funnel no longer suppresses zone-touch "
-                         "signals at 255 — re-quote this pin AND re-check the "
-                         "b189 parity todo before quoting any census")
-        self.assertEqual(rc["signals_with_runner_leg"], 83,
-                         "the A-lane runner population moved off 83 — b187's "
-                         "suppression can only SHRINK it (84 pre-b187 -> 83); "
-                         "anything else means _partial_close_fraction or the "
-                         "grade gate changed shape")
+        rc = mod.runner_census(c["M15"], c["H1"], c["H4"],
+                               m5_stream=mod.b81.m5_source_rows())
+        # b194 RE-QUOTE (this run): b193b made the M5 gate fail-CLOSED when no
+        # M5 rows are visible, which exposed that this census counted the M15
+        # leg with NO confirmation source at all — i.e. it counted signals live
+        # cannot take (with no stream the funnel emits 0, verified). The census
+        # now threads the broker's settled M5 bars (b182_m5_bars covers the
+        # whole cached window) through the same window builder live uses, so it
+        # counts the population the shipped gate actually admits: 306 frozen
+        # signals -> 255 (b187 re-quote) -> 96 under the real trigger, with 24
+        # runner legs. The FROZEN ledger row below stays certified as
+        # pre-b187 history (b102: pin and finding move together; history must
+        # not rot).
+        self.assertEqual(rc["gate_passed_signals"], 96,
+                         "the M5-parity runner census moved off 96 — re-derive "
+                         "with b81.m5_source_rows() AND re-check the b189/b194 "
+                         "parity todo before quoting any census")
+        self.assertEqual(rc["signals_with_runner_leg"], 24,
+                         "the A-lane runner population moved off 24 under the "
+                         "live trigger — anything else means "
+                         "_partial_close_fraction or the grade gate changed shape")
         self.assertLessEqual(rc["signals_with_runner_leg"],
                              LED["cached"]["runner_census"]
                              ["signals_with_runner_leg"],
