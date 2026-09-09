@@ -74,6 +74,25 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       execute), AST census that every literal return carries `reasons`
       (anti-vacuity floor 20), headline == reason on the Check-1 paths, and
       the runtime observability lines.
+- [ ] b171 REUSABLE PROCEDURE — A READER-SIDE SOURCE PIN IS NOT WIRING: FOR
+      EVERY GATE FLAG, CENSUS THE WRITERS BEFORE BELIEVING THE GATE IS LIVE
+      (filed by b170, 2026-09-09): test_b132 pinned that auto_executor
+      "must still honour the macro veto flag" by grepping the CONSUMER — and
+      the grep passed for months while `grep -rn blocked_by_macro` across
+      the repo showed ZERO writers: the flag's producer (apply_macro_guard)
+      set a different key, so Check 7 was structurally dead and the veto
+      only landed via Check 1's `blocked` path. RULE: when a review or a pin
+      touches a dict-flag gate (X.get(flag)), run the census BOTH ways in
+      the same command — writers (`grep -rn "flag\"\]\s*=\|flag':"`) and
+      readers — and if the writer set is empty, the item is a DEFECT report,
+      not a hygiene note. A wiring fix must then ship with a positive test:
+      construct the proposal/decision carrying ONLY that flag and assert the
+      gate fires (b170's TestB170Check7Live is the template — pre-fix that
+      exact shape returned execute=True). Applies to every flag-keyed gate on
+      both lanes: blocked_by_macro, blocked, spread_blocked,
+      calendar_unavailable, stale_* — same grep, same writer-set census.
+      Name-carrier: tests/test_b170_macro_veto_wiring.py::
+      TestB170Check7Live.
 - [x] b167 TRADER CODE REVIEW (cross-module parity, 2026-09-09) — THE RUNTIME
       FALLBACK PATH LET A NEWS LOCK STEAL THE BREAKEVEN FLAG; b32 FIXED IT ONLY
       IN THE WATCHDOG. hermes_runtime.cycle's manage-fallback wrote
