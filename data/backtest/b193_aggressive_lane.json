@@ -1,0 +1,82 @@
+{
+ "generated_at": "2026-09-09T19:41:49.795104+00:00",
+ "days": 153.2,
+ "legs": 45,
+ "grid": "15m",
+ "exit": "P2",
+ "hypothesis": "aggressive lane bypasses b187 and is untested",
+ "policies": {
+  "ungated": {
+   "n": 27,
+   "win_rate": 0.444,
+   "parallel_R": -5.18,
+   "R_per_trade": -0.19,
+   "serial_trades": 18,
+   "serial_R_per_week": -0.04,
+   "by_style": {
+    "aggressive": {
+     "n": 20,
+     "win": 0.25,
+     "mean_R": -0.67
+    },
+    "pullback": {
+     "n": 7,
+     "win": 1.0,
+     "mean_R": 1.18
+    }
+   }
+  },
+  "gated": {
+   "n": 20,
+   "win_rate": 0.8,
+   "parallel_R": 11.0,
+   "R_per_trade": 0.55,
+   "serial_trades": 12,
+   "serial_R_per_week": 0.2,
+   "by_style": {
+    "aggressive": {
+     "n": 12,
+     "win": 0.667,
+     "mean_R": 0.18
+    },
+    "pullback": {
+     "n": 8,
+     "win": 1.0,
+     "mean_R": 1.11
+    }
+   }
+  },
+  "pullback": {
+   "n": 9,
+   "win_rate": 1.0,
+   "parallel_R": 9.03,
+   "R_per_trade": 1.0,
+   "serial_trades": 7,
+   "serial_R_per_week": 0.34,
+   "by_style": {
+    "pullback": {
+     "n": 9,
+     "win": 1.0,
+     "mean_R": 1.0
+    }
+   }
+  },
+  "aggr_only": {
+   "n": 24,
+   "win_rate": 0.25,
+   "parallel_R": -16.3,
+   "R_per_trade": -0.68,
+   "serial_trades": 15,
+   "serial_R_per_week": -0.44,
+   "by_style": {
+    "aggressive": {
+     "n": 24,
+     "win": 0.25,
+     "mean_R": -0.68
+    }
+   }
+  }
+ },
+ "decision": "DEPLOYED 2026-09-09: aggressive lanes now need the same 3-close M5 confirmation as pullback (b187 parity). ungated aggressive: n=20 win=0.25 mean_R=-0.67; gated: n=12 win=0.667 mean_R=+0.18. Live parity 2026-09-08/09: unconfirmed aggressive -95.10/-44.85/-24.45$ vs confirmed pullback +19.26$. Ratio-gate vs deployed serial/wk is meaningless near zero baseline; absolute R/trade by style is the decision metric.",
+ "note": "first harness to exercise plan.py aggressive branches; b189/190/191 only replayed the in-zone gate"
+}

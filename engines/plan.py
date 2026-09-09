@@ -236,7 +236,8 @@ def _reanchor_blueprint(bp: dict, price: float, atr: float, min_rr: float | None
     return bp
 
 
-def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dict:
+def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
+               m5_ok: bool = True) -> dict:
     zones = plan["zones"]
     execution = plan.get("execution", {})
     breakout_trigger = execution.get("breakout_trigger", zones["short_entry_low"])
@@ -283,9 +284,10 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dic
                 "at": now.isoformat(),
             }
         smc_conf = plan.get("quality", {}).get("smc_confidence", 0) or 0
-        if smc_conf >= SMC_CONF_FLOOR:
-            # Re-anchor the blueprint to current market conditions, otherwise the
-            # stale plan TP (far above after a long move) breaks trade geometry.
+        # b193: the aggressive premium lane used to bypass b187 with a hardcoded
+        # trigger_ok=True. It is the lane that lost -95/-45/-24$ on 2026-09-08/09
+        # while the confirmed pullback lane won. Same evidence, same gate.
+        if smc_conf >= SMC_CONF_FLOOR and m5_ok:
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
             bp = _reanchor_blueprint(bp, price, atr_val)
             return {
@@ -300,7 +302,7 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dic
         near_value_high = abs(price - zones["value_high"]) < (zones["value_high"] - zones["value_low"]) * 0.3
         if near_value_high and plan.get("bias") == "bullish":
             smc_conf = plan.get("quality", {}).get("smc_confidence", 0) or 0
-            if smc_conf >= SMC_CONF_FLOOR:
+            if smc_conf >= SMC_CONF_FLOOR and m5_ok:  # b193: no unconfirmed aggressive entry
                 bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
                 bp = _reanchor_blueprint(
                     bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
@@ -338,7 +340,8 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dic
     }
 
 
-def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dict:
+def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
+                m5_ok: bool = True) -> dict:
     zones = plan["zones"]
     execution = plan.get("execution", {})
     breakout_trigger = execution.get("breakout_trigger", zones["long_entry_high"])
@@ -375,7 +378,7 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> di
     if price >= breakout_trigger:
         # Aggressive: if price is near value_low and trending, allow entry
         near_value_low = abs(price - zones["value_low"]) < (zones["value_high"] - zones["value_low"]) * 0.3
-        if near_value_low and plan.get("quality", {}).get("smc_confidence", 0) >= SMC_CONF_FLOOR:
+        if near_value_low and plan.get("quality", {}).get("smc_confidence", 0) >= SMC_CONF_FLOOR and m5_ok:  # b193
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
             bp = _reanchor_blueprint(
                 bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
@@ -409,7 +412,7 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> di
                 "execution_style": "wait_for_replan",
                 "at": now.isoformat(),
             }
-        if smc_conf >= SMC_CONF_FLOOR:
+        if smc_conf >= SMC_CONF_FLOOR and m5_ok:  # b193: no unconfirmed aggressive entry
             # Re-anchor the blueprint to current market conditions, otherwise the
             # stale plan TP (far below after a long move) breaks trade geometry.
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
@@ -449,7 +452,8 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime) -> di
     }
 
 
-def decide_execution_action(plan: dict, price: float, trigger_ok: bool, now: datetime) -> dict:
+def decide_execution_action(plan: dict, price: float, trigger_ok: bool, now: datetime,
+                            m5_ok: bool = True) -> dict:
     # A neutral plan is an explicit no-trade state.  Never route it through
     # the bearish branch below; that could produce sell-stop/limit proposals.
     if plan.get("bias") == "neutral":
@@ -483,5 +487,5 @@ def decide_execution_action(plan: dict, price: float, trigger_ok: bool, now: dat
         }
 
     if plan.get("bias") == "bullish":
-        return _buy_logic(plan, price=price, trigger_ok=trigger_ok, now=now)
-    return _sell_logic(plan, price=price, trigger_ok=trigger_ok, now=now)
+        return _buy_logic(plan, price=price, trigger_ok=trigger_ok, now=now, m5_ok=m5_ok)
+    return _sell_logic(plan, price=price, trigger_ok=trigger_ok, now=now, m5_ok=m5_ok)

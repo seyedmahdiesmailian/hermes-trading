@@ -141,11 +141,14 @@ def evaluate_monitor_cycle(plan: dict, price: float, now: datetime | None = None
     if trigger_ok is None:
         zone = plan.get("zones", {})
         in_zone = bool(
-            (zone.get("long_entry_low") is not None and zone.get("long_entry_low") <= price <= zone.get("long_entry_high")) or
-            (zone.get("short_entry_low") is not None and zone.get("short_entry_low") <= price <= zone.get("short_entry_high"))
+            (zone.get("long_entry_low") is not None and zone.get("long_entry_high") is not None
+             and zone["long_entry_low"] <= price <= zone["long_entry_high"])
+            or (zone.get("short_entry_low") is not None and zone.get("short_entry_high") is not None
+                and zone["short_entry_low"] <= price <= zone["short_entry_high"])
         )
         # b187: zone touch alone is adverse selection, not a trigger.
-        trigger_ok = in_zone and m5_confirmation(m5_rows, plan.get("bias", ""))
+        conf = m5_confirmation(m5_rows, plan.get("bias", ""))
+        trigger_ok = in_zone and conf
         if in_zone and not trigger_ok:
             return {
                 "action": "wait_for_trigger",
@@ -154,7 +157,13 @@ def evaluate_monitor_cycle(plan: dict, price: float, now: datetime | None = None
                 "plan_id": plan.get("plan_id"),
                 "at": now.isoformat(),
             }
-    decision = decide_execution_action(plan, price=price, trigger_ok=trigger_ok, now=now)
+    # b193: the aggressive lanes (premium/value/breakout/discount entries OUTSIDE
+    # the zone) used to hardcode trigger_ok=True and bypass b187. Backtest + live
+    # (2026-09-08/09: -95/-45/-24$ unconfirmed vs +19$ confirmed) killed them:
+    # they now need the same M5 reversal confirmation. Fail-closed without rows.
+    m5_ok = m5_confirmation(m5_rows, plan.get("bias", "")) if m5_rows is not None else True
+    decision = decide_execution_action(plan, price=price, trigger_ok=trigger_ok, now=now,
+                                       m5_ok=m5_ok)
     if decision.get("action") in {"market_order", "market_entry_now"} and not _passes_quality_gate(plan):
         decision = {
             "action": "wait_for_trigger",
