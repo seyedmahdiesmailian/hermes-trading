@@ -6,6 +6,94 @@ from datetime import datetime, timezone
 # scripts/ab_b54_sweep.py on the live-parity M5 funnel; values = live as-is).
 # SMC_CONF_FLOOR gates every no-trigger aggressive lane (4 call sites).
 SMC_CONF_FLOOR = 0.4
+# b193: the range-kill confidence threshold, hoisted from the two literals that
+# used to sit in hermes_runtime.build_live_plan and backtest_real.strategy_signal
+# (default arg of apply_smc_merge below). Scripts may pass an explicit override.
+RANGE_KILL_CONF = 0.35
+
+
+def stale_at_birth(bias, invalidation, last_close) -> bool:
+    """b188(a): a directional plan whose invalidation level is already breached
+    by the current close is born dead. True = force neutral. Junk inputs return
+    False (fail-open on the ORIGINAL bias, never on a fabricated trade).
+
+    b193: this predicate used to live only in hermes_runtime, so it guarded the
+    LIVE plan path while engines/backtest_real re-implemented the surrounding
+    bias merge WITHOUT it — the lab kept trading plans live can never emit
+    (measured: 11 of 523 funnel signals on the cached M15 leg, 2.1%). It sits in
+    this leaf module now, called by apply_smc_merge, which BOTH paths share.
+    """
+    try:
+        inv = float(invalidation or 0)
+        close = float(last_close or 0)
+    except (TypeError, ValueError):
+        return False
+    if inv <= 0 or close <= 0:
+        return False
+    if bias == 'bullish':
+        return close <= inv
+    if bias == 'bearish':
+        return close >= inv
+    return False
+
+
+def _entry_close(rows) -> float:
+    """Last settled close of an entry-timeframe stream, tolerant of the two
+    bridge row shapes (dict / OHLC tuple). 0.0 = unknown (guard fails open)."""
+    try:
+        r = rows[-1]
+        v = r.get('close', r.get('Close', 0)) if isinstance(r, dict) else r[3]
+        return float(v)
+    except (TypeError, ValueError, IndexError, KeyError, AttributeError):
+        return 0.0
+
+
+def apply_smc_merge(ctx: dict, merged: dict, *, entry_close: float,
+                    range_kill_conf: float = RANGE_KILL_CONF,
+                    smc_result: dict | None = None) -> bool:
+    """THE bias-merge + b188(a) stale-at-birth guard — ONE definition, TWO paths.
+
+    hermes_runtime.build_live_plan and backtest_real.strategy_signal each carried
+    their own copy of this sequence (the b109/b111 drift class). The copy in the
+    lab was missing the FINAL step, so the stale-at-birth veto that shipped in
+    b188(a) applied to live plans only and every lab exp_R since then was priced
+    on a funnel live cannot run (the b189 class, in mirror).
+
+    Order is verbatim what build_live_plan always did: (1) range-kill or adopt
+    the merged bias, (2) stamp quality.smc_confidence, (3) optionally record the
+    SMC display fields (live only — pass smc_result), (4) the stale-at-birth
+    guard. Step 4 is what makes a bias FLIP by the merge expensive: the
+    invalidation level was computed by engines.context for the CLASSIC bias, so
+    when SMC flips the direction the stop is on the wrong side of price and the
+    plan is stale at birth. Returns True when the guard fired.
+    """
+    classic_regime = ctx.get('quality', {}).get('regime', '')
+    smc_confidence = float(merged.get('confidence', 0) or 0)
+    smc_bias = merged.get('bias', 'neutral')
+    # Only force neutral if SMC is NOT confident AND classic says range
+    if classic_regime == 'range' and smc_bias != 'neutral' and smc_confidence < range_kill_conf:
+        ctx['bias'] = 'neutral'
+        merged['bias'] = 'neutral'
+        merged['confidence'] = min(smc_confidence, 0.3)
+        merged['action'] = 'wait'
+    else:
+        # Use SMC bias when confident, even in range
+        ctx['bias'] = merged.get('bias', ctx.get('bias'))
+    ctx.setdefault('quality', {})['smc_confidence'] = merged.get('confidence')
+    if smc_result is not None:
+        ctx['quality']['smc_poi'] = (merged.get('smc_source') or {}).get('poi')
+        ctx['quality']['smc_signal'] = (merged.get('smc_source') or {}).get('signal')
+        ctx.setdefault('context', {})['smc'] = smc_result
+        ctx.setdefault('context', {})['merged'] = {
+            k: v for k, v in merged.items() if k != 'smc_result'}
+    # b188(a) STALE-AT-BIRTH: a plan whose thesis is already wrong at t=0 is a
+    # neutral plan (measured pre-fix: 69% of plan_history rows, b185).
+    if stale_at_birth(ctx.get('bias'), ctx.get('invalidation'), entry_close):
+        ctx['bias'] = 'neutral'
+        ctx.setdefault('quality', {})['stale_at_birth'] = True
+        return True
+    return False
+
 # Late entries re-anchor their stop to min(structure, price ± cap*ATR).
 REANCHOR_STOP_ATR_CAP = 2.0
 # ...and keep at least this reward:risk after re-anchoring.

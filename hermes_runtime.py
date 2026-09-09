@@ -25,7 +25,7 @@ from engines.trade_management import (evaluate_trade_management, ladder_fields,
                                       build_tp_ladder)
 from engines.risk import assess_account_policy, compute_performance_state
 from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log, append_risk_ledger
-from engines.plan import setup_grade
+from engines.plan import setup_grade, apply_smc_merge, _entry_close, stale_at_birth
 from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
 from engines.macro_filter import apply_macro_guard
 from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
@@ -84,22 +84,11 @@ def _bar_time(row) -> int | None:
         return None
 
 
-def _stale_at_birth(bias, invalidation, last_close) -> bool:
-    """b188(a): a directional plan whose invalidation level is already breached
-    by the current close is born dead. True = force neutral. Junk inputs return
-    False (fail-open on the ORIGINAL bias, never on a fabricated trade)."""
-    try:
-        inv = float(invalidation or 0)
-        close = float(last_close or 0)
-    except (TypeError, ValueError):
-        return False
-    if inv <= 0 or close <= 0:
-        return False
-    if bias == 'bullish':
-        return close <= inv
-    if bias == 'bearish':
-        return close >= inv
-    return False
+# b193: the predicate moved to engines.plan.stale_at_birth so the LAB funnel
+# (backtest_real.strategy_signal) enforces it too — it used to live only here,
+# which is exactly how b188(a) shipped to live but not to the lab. This alias
+# keeps hermes_runtime._stale_at_birth importable (tests, scripts).
+_stale_at_birth = stale_at_birth
 
 
 def _account_obj(account: dict):
@@ -184,35 +173,13 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     ctx = build_plan_context(m5, h1, h4, session, m15_rows=m15)
     smc_result = smc_analyse(m5, now=now, h1_rows=h1)
     merged = merge_smc_with_classic(ctx, smc_result)
-    classic_regime = ctx.get('quality', {}).get('regime', '')
-    smc_confidence = float(merged.get('confidence', 0) or 0)
-    smc_bias = merged.get('bias', 'neutral')
-    # Only force neutral if SMC is NOT confident AND classic says range
-    if classic_regime == 'range' and smc_bias != 'neutral' and smc_confidence < 0.35:
-        ctx['bias'] = 'neutral'
-        merged['bias'] = 'neutral'
-        merged['confidence'] = min(smc_confidence, 0.3)
-        merged['action'] = 'wait'
-    else:
-        # Use SMC bias when confident, even in range
-        ctx['bias'] = merged.get('bias', ctx.get('bias'))
-    ctx.setdefault('quality', {})['smc_confidence'] = merged.get('confidence')
-    ctx['quality']['smc_poi'] = (merged.get('smc_source') or {}).get('poi')
-    ctx['quality']['smc_signal'] = (merged.get('smc_source') or {}).get('signal')
-    ctx.setdefault('context', {})['smc'] = smc_result
-    ctx['context']['merged'] = {k: v for k, v in merged.items() if k != 'smc_result'}
-    # b188(a) STALE-AT-BIRTH: 159/231 directional plans (69%) were created with the
-    # invalidation level ALREADY BREACHED - born dead, untradeable, and they poison
-    # every hit-rate stat built on plan_history (measured in b185: all 159 share the
-    # race-stop outcome by construction). A plan whose thesis is already wrong at
-    # t=0 is a neutral plan.
-    try:
-        _last_close = float(m5[-1].get('close', m5[-1].get('Close', 0)) if isinstance(m5[-1], dict) else m5[-1][3])
-    except (TypeError, ValueError, IndexError, KeyError):
-        _last_close = 0.0
-    if _stale_at_birth(ctx.get('bias'), ctx.get('invalidation'), _last_close):
-        ctx['bias'] = 'neutral'
-        ctx.setdefault('quality', {})['stale_at_birth'] = True
+    # b193: this 30-line block was build_live_plan's OWN copy of the merge; the
+    # lab had a second copy that dropped the b188(a) veto. One definition now,
+    # in engines.plan.apply_smc_merge, called by both paths. Behaviour here is
+    # identical to the old inline code, including the display-only smc_* stamps
+    # (passed via smc_result — the backtest omits them by passing nothing).
+    apply_smc_merge(ctx, merged, entry_close=_entry_close(m5),
+                    smc_result=smc_result)
     plan = build_plan_from_context(ctx, now=now)
     return plan, None
 

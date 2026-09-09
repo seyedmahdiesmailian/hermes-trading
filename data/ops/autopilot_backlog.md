@@ -77,6 +77,48 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       the b68 loop chases (~+0.03R), so any arm "beating" the funnel on one leg is
       inside noise — update the b74 protocol to require all M5W1..W4 legs from the b191
       ledger before an arm queues for wiring.
+- [x] b193 TRADER PARITY DEFECT (2026-09-09, DONE) — THE b188(a) STALE-AT-BIRTH VETO
+      SHIPPED TO LIVE ONLY; THE LAB FUNNEL KEPT TRADING PLAN THE RUNTIME CANNOT EMIT.
+      b188(a) wired the veto inside hermes_runtime.build_live_plan's merge block, but
+      backtest_real.strategy_signal carries a HAND-COPY of that block which never got
+      the veto — the b189 class in mirror (b189 = lab missing live's trigger; this =
+      lab missing live's REJECT), and the b110/b111 drift class it was supposed to
+      have ended. MEASURED (cached M15 leg, run_backtest funnel): 112/1705 directional
+      contexts (6.6%) stale-at-birth, 11/523 emitted signals (2.1%) from them — every
+      one live would have forced neutral (0/477 stale plans post-b188 live, and the
+      signals are all SMC-flip-born: stop left on the wrong side of price by the
+      classic-bias invalidation). FIX, parity by construction: the merge+range-kill+
+      veto sequence moved to engines.plan.apply_smc_merge (plus stale_at_birth
+      predicate and _entry_close), called by BOTH paths — build_live_plan passes
+      smc_result for its display-only stamps, strategy_signal passes nothing; the
+      range-kill threshold is now ONE constant (RANGE_KILL_CONF=0.35, was three
+      literals: 2 inline + 1 default-arg, kept overridable for the b59 A/B);
+      hermes_runtime._stale_at_birth kept as an alias to the shared predicate. Post-fix
+      re-census: signals 523->512, stale 11->0, and strategy_signal returns None for
+      every vetoed bar (the 11 removals are EXACTLY the vetoes — no knock-on).
+      All stale-flip rejections were bearish. 14 tests (tests/test_b193_merge_parity.py):
+      source-pins that BOTH call sites use the seam and neither re-inlines the
+      predicate, identity pin on the runtime alias, one-constant threshold pin, merge
+      behaviour matrix (stale flip vetoed / fresh flip survives / range-kill intact /
+      live-only stamps absent in lab), and an END-TO-END pin that the veto bites
+      inside strategy_signal (ctx reaching build_plan_from_context must be neutral +
+      stale_at_birth, anti-vacuity pair). Impact on quoted bars: cached b118 line
+      102/0.254 and the M5W band were priced WITH this gap; expect a small
+      tightening (<=2% of signals removed, grade-B gate already rejects most).
+      FINDING 2026-09-09 (commit run): the parked work was RED-HEAD — three
+      source pins still pointed at the pre-move shape (b86 wanted the literal
+      inside hermes_runtime, b158's sanctioned-poi-reader list lacked the new
+      engines/plan home, b42 saw the untracked b193 test). Pins updated to the
+      one-definition seam (gate value 0.35 UNTOUCHED, re-asserted stricter:
+      runtime must NOT re-inline it); suite green, live cycle rc=0.
+  [NEW TODO b194] RE-PRICE THE MERIT BAR UNDER THE VETO-FIXED FUNNEL: b190/b191's
+      cited numbers (cached 0.280 | M5W 0.142-0.328) include the 11 stale-signal
+      leak. Re-run scripts/b190_merit_bar_live_trigger.py + b191 arm table on the
+      fixed seam (no code change needed — both call run_backtest) and re-quote the
+      band; if any leg moves >0.02R, the b68 loop's arm deltas since 0e44f76 need
+      the same re-check. PRICING THE GAP ITSELF (on/off A/B via the seam) was tried
+      this round and is too slow for an autopilot window (~30 min/leg) — fold it
+      into the re-run rather than a separate probe.
 - [ ] (original text below) b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
       BACKTEST_REAL DOES NOT MODEL THE b187 ENTRY TRIGGER: THE LAB BAR IS
       NOW PRICED ON A RULE LIVE NEVER RUNS. b187 shipped the M5 3-close

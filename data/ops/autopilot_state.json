@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T14:30:54.802593+00:00",
+ "last_run_utc": "2026-09-09T16:30:03.177198+00:00",
  "recent_commits": [
+  "9caad90 autopilot: b191 stamp (verify_head OK c312b1d, runtime drift)",
+  "c312b1d autopilot: b191 M5-entry window lab \u2014 true live-parity bar (band 0.14-0.33, trigger delta mixed-sign neutral on entry TF)",
   "c201fc3 autopilot: b191 parked-lab hygiene \u2014 HEAD was RED after the b190 harvest: b190's test docstring claims 'FILED AS b191' but no checkbox item and no named pin existed (b102/b103 4 failures). Registered b191 as a real todo + tests/test_b191_m5_window_lab_pin.py (2 tests, spared-direction)",
   "2dff7a6 harvest: b190 merit-bar live-trigger probe (run_backtest-only, coverage-gated bar), b127 CHECKS registration, b189 m5_window_for docstring truth",
-  "2788b42 b191b: TP geometry probe - plan ladder beats all ATR clamps, keep raw",
-  "ef1a367 b191 tuning sweep: deployed config (conf3/15m/plan-SL/P2) beats 9 perturbations under serial accounting; P3 1.08x fails 1.2x gate -> keep",
-  "69ea298 b190 exit x entry matrix (honest close-only/touch-stop harness): deployed C|P2 confirmed optimal; slot expansion marginal"
+  "2788b42 b191b: TP geometry probe - plan ladder beats all ATR clamps, keep raw"
  ]
 }

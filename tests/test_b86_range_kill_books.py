@@ -213,9 +213,17 @@ class TestReachability(unittest.TestCase):
         import inspect
         sig = inspect.signature(run_backtest)
         self.assertEqual(sig.parameters["range_kill_conf"].default, 0.35)
-        with open(os.path.join(ROOT, "hermes_runtime.py")) as f:
+        # b193: the merge (and its literal) moved OUT of hermes_runtime into the
+        # single shared definition engines/plan.apply_smc_merge — the same code,
+        # one home, both paths (live + lab) now enforce it. The pin follows the
+        # move: the constant must still read 0.35 and the comparison must still
+        # gate the bias flip. hermes_runtime must NOT carry a second copy back.
+        with open(os.path.join(ROOT, "engines", "plan.py")) as f:
             src = f.read()
-        self.assertIn("smc_confidence < 0.35", src)
+        self.assertIn("RANGE_KILL_CONF = 0.35", src)
+        self.assertIn("smc_confidence < range_kill_conf", src)
+        with open(os.path.join(ROOT, "hermes_runtime.py")) as f:
+            self.assertNotIn("smc_confidence <", f.read())
 
 
 if __name__ == "__main__":  # pragma: no cover

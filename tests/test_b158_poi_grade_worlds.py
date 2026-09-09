@@ -167,10 +167,12 @@ class TestB158MismatchIsVisible(unittest.TestCase):
 class TestB158NoDecisionConsumer(unittest.TestCase):
     """b157 grep-verified that `poi` feeds no gate. Pin it: the ONLY readers
     of the poi value outside engines/smc.py are the sanctioned LABEL writer
-    (hermes_runtime's ctx['quality']['smc_poi']) and tests. A commit that
-    starts gating on poi without its own funnel round must fail here."""
+    (b193: moved with the merge block from hermes_runtime into
+    engines/plan.apply_smc_merge's ctx['quality']['smc_poi'] stamp) and tests.
+    A commit that starts gating on poi without its own funnel round must fail
+    here."""
 
-    SANCTIONED = ("engines/smc.py", "hermes_runtime.py")
+    SANCTIONED = ("engines/smc.py", "hermes_runtime.py", "engines/plan.py")
 
     def _poi_readers(self):
         readers = []

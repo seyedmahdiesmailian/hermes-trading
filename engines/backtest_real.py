@@ -8,6 +8,7 @@ from pathlib import Path
 from engines.context import build_plan_context
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.trade_management import ladder_fields
+from engines.plan import apply_smc_merge
 from engines.orchestrator import build_plan_from_context, evaluate_monitor_cycle
 from engines.backtest import backtest_ohlc
 from engines import paths as _paths
@@ -145,17 +146,16 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         ctx = build_plan_context(m15_window[-120:], h1_window[-80:], h4_window[-80:], session)
         smc_result = smc_analyse(m15_window[-120:], now=now, h1_rows=h1_window[-80:])
         merged = merge_smc_with_classic(ctx, smc_result)
-        classic_regime = ctx.get("quality", {}).get("regime", "")
-        smc_confidence = float(merged.get("confidence", 0) or 0)
-        smc_bias = merged.get("bias", "neutral")
-        # same range-kill rule as build_live_plan (threshold overridable for A/B)
-        if classic_regime == "range" and smc_bias != "neutral" and smc_confidence < range_kill_conf:
-            ctx["bias"] = "neutral"
-            merged["bias"] = "neutral"
-            merged["confidence"] = min(smc_confidence, 0.3)
-        else:
-            ctx["bias"] = merged.get("bias", ctx.get("bias"))
-        ctx.setdefault("quality", {})["smc_confidence"] = merged.get("confidence")
+        # b193: this was a hand-copy of build_live_plan's merge block that never
+        # carried b188(a)'s stale-at-birth veto — live kills those plans at the
+        # merge, the lab kept trading them (11 of 523 signals on the cached M15
+        # leg). Both paths now call the ONE definition in engines.plan;
+        # smc_result is deliberately not passed (display-only stamps, never read
+        # by the funnel). The veto itself is stamped by apply_smc_merge into
+        # ctx['quality']['stale_at_birth'], which build_plan_from_context copies
+        # onto the plan exactly as the live path does.
+        apply_smc_merge(ctx, merged, entry_close=float(row.get("close", 0) or 0),
+                        range_kill_conf=range_kill_conf)
 
         plan = build_plan_from_context(ctx, now=now)
         decision = evaluate_monitor_cycle(plan, price=float(row.get("close", 0)),
