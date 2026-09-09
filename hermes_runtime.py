@@ -84,6 +84,24 @@ def _bar_time(row) -> int | None:
         return None
 
 
+def _stale_at_birth(bias, invalidation, last_close) -> bool:
+    """b188(a): a directional plan whose invalidation level is already breached
+    by the current close is born dead. True = force neutral. Junk inputs return
+    False (fail-open on the ORIGINAL bias, never on a fabricated trade)."""
+    try:
+        inv = float(invalidation or 0)
+        close = float(last_close or 0)
+    except (TypeError, ValueError):
+        return False
+    if inv <= 0 or close <= 0:
+        return False
+    if bias == 'bullish':
+        return close <= inv
+    if bias == 'bearish':
+        return close >= inv
+    return False
+
+
 def _account_obj(account: dict):
     data = account.get('data', account) if isinstance(account, dict) else {}
     return SimpleNamespace(
@@ -183,6 +201,18 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     ctx['quality']['smc_signal'] = (merged.get('smc_source') or {}).get('signal')
     ctx.setdefault('context', {})['smc'] = smc_result
     ctx['context']['merged'] = {k: v for k, v in merged.items() if k != 'smc_result'}
+    # b188(a) STALE-AT-BIRTH: 159/231 directional plans (69%) were created with the
+    # invalidation level ALREADY BREACHED - born dead, untradeable, and they poison
+    # every hit-rate stat built on plan_history (measured in b185: all 159 share the
+    # race-stop outcome by construction). A plan whose thesis is already wrong at
+    # t=0 is a neutral plan.
+    try:
+        _last_close = float(m5[-1].get('close', m5[-1].get('Close', 0)) if isinstance(m5[-1], dict) else m5[-1][3])
+    except (TypeError, ValueError, IndexError, KeyError):
+        _last_close = 0.0
+    if _stale_at_birth(ctx.get('bias'), ctx.get('invalidation'), _last_close):
+        ctx['bias'] = 'neutral'
+        ctx.setdefault('quality', {})['stale_at_birth'] = True
     plan = build_plan_from_context(ctx, now=now)
     return plan, None
 
