@@ -228,7 +228,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       base + 10pt stop sizes below the broker min lot → fail-closed SKIP,
       and the clamp proof min(tier,MAX)==tier at every boundary. 1642 green,
       live cycle rc=0 (monitor lane, no order endpoint touched).)
-- [ ] b197 TRADER OBSERVABILITY (from b196, 2026-09-09): the tiered base now
+- [x] b197 TRADER OBSERVABILITY (from b196, 2026-09-09, DONE this run): the tiered base now
       drives sizing, but nothing in the ops reports states WHICH base a live
       entry used vs the MAX ceiling — the first >=5000 entry post-fix silently
       runs a 25% smaller lot than every pre-fix trade and the only place that
@@ -239,6 +239,10 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       ops brief, so a lot that looks 'wrong' vs history is self-explaining
       instead of triggering a manual forensic pass. Read-only reporting; no
       sizing path, no gate. [TRADER hygiene]
+      (2026-09-09 autopilot DONE: sizing_epoch classifier+line in b143 summary,
+      derive block, digest ops-brief line, b127 check extended, 17 tests
+      green + 59 consumers green; live data: 6 rows all max_flat, 0 tiered
+      until balance crosses 5000 — the epoch note pre-explains that.)
 - [x] (ARCHIVE TEXT of the DONE b189 item above — re-checked 2026-09-09: b189
       shipped per the top-of-file entry; this box was left unticked by mistake
       and made every autopilot run re-read a finished item as "top todo")

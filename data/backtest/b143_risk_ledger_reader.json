@@ -2,11 +2,138 @@
  "_note": "b143 reader: reconciles the b139 risk_stack sidecar against the shared sizing model and reports the realized damper mix (b138's double-charge frequency as a table). Read-only. The JOIN INPUTS are embedded so _derived is reproducible from this artifact alone (b127's producer-reproduction contract) even though the live CSVs keep growing.",
  "_sources": {
   "risk_ledger": "/home/ai/hermes-trading/data/xau_plan/risk_ledger.csv",
-  "risk_ledger_exists": false,
+  "risk_ledger_exists": true,
   "execution_log": "/home/ai/hermes-trading/data/xau_plan/execution_log.csv",
   "trade_journal": "/home/ai/hermes-trading/data/xau_plan/trade_journal.csv"
  },
- "rows": [],
+ "rows": [
+  {
+   "at": "2026-09-08T07:00:02.130487+00:00",
+   "lane": "plan",
+   "plan_id": "xau-53c22a23",
+   "side": "SELL",
+   "lot": "0.02",
+   "entry": "4403.63",
+   "sl": "4413.13",
+   "tp": "4388.9",
+   "grade": "B",
+   "base_risk_pct": "0.02",
+   "learning_risk_mult": "1.0",
+   "execution_style": "aggressive_discount_entry",
+   "style_mult": "0.5",
+   "defcon_override": "",
+   "regime": "defensive",
+   "regime_mult": "0.5",
+   "final_risk_pct": "0.005",
+   "risk_usd": "24.95",
+   "ticket": "105180034"
+  },
+  {
+   "at": "2026-09-08T09:30:02.761249+00:00",
+   "lane": "plan",
+   "plan_id": "xau-39b5ede8",
+   "side": "SELL",
+   "lot": "0.03",
+   "entry": "4392.91",
+   "sl": "4400.39",
+   "tp": "4381.32",
+   "grade": "B",
+   "base_risk_pct": "0.02",
+   "learning_risk_mult": "1.0",
+   "execution_style": "aggressive_discount_entry",
+   "style_mult": "0.5",
+   "defcon_override": "",
+   "regime": "defensive",
+   "regime_mult": "0.5",
+   "final_risk_pct": "0.005",
+   "risk_usd": "25.03",
+   "ticket": "105222761"
+  },
+  {
+   "at": "2026-09-08T18:05:18.454879+00:00",
+   "lane": "plan",
+   "plan_id": "xau-f3b667f2",
+   "side": "SELL",
+   "lot": "0.03",
+   "entry": "4386.72",
+   "sl": "4394.0",
+   "tp": "4375.44",
+   "grade": "A",
+   "base_risk_pct": "0.02",
+   "learning_risk_mult": "1.0",
+   "execution_style": "aggressive_discount_entry",
+   "style_mult": "0.5",
+   "defcon_override": "",
+   "regime": "defensive",
+   "regime_mult": "0.5",
+   "final_risk_pct": "0.005",
+   "risk_usd": "24.91",
+   "ticket": "105396538"
+  },
+  {
+   "at": "2026-09-08T19:00:02.126036+00:00",
+   "lane": "plan",
+   "plan_id": "xau-39498040",
+   "side": "SELL",
+   "lot": "0.04",
+   "entry": "4375.19",
+   "sl": "4386.4",
+   "tp": "4357.81",
+   "grade": "B",
+   "base_risk_pct": "0.02",
+   "learning_risk_mult": "1.0",
+   "execution_style": "pullback_continuation",
+   "style_mult": "1.0",
+   "defcon_override": "",
+   "regime": "defensive",
+   "regime_mult": "0.5",
+   "final_risk_pct": "0.01",
+   "risk_usd": "50.0",
+   "ticket": "105410718"
+  },
+  {
+   "at": "2026-09-09T00:30:02.380727+00:00",
+   "lane": "plan",
+   "plan_id": "xau-680a8b58",
+   "side": "SELL",
+   "lot": "0.05",
+   "entry": "4347.22",
+   "sl": "4355.98",
+   "tp": "4333.64",
+   "grade": "B",
+   "base_risk_pct": "0.02",
+   "learning_risk_mult": "1.0",
+   "execution_style": "aggressive_discount_entry",
+   "style_mult": "0.5",
+   "defcon_override": "",
+   "regime": "normal",
+   "regime_mult": "1.0",
+   "final_risk_pct": "0.01",
+   "risk_usd": "50.39",
+   "ticket": "105443817"
+  },
+  {
+   "at": "2026-09-09T18:15:02.940749+00:00",
+   "lane": "plan",
+   "plan_id": "xau-527e9073",
+   "side": "BUY",
+   "lot": "0.15",
+   "entry": "4420.48",
+   "sl": "4414.18",
+   "tp": "4430.24",
+   "grade": "B",
+   "base_risk_pct": "0.02",
+   "learning_risk_mult": "1.0",
+   "execution_style": "aggressive_premium_entry",
+   "style_mult": "1.0",
+   "defcon_override": "",
+   "regime": "normal",
+   "regime_mult": "1.0",
+   "final_risk_pct": "0.02",
+   "risk_usd": "99.88",
+   "ticket": "105702248"
+  }
+ ],
  "execution_log": [
   {
    "at": "2026-08-28T16:14:30.558050+00:00",
@@ -385,6 +512,90 @@
    "dry_run": "False",
    "result_ok": "True",
    "ticket": "105127383"
+  },
+  {
+   "at": "2026-09-08T07:00:02.130487+00:00",
+   "plan_id": "xau-53c22a23",
+   "side": "SELL",
+   "lot": "0.02",
+   "entry": "4403.63",
+   "sl": "4413.13",
+   "tp": "4388.9",
+   "grade": "B",
+   "risk_usd": "24.95",
+   "dry_run": "False",
+   "result_ok": "True",
+   "ticket": "105180034"
+  },
+  {
+   "at": "2026-09-08T09:30:02.761249+00:00",
+   "plan_id": "xau-39b5ede8",
+   "side": "SELL",
+   "lot": "0.03",
+   "entry": "4392.91",
+   "sl": "4400.39",
+   "tp": "4381.32",
+   "grade": "B",
+   "risk_usd": "25.03",
+   "dry_run": "False",
+   "result_ok": "True",
+   "ticket": "105222761"
+  },
+  {
+   "at": "2026-09-08T18:05:18.454879+00:00",
+   "plan_id": "xau-f3b667f2",
+   "side": "SELL",
+   "lot": "0.03",
+   "entry": "4386.72",
+   "sl": "4394.0",
+   "tp": "4375.44",
+   "grade": "A",
+   "risk_usd": "24.91",
+   "dry_run": "False",
+   "result_ok": "True",
+   "ticket": "105396538"
+  },
+  {
+   "at": "2026-09-08T19:00:02.126036+00:00",
+   "plan_id": "xau-39498040",
+   "side": "SELL",
+   "lot": "0.04",
+   "entry": "4375.19",
+   "sl": "4386.4",
+   "tp": "4357.81",
+   "grade": "B",
+   "risk_usd": "50.0",
+   "dry_run": "False",
+   "result_ok": "True",
+   "ticket": "105410718"
+  },
+  {
+   "at": "2026-09-09T00:30:02.380727+00:00",
+   "plan_id": "xau-680a8b58",
+   "side": "SELL",
+   "lot": "0.05",
+   "entry": "4347.22",
+   "sl": "4355.98",
+   "tp": "4333.64",
+   "grade": "B",
+   "risk_usd": "50.39",
+   "dry_run": "False",
+   "result_ok": "True",
+   "ticket": "105443817"
+  },
+  {
+   "at": "2026-09-09T18:15:02.940749+00:00",
+   "plan_id": "xau-527e9073",
+   "side": "BUY",
+   "lot": "0.15",
+   "entry": "4420.48",
+   "sl": "4414.18",
+   "tp": "4430.24",
+   "grade": "B",
+   "risk_usd": "99.88",
+   "dry_run": "False",
+   "result_ok": "True",
+   "ticket": "105702248"
   }
  ],
  "journal_rows": [
@@ -399,7 +610,8 @@
    "journaled_at": "2026-08-29T18:26:02.162518+00:00",
    "position_id": "101091775",
    "commission": "-0.03",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.03"
   },
   {
    "ticket": "96021723",
@@ -412,7 +624,8 @@
    "journaled_at": "2026-08-29T18:26:02.162544+00:00",
    "position_id": "101090561",
    "commission": "-0.03",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.03"
   },
   {
    "ticket": "96058333",
@@ -425,7 +638,8 @@
    "journaled_at": "2026-08-29T18:26:02.162552+00:00",
    "position_id": "101101649",
    "commission": "-0.03",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.03"
   },
   {
    "ticket": "98072921",
@@ -438,7 +652,8 @@
    "journaled_at": "2026-08-29T18:26:02.162560+00:00",
    "position_id": "103191931",
    "commission": "-0.06",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.06"
   },
   {
    "ticket": "98084590",
@@ -451,7 +666,8 @@
    "journaled_at": "2026-08-29T18:26:02.162568+00:00",
    "position_id": "103194694",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98200524",
@@ -464,7 +680,8 @@
    "journaled_at": "2026-08-31T04:45:04.066862+00:00",
    "position_id": "103324106",
    "commission": "-0.18",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.18"
   },
   {
    "ticket": "98200669",
@@ -477,7 +694,8 @@
    "journaled_at": "2026-08-31T04:45:04.066904+00:00",
    "position_id": "103324106",
    "commission": "-0.18",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.18"
   },
   {
    "ticket": "98203175",
@@ -490,7 +708,8 @@
    "journaled_at": "2026-08-31T04:45:04.066927+00:00",
    "position_id": "103326893",
    "commission": "-0.18",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.18"
   },
   {
    "ticket": "98203263",
@@ -503,7 +722,8 @@
    "journaled_at": "2026-08-31T04:45:04.066945+00:00",
    "position_id": "103326893",
    "commission": "-0.12",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.12"
   },
   {
    "ticket": "98203591",
@@ -516,7 +736,8 @@
    "journaled_at": "2026-08-31T04:45:04.066961+00:00",
    "position_id": "103326893",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98367013",
@@ -529,7 +750,8 @@
    "journaled_at": "2026-08-31T14:40:08.934089+00:00",
    "position_id": "103493774",
    "commission": "-0.12",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.12"
   },
   {
    "ticket": "98368015",
@@ -542,7 +764,8 @@
    "journaled_at": "2026-08-31T14:40:08.934131+00:00",
    "position_id": "103493774",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98371735",
@@ -555,7 +778,8 @@
    "journaled_at": "2026-08-31T14:40:08.934150+00:00",
    "position_id": "103501799",
    "commission": "-0.18",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.18"
   },
   {
    "ticket": "98499344",
@@ -568,7 +792,8 @@
    "journaled_at": "2026-09-01T03:30:02.978942+00:00",
    "position_id": "103636278",
    "commission": "-0.15",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.15"
   },
   {
    "ticket": "98499696",
@@ -581,7 +806,8 @@
    "journaled_at": "2026-09-01T03:30:02.978982+00:00",
    "position_id": "103636278",
    "commission": "-0.06",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.06"
   },
   {
    "ticket": "98501207",
@@ -594,7 +820,8 @@
    "journaled_at": "2026-09-01T04:00:02.183463+00:00",
    "position_id": "103636278",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98503445",
@@ -607,7 +834,8 @@
    "journaled_at": "2026-09-01T04:30:02.477626+00:00",
    "position_id": "103640711",
    "commission": "-0.21",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.21"
   },
   {
    "ticket": "98504641",
@@ -620,7 +848,8 @@
    "journaled_at": "2026-09-01T04:45:02.626931+00:00",
    "position_id": "103640711",
    "commission": "-0.12",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.12"
   },
   {
    "ticket": "98505189",
@@ -633,7 +862,8 @@
    "journaled_at": "2026-09-01T04:45:02.626969+00:00",
    "position_id": "103640711",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98511859",
@@ -646,7 +876,8 @@
    "journaled_at": "2026-09-01T05:45:02.470249+00:00",
    "position_id": "103649120",
    "commission": "-0.45",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.45"
   },
   {
    "ticket": "98535085",
@@ -659,7 +890,8 @@
    "journaled_at": "2026-09-01T07:45:02.785133+00:00",
    "position_id": "103661982",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98535655",
@@ -672,7 +904,8 @@
    "journaled_at": "2026-09-01T07:45:02.785170+00:00",
    "position_id": "103661982",
    "commission": "-0.03",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.03"
   },
   {
    "ticket": "98638516",
@@ -685,7 +918,8 @@
    "journaled_at": "2026-09-01T13:00:02.621416+00:00",
    "position_id": "103775507",
    "commission": "-0.03",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.03"
   },
   {
    "ticket": "98639660",
@@ -698,7 +932,8 @@
    "journaled_at": "2026-09-01T13:00:02.621455+00:00",
    "position_id": "103775507",
    "commission": "-0.03",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.03"
   },
   {
    "ticket": "98799579",
@@ -711,7 +946,8 @@
    "journaled_at": "2026-09-02T00:15:02.624394+00:00",
    "position_id": "103941623",
    "commission": "-0.24",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.24"
   },
   {
    "ticket": "98809821",
@@ -724,7 +960,8 @@
    "journaled_at": "2026-09-02T01:15:02.869103+00:00",
    "position_id": "103951497",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98816451",
@@ -737,7 +974,8 @@
    "journaled_at": "2026-09-02T02:00:03.302054+00:00",
    "position_id": "103958601",
    "commission": "-0.09",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.09"
   },
   {
    "ticket": "98825359",
@@ -750,7 +988,8 @@
    "journaled_at": "2026-09-02T02:45:03.127858+00:00",
    "position_id": "103964980",
    "commission": "-0.06",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.06"
   },
   {
    "ticket": "98834383",
@@ -763,7 +1002,8 @@
    "journaled_at": "2026-09-02T03:45:02.746479+00:00",
    "position_id": "103976964",
    "commission": "-0.12",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.12"
   },
   {
    "ticket": "99122845",
@@ -776,7 +1016,8 @@
    "journaled_at": "2026-09-03T03:15:03.252821+00:00",
    "position_id": "104278658",
    "commission": "-0.33",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.33"
   },
   {
    "ticket": "99133464",
@@ -789,7 +1030,8 @@
    "journaled_at": "2026-09-03T04:45:02.900631+00:00",
    "position_id": "104285338",
    "commission": "-0.39",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.39"
   },
   {
    "ticket": "99136854",
@@ -802,7 +1044,8 @@
    "journaled_at": "2026-09-03T05:15:02.134756+00:00",
    "position_id": "104292973",
    "commission": "-0.48",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.48"
   },
   {
    "ticket": "99170108",
@@ -815,7 +1058,8 @@
    "journaled_at": "2026-09-03T08:15:02.808002+00:00",
    "position_id": "104312573",
    "commission": "-0.27",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.27"
   },
   {
    "ticket": "99301256",
@@ -828,7 +1072,8 @@
    "journaled_at": "2026-09-03T15:15:02.447465+00:00",
    "position_id": "104484332",
    "commission": "-0.18",
-   "swap": ""
+   "swap": "",
+   "entry_commission": "-0.18"
   },
   {
    "ticket": "99694222",
@@ -841,7 +1086,8 @@
    "journaled_at": "2026-09-07T05:30:03.161134+00:00",
    "position_id": "104905967",
    "commission": "-0.51",
-   "swap": "0.0"
+   "swap": "0.0",
+   "entry_commission": "-0.51"
   },
   {
    "ticket": "99845655",
@@ -854,7 +1100,8 @@
    "journaled_at": "2026-09-07T15:00:03.611201+00:00",
    "position_id": "105056349",
    "commission": "-0.21",
-   "swap": "0.0"
+   "swap": "0.0",
+   "entry_commission": "-0.21"
   },
   {
    "ticket": "99876585",
@@ -867,7 +1114,106 @@
    "journaled_at": "2026-09-07T18:00:02.843120+00:00",
    "position_id": "105068963",
    "commission": "-0.18",
-   "swap": "0.0"
+   "swap": "0.0",
+   "entry_commission": "-0.18"
+  },
+  {
+   "ticket": "99940851",
+   "close_time": "1788857757",
+   "side": "BUY",
+   "volume": "0.06",
+   "price": "4417.8",
+   "profit": "-89.1",
+   "comment": "[sl 4417.83]",
+   "journaled_at": "2026-09-08T06:00:02.572823+00:00",
+   "position_id": "105127383",
+   "commission": "-0.18",
+   "swap": "0.0",
+   "entry_commission": "-0.18"
+  },
+  {
+   "ticket": "99969042",
+   "close_time": "1788863866",
+   "side": "SELL",
+   "volume": "0.02",
+   "price": "4396.01",
+   "profit": "15.04",
+   "comment": "HermesClose",
+   "journaled_at": "2026-09-08T07:45:02.189053+00:00",
+   "position_id": "105180034",
+   "commission": "-0.06",
+   "swap": "0.0",
+   "entry_commission": "-0.06"
+  },
+  {
+   "ticket": "100001682",
+   "close_time": "1788871245",
+   "side": "SELL",
+   "volume": "0.03",
+   "price": "4401.08",
+   "profit": "-24.45",
+   "comment": "[sl 4400.39]",
+   "journaled_at": "2026-09-08T09:45:02.614429+00:00",
+   "position_id": "105222761",
+   "commission": "-0.09",
+   "swap": "0.0",
+   "entry_commission": "-0.09"
+  },
+  {
+   "ticket": "100173627",
+   "close_time": "1788904099",
+   "side": "SELL",
+   "volume": "0.03",
+   "price": "4380.13",
+   "profit": "19.26",
+   "comment": "HermesClose",
+   "journaled_at": "2026-09-08T19:00:02.893083+00:00",
+   "position_id": "105396538",
+   "commission": "-0.09",
+   "swap": "0.0",
+   "entry_commission": "-0.09"
+  },
+  {
+   "ticket": "100186657",
+   "close_time": "1788906779",
+   "side": "SELL",
+   "volume": "0.04",
+   "price": "4364.45",
+   "profit": "39.08",
+   "comment": "HermesClose",
+   "journaled_at": "2026-09-08T19:45:02.933061+00:00",
+   "position_id": "105410718",
+   "commission": "-0.12",
+   "swap": "0.0",
+   "entry_commission": "-0.12"
+  },
+  {
+   "ticket": "100214887",
+   "close_time": "1788925530",
+   "side": "SELL",
+   "volume": "0.05",
+   "price": "4355.97",
+   "profit": "-44.85",
+   "comment": "[sl 4355.98]",
+   "journaled_at": "2026-09-09T01:00:03.324073+00:00",
+   "position_id": "105443817",
+   "commission": "-0.15",
+   "swap": "0.0",
+   "entry_commission": "-0.15"
+  },
+  {
+   "ticket": "100468656",
+   "close_time": "1788989529",
+   "side": "BUY",
+   "volume": "0.15",
+   "price": "4414.13",
+   "profit": "-95.1",
+   "comment": "[sl 4414.18]",
+   "journaled_at": "2026-09-09T18:45:02.987199+00:00",
+   "position_id": "105702248",
+   "commission": "-0.45",
+   "swap": "0.0",
+   "entry_commission": "-0.45"
   }
  ],
  "journal_positions": [
@@ -877,8 +1223,9 @@
    "profit": 9.9,
    "commission": -0.03,
    "swap": 0.0,
+   "entry_commission": -0.03,
    "closed_at": 1787342489.0,
-   "realized_net": 9.87
+   "realized_net": 9.84
   },
   {
    "position_id": "101090561",
@@ -886,8 +1233,9 @@
    "profit": 14.05,
    "commission": -0.03,
    "swap": 0.0,
+   "entry_commission": -0.03,
    "closed_at": 1787342492.0,
-   "realized_net": 14.02
+   "realized_net": 13.99
   },
   {
    "position_id": "101101649",
@@ -895,8 +1243,9 @@
    "profit": -10.42,
    "commission": -0.03,
    "swap": 0.0,
+   "entry_commission": -0.03,
    "closed_at": 1787352052.0,
-   "realized_net": -10.45
+   "realized_net": -10.48
   },
   {
    "position_id": "103191931",
@@ -904,8 +1253,9 @@
    "profit": 14.04,
    "commission": -0.06,
    "swap": 0.0,
+   "entry_commission": -0.06,
    "closed_at": 1787947867.0,
-   "realized_net": 13.98
+   "realized_net": 13.92
   },
   {
    "position_id": "103194694",
@@ -913,8 +1263,9 @@
    "profit": 43.32,
    "commission": -0.09,
    "swap": 0.0,
+   "entry_commission": -0.09,
    "closed_at": 1787949728.0,
-   "realized_net": 43.23
+   "realized_net": 43.14
   },
   {
    "position_id": "103324106",
@@ -922,8 +1273,9 @@
    "profit": 10.92,
    "commission": -0.36,
    "swap": 0.0,
+   "entry_commission": -0.36,
    "closed_at": 1788160581.0,
-   "realized_net": 10.56
+   "realized_net": 10.2
   },
   {
    "position_id": "103326893",
@@ -931,8 +1283,9 @@
    "profit": -0.27,
    "commission": -0.39,
    "swap": 0.0,
+   "entry_commission": -0.39,
    "closed_at": 1788161690.0,
-   "realized_net": -0.66
+   "realized_net": -1.05
   },
   {
    "position_id": "103493774",
@@ -940,8 +1293,9 @@
    "profit": 37.67,
    "commission": -0.21,
    "swap": 0.0,
+   "entry_commission": -0.21,
    "closed_at": 1788197498.0,
-   "realized_net": 37.46
+   "realized_net": 37.25
   },
   {
    "position_id": "103501799",
@@ -949,8 +1303,9 @@
    "profit": -94.38,
    "commission": -0.18,
    "swap": 0.0,
+   "entry_commission": -0.18,
    "closed_at": 1788197890.0,
-   "realized_net": -94.56
+   "realized_net": -94.74
   },
   {
    "position_id": "103636278",
@@ -958,8 +1313,9 @@
    "profit": 25.43,
    "commission": -0.3,
    "swap": 0.0,
+   "entry_commission": -0.3,
    "closed_at": 1788245106.0,
-   "realized_net": 25.13
+   "realized_net": 24.83
   },
   {
    "position_id": "103640711",
@@ -967,8 +1323,9 @@
    "profit": 6.97,
    "commission": -0.42,
    "swap": 0.0,
+   "entry_commission": -0.42,
    "closed_at": 1788248355.0,
-   "realized_net": 6.55
+   "realized_net": 6.13
   },
   {
    "position_id": "103649120",
@@ -976,8 +1333,9 @@
    "profit": -105.15,
    "commission": -0.45,
    "swap": 0.0,
+   "entry_commission": -0.45,
    "closed_at": 1788251455.0,
-   "realized_net": -105.6
+   "realized_net": -106.05
   },
   {
    "position_id": "103661982",
@@ -985,8 +1343,9 @@
    "profit": 15.85,
    "commission": -0.12,
    "swap": 0.0,
+   "entry_commission": -0.12,
    "closed_at": 1788258631.0,
-   "realized_net": 15.73
+   "realized_net": 15.61
   },
   {
    "position_id": "103775507",
@@ -994,8 +1353,9 @@
    "profit": 9.8,
    "commission": -0.06,
    "swap": 0.0,
+   "entry_commission": -0.06,
    "closed_at": 1788278341.0,
-   "realized_net": 9.74
+   "realized_net": 9.68
   },
   {
    "position_id": "103941623",
@@ -1003,8 +1363,9 @@
    "profit": 14.08,
    "commission": -0.24,
    "swap": 0.0,
+   "entry_commission": -0.24,
    "closed_at": 1788318005.0,
-   "realized_net": 13.84
+   "realized_net": 13.6
   },
   {
    "position_id": "103951497",
@@ -1012,8 +1373,9 @@
    "profit": 21.81,
    "commission": -0.09,
    "swap": 0.0,
+   "entry_commission": -0.09,
    "closed_at": 1788321727.0,
-   "realized_net": 21.72
+   "realized_net": 21.63
   },
   {
    "position_id": "103958601",
@@ -1021,8 +1383,9 @@
    "profit": 9.93,
    "commission": -0.09,
    "swap": 0.0,
+   "entry_commission": -0.09,
    "closed_at": 1788324434.0,
-   "realized_net": 9.84
+   "realized_net": 9.75
   },
   {
    "position_id": "103964980",
@@ -1030,8 +1393,9 @@
    "profit": -35.16,
    "commission": -0.06,
    "swap": 0.0,
+   "entry_commission": -0.06,
    "closed_at": 1788327481.0,
-   "realized_net": -35.22
+   "realized_net": -35.28
   },
   {
    "position_id": "103976964",
@@ -1039,8 +1403,9 @@
    "profit": 1.04,
    "commission": -0.12,
    "swap": 0.0,
+   "entry_commission": -0.12,
    "closed_at": 1788330604.0,
-   "realized_net": 0.92
+   "realized_net": 0.8
   },
   {
    "position_id": "104278658",
@@ -1048,8 +1413,9 @@
    "profit": 70.84,
    "commission": -0.33,
    "swap": 0.0,
+   "entry_commission": -0.33,
    "closed_at": 1788415938.0,
-   "realized_net": 70.51
+   "realized_net": 70.18
   },
   {
    "position_id": "104285338",
@@ -1057,8 +1423,9 @@
    "profit": 71.63,
    "commission": -0.39,
    "swap": 0.0,
+   "entry_commission": -0.39,
    "closed_at": 1788420910.0,
-   "realized_net": 71.24
+   "realized_net": 70.85
   },
   {
    "position_id": "104292973",
@@ -1066,8 +1433,9 @@
    "profit": -102.88,
    "commission": -0.48,
    "swap": 0.0,
+   "entry_commission": -0.48,
    "closed_at": 1788422817.0,
-   "realized_net": -103.36
+   "realized_net": -103.84
   },
   {
    "position_id": "104312573",
@@ -1075,8 +1443,9 @@
    "profit": 84.24,
    "commission": -0.27,
    "swap": 0.0,
+   "entry_commission": -0.27,
    "closed_at": 1788433405.0,
-   "realized_net": 83.97
+   "realized_net": 83.7
   },
   {
    "position_id": "104484332",
@@ -1084,8 +1453,9 @@
    "profit": 82.74,
    "commission": -0.18,
    "swap": 0.0,
+   "entry_commission": -0.18,
    "closed_at": 1788458672.0,
-   "realized_net": 82.56
+   "realized_net": 82.38
   },
   {
    "position_id": "104905967",
@@ -1093,8 +1463,9 @@
    "profit": -99.28,
    "commission": -0.51,
    "swap": 0.0,
+   "entry_commission": -0.51,
    "closed_at": 1788769678.0,
-   "realized_net": -99.79
+   "realized_net": -100.3
   },
   {
    "position_id": "105056349",
@@ -1102,8 +1473,9 @@
    "profit": 43.05,
    "commission": -0.21,
    "swap": 0.0,
+   "entry_commission": -0.21,
    "closed_at": 1788803150.0,
-   "realized_net": 42.84
+   "realized_net": 42.63
   },
   {
    "position_id": "105068963",
@@ -1111,28 +1483,205 @@
    "profit": -47.82,
    "commission": -0.18,
    "swap": 0.0,
+   "entry_commission": -0.18,
    "closed_at": 1788814530.0,
-   "realized_net": -48.0
+   "realized_net": -48.18
+  },
+  {
+   "position_id": "105127383",
+   "close_deals": 1,
+   "profit": -89.1,
+   "commission": -0.18,
+   "swap": 0.0,
+   "entry_commission": -0.18,
+   "closed_at": 1788857757.0,
+   "realized_net": -89.46
+  },
+  {
+   "position_id": "105180034",
+   "close_deals": 1,
+   "profit": 15.04,
+   "commission": -0.06,
+   "swap": 0.0,
+   "entry_commission": -0.06,
+   "closed_at": 1788863866.0,
+   "realized_net": 14.92
+  },
+  {
+   "position_id": "105222761",
+   "close_deals": 1,
+   "profit": -24.45,
+   "commission": -0.09,
+   "swap": 0.0,
+   "entry_commission": -0.09,
+   "closed_at": 1788871245.0,
+   "realized_net": -24.63
+  },
+  {
+   "position_id": "105396538",
+   "close_deals": 1,
+   "profit": 19.26,
+   "commission": -0.09,
+   "swap": 0.0,
+   "entry_commission": -0.09,
+   "closed_at": 1788904099.0,
+   "realized_net": 19.08
+  },
+  {
+   "position_id": "105410718",
+   "close_deals": 1,
+   "profit": 39.08,
+   "commission": -0.12,
+   "swap": 0.0,
+   "entry_commission": -0.12,
+   "closed_at": 1788906779.0,
+   "realized_net": 38.84
+  },
+  {
+   "position_id": "105443817",
+   "close_deals": 1,
+   "profit": -44.85,
+   "commission": -0.15,
+   "swap": 0.0,
+   "entry_commission": -0.15,
+   "closed_at": 1788925530.0,
+   "realized_net": -45.15
+  },
+  {
+   "position_id": "105702248",
+   "close_deals": 1,
+   "profit": -95.1,
+   "commission": -0.45,
+   "swap": 0.0,
+   "entry_commission": -0.45,
+   "closed_at": 1788989529.0,
+   "realized_net": -96.0
   }
  ],
  "_derived": {
-  "rows": 0,
-  "status_counts": {},
+  "rows": 6,
+  "status_counts": {
+   "coherent": 6
+  },
   "defect_rows": [],
   "damper_mix": {
-   "rows": 0,
+   "rows": 6,
    "damper_fire_counts": {
-    "learning": {},
-    "style": {},
-    "defcon": {},
-    "regime": {}
+    "learning": {
+     "neutral": 6
+    },
+    "style": {
+     "fires": 4,
+     "neutral": 2
+    },
+    "defcon": {
+     "neutral": 6
+    },
+    "regime": {
+     "fires": 4,
+     "neutral": 2
+    }
    },
-   "combined_factor_distribution": {},
+   "combined_factor_distribution": {
+    "0.25x": 3,
+    "0.5x": 2,
+    "1.0x": 1
+   },
    "double_charge_rows_b138": 0,
-   "regimes_seen": {},
-   "styles_seen": {}
+   "regimes_seen": {
+    "defensive": 4,
+    "normal": 2
+   },
+   "styles_seen": {
+    "aggressive_discount_entry": 4,
+    "pullback_continuation": 1,
+    "aggressive_premium_entry": 1
+   }
   },
-  "ticket_join": [],
-  "verdict": "NO_ROWS_YET"
+  "sizing_epoch": {
+   "counts": {
+    "tiered": 0,
+    "max_flat": 6,
+    "tier_mismatch": 0,
+    "unknown": 0
+   },
+   "per_lane": {
+    "plan": {
+     "max_flat": 6
+    }
+   },
+   "first_tiered_at": null,
+   "tiered_rows_present": false,
+   "note": "sizing epoch (b196+): base_risk_pct < 0.02 marks tiered-policy sizing \u2014 a lot that looks 25% small vs history at balance>=5000 is CORRECT, not a defect (tier at 5000+: 0.015 vs ceiling 0.02); rows: tiered=0 max_flat=6 unknown=0 | no tiered row yet \u2014 expected until the account crosses 5000 (pre-b196 rows and sub-5000 rows share base=MAX)"
+  },
+  "ticket_join": [
+   {
+    "at": "2026-09-08T07:00:02.130487+00:00",
+    "lane": "plan",
+    "plan_id": "xau-53c22a23",
+    "joinable": true,
+    "ticket": "105180034",
+    "realized_net": 14.92,
+    "join_path": "row_ticket",
+    "position_id": "105180034",
+    "close_deals": 1
+   },
+   {
+    "at": "2026-09-08T09:30:02.761249+00:00",
+    "lane": "plan",
+    "plan_id": "xau-39b5ede8",
+    "joinable": true,
+    "ticket": "105222761",
+    "realized_net": -24.63,
+    "join_path": "row_ticket",
+    "position_id": "105222761",
+    "close_deals": 1
+   },
+   {
+    "at": "2026-09-08T18:05:18.454879+00:00",
+    "lane": "plan",
+    "plan_id": "xau-f3b667f2",
+    "joinable": true,
+    "ticket": "105396538",
+    "realized_net": 19.08,
+    "join_path": "row_ticket",
+    "position_id": "105396538",
+    "close_deals": 1
+   },
+   {
+    "at": "2026-09-08T19:00:02.126036+00:00",
+    "lane": "plan",
+    "plan_id": "xau-39498040",
+    "joinable": true,
+    "ticket": "105410718",
+    "realized_net": 38.84,
+    "join_path": "row_ticket",
+    "position_id": "105410718",
+    "close_deals": 1
+   },
+   {
+    "at": "2026-09-09T00:30:02.380727+00:00",
+    "lane": "plan",
+    "plan_id": "xau-680a8b58",
+    "joinable": true,
+    "ticket": "105443817",
+    "realized_net": -45.15,
+    "join_path": "row_ticket",
+    "position_id": "105443817",
+    "close_deals": 1
+   },
+   {
+    "at": "2026-09-09T18:15:02.940749+00:00",
+    "lane": "plan",
+    "plan_id": "xau-527e9073",
+    "joinable": true,
+    "ticket": "105702248",
+    "realized_net": -96.0,
+    "join_path": "row_ticket",
+    "position_id": "105702248",
+    "close_deals": 1
+   }
+  ],
+  "verdict": "LEDGER_RECONCILES"
  }
 }

@@ -218,6 +218,121 @@ def reconcile(row: dict) -> dict:
     return out
 
 
+def sizing_epoch(row: dict) -> str:
+    """Which sizing regime produced this row's BASE — b197 (2026-09-09).
+
+    b196 wired the account's tiered base_risk_pct (engines/risk.
+    _base_risk_pct: <800 -> 1.0%, <1500 -> 1.5%, <5000 -> 2.0%, >=5000 ->
+    1.5%) into evaluate_proposal, clamped under MAX_RISK_PER_TRADE_PCT.
+    Every tier is <= MAX, so the ONLY row shapes that can appear are:
+
+      'tiered'  — base < MAX: the policy base sized this lot (post-b196; at
+                  >=5000 that is a 25% SMALLER lot than any pre-fix trade).
+      'max_flat'— base == MAX: either a pre-b196 row (base was always MAX)
+                  or a post-b196 row below 5000, where the tier EQUALS MAX —
+                  the two are indistinguishable from the row alone, and this
+                  is why a >=5000 'max_flat' row after the fix would be a
+                  DEFECT, not noise (b196 clamp cannot produce it).
+      'unknown' — no parsable base: never guess, say so.
+
+    The tiers are IMPORTED (risk._base_risk_pct), never restated — b143's
+    own imported-not-restated rule, extended to the classifier.
+    """
+    from engines.auto_executor import MAX_RISK_PER_TRADE_PCT
+    from engines.risk import _base_risk_pct
+
+    base = _num(row.get("base_risk_pct"))
+    if base is None or base <= 0:
+        return "unknown"
+    # b139's sidecar records final_risk_pct rounded to 4dp and risk_usd to
+    # cents, so a derived balance carries error and can sit a hair across a
+    # tier edge — b143's own lo/mid/high band rule (expected_lot) applies
+    # here too: the row is a tier-MATCH if ANY band point sizes to its base.
+    if abs(base - MAX_RISK_PER_TRADE_PCT) < 1e-4:
+        return "max_flat"
+    risk_usd = _num(row.get("risk_usd"))
+    pct = _num(row.get("final_risk_pct"))
+    implied = _num(row.get("balance"))
+    if implied is None and risk_usd and pct:
+        implied = risk_usd / pct
+    if implied is not None:
+        # two rounding errors move the implied balance: cents on risk_usd
+        # (absolute 0.005/pct) and 4dp on final_risk_pct (relative 5e-5/pct —
+        # for small final pcts this dominates; b139 rounds risk_pct with
+        # round(x, 4), so a 0.0038 final carries ~1.3% of balance).
+        band = (0.005 / pct) if (risk_usd and pct) else 0.0
+        rel = (5e-5 / pct) if pct else 0.0
+        rel = min(max(rel, 0.0), 0.05)  # never treat a >5% drift as rounding
+        points = (implied - band, implied, implied + band,
+                  implied * (1 - rel), implied * (1 + rel))
+        for b in points:
+            if abs(_base_risk_pct(b) - base) < 1e-4:
+                return "tiered"
+        # a tiered base that matches NO balance tier (even across the
+        # rounding band): the tier table moved under an old ledger, or the
+        # row is torn. Loud, not smoothed into 'tiered'.
+        return "tier_mismatch"
+    # base < MAX but no money fields to derive a balance from: the value is
+    # still unambiguously a tier (only _base_risk_pct emits sub-MAX bases
+    # post-b196) — keep it 'tiered', band check just unavailable.
+    return "tiered"
+
+
+def sizing_epoch_summary(rows: list[dict]) -> dict:
+    """The one-line 'sizing epoch' note b197 asked for: how many rows were
+    sized by the tiered policy base vs the flat MAX ceiling, per lane, plus
+    the human sentence. Pure function of the rows; NO_ROWS_YET never means
+    'the fix is dead' — an empty ledger is an empty window (b184's rule)."""
+    counts = {"tiered": 0, "max_flat": 0, "tier_mismatch": 0, "unknown": 0}
+    per_lane: dict = {}
+    first_tiered_at = None
+    for r in rows:
+        e = sizing_epoch(r)
+        counts[e] = counts.get(e, 0) + 1
+        lane = str(r.get("lane") or "?")
+        per_lane.setdefault(lane, {}).setdefault(e, 0)
+        per_lane[lane][e] += 1
+        if e in ("tiered", "tier_mismatch") and first_tiered_at is None:
+            first_tiered_at = str(r.get("at") or "")
+    from engines.auto_executor import MAX_RISK_PER_TRADE_PCT
+    from engines.risk import _base_risk_pct
+    note = (
+        f"sizing epoch (b196+): base_risk_pct < {MAX_RISK_PER_TRADE_PCT} marks "
+        f"tiered-policy sizing — a lot that looks 25% small vs history at "
+        f"balance>=5000 is CORRECT, not a defect "
+        f"(tier at 5000+: {_base_risk_pct(5000)} vs ceiling "
+        f"{MAX_RISK_PER_TRADE_PCT}); rows: "
+        f"tiered={counts['tiered']} max_flat={counts['max_flat']} "
+        f"unknown={counts['unknown']}")
+    if counts["tier_mismatch"]:
+        note += (f" WARNING: {counts['tier_mismatch']} row(s) carry a base "
+                 "that matches NO balance tier — forensic pass needed")
+    if not counts["tiered"] and rows:
+        note += (" | no tiered row yet — expected until the account crosses "
+                 "5000 (pre-b196 rows and sub-5000 rows share base=MAX)")
+    return {"counts": counts, "per_lane": per_lane,
+            "first_tiered_at": first_tiered_at,
+            "tiered_rows_present": counts["tiered"] + counts["tier_mismatch"] > 0,
+            "note": note}
+
+
+def persian_sizing_line(summary: dict) -> str:
+    """One Persian ops-brief line (b197): self-explains a lot that looks
+    'wrong' vs history. Empty string when there is nothing to say (no rows —
+    honest zero, no fabricated line)."""
+    c = summary.get("counts", {})
+    if sum(c.values()) == 0:
+        return ""
+    line = (f"پایه ریسک حجم‌ها: {c.get('max_flat', 0)} ردیف با سقف ثابت، "
+            f"{c.get('tiered', 0)} ردیف با سیاست پله‌ای (b196)")
+    if c.get("tier_mismatch", 0):
+        line += f" — ⚠️ {c['tier_mismatch']} ردیف پایه‌اش با هیچ پله‌ای نمی‌خواند"
+    if not summary.get("tiered_rows_present"):
+        line += (" — پس از عبور موجودی از 5000 حجم‌ها 25٪ کوچک‌تر می‌شوند؛ "
+                 "طبیعی است")
+    return line
+
+
 def damper_mix(rows: list[dict]) -> dict:
     """How often each leg actually fired, and the realized product shape."""
     n = len(rows)
@@ -396,6 +511,8 @@ def derive(rows: list[dict], exec_rows: list[dict], journal: dict) -> dict:
         "status_counts": status_counts,
         "defect_rows": defects,
         "damper_mix": damper_mix(rows),
+        # b197: which sizing BASE produced these rows (pre/post-b196 tiering).
+        "sizing_epoch": sizing_epoch_summary(rows),
         "ticket_join": join_to_tickets(rows, exec_rows, journal),
         "verdict": ("NO_ROWS_YET" if not rows else
                     ("LEDGER_RECONCILES" if not defects
@@ -434,6 +551,9 @@ def main() -> dict:
               d["damper_mix"]["combined_factor_distribution"])
         print("b138 double-charge rows:",
               d["damper_mix"]["double_charge_rows_b138"])
+        # b197: the sizing epoch line — makes a 'small-looking' lot
+        # self-explaining instead of triggering a manual forensic pass.
+        print(d["sizing_epoch"]["note"])
     print("ledger:", OUT)
     return led
 

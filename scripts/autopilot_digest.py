@@ -2,11 +2,12 @@
 """Daily autopilot digest → Telegram (trading bot token, chat from .env).
 
 b49 SELF-CHECK: `python3 scripts/autopilot_digest.py --self-check` (or
-HERMES_SELFCHECK=1) turns the six `except Exception: pass` guard blocks into
+HERMES_SELFCHECK=1) turns the guarded `except Exception` sections into
 loud failures AND suppresses the Telegram send, so a digest that prints
 nothing because its machinery is broken can never be mistaken for one that
 printed nothing because everything is fine. Normal (cron) behaviour is
-byte-identical to before.
+byte-identical to before.  (b197 added the sizing-epoch section — the
+b49 test counts handlers dynamically; never trust a literal in a docstring.)
 """
 import json
 import os
@@ -99,6 +100,22 @@ try:
         lines.append(f'📦 <b>{_dl}</b>')
 except Exception as e:
     selfcheck.fail('dirty_work section', e)
+
+# b197: sizing-epoch line from the risk ledger. b196 wired the account's
+# tiered base_risk_pct into entry sizing, so the FIRST >=5000-balance entry
+# runs a 25% smaller lot than every pre-fix trade — without a note, that
+# looks like a defect. Read through the CANONICAL reader
+# (scripts/b143_risk_ledger_reader, imported not re-parsed): the classifier,
+# the counts and the sentence all live there, one definition (b109 rule).
+try:
+    from scripts import b143_risk_ledger_reader as _b143
+    _sz = _b143.sizing_epoch_summary(_b143.read_ledger())
+    _szl = _b143.persian_sizing_line(_sz)
+    if _szl:
+        lines.append('')
+        lines.append(f'⚖️ {_szl}')
+except Exception as e:
+    selfcheck.fail('sizing epoch section', e)
 
 # errors in autopilot log (last 200 lines)
 if LOG.exists():

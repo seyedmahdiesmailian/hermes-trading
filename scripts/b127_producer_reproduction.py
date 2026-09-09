@@ -597,7 +597,7 @@ def check_b143_derived_blocks() -> str:
         "frozen ledger was NOT produced by the shipped aggregator")
     d = led["_derived"]
     for key in ("rows", "status_counts", "defect_rows", "damper_mix",
-                "ticket_join", "verdict"):
+                "ticket_join", "verdict", "sizing_epoch"):
         assert key in d, f"b143 _derived lost block {key}"
     # the join is re-runnable too (pure over artifact inputs): every
     # execution_log row that carries its own ticket must resolve through the
