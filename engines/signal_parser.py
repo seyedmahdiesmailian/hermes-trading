@@ -479,6 +479,15 @@ def parse_signal(text: str, current_price: float = 0.0,
         bare_prices = re.findall(r'(\d{2,6}\.?\d{0,4})', text)
         # Filter out very small numbers (lot sizes, etc.) — entry is usually 2+ digits
         candidates = [float(b) for b in bare_prices if float(b) >= 10]
+        # b192: a P&L screenshot ("PROFIT:- 1236$ 📈") became a BUY at 1236 —
+        # the emoji made the side, the bare grab made the price. Values under
+        # 1000 are channel abbreviations ('72' -> 4472) and get expanded by
+        # _resolve_ladder below; a FULL price that is not the same order of
+        # magnitude as the market is an advertisement number, not an entry
+        # (same logic b74b applies to typo'd TP rungs).
+        if candidates and current_price > 0:
+            candidates = [c for c in candidates
+                          if c < 1000 or current_price / 2 <= c <= current_price * 2]
         if candidates:
             sig.entry = candidates[0]
             confidence += 0.05

@@ -105,6 +105,44 @@ class TestSignalDecision(unittest.TestCase):
         self.assertEqual(result["verdict"], "skip")
 
 
+class TestB192AdvertisementSanity(unittest.TestCase):
+    """b192: a P&L promo screenshot must never parse into a tradable signal."""
+
+    PROMO = ("[💬 از Gold Trader Mo (GTMO)]\n"
+             "🔔ACCOUNT MANAGEMENT PERFORMANCE 🎭\n\n"
+             "➡️ PROFIT:- 1236$ ❤️‍🔥📈\n\n"
+             "➡️ CAPITAL:- 2000$ 💸 🧻 🫴\n\n"
+             "WORK DONE BY 📝👇")
+
+    def test_promo_not_valid_signal(self):
+        from engines.signal_parser import parse_signal
+        sig = parse_signal(self.PROMO, current_price=4410.0)
+        self.assertFalse(sig.is_valid)
+        self.assertEqual(sig.entry, 0.0)
+
+    def test_full_price_far_from_market_rejected(self):
+        from engines.signal_parser import parse_signal
+        sig = parse_signal("BUY XAUUSD 1655.8 SL 1600 TP 1700",
+                           current_price=4410.0)
+        self.assertFalse(sig.is_valid)
+
+    def test_real_signal_untouched_by_guard(self):
+        # entry stated as a full market-side price still parses
+        from engines.signal_parser import parse_signal
+        sig = parse_signal("BUY XAUUSD @ 4411 SL 4425 TP 4395",
+                           current_price=4410.0)
+        self.assertTrue(sig.is_valid)
+        self.assertAlmostEqual(sig.entry, 4411.0)
+
+    def test_abbreviated_entry_still_expands(self):
+        # '92 و 87 خرید' style: bare grab gives 92 (<1000), ladder expands it
+        from engines.signal_parser import parse_signal
+        sig = parse_signal("[💬 از RADIN VIP NEW ⚡] 92 و 87 خرید استاپ 82 تی پی\n"
+                           "77", current_price=4395.0)
+        self.assertTrue(sig.is_valid)
+        self.assertGreater(sig.entry, 4000)
+
+
 class TestEconomicCalendar(unittest.TestCase):
     def test_fetch_doesnt_crash(self):
         from engines.economic_calendar import fetch_economic_calendar
