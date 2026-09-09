@@ -69,7 +69,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       shared predicate + both commit arms gated (orelse-blind arm walk so a
       sibling elif cannot certify a write); pins the live-daemon b32 branch
       text too. Suite 1500 OK. Live cycle clean.
-- [ ] b168 REUSABLE PROCEDURE — A FIX TO A SHARED-HAZARD CLASS MUST BE CENSUSED
+- [x] b168 REUSABLE PROCEDURE — A FIX TO A SHARED-HAZARD CLASS MUST BE CENSUSED
       ACROSS EVERY PATH THAT REACHES THE SAME STATE, NOT JUST THE REPORTED ONE
       (from b167, 2026-09-09): b32 fixed news_lock/breakeven_active confusion
       in position_daemon and its backlog text said 'this whole bug CLASS' —
@@ -82,6 +82,14 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       coverage-check grep is cheap; the drift it prevents is a safety flag on
       the live trade-management path. Codify as a b109-style AST/consistency
       test when the next sibling drift appears.
+      DONE 2026-09-09 (b169, this run exercised the rule): the census over
+      producers of the trade dict feeding evaluate_trade_management found the
+      sibling drift — build_trade's b44+b60 TP-ladder shaping was inline-only,
+      hermes_runtime's fallback passed RAW plan targets; extracted VERBATIM to
+      engines.trade_management.build_tp_ladder, both callers wired, measured
+      drift on the #103326893 replay (watchdog [4361.235, 4306.65] vs old
+      fallback [4416.78, 4382.67, 4361.24, 4306.65] — first level wrong-side,
+      dead-locks the TP branch). tests/test_b169_tp_ladder_parity.py (6).
 - [x] b165 TRADER CODE REVIEW — evaluate_signal EARLY RETURNS SHIPPED WITHOUT
       THE 'reasons' KEY EVERY DOWNSTREAM READER USES (found and fixed by a run
       killed mid-flight before this one; this run verified + landed it, b46/b144

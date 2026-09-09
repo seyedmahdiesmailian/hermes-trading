@@ -564,6 +564,49 @@ def check_b163_derived_blocks() -> str:
             "46 timeline-joined, max age 0.2787h, 0 stale)")
 
 
+def check_b143_derived_blocks() -> str:
+    """b128's rule applied to the risk-lane ledger, which b127 shipped WITHOUT
+    covering. b143 wrote its post-processing inline in main(), but it embeds
+    the raw journal rows in the artifact, so the aggregation half is
+    re-executable from the file alone — b164 extracted aggregate_journal
+    into a pure function for exactly this. The PINNED half is the
+    aggregation; the measurement half (bridge history, MFE recompute) is NOT
+    re-run here and stays pinned by this check's own row arithmetic.
+
+    Field-for-field equality with the frozen journal_positions is NOT
+    expected: the artifact predates b152, so its rows lack the
+    entry_commission column the current aggregator emits (0.0 vs absent).
+    The load-bearing assertion is that realized_net — the number every
+    derived block is computed from — is identical per position."""
+    from scripts import b143_risk_ledger_reader as b143
+    led = _load(os.path.join(BT, "b143_risk_ledger_reader.json"))
+    rec = b143.aggregate_journal(led["journal_rows"])
+    rec.pop("_index", None)
+    frozen = {e["position_id"]: e for e in led["journal_positions"]}
+    net_mismatch = sum(
+        1 for k in rec
+        if abs((rec[k]["realized_net"] or 0.0)
+               - (frozen.get(k, {}).get("realized_net") or 0.0)) > 1e-9)
+    assert set(rec) == set(frozen), (
+        f"b143 aggregation covers {set(rec) ^ set(frozen)} differently")
+    assert net_mismatch == 0, (
+        f"b143 realized_net disagrees on {net_mismatch} positions — the "
+        "frozen ledger was NOT produced by the shipped aggregator")
+    d = led["_derived"]
+    for key in ("rows", "status_counts", "defect_rows", "damper_mix",
+                "ticket_join", "verdict"):
+        assert key in d, f"b143 _derived lost block {key}"
+    # the join is re-runnable too (pure over artifact inputs): every
+    # execution_log row that carries its own ticket must resolve through the
+    # re-aggregated journal exactly as the shipped code does
+    joined = b143.join_to_tickets(led["rows"], led["execution_log"], rec)
+    assert sum(1 for j in joined if j["joinable"]) \
+        == sum(1 for j in led["_derived"]["ticket_join"] if j["joinable"]), \
+        "b143 ticket join no longer reproduces from its own inputs"
+    return (f"b143 journal aggregation re-run from frozen rows "
+            f"({len(rec)} positions, 0 realized_net mismatches)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -590,6 +633,7 @@ CHECKS = (
     check_b132_derived_blocks,
     check_b161_verdict_and_census,
     check_b163_derived_blocks,
+    check_b143_derived_blocks,
 )
 
 

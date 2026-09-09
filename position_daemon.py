@@ -35,7 +35,7 @@ load_dotenv(BASE / '.env')
 from bridge_client import BridgeClient
 from engines import paths
 from engines.bridge_payload import positions_list
-from engines.trade_management import evaluate_trade_management, ladder_fields
+from engines.trade_management import evaluate_trade_management, ladder_fields, build_tp_ladder
 from engines.plan import setup_grade   # b111: ONE grade rule for all producers
 from engines.auto_executor import evaluate_management_action
 from engines.legacy_guards import (evaluate_news_lock, evaluate_time_exit,
@@ -131,34 +131,14 @@ def build_trade(raw: dict, plan: dict, wstate: dict) -> dict:
     # grade rule; the grade now comes from engines.plan.setup_grade, so the
     # two locals were dead.
     side = p.type if p.type in ('BUY', 'SELL') else ('BUY' if p.type == 0 else 'SELL')
-    # b44: plan levels are re-drawn every reassessment and can end up on the
-    # WRONG side of this position's entry (re-anchored entries get a different
-    # TP than the plan file keeps). #103326893: stale TP1 4416.78 sat above a
-    # SELL entered at 4415.82 → "TP hit" one second after entry → 0.06 lots
-    # closed at a LOSS. Only targets beyond entry (in profit direction) are
-    # valid partial-close levels for this trade.
+    # b44 filter + b60 midpoint rebuild — b169: the inline block moved to
+    # engines.trade_management.build_tp_ladder UNCHANGED, because
+    # hermes_runtime's manage-fallback (the path that runs whenever this
+    # watchdog is >60s stale) feeds the SAME evaluate_trade_management and
+    # was shipping neither fix. Byte-identical behaviour here; see that
+    # helper's docstring for #103326893 / #103976964.
     raw_levels = execution.get('tp_levels') or plan.get('targets') or []
-    tp_levels = [float(t) for t in raw_levels
-                 if (float(t) > p.price_open) == (side == 'BUY')]
-    # b60 PARITY FIX: live TP1 must mirror the backtest geometry — halfway
-    # between entry and the FINAL target. The plan's first intermediate
-    # target can sit pennies from a re-anchored entry: #103976964 SELL
-    # 4293.35 with TP1 4292.83 (0.52 away!) vs SL 10.6 away -> b55's "100%
-    # at TP1" closed the whole position for +0.80$ while risking 50$.
-    # The +1641$ backtest number was built on TP1 = midpoint (RR ~1:1);
-    # live was executing a completely different ladder. Rebuild it:
-    # TP1 = midpoint, TP2 = final target.
-    if tp_levels:
-        # The broker TP (set by the executor from the blueprint) IS the final
-        # target the backtest rides to; prefer it when it is on the profit
-        # side, else the furthest plan target.
-        _side_buy = (side == 'BUY')
-        _cands = [float(p.tp)] if (p.tp and (float(p.tp) > p.price_open) == _side_buy) else []
-        _cands += [t for t in tp_levels if (t > p.price_open) == _side_buy]
-        _final = max(_cands, key=lambda t: abs(t - p.price_open)) if _cands else None
-        if _final:
-            _mid = p.price_open + (_final - p.price_open) * 0.5
-            tp_levels = [_mid, _final]
+    tp_levels = build_tp_ladder(p.price_open, side, p.tp, raw_levels)
     # b111 FIX 2026-09-07: the watchdog used to inline a PRE-b45 grade rule
     # here (no regime clause for an A, 'mixed' reaching B) while the entry
     # gate and hermes_runtime used the canonical one — so the ladder decision

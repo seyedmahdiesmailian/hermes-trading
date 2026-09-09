@@ -27,6 +27,46 @@ def _next_unfilled_target(trade: dict):
     return None
 
 
+def build_tp_ladder(price_open: float, side: str, broker_tp, raw_levels) -> list:
+    """b44 filter + b60 midpoint rebuild — THE ONE definition of the live TP
+    ladder (b169: was inlined only in position_daemon.build_trade).
+
+    Two producers feed evaluate_trade_management a trade dict: the watchdog
+    (position_daemon, every 5s) and hermes_runtime's manage-fallback (runs
+    whenever the watchdog heartbeat is >60s stale — b167's lesson: exactly
+    when the daemon's fixes cannot help). Until b169 only the watchdog
+    shaped the ladder:
+
+      * b44: plan levels are re-drawn every reassessment and can end up on
+        the WRONG side of this position's entry (#103326893: stale TP1
+        4416.78 above a SELL entered at 4415.82 — and as the FIRST list
+        entry it also made _next_unfilled_target return a target the
+        profit_side guard blocks, dead-locking the legit farther targets so
+        no TP/BE branch could ever fire on that path).
+      * b60: live TP1 must mirror the backtest geometry — halfway between
+        entry and the FINAL target (#103976964: TP1 0.52 away vs SL 10.6 →
+        b55's "100% at TP1" closed the whole ticket for +0.80$).
+
+    Behaviour is byte-identical to the watchdog's inline block it was
+    extracted from — including keeping targets exactly ON entry for SELL
+    (strict `>` test) and the `broker_tp` truthiness gate (None/0 drop out).
+    """
+    side_buy = (side == 'BUY')
+    tp_levels = [float(t) for t in (raw_levels or [])
+                 if (float(t) > price_open) == side_buy]
+    if tp_levels:
+        # The broker TP (set by the executor from the blueprint) IS the final
+        # target the backtest rides to; prefer it when it is on the profit
+        # side, else the furthest plan target.
+        _cands = [float(broker_tp)] if (broker_tp and (float(broker_tp) > price_open) == side_buy) else []
+        _cands += [t for t in tp_levels if (t > price_open) == side_buy]
+        _final = max(_cands, key=lambda t: abs(t - price_open)) if _cands else None
+        if _final:
+            _mid = price_open + (_final - price_open) * 0.5
+            tp_levels = [_mid, _final]
+    return tp_levels
+
+
 def _next_scale_level(trade: dict):
     used = set(float(x) for x in trade.get("scaled_in_levels", []))
     for level in trade.get("scale_in_levels", []):

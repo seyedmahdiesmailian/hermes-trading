@@ -30,8 +30,12 @@ from test_integration import MockBridge
 import fixtures_bridge as fb
 
 
-TICK_S = fb.tick_payload(ask=4430.5, bid=4430.0)   # SELL TP1=4435 hit
-TICK_B = fb.tick_payload(ask=4496.0, bid=4495.5)   # BUY  TP1=4490 hit
+# b169: the fallback now builds THE SAME TP ladder as the watchdog (b44
+# filter + b60 midpoint). For the fixtures below that moves TP1 from the raw
+# plan levels (4435 / 4490) to the midpoint of entry 4450 and the final
+# target (4427.5 SELL / 4525 BUY) — ticks updated to clear the PARITY ladder.
+TICK_S = fb.tick_payload(ask=4425.5, bid=4425.0)   # SELL parity TP1=4427.5 hit
+TICK_B = fb.tick_payload(ask=4531.5, bid=4531.0)   # BUY  parity TP1=4525 hit
 
 
 def production_plan(side='SELL'):

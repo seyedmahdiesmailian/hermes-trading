@@ -21,7 +21,8 @@ from engines.context import build_plan_context
 from engines.bridge_payload import positions_list
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
-from engines.trade_management import evaluate_trade_management, ladder_fields
+from engines.trade_management import (evaluate_trade_management, ladder_fields,
+                                      build_tp_ladder)
 from engines.risk import assess_account_policy, compute_performance_state
 from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log, append_risk_ledger
 from engines.plan import setup_grade
@@ -511,10 +512,24 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         wd_positions = wd_positions.get('positions') or {}
         for raw in positions:
             p = _pos_obj(raw)
+            _side = 'BUY' if p.type == 0 else 'SELL'
             trade = {
-                'symbol': p.symbol, 'side': 'BUY' if p.type == 0 else 'SELL', 'entry_price': p.price_open,
+                'symbol': p.symbol, 'side': _side, 'entry_price': p.price_open,
                 'sl': p.sl or plan.get('invalidation') or p.price_open,
-                'tp_levels': (plan.get('execution') or {}).get('tp_levels') or plan.get('targets') or [],
+                # b169: THE SAME ladder the watchdog builds (b44 wrong-side
+                # filter + b60 midpoint rebuild), extracted to
+                # engines.trade_management.build_tp_ladder. This fallback path
+                # used to feed evaluate_trade_management the RAW plan targets:
+                # a stale TP1 on the wrong side of entry made
+                # _next_unfilled_target return a blocked level (the b44
+                # profit_side guard then dead-locks every farther target), so
+                # the manage loop could neither take profit, arm breakeven nor
+                # trail — it could only time-exit. That is exactly the
+                # b167/b168 lesson: a fix to this ladder must be censused on
+                # EVERY producer of the trade dict, not just the daemon.
+                'tp_levels': build_tp_ladder(
+                    p.price_open, _side, p.tp,
+                    (plan.get('execution') or {}).get('tp_levels') or plan.get('targets') or []),
                 'tp_shares': (plan.get('execution') or {}).get('tp_shares') or [0.5, 0.3, 0.2],
                 'scale_in_levels': (plan.get('execution') or {}).get('scale_in_levels') or [],
                 'filled_tp_levels': ((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('filled_tp_levels', []),

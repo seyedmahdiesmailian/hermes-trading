@@ -279,40 +279,33 @@ def read_journal_rows(path: Path = JOURNAL) -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def read_journal_tickets(path: Path = JOURNAL) -> dict:
-    """Position key -> realized P&L. The journal writes ONE ROW PER CLOSE DEAL,
-    so a partially-closed position appears several times; realized profit for
-    the position is the SUM (plus commission/swap), not the last row. Two key
-    eras exist in the data: execution_log.ticket matches the journal's
-    position_id for recent trades and its ticket column for old ones, so both
-    indexes are built and the join tries them in that order. Nothing is
-    invented: a ticket with no journal row simply reports realized=None."""
-    p = Path(path)
+def aggregate_journal(rows: list[dict]) -> dict:
+    """PURE half of read_journal_tickets (b128's contract: the derived blocks
+    must be re-executable from the artifact's embedded rows alone): raw
+    journal rows in, position aggregation out. All arithmetic lives HERE —
+    the file reader below only feeds it (b152's anti-duplication rule)."""
     by_pos: dict[str, dict] = {}
     index: dict[str, str] = {}
-    if not p.exists():
-        return by_pos
-    with p.open(newline="", encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            key = str(r.get("position_id") or "").strip() or \
-                  str(r.get("ticket") or "").strip()
-            if not key:
-                continue
-            agg = by_pos.setdefault(key, {"position_id": key, "close_deals": 0,
-                                          "profit": 0.0, "commission": 0.0,
-                                          "swap": 0.0, "entry_commission": 0.0,
-                                          "closed_at": None})
-            agg["close_deals"] += 1
-            for col in ("profit", "commission", "swap", "entry_commission"):
-                v = _num(r.get(col), 0.0) or 0.0
-                agg[col] = round(agg[col] + v, 4)
-            ct = _num(r.get("close_time"))
-            if ct and (agg["closed_at"] is None or ct > agg["closed_at"]):
-                agg["closed_at"] = ct
-            for alt in (str(r.get("position_id") or "").strip(),
-                        str(r.get("ticket") or "").strip()):
-                if alt:
-                    index.setdefault(alt, key)
+    for r in rows:
+        key = str(r.get("position_id") or "").strip() or \
+              str(r.get("ticket") or "").strip()
+        if not key:
+            continue
+        agg = by_pos.setdefault(key, {"position_id": key, "close_deals": 0,
+                                      "profit": 0.0, "commission": 0.0,
+                                      "swap": 0.0, "entry_commission": 0.0,
+                                      "closed_at": None})
+        agg["close_deals"] += 1
+        for col in ("profit", "commission", "swap", "entry_commission"):
+            v = _num(r.get(col), 0.0) or 0.0
+            agg[col] = round(agg[col] + v, 4)
+        ct = _num(r.get("close_time"))
+        if ct and (agg["closed_at"] is None or ct > agg["closed_at"]):
+            agg["closed_at"] = ct
+        for alt in (str(r.get("position_id") or "").strip(),
+                    str(r.get("ticket") or "").strip()):
+            if alt:
+                index.setdefault(alt, key)
     for k, v in by_pos.items():
         # b152: entry_commission (broker IN-deal fee, prorated per leg) joins
         # the net too, so the reader's realized matches learning.group_positions.
@@ -320,6 +313,13 @@ def read_journal_tickets(path: Path = JOURNAL) -> dict:
                                   + v["entry_commission"], 4)
     by_pos["_index"] = index
     return by_pos
+
+
+def read_journal_tickets(path: Path = JOURNAL) -> dict:
+    """File-reading shell over aggregate_journal (b128): keep all arithmetic
+    in the pure function so a reproduction can re-run it from the artifact's
+    embedded journal_rows without touching the ledger."""
+    return aggregate_journal(read_journal_rows(path))
 
 
 def join_to_tickets(rows: list[dict], exec_rows: list[dict],
