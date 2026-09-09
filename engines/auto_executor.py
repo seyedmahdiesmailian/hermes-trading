@@ -91,11 +91,19 @@ def evaluate_proposal(
     _eff_min_rr = float(_ls.get("min_rr", MIN_RISK_REWARD))
 
     # ── Check 1: Valid proposal ──
+    # b170: these three early returns shipped without 'reasons' — the key
+    # hermes_runtime copies into proposal['skip_reasons'] (line ~770) and
+    # signal_listener concatenates into the alert (line ~611), exactly the
+    # b165 defect class one module over. The verdict/reason strings are
+    # byte-identical; only the plural carrier is added (observability, never
+    # a gate change).
     if not proposal or proposal.get("blocked"):
+        _r = (proposal or {}).get("reason") or "no_proposal"
         return {
             "execute": False,
-            "reason": proposal.get("reason", "no_proposal") if proposal else "no_proposal",
+            "reason": _r,
             "command": None,
+            "reasons": [_r],
         }
 
     blueprint = proposal.get("blueprint")
@@ -104,6 +112,7 @@ def evaluate_proposal(
             "execute": False,
             "reason": "no_blueprint",
             "command": None,
+            "reasons": ["no_blueprint"],
         }
 
     side = str(blueprint.get("side", "")).upper()
@@ -117,6 +126,7 @@ def evaluate_proposal(
             "execute": False,
             "reason": "invalid_blueprint",
             "command": None,
+            "reasons": ["invalid_blueprint"],
         }
 
     # ── Check 2: Account policy ──

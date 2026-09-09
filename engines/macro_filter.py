@@ -46,4 +46,11 @@ def apply_macro_guard(proposal: dict | None, macro: dict) -> dict | None:
     guarded["blocked"] = True
     guarded["reason"] = macro.get("reason", "macro_filter_block")
     guarded["macro_events"] = macro.get("events", [])
+    # b170: auto_executor Check 7 vetoes on 'blocked_by_macro', but NOBODY
+    # ever wrote that key (measured 2026-09-09: grep over the whole repo —
+    # its only reader was the check itself, plus b132's source pin). The
+    # veto really lands via 'blocked' + Check 1. Set the flag here too so
+    # Check 7 becomes a live second net and b132's pin is honest.
+    # Tightening-neutral: adds a veto path, never removes one.
+    guarded["blocked_by_macro"] = True
     return guarded

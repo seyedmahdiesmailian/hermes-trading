@@ -665,6 +665,18 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
                 proposal, {'allowed': False, 'reason': 'macro_gate_error',
                            'error': str(e)[:200]})
 
+        # b170 OBSERVABILITY: a macro-blocked proposal is filtered out by the
+        # `not proposal.get('blocked')` gate below, so it NEVER reached
+        # evaluate_proposal and therefore never got a skip_reason — the brief
+        # could not distinguish 'news blackout killed a real setup' from 'no
+        # setup at all'. Exactly the window the operator asks why nothing
+        # traded. Reporting only: no gate, no sizing, no verdict changes.
+        if proposal is not None and proposal.get('blocked'):
+            _mr = str(proposal.get('reason') or 'macro_block')
+            proposal['skip_reason'] = 'macro_blackout'
+            proposal['skip_reasons'] = [_mr]
+            monitor['macro_blocked'] = _mr
+
     # ── Legacy migration: macro snapshot into plan context + report ──
     # analyze_macro costs ~22 bridge calls (6 FX ticks + 6 H1 rates + silver/
     # SPX aliases + H4/D1/W1 gold). It feeds REPORTS ONLY — no decision gate

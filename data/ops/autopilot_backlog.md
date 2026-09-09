@@ -47,6 +47,33 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b170 TRADER CODE REVIEW (2026-09-09) — THE NEWS BLACKOUT HAD A VETO DOOR
+      THAT NOBODY COULD OPEN, AND THE ENTRY GAUNTLET'S FIRST THREE EXITS WERE
+      MUTE. auto_executor Check 7 rejects a proposal carrying
+      `blocked_by_macro`, but grep over the whole repo found ZERO writers of
+      that key — apply_macro_guard only ever set `blocked`. So the veto landed
+      indirectly via Check 1 and Check 7 was dead code, while b132's pin
+      ("Check 7 must still honour the macro veto flag") certified a wire that
+      was never connected. FIX: apply_macro_guard now sets BOTH flags
+      (additive — a proposal vetoed by the flag alone is now genuinely
+      rejected, nothing that traded before is blocked). SECOND FINDING, the
+      b165 defect class one module over: of evaluate_proposal's 21 literal
+      returns, the three Check-1 exits (no_proposal / no_blueprint /
+      invalid_blueprint) shipped WITHOUT the plural `reasons` that
+      hermes_runtime copies into skip_reasons and signal_listener prints in
+      the ops alert — a malformed or already-blocked proposal reported an
+      EMPTY reason list. THIRD: a macro-blocked PLAN proposal never reached
+      evaluate_proposal at all (runtime gates on `not blocked`), so a blackout
+      that killed a real setup was indistinguishable in the brief from "no
+      setup formed" — now skip_reason='macro_blackout' + monitor
+      .macro_blocked record the concrete gate reason. All three are
+      tightening-neutral (they can only ADD a block or a string, never remove
+      one; no threshold, lot, or verdict path changed). 7 tests
+      (tests/test_b170_macro_veto_wiring.py): producer sets the flag, allowed
+      macro sets neither, the flag-only proposal IS vetoed (pre-fix it could
+      execute), AST census that every literal return carries `reasons`
+      (anti-vacuity floor 20), headline == reason on the Check-1 paths, and
+      the runtime observability lines.
 - [x] b167 TRADER CODE REVIEW (cross-module parity, 2026-09-09) — THE RUNTIME
       FALLBACK PATH LET A NEWS LOCK STEAL THE BREAKEVEN FLAG; b32 FIXED IT ONLY
       IN THE WATCHDOG. hermes_runtime.cycle's manage-fallback wrote
