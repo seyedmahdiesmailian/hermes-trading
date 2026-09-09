@@ -1,0 +1,328 @@
+{
+ "_note": "b191: the merit bar on the LIVE ENTRY TIMEFRAME \u2014 independent 6500-bar M5 windows strictly before the cached M15 span, every arm engines.backtest_real.run_backtest with lab_harness live exit geometry; wired = the stream's own settled M5 closes (byte-parity with hermes_runtime), control = m5_stream=[] (pre-b189 parity). M5W0 reproduces b189's arm C/D as the integrity anchor.",
+ "_legs": [
+  "M5W0_anchor",
+  "M5W1",
+  "M5W2",
+  "M5W3",
+  "M5W4"
+ ],
+ "_m5_source": {
+  "file": "data/backtest/b191_m5_ohlc.json",
+  "bars": 60000,
+  "first": 1762221600,
+  "last": 1788975900
+ },
+ "_gates": {
+  "min_rr": 0.0,
+  "live_min_rr": 1.5,
+  "min_grade": "B",
+  "spread": 0.2,
+  "trail_mult": 0.3,
+  "trail_floor": 3.0
+ },
+ "_independence": {
+  "cached_m15_first": 1784109600,
+  "cached_m15_last": 1787960700,
+  "M5W1": {
+   "bars": 6500,
+   "first": 1781180400,
+   "last": 1784109300,
+   "overlap_with_cached_span": 0
+  },
+  "M5W2": {
+   "bars": 6500,
+   "first": 1778271000,
+   "last": 1781180100,
+   "overlap_with_cached_span": 0
+  },
+  "M5W3": {
+   "bars": 6500,
+   "first": 1775547000,
+   "last": 1778270700,
+   "overlap_with_cached_span": 0
+  },
+  "M5W4": {
+   "bars": 6500,
+   "first": 1772559900,
+   "last": 1775546700,
+   "overlap_with_cached_span": 0
+  }
+ },
+ "M5W0_anchor": {
+  "_entry_bars": 6500,
+  "_span": [
+   1785237600,
+   1787961300
+  ],
+  "_m5_coverage": 0.9997,
+  "control_no_trigger": {
+   "trades": 159,
+   "exp_R": 0.212,
+   "WR%": 67.3,
+   "avg_win_R": 0.8,
+   "avg_loss_R": -1.0,
+   "net_R": 33.7,
+   "maxDD_R": -4.0,
+   "mean_hold_bars": 9.4,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 55,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "wired_own_m5_closes": {
+   "trades": 166,
+   "exp_R": 0.197,
+   "WR%": 66.3,
+   "avg_win_R": 0.81,
+   "avg_loss_R": -1.0,
+   "net_R": 32.6,
+   "maxDD_R": -4.8,
+   "mean_hold_bars": 9.3,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 55,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "d_exp_R": -0.015,
+  "d_trades": 7,
+  "_stored_b189": {
+   "wired": [
+    166,
+    0.197
+   ],
+   "control": [
+    159,
+    0.212
+   ]
+  },
+  "anchor_ok": true
+ },
+ "M5W1": {
+  "_entry_bars": 6500,
+  "_span": [
+   1781180400,
+   1784109300
+  ],
+  "_m5_coverage": 0.9997,
+  "control_no_trigger": {
+   "trades": 130,
+   "exp_R": 0.201,
+   "WR%": 66.2,
+   "avg_win_R": 0.83,
+   "avg_loss_R": -1.02,
+   "net_R": 26.1,
+   "maxDD_R": -6.6,
+   "mean_hold_bars": 11.0,
+   "p95_hold_bars": 29,
+   "max_hold_bars": 131,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "wired_own_m5_closes": {
+   "trades": 133,
+   "exp_R": 0.202,
+   "WR%": 66.9,
+   "avg_win_R": 0.81,
+   "avg_loss_R": -1.02,
+   "net_R": 26.9,
+   "maxDD_R": -7.6,
+   "mean_hold_bars": 11.2,
+   "p95_hold_bars": 29,
+   "max_hold_bars": 131,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "d_exp_R": 0.001,
+  "d_trades": 3
+ },
+ "M5W2": {
+  "_entry_bars": 6500,
+  "_span": [
+   1778271000,
+   1781180100
+  ],
+  "_m5_coverage": 0.9997,
+  "control_no_trigger": {
+   "trades": 153,
+   "exp_R": 0.286,
+   "WR%": 71.2,
+   "avg_win_R": 0.81,
+   "avg_loss_R": -1.02,
+   "net_R": 43.8,
+   "maxDD_R": -5.3,
+   "mean_hold_bars": 9.1,
+   "p95_hold_bars": 33,
+   "max_hold_bars": 124,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "wired_own_m5_closes": {
+   "trades": 165,
+   "exp_R": 0.328,
+   "WR%": 73.3,
+   "avg_win_R": 0.82,
+   "avg_loss_R": -1.02,
+   "net_R": 54.1,
+   "maxDD_R": -4.4,
+   "mean_hold_bars": 9.3,
+   "p95_hold_bars": 26,
+   "max_hold_bars": 124,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "d_exp_R": 0.042,
+  "d_trades": 12
+ },
+ "M5W3": {
+  "_entry_bars": 6500,
+  "_span": [
+   1775547000,
+   1778270700
+  ],
+  "_m5_coverage": 0.9997,
+  "control_no_trigger": {
+   "trades": 133,
+   "exp_R": 0.132,
+   "WR%": 62.4,
+   "avg_win_R": 0.82,
+   "avg_loss_R": -1.02,
+   "net_R": 17.5,
+   "maxDD_R": -4.9,
+   "mean_hold_bars": 9.2,
+   "p95_hold_bars": 29,
+   "max_hold_bars": 57,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "wired_own_m5_closes": {
+   "trades": 140,
+   "exp_R": 0.142,
+   "WR%": 62.9,
+   "avg_win_R": 0.83,
+   "avg_loss_R": -1.02,
+   "net_R": 19.9,
+   "maxDD_R": -4.3,
+   "mean_hold_bars": 10.2,
+   "p95_hold_bars": 33,
+   "max_hold_bars": 109,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "d_exp_R": 0.01,
+  "d_trades": 7
+ },
+ "M5W4": {
+  "_entry_bars": 6500,
+  "_span": [
+   1772559900,
+   1775546700
+  ],
+  "_m5_coverage": 0.9997,
+  "control_no_trigger": {
+   "trades": 125,
+   "exp_R": 0.352,
+   "WR%": 73.6,
+   "avg_win_R": 0.84,
+   "avg_loss_R": -1.01,
+   "net_R": 44.1,
+   "maxDD_R": -4.3,
+   "mean_hold_bars": 8.9,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 32,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "wired_own_m5_closes": {
+   "trades": 137,
+   "exp_R": 0.297,
+   "WR%": 70.8,
+   "avg_win_R": 0.84,
+   "avg_loss_R": -1.01,
+   "net_R": 40.7,
+   "maxDD_R": -4.3,
+   "mean_hold_bars": 8.8,
+   "p95_hold_bars": 27,
+   "max_hold_bars": 32,
+   "holds_over_time_exit": 0,
+   "_bars": 6500,
+   "_time_stop_bars": 432
+  },
+  "d_exp_R": -0.055,
+  "d_trades": 12
+ },
+ "_merit_bar_m5_entry": {
+  "M5W0_anchor": 0.197,
+  "M5W1": 0.202,
+  "M5W2": 0.328,
+  "M5W3": 0.142,
+  "M5W4": 0.297,
+  "_control_bar": {
+   "M5W0_anchor": 0.212,
+   "M5W1": 0.201,
+   "M5W2": 0.286,
+   "M5W3": 0.132,
+   "M5W4": 0.352
+  },
+  "_coverage_floor": 0.9
+ },
+ "_trigger_delta": {
+  "M5W0_anchor": {
+   "d_exp_R": -0.015,
+   "d_trades": 7,
+   "coverage": 0.9997
+  },
+  "M5W1": {
+   "d_exp_R": 0.001,
+   "d_trades": 3,
+   "coverage": 0.9997
+  },
+  "M5W2": {
+   "d_exp_R": 0.042,
+   "d_trades": 12,
+   "coverage": 0.9997
+  },
+  "M5W3": {
+   "d_exp_R": 0.01,
+   "d_trades": 7,
+   "coverage": 0.9997
+  },
+  "M5W4": {
+   "d_exp_R": -0.055,
+   "d_trades": 12,
+   "coverage": 0.9997
+  }
+ },
+ "_band_vs_b190_m15_bar": {
+  "b190_m15_wired": {
+   "cached": 0.28,
+   "W1": 0.197,
+   "W2": 0.245,
+   "W3": null,
+   "W4": null
+  },
+  "b191_m5_entry_wired": {
+   "M5W1": 0.202,
+   "M5W2": 0.328,
+   "M5W3": 0.142,
+   "M5W4": 0.297
+  },
+  "m15_quoted": [
+   0.197,
+   0.28
+  ],
+  "all_quoted_span": [
+   0.142,
+   0.328
+  ]
+ }
+}

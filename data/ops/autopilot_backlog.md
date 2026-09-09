@@ -51,15 +51,32 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   [NEW TODO b190] re-run scripts/b117_trail_reprice.py + scripts/b118_merit_bar_rebaseline.py under the wired funnel and refresh the merit-bar citation; b188 residual items unchanged.
 - [x] b190 RE-BASELINE (2026-09-09, DONE, mixed finding) — the merit bar re-priced under the b189-WIRED funnel. b117/b118 cannot do this themselves: they run `b81.funnel_fn`, which calls strategy_signal WITHOUT m5_rows (and derives nothing on M15 windows), so re-running them reproduces the PRE-WIRING 0.254/102 byte-identically — a plain "re-run the scripts" would have certified the wrong bar. New probe scripts/b190_merit_bar_live_trigger.py (run_backtest only, HARD RULE kept): per leg (cached+W1..W4) control m5_stream=[] vs wired broker-M5-closes-at-decision-moment (one fresh read-only get_rates fetch cached to b190_m5_closes.json; 60000-bar M5 cap discovered MEASURED, back to ~2025-11-03). INTEGRITY: cached control reproduces 102/0.254 AND cached wired reproduces b189's arm B 104/0.280 exactly — the two rounds slice the trigger identically. FINDING: the b187 trigger's lab merit is MIXED-SIGN, near-neutral — cached +0.026R, W1 -0.007R, W2 -0.050R (covered legs; d_trades +2/+6/+7: confirmation releases late reward>R entries as often as it suppresses). NEW CITABLE BAR (wired, coverage-gated): cached 0.280 | W1 0.197 | W2 0.245; the ~0.20-0.28 band every round compares against STANDS. HONESTY GATE: W3 coverage 0.72, W4 0.00 (predate M5 history) — bar() REFUSES to quote a leg below 0.9 coverage (None + stored _m5_coverage), because a wired number that silently means "no trigger" is the b116 class; pinned by tests/test_b190_merit_bar_live_trigger.py (12), post-processing registered in b127 CHECKS (b128 rule). Docstring lie healed the same commit: m5_window_for claimed b81.funnel_fn shares it — it never did; the note now states which ledgers are trigger-less. b188 residual items unchanged; the b187 trigger stays LIVE (never weaken shipped logic).
   [NEW TODO b191] the TRUE live-parity bar is an M5 ENTRY stream over window-independent legs: b189 priced only its own 6500-bar Jul-Aug M5 leg (166/0.197) and b190 prices M15 legs with real M5 closes — the one missing view is W-style independent windows run on the live entry TF. Needs a b68l-style cached M5 OHLC + H1/H4 context fetch (M5 cap 60000 bars ≈ 4.5 months, so independent M5 windows can only start ~2025-11); wire it as scripts/b191_m5_window_lab.py and re-quote the band if the M5-entry legs move it.
-- [ ] b191 TRADER LAB — M5-ENTRY WINDOW LEGS: THE TRUE LIVE-PARITY BAR (filed by b189/b190,
-      2026-09-09): b189 priced only its own 6500-bar Jul-Aug M5 leg (166/0.197) and b190
-      prices M15 legs with real M5 closes — the one missing view is W-style INDEPENDENT
-      windows run on the live entry TF (M5). Needs a b68l-style cached M5 OHLC + H1/H4
-      context fetch (M5 cap 60000 bars ≈ 4.5 months, so independent M5 windows can only
-      start ~2025-11); wire it as scripts/b191_m5_window_lab.py (run_backtest only) and
-      re-quote the ~0.20-0.28 band if the M5-entry legs move it. The spared direction is
-      pinned by tests/test_b191_m5_window_lab_pin.py — when this ships, that pin is
-      edited, not deleted, and the band re-quoted in the same commit.
+- [x] b191 TRADER LAB — M5-ENTRY WINDOW LEGS: THE TRUE LIVE-PARITY BAR (2026-09-09, DONE) —
+      shipped scripts/b191_m5_window_lab.py (run_backtest only, HARD RULE kept): four
+      INDEPENDENT 6500-bar M5 ENTRY windows (M5W1..M5W4, b68l-style, strictly before the
+      cached M15 span, overlap MEASURED 0) wired = the stream's own settled M5 closes
+      (byte-parity with hermes_runtime), control = m5_stream=[]. INTEGRITY: M5W0_anchor
+      reproduces b189's arm C/D exactly (166/0.197, 159/0.212) inside the new script.
+      FINDING 1 (band): on the live entry TF, out of the tuned regime, wired exp_R =
+      M5W1 0.202 | M5W2 0.328 | M5W3 0.142 | M5W4 0.297 — mean 0.242 HOLDS but the
+      ~0.20-0.28 M15-proxy band UNDERSTATES the window spread (true 0.14-0.33); every
+      future single-window arm comparison is inside this noise. FINDING 2 (trigger):
+      b187 delta on the entry TF is still mixed-sign near-zero mean (+0.001/+0.042/
+      +0.010/-0.055, mean -0.0005) and NEVER net-suppresses trades (d_trades +3/+12/+7/
+      +12) — b190's neutrality reading REPRODUCES on the true TF, trigger stays live,
+      lab-neutral. FINDING 3 (honesty): M5-entry legs carry their own closes — coverage
+      0.9997 on ALL legs including spans that killed b190's W4 (0.00): the entry-TF
+      design removes the coverage hole structurally. The spared-direction pin
+      tests/test_b191_m5_window_lab_pin.py was EDITED not deleted as promised (12 tests:
+      anchor, independence, coverage, band, delta, AST run_backtest-only); b127 CHECKS
+      registered (b128 rule). M5 history reach measured: 60000 bars = 2025-11-04 ->,
+      so 4x6500 independent windows reach back only to 2026-03-03 — a 5th draw needs a
+      fresh fetch as the cache rolls forward.
+  [NEW TODO b192] lab arms must be quoted on the 4-leg M5W set, not one window: the
+      measured single-window spread (0.142-0.328, sigma ~0.08R) EXCEEDS the effect size
+      the b68 loop chases (~+0.03R), so any arm "beating" the funnel on one leg is
+      inside noise — update the b74 protocol to require all M5W1..W4 legs from the b191
+      ledger before an arm queues for wiring.
 - [ ] (original text below) b189 TRADER PARITY DEFECT (filed by the b187-requote, 2026-09-09) —
       BACKTEST_REAL DOES NOT MODEL THE b187 ENTRY TRIGGER: THE LAB BAR IS
       NOW PRICED ON A RULE LIVE NEVER RUNS. b187 shipped the M5 3-close

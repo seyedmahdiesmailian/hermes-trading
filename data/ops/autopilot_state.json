@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T13:07:58.588362+00:00",
+ "last_run_utc": "2026-09-09T14:30:54.802593+00:00",
  "recent_commits": [
+  "c201fc3 autopilot: b191 parked-lab hygiene \u2014 HEAD was RED after the b190 harvest: b190's test docstring claims 'FILED AS b191' but no checkbox item and no named pin existed (b102/b103 4 failures). Registered b191 as a real todo + tests/test_b191_m5_window_lab_pin.py (2 tests, spared-direction)",
+  "2dff7a6 harvest: b190 merit-bar live-trigger probe (run_backtest-only, coverage-gated bar), b127 CHECKS registration, b189 m5_window_for docstring truth",
+  "2788b42 b191b: TP geometry probe - plan ladder beats all ATR clamps, keep raw",
   "ef1a367 b191 tuning sweep: deployed config (conf3/15m/plan-SL/P2) beats 9 perturbations under serial accounting; P3 1.08x fails 1.2x gate -> keep",
-  "69ea298 b190 exit x entry matrix (honest close-only/touch-stop harness): deployed C|P2 confirmed optimal; slot expansion marginal",
-  "60324d5 b189 structure counterfactuals: entry-rule ranking + serial single-slot reality check + signal-lane counterfactual",
-  "1b6a6c2 autopilot: b189 wire b187 entry trigger into backtest_real (live-parity M5 window) + b189 pricing ledger",
-  "9d1a35a autopilot: b187-requote \u2014 HEAD was BROKEN since 00ce842: b117/b118 re-derivation pins caught the funnel move (M5 confirmation not modelled in backtest_real: census 306->255, bar 0.278/109 -> 0.254/102); pins re-quoted with frozen pre-b187 history rows pinned in place, gap parked as todo b189; harvest commit 97cf1c6 restored b42/b102 (b185 reader tests + census flip untracked 3h)"
+  "69ea298 b190 exit x entry matrix (honest close-only/touch-stop harness): deployed C|P2 confirmed optimal; slot expansion marginal"
  ]
 }

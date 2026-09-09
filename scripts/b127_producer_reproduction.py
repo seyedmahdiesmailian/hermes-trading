@@ -623,6 +623,7 @@ def check_b143_derived_blocks() -> str:
 
 LEDGER_141 = os.path.join(BT, "b141_rollover_blind_window_census.json")
 LEDGER_190 = os.path.join(BT, "b190_merit_bar_live_trigger.json")
+LEDGER_191 = os.path.join(BT, "b191_m5_window_lab.json")
 LEDGER_84 = os.path.join(BT, "b84_rr_gate_books.json")
 LEDGER_86 = os.path.join(BT, "b86_range_kill_books.json")
 LEDGER_88 = os.path.join(BT, "b88_defcon_books.json")
@@ -671,6 +672,31 @@ def check_b190_merit_bar_blocks() -> str:
     return (f"b190 coverage-gated bar + trigger delta "
             f"({n_quotable}/{len(led['_legs'])} legs quotable, "
             f"mixed-sign delta intact)")
+
+
+def check_b191_m5_window_blocks() -> str:
+    """b191's post-processing (the M5-entry coverage-gated bar, trigger
+    delta, and the b190 cross-read band) is pure arithmetic on the frozen leg
+    rows; the funnel replay itself is NOT re-run (b127's rule). This is the
+    ledger behind the CURRENT live-entry-TF bar citation."""
+    from scripts import b191_m5_window_lab as b191
+    led = _load(LEDGER_191)
+    got_bar = b191.bar(led)
+    assert got_bar == led["_merit_bar_m5_entry"], (
+        "b191.bar() no longer reproduces _merit_bar_m5_entry — the "
+        "coverage gate or the leg rows moved under the shipped M5 bar")
+    got_delta = b191.trigger_delta(led)
+    assert got_delta == led["_trigger_delta"], (
+        "b191.trigger_delta() moved the stored wired-minus-control deltas")
+    got_band = b191.band_comparison(led)
+    assert got_band == led["_band_vs_b190_m15_bar"], (
+        "b191.band_comparison() no longer reproduces the stored cross-read "
+        "of the b190 bar")
+    n_quotable = sum(1 for k in led["_legs"]
+                     if isinstance(got_bar.get(k), float))
+    return (f"b191 M5-entry bar + trigger delta + b190 cross-band "
+            f"({n_quotable}/{len(led['_legs'])} legs quotable, "
+            f"anchor {led['M5W0_anchor']['anchor_ok']})")
 
 
 def _books_verdict_check(mod_name: str, script: str, ledger: str) -> str:
@@ -760,6 +786,7 @@ CHECKS = (
     check_b143_derived_blocks,
     check_b141_rollover_blocks,
     check_b190_merit_bar_blocks,
+    check_b191_m5_window_blocks,
     check_b84_rr_gate_verdict,
     check_b86_range_kill_verdict,
     check_b88_defcon_verdict,
