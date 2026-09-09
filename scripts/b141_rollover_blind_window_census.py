@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -105,7 +106,14 @@ def _defcon(state: dict, balance: float) -> dict:
 
 
 def _kill(state: dict, balance: float, at: datetime) -> dict:
-    """check_kill_switch on a THROWAWAY state file (it writes when it halts)."""
+    """check_kill_switch on a THROWAWAY state file (it writes when it halts).
+
+    b128 hygiene (2026-09-09): the throwaway dir MUST be removed on exit.
+    `mkdtemp` without cleanup leaks one dir per call — registering this
+    module's pure functions in scripts/b127_producer_reproduction.py made the
+    suite re-run the 28-step synthetic sweep on every check pass, and /tmp
+    woke up with ~42k `b141kill_*` dirs (663 MB) from repeated runs.
+    """
     tmp = Path(tempfile.mkdtemp(prefix="b141kill_"))
     (tmp / "data" / "xau_plan").mkdir(parents=True, exist_ok=True)
     old = os.environ.get("HERMES_DATA_ROOT")
@@ -124,6 +132,7 @@ def _kill(state: dict, balance: float, at: datetime) -> dict:
         else:
             os.environ["HERMES_DATA_ROOT"] = old
         paths.set_data_root(None)
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def consumers(state: dict, balance: float, at: datetime) -> dict:

@@ -91,9 +91,12 @@ def _load(path: str) -> dict:
 def _load_probe():
     """b114's drift probe is not a package module (scripts/ has no __init__
     guarantee for it); load it by path the way its own test does."""
+    return _load_probe_by_name("b114_daemon_code_drift.py")
+
+
+def _load_probe_by_name(fname: str):
     spec = importlib.util.spec_from_file_location(
-        "b114_probe", os.path.join(_ROOT, "scripts",
-                                   "b114_daemon_code_drift.py"))
+        fname[:-3], os.path.join(_ROOT, "scripts", fname))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -607,6 +610,104 @@ def check_b143_derived_blocks() -> str:
             f"({len(rec)} positions, 0 realized_net mismatches)")
 
 
+# ── b128 (2026-09-09): the producers b127 did not cover, now registered ─────
+# b128's rule: every frozen ledger with PURE post-processing gets a CHECKS
+# entry in the same commit that ships it, and a producer whose derived blocks
+# are re-runnable but UNREGISTERED is a silent hole. The coverage scan filed
+# as MISSING by b127's own diff: b136/b137/b140/b141 (censuses feeding gate
+# decisions) and b84/b86/b88 (the books ledgers behind the min_rr,
+# range-kill and DEFCON decisions). Each check below pins the half that is
+# pure arithmetic on the ledger's OWN embedded inputs; where a producer's
+# measurement half needs a live bridge or the funnel replay, the check says
+# so and pins only the re-derivable half.
+
+LEDGER_141 = os.path.join(BT, "b141_rollover_blind_window_census.json")
+LEDGER_84 = os.path.join(BT, "b84_rr_gate_books.json")
+LEDGER_86 = os.path.join(BT, "b86_range_kill_books.json")
+LEDGER_88 = os.path.join(BT, "b88_defcon_books.json")
+
+
+def check_b141_rollover_blocks() -> str:
+    """The b141 census behind the pending A-vs-B human decision: its three
+    derived blocks must still follow from the deals it embedded. Option A is
+    decision-blocking, so a number that silently rotted here would mis-price
+    a risk-gate change."""
+    from scripts import b141_rollover_blind_window_census as b141
+    led = _load(LEDGER_141)
+    bal = float(led["_balance_used"])
+    got = b141.derive(led["_deals_embedded"], bal)
+    assert got == led["derived"], ("b141.derive() no longer reproduces the "
+                                   "boundary rows — the rollover replay "
+                                   "changed shape")
+    sweep = b141.synthetic_arms(bal)
+    assert sweep == led["synthetic_sweep"], ("b141.synthetic_arms() moved the "
+                                             "28-step threshold sweep (the "
+                                             "kill-leg arming evidence)")
+    v = b141.verdict(led["derived"], led["_thresholds"])
+    assert v == led["verdict"], f"b141.verdict() no longer {led['verdict']!r}"
+    return (f"b141 derive + synthetic sweep + verdict "
+            f"({led['_deal_count']} embedded deals, "
+            f"{led['derived']['blind_count']} blind boundaries)")
+
+
+def _books_verdict_check(mod_name: str, script: str, ledger: str) -> str:
+    """b84/b86/b88 share a shape: verdict(led) re-derives the decision cells
+    from the stored leg blocks (the funnel replay itself is NOT re-run —
+    b127's rule: pin the pure half, say so)."""
+    mod = _load_probe_by_name(script)
+    led = _load(ledger)
+    got = mod.verdict(led)
+    assert got == led["_verdict"], (
+        f"{mod_name}.verdict() no longer reproduces its frozen ledger — the "
+        "arm-vs-incumbent decision cells moved under the stored legs")
+    return f"{mod_name} verdict ({len(got)} legs) exact on stored blocks"
+
+
+def check_b84_rr_gate_verdict() -> str:
+    return _books_verdict_check("b84", "b84_rr_gate_books.py", LEDGER_84)
+
+
+def check_b86_range_kill_verdict() -> str:
+    return _books_verdict_check("b86", "b86_range_kill_books.py", LEDGER_86)
+
+
+def check_b88_defcon_verdict() -> str:
+    return _books_verdict_check("b88", "b88_defcon_books.py", LEDGER_88)
+
+
+def check_b137_self_check_still_clean() -> str:
+    """b137's derive() consumes live-discovered inputs (learning floor,
+    style map, DEFCON overrides) that the ledger does NOT embed, so the
+    re-runnable pure half is self_check(ledger['_derived']) — the b122
+    invariant set a census that cannot fail will silently rot. It must still
+    return zero problems, AND the double-count it documented must still
+    reproduce: if b138 dedups it, this check is the tripwire that says the
+    census was retired, not drifted."""
+    from scripts import b137_shrink_stack_census as b137
+    led = _load(os.path.join(BT, "b137_shrink_stack_census.json"))
+    problems = b137.self_check(led["_derived"])
+    assert problems == [], f"b137 self_check fires: {problems}"
+    return "b137 self_check clean (4 dampers, double-count reproduces)"
+
+
+def check_b140_derive_and_self_check() -> str:
+    """b140 embedded its full collected arms, so BOTH halves are re-runnable:
+    derive() must reproduce the sizing/scoring blocks exactly and self_check()
+    must still find no problems (locked regimes block, tight regimes shrink,
+    scorer sees the real regime). This census is the evidence that the signal
+    lane sees drawdown regimes (b140's wiring fix); drift here means the
+    wiring claim rotted."""
+    from scripts import b140_signal_lane_regime_census as b140
+    led = _load(os.path.join(BT, "b140_signal_lane_regime_census.json"))
+    got = b140.derive(led)
+    assert got == led["derived"], ("b140.derive() no longer reproduces the "
+                                   "frozen arms — lane sizing/scoring moved")
+    problems = b140.self_check(led)
+    assert problems == [], f"b140 self_check fires: {problems}"
+    return (f"b140 derive + self_check ({len(got['sizing'])} arms, "
+            f"0 problems)")
+
+
 CHECKS = (
     check_b81_verdict,
     check_b81_delta_cells,
@@ -634,6 +735,12 @@ CHECKS = (
     check_b161_verdict_and_census,
     check_b163_derived_blocks,
     check_b143_derived_blocks,
+    check_b141_rollover_blocks,
+    check_b84_rr_gate_verdict,
+    check_b86_range_kill_verdict,
+    check_b88_defcon_verdict,
+    check_b137_self_check_still_clean,
+    check_b140_derive_and_self_check,
 )
 
 

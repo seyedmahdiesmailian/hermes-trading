@@ -21,13 +21,11 @@ This landing does three things:
    read).
 
 3. MEASUREMENT (2026-09-09):
-     skip_reason    LIVE        (3W runtime / 2R brief-append in same file)
-     skip_reasons   WRITE-ONLY  (written at hermes_runtime 677,782; production
-                                 has ZERO readers — the multi-gate rejection
-                                 list never reaches the brief; only the
-                                 singular skip_reason line ships. Filed as a
-                                 follow-up todo, NOT silently "fixed" here.)
-     reasons        LIVE        (35W / 8R — lane dict wired both ways)
+      skip_reason    LIVE        (3W runtime / 2R brief-append in same file)
+      skip_reasons   WRITE-ONLY at filing -> FIXED same day by b185
+                                  (hermes_runtime._skip_reason_detail is the
+                                  reader; the LIVE pins below moved with it)
+      reasons        LIVE        (35W / 8R — lane dict wired both ways)
    Pinned so a rename, a new reader, or a deletion must pass through this file.
 """
 import ast
@@ -95,27 +93,40 @@ class TestReportDictFamilyCensus(unittest.TestCase):
                       " ".join(self.data["skip_reason"]["readers"]))
 
     def test_b185_defect_filed_with_named_pin(self):
-        # b102 carrier: the WRITE-ONLY finding below must live somewhere a
-        # future run can pick up, not only in this file's prose.
+        # b102 carrier: b185 was filed from this census and LANDED the same
+        # day (hermes_runtime._skip_reason_detail is the reader). The pin
+        # moved from "- [ ] b185" to "- [x] b185" together with the fix — a
+        # future run that un-wires the reader must re-open the todo, not
+        # silently drop this assertion.
         with open(os.path.join(ROOT, "data", "ops",
                                "autopilot_backlog.md"), encoding="utf-8") as f:
-            self.assertIn("- [ ] b185", f.read(),
-                          "skip_reasons write-only defect must stay filed "
-                          "as todo b185 until someone wires or drops the key")
+            self.assertIn("- [x] b185", f.read(),
+                          "skip_reasons write-only defect was FIXED by "
+                          "b185 (reader wired); it must stay closed-with-"
+                          "evidence unless the reader is removed")
 
-    def test_skip_reasons_measured_write_only(self):
-        # Pinned as MEASURED, not as desired: an observability defect is
-        # filed (todo b185), and whoever wires or drops the key must edit
-        # this pin either way.
+    def test_skip_reasons_now_live_after_b185(self):
+        # b185 (2026-09-09, THIS pin flipped per b102): the WRITE-ONLY
+        # measurement below stood until hermes_runtime._skip_reason_detail
+        # became the reader — the plural rejection list now renders as one
+        # supplementary line under '⚠️ اجرا نشد' (observability only). The
+        # pin moved from WRITE-ONLY to LIVE together with the finding, and
+        # tests/test_b185_skip_reasons_reader.py owns the behaviour proof.
         v = verdict(self.data["skip_reasons"])
-        self.assertEqual(v, "WRITE-ONLY",
+        self.assertEqual(v, "LIVE",
                          "skip_reasons changed shape — update the backlog "
                          "finding and this pin together")
         self.assertEqual(
             sorted(os.path.basename(s.split(":")[0])
                    for s in self.data["skip_reasons"]["writers"]),
             ["hermes_runtime.py", "hermes_runtime.py"])
-        self.assertEqual(self.data["skip_reasons"]["readers"], set())
+        self.assertTrue(self.data["skip_reasons"]["readers"],
+                        "b185's reader (hermes_runtime._skip_reason_detail) "
+                        "vanished — the list is write-only again; re-file the "
+                        "defect, do not just edit this pin")
+        self.assertTrue(
+            any(s.startswith("hermes_runtime.py")
+                for s in self.data["skip_reasons"]["readers"]))
 
     def test_reasons_lane_carrier_is_live_both_ways(self):
         d = self.data["reasons"]
