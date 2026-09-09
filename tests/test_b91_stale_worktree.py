@@ -184,7 +184,7 @@ class TestSweepRealWorktrees(unittest.TestCase):
             self.assertNotIn(str(alive_wt), removed,
                              "an age-0 sweep removed an ALIVE owner's "
                              "worktree — the owner check must outrank age")
-            self.assertTrue(all(WORKTREE_PREFIX in p for p in removed),
+            self.assertTrue(all(head_verify.WORKTREE_PREFIX in p for p in removed),
                             "the sweep removed something outside its own "
                             f"prefix: {removed}")
             self.assertIn(str(REPO), _worktree_paths())
