@@ -176,13 +176,39 @@ def render_reassess_brief(old_plan: dict | None, new_plan: dict) -> str:
 
 def render_monitor_brief(plan: dict, monitor: dict) -> str:
     symbol = _symbol_fa(plan.get("symbol"))
-    return "\n".join([
+    lines = [
         f"👀 پایش | {symbol}",
         f"جهت | {_bias_fa(plan.get('bias'))}",
         f"وضعیت | {_action_fa(monitor.get('action'))}",
         f"توضیح | {_monitor_explanation_fa(monitor)}",
         f"قیمت | {_fmt_price(monitor.get('price'))}",
-    ])
+    ]
+    # b171: the entry-path vetoes write spread_blocked / calendar_unavailable /
+    # macro_blocked into this same monitor dict (hermes_runtime 640-678) but
+    # NOTHING rendered them — the census showed writer-set >0, reader-set =0,
+    # the write-only mirror of the b170 dead-gate class. A wide-spread or
+    # blind-calendar veto killed a real setup and the brief looked identical
+    # to "no setup formed". Reporting only: no gate, threshold, or verdict
+    # path changes.
+    veto = _entry_veto_fa(monitor)
+    if veto:
+        lines.append(veto)
+    return "\n".join(lines)
+
+
+def _entry_veto_fa(monitor: dict) -> str:
+    """One line explaining WHY an otherwise-valid entry proposal was vetoed."""
+    if monitor.get("spread_blocked"):
+        try:
+            _spr = float(monitor["spread_blocked"])
+            return f"🚫 اسپرد {_spr:.2f}$ بیش از حد مجاز — ورود لغو شد"
+        except (TypeError, ValueError):
+            return "🚫 اسپرد غیرمجاز — ورود لغو شد"
+    if monitor.get("calendar_unavailable"):
+        return "⚠️ تقویم اخبار دیده نشد — ورود مسدود (fail-closed)"
+    if monitor.get("macro_blocked"):
+        return f"⚠️ پشت‌بند اخبار: {str(monitor['macro_blocked'])[:80]}"
+    return ""
 
 
 def render_execution_brief(plan: dict, execution: dict) -> str:

@@ -74,7 +74,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       execute), AST census that every literal return carries `reasons`
       (anti-vacuity floor 20), headline == reason on the Check-1 paths, and
       the runtime observability lines.
-- [ ] b171 REUSABLE PROCEDURE — A READER-SIDE SOURCE PIN IS NOT WIRING: FOR
+- [x] b171 REUSABLE PROCEDURE — A READER-SIDE SOURCE PIN IS NOT WIRING: FOR
       EVERY GATE FLAG, CENSUS THE WRITERS BEFORE BELIEVING THE GATE IS LIVE
       (filed by b170, 2026-09-09): test_b132 pinned that auto_executor
       "must still honour the macro veto flag" by grepping the CONSUMER — and
@@ -93,6 +93,30 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       calendar_unavailable, stale_* — same grep, same writer-set census.
       Name-carrier: tests/test_b170_macro_veto_wiring.py::
       TestB170Check7Live.
+      DONE 2026-09-09 (this run): census run BOTH ways over 48 production
+      files (scripts/b171_flag_gate_census.py) — found the MIRROR bug:
+      hermes_runtime writes spread_blocked/calendar_unavailable/macro_blocked
+      into `monitor` with ZERO production readers, so a wide-spread or blind-
+      calendar veto of a REAL setup rendered the same brief as "no setup
+      formed". Fix is reader-side only (engines/report.render_monitor_brief
+      +_entry_veto_fa, one Persian veto line; no gate/threshold/verdict
+      touched); stale_rates/stale_tick measured DEAD-NO-WRITER (test
+      vocabulary only) and pinned as such. 14 tests
+      (tests/test_b171_flag_gate_census.py).
+- [ ] b172 REUSABLE PROCEDURE — A WRITER-ONLY VETO IS THE MIRROR OF A DEAD
+      GATE: CENSUS REPORT-DICT FLAGS TOO, NOT JUST GATE KEYS (filed by the
+      b171 run, 2026-09-09): b171's rule caught blocked_by_macro (no writer,
+      dead gate); the same pass over the monitor/brief dicts found the
+      opposite shape — vetoes WRITTEN (hermes_runtime 640-678) with no
+      production reader, invisible in the Telegram brief. RULE: run
+      scripts/b171_flag_gate_census.py's census over BOTH families each time
+      a gate or a brief field is added: (a) keys a gate READS (needs a
+      writer) and (b) keys the runtime WRITES for reporting (needs a reader
+      in engines/report.py or notifier/dashboards.py). A write-only veto is
+      an observability defect exactly like a read-only gate is a wiring
+      defect. NEXT: extend the flag list to skip_reason/skip_reasons and the
+      signal-lane execution dicts (signal_listener writes 'reasons',
+      dashboards reads reasons[:3] — same both-ways check).
 - [x] b167 TRADER CODE REVIEW (cross-module parity, 2026-09-09) — THE RUNTIME
       FALLBACK PATH LET A NEWS LOCK STEAL THE BREAKEVEN FLAG; b32 FIXED IT ONLY
       IN THE WATCHDOG. hermes_runtime.cycle's manage-fallback wrote
