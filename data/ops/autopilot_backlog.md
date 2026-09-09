@@ -103,20 +103,30 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       touched); stale_rates/stale_tick measured DEAD-NO-WRITER (test
       vocabulary only) and pinned as such. 14 tests
       (tests/test_b171_flag_gate_census.py).
-- [ ] b172 REUSABLE PROCEDURE — A WRITER-ONLY VETO IS THE MIRROR OF A DEAD
+- [ ] b185 TRADER OBSERVABILITY — skip_reasons IS WRITE-ONLY: THE MULTI-GATE
+      REJECTION LIST NEVER REACHES A HUMAN (filed by the b172 census,
+      2026-09-09): hermes_runtime.py:677 (macro veto) and :782 (entry
+      vetoes) copy evaluate_proposal's plural `reasons` into
+      proposal['skip_reasons'], but the repo-wide census finds ZERO
+      production readers — engines/report.py and the notifier render only
+      the SINGULAR skip_reason line, so when several gates fire at once
+      (e.g. spread_blocked + calendar_unavailable) the brief shows one
+      reason and silently drops the rest. Same defect class as b170's
+      mute Check-1 exits, one key later. FIX is reader-side only:
+      render_monitor_brief/_entry_veto_fa should append the full list
+      (tightening-neutral: adds strings, never removes a block). Flip
+      tests/test_b172_report_dict_census.py's WRITE-ONLY pin in the SAME
+      commit (b102 rule: the pin and the finding move together).
+- [x] b172 REUSABLE PROCEDURE — A WRITER-ONLY VETO IS THE MIRROR OF A DEAD
       GATE: CENSUS REPORT-DICT FLAGS TOO, NOT JUST GATE KEYS (filed by the
-      b171 run, 2026-09-09): b171's rule caught blocked_by_macro (no writer,
-      dead gate); the same pass over the monitor/brief dicts found the
-      opposite shape — vetoes WRITTEN (hermes_runtime 640-678) with no
-      production reader, invisible in the Telegram brief. RULE: run
-      scripts/b171_flag_gate_census.py's census over BOTH families each time
-      a gate or a brief field is added: (a) keys a gate READS (needs a
-      writer) and (b) keys the runtime WRITES for reporting (needs a reader
-      in engines/report.py or notifier/dashboards.py). A write-only veto is
-      an observability defect exactly like a read-only gate is a wiring
-      defect. NEXT: extend the flag list to skip_reason/skip_reasons and the
-      signal-lane execution dicts (signal_listener writes 'reasons',
-      dashboards reads reasons[:3] — same both-ways check).
+      b171 run, 2026-09-09): DONE 2026-09-09 (harvested landing):
+      census(flags=[...]) now drives the AST walker itself (pre-fix a new
+      key outside module FLAGS returned all-zero sets that READ like
+      DEAD-NO-WRITER but were a tool artifact — RED-proof test 1); FLAGS
+      extended with skip_reason/skip_reasons/reasons. MEASURED:
+      skip_reason LIVE, reasons LIVE (35W/8R lane), skip_reasons
+      WRITE-ONLY -> filed as b185, pinned as measured. 7 tests
+      (tests/test_b172_report_dict_census.py).
 - [x] b167 TRADER CODE REVIEW (cross-module parity, 2026-09-09) — THE RUNTIME
       FALLBACK PATH LET A NEWS LOCK STEAL THE BREAKEVEN FLAG; b32 FIXED IT ONLY
       IN THE WATCHDOG. hermes_runtime.cycle's manage-fallback wrote

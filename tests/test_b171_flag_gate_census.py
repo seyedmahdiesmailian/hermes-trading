@@ -100,6 +100,20 @@ class TestProductionCensus(unittest.TestCase):
         self.assertEqual(verdict(self.data["stale_tick"]), "DEAD-NO-WRITER")
 
 
+class TestB172FiledPins(unittest.TestCase):
+    """b102 carrier for b171's parked claim: b171's commit message said
+    "filed b172" (the write-only report-dict mirror pass). The claim must
+    not live only in git prose — b172 landed as
+    tests/test_b172_report_dict_census.py; this pin names both items."""
+
+    def test_b171_filed_b172_and_it_landed(self):
+        self.assertTrue(
+            os.path.exists(os.path.join(ROOT, "tests",
+                                        "test_b172_report_dict_census.py")),
+            "b171's commit filed b172 (report-dict census both ways) but the "
+            "landing file vanished")
+
+
 class TestMonitorBriefShowsVeto(unittest.TestCase):
     PLAN = {"symbol": "XAUUSD", "bias": "bullish"}
 

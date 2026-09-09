@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T02:50:26.583022+00:00",
+ "last_run_utc": "2026-09-09T05:35:19.849731+00:00",
  "recent_commits": [
+  "173c193 b182 pins \u2014 the exit policy made b111's second-order divergences visible",
+  "52827ad b182 TRADER EXIT \u2014 THE AMPUTATED WINNER: half at TP1-mid, ride the rest",
+  "e7ad1e1 autopilot: b171 flag-gate census both ways \u2014 found write-only entry vetoes (spread_blocked/calendar_unavailable/macro_blocked had zero brief readers); reader-side fix in render_monitor_brief + b172 filed",
   "5b2aa5d autopilot: b170 backlog note + filed b171 (writer-census rule for flag-keyed gates)",
-  "539953b autopilot: b170 macro-veto wiring \u2014 apply_macro_guard now sets blocked_by_macro (Check 7's flag had ZERO producers repo-wide, b132's pin certified a dead wire); evaluate_proposal's three Check-1 exits now carry 'reasons' (b165 defect class one module over); runtime records skip_reason=macro_blackout on a blocked plan proposal so a blackout-that-killed-a-setup is distinguishable from no-setup; all tightening-neutral; 7 tests (test_b170_macro_veto_wiring)",
-  "39cbab1 autopilot: b169 TP-ladder parity \u2014 runtime fallback now builds the same b44/b60 ladder as the watchdog (b168 census rule exercised); lands parked b127/b143 pure-function harvest",
-  "3575155 autopilot: b167 news_lock must not arm breakeven_active on the runtime fallback path (b32 parity, shared is_news_lock predicate); file b168",
-  "1bdd92f autopilot: b165 harvest+landing (b46 shape: verified work of the run killed mid-flight) \u2014 signal_decision.evaluate_signal's four early returns shipped without the plural 'reasons' every downstream reader consumes (daemon alert, runtime skip_reasons, ops panel, b163 census align_of); blackout journal row 2026-09-04 proves the gap live (reason-without-reasons), 5 contract tests added; plus this run's fixes: blackout reason now reuses reasons[-1] (headline==appended entry, empty-reason disagreement healed), b163 frozen-rows test renamed test_b164_* to pay b163's b102 debt (HEAD 835061a BROKEN #1), leaked hand-made worktree /tmp/b163wt removed (HEAD BROKEN #2, b50 leak test correctly counted it); added todo b166 (worktree ownership procedure)"
+  "539953b autopilot: b170 macro-veto wiring \u2014 apply_macro_guard now sets blocked_by_macro (Check 7's flag had ZERO producers repo-wide, b132's pin certified a dead wire); evaluate_proposal's three Check-1 exits now carry 'reasons' (b165 defect class one module over); runtime records skip_reason=macro_blackout on a blocked plan proposal so a blackout-that-killed-a-setup is distinguishable from no-setup; all tightening-neutral; 7 tests (test_b170_macro_veto_wiring)"
  ]
 }

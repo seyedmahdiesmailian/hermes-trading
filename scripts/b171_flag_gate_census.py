@@ -40,6 +40,15 @@ FLAGS = [
     "trade_allowed",
     "runner_allowed",
     "scale_in_allowed",
+    # b172 (2026-09-09): the REPORT-DICT family. b171's rule says the census
+    # must run both ways over the keys the runtime WRITES for reporting too —
+    # a write-only veto is an observability defect exactly like a read-only
+    # gate is a wiring defect. skip_reason/skip_reasons/reasons are the
+    # Telegram/brief carriers; degraded is the calendar's "served from an aged
+    # cache because both live sources failed" bit.
+    "skip_reason",
+    "skip_reasons",
+    "reasons",
 ]
 
 EXCLUDE_PARTS = ("legacy", "tests", "scripts", ".git", ".venv", "node_modules")
@@ -76,21 +85,28 @@ def reads_same_key(node, name):
 
 
 class _Walk(ast.NodeVisitor):
-    def __init__(self, rel):
+    def __init__(self, rel, flags=None):
         self.rel = rel
+        # b172: the census must filter against the CALLER's wanted set.
+        # `census(flags=[...])` used to narrow only the reporting loop while
+        # the walker kept comparing against the module-level FLAGS — so a
+        # census over any NEW key (skip_reason, reasons, degraded beyond the
+        # default list) returned all-zero writer/reader sets that READ like
+        # "DEAD-NO-WRITER" findings but were an artifact of the tool.
+        self.flags = set(flags if flags is not None else FLAGS)
         self.sites = []  # (flag, 'W'|'R'|'P', lineno)
 
     def visit_Dict(self, node):
         for k, v in zip(node.keys, node.values):
             name = const_str(k)
-            if name in FLAGS:
+            if name in self.flags:
                 kind = "P" if reads_same_key(v, name) else "W"
                 self.sites.append((name, kind, k.lineno))
         self.generic_visit(node)
 
     def visit_Subscript(self, node):
         name = const_str(node.slice)
-        if name in FLAGS:
+        if name in self.flags:
             if isinstance(node.ctx, ast.Store):
                 self.sites.append((name, "W", node.lineno))
             elif isinstance(node.ctx, ast.Load):
@@ -102,28 +118,28 @@ class _Walk(ast.NodeVisitor):
         if isinstance(f, ast.Attribute):
             if f.attr in ("get", "pop") and node.args:
                 name = const_str(node.args[0])
-                if name in FLAGS:
+                if name in self.flags:
                     self.sites.append((name, "R", node.lineno))
             elif f.attr == "setdefault" and node.args:
                 name = const_str(node.args[0])
-                if name in FLAGS:
+                if name in self.flags:
                     self.sites.append((name, "W", node.lineno))
             elif f.attr == "update":
                 for a in node.args:
                     if isinstance(a, ast.Dict):
                         for k in a.keys:
                             name = const_str(k)
-                            if name in FLAGS:
+                            if name in self.flags:
                                 self.sites.append((name, "W", node.lineno))
                 for kw in node.keywords:
-                    if kw.arg in FLAGS:
+                    if kw.arg in self.flags:
                         self.sites.append((kw.arg, "W", node.lineno))
         self.generic_visit(node)
 
     def visit_Compare(self, node):
         if any(isinstance(op, (ast.In, ast.NotIn)) for op in node.ops):
             name = const_str(node.left)
-            if name in FLAGS:
+            if name in self.flags:
                 self.sites.append((name, "R", node.lineno))
         self.generic_visit(node)
 
@@ -140,7 +156,7 @@ def census(flags=None):
             tree = ast.parse(p.read_text(encoding="utf-8"))
         except (SyntaxError, UnicodeDecodeError):
             continue
-        w = _Walk(rel)
+        w = _Walk(rel, wanted)
         w.visit(tree)
         for flag, kind, lineno in w.sites:
             if flag not in wanted:
