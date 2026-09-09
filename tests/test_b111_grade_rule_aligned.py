@@ -190,10 +190,23 @@ class TestB111Inertness(unittest.TestCase):
         self.assertEqual(grade_diff, 44,
                          f"the two rules now differ on {grade_diff} cells, not "
                          "the 44 b111 measured — re-read the probe")
-        self.assertEqual(outcome_diff, 9,
+        # b182 (2026-09-09) SUPERSEDES the 9-cell inertness claim. Once
+        # _partial_close_fraction takes 50% at a midpoint TP1 (volume>=0.02),
+        # the TP1 action no longer closes the ticket, so the post-TP1
+        # breakeven branch becomes broker-visible — and it is grade-aware
+        # (_breakeven_stop locks entry±0.15R only at grade>=2). The old
+        # full-close world hid every second-action divergence behind
+        # TICKET_CLOSED_AT_TP1. Measured here, not assumed: outcome_diff
+        # 9 -> 39, families {'aligned' B-vs-A} plus {'mixed' C-vs-B}.
+        # Both directions now take the SAME first broker action (partial
+        # 50%); they differ only in how aggressively the runner's stop is
+        # locked afterwards. The grade rule itself is unchanged — what
+        # changed is that the exit policy made its second-order effects
+        # observable.
+        self.assertEqual(outcome_diff, 39,
                          f"{outcome_diff} cells differ at the broker, not the "
-                         "9 b111 measured — the blast radius changed")
-        self.assertEqual(families, {("aligned", "B", "A")},
+                         "39 b182 re-measured — re-run this loop and re-pin")
+        self.assertEqual(families, {("aligned", "B", "A"), ("mixed", "C", "B")},
                          f"outcome-differing families grew: {families}")
 
     def test_b111_the_producer_cannot_emit_the_differing_cell(self):

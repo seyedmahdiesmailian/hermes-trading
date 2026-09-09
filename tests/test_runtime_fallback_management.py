@@ -136,9 +136,12 @@ class RuntimeFallbackTests(unittest.TestCase):
         result = cycle(bridge, dry_run=False)
         self.assertEqual(result.get('step'), 'manage')
         self.assertEqual(result['management']['action'], 'partial_take_profit')
-        # b55: default-grade trade now exits 100% at TP1 -> routed to
-        # close_position (MT5 rejects a 100% partial with retcode 10026)
-        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['close_position'])
+        # b182: midpoint-ladder TP1 with a farther final target and a
+        # splittable volume (0.02) takes 50% via partial_close. The b55-era
+        # pin said close_position because _partial_close_fraction returned
+        # 1.0 for every default-grade trade.
+        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['partial_close'])
+        self.assertEqual(bridge.mgmt_calls[0][1].get('percent'), 50)
         self.assertTrue(result['will_execute_now'])
 
     def test_buy_side_is_not_inverted(self):
@@ -155,8 +158,9 @@ class RuntimeFallbackTests(unittest.TestCase):
         result = cycle(bridge, dry_run=False)
         self.assertEqual(result.get('step'), 'manage')
         self.assertEqual(result['management']['action'], 'partial_take_profit')
-        # b55: full exit at TP1 -> close_position (see SELL twin above)
-        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['close_position'])
+        # b182: half at TP1 -> partial_close(50) (see SELL twin above)
+        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['partial_close'])
+        self.assertEqual(bridge.mgmt_calls[0][1].get('percent'), 50)
 
     def test_legacy_int_types_still_work(self):
         from hermes_runtime import cycle

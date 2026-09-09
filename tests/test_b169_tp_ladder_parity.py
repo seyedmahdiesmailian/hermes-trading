@@ -108,7 +108,10 @@ class TestBuildTpLadder(unittest.TestCase):
         result = cycle(bridge, dry_run=False)
         self.assertEqual(result.get('step'), 'manage', result)
         self.assertEqual(result['management']['action'], 'partial_take_profit')
-        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['close_position'])
+        # b182: this ladder has farther targets beyond the hit midpoint and
+        # the fixture volume is splittable -> 50% partial, not a full close.
+        self.assertEqual([c[0] for c in bridge.mgmt_calls], ['partial_close'])
+        self.assertEqual(bridge.mgmt_calls[0][1].get('percent'), 50)
 
     def test_fresh_heartbeat_still_skips_fallback(self):
         from engines.storage import save_current_plan
