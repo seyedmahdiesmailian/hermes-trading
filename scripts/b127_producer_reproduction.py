@@ -622,6 +622,7 @@ def check_b143_derived_blocks() -> str:
 # so and pins only the re-derivable half.
 
 LEDGER_141 = os.path.join(BT, "b141_rollover_blind_window_census.json")
+LEDGER_190 = os.path.join(BT, "b190_merit_bar_live_trigger.json")
 LEDGER_84 = os.path.join(BT, "b84_rr_gate_books.json")
 LEDGER_86 = os.path.join(BT, "b86_range_kill_books.json")
 LEDGER_88 = os.path.join(BT, "b88_defcon_books.json")
@@ -648,6 +649,28 @@ def check_b141_rollover_blocks() -> str:
     return (f"b141 derive + synthetic sweep + verdict "
             f"({led['_deal_count']} embedded deals, "
             f"{led['derived']['blind_count']} blind boundaries)")
+
+
+def check_b190_merit_bar_blocks() -> str:
+    """b190's post-processing (the coverage-gated bar + per-leg trigger delta)
+    is pure arithmetic on the frozen leg rows; the funnel replay itself is NOT
+    re-run (b127's rule: pin the pure half, say so). This is the ledger behind
+    the CURRENT merit-bar citation, so a rot here mis-prices every future
+    lab-vs-funnel comparison."""
+    from scripts import b190_merit_bar_live_trigger as b190
+    led = _load(LEDGER_190)
+    got_bar = b190.bar(led)
+    assert got_bar == led["_merit_bar_live_wired"], (
+        "b190.bar() no longer reproduces _merit_bar_live_wired — the "
+        "coverage gate or the leg rows moved under the shipped bar")
+    got_delta = b190.trigger_delta(led)
+    assert got_delta == led["_trigger_delta"], (
+        "b190.trigger_delta() moved the stored wired-minus-control deltas")
+    n_quotable = sum(1 for k in led["_legs"]
+                     if isinstance(got_bar.get(k), float))
+    return (f"b190 coverage-gated bar + trigger delta "
+            f"({n_quotable}/{len(led['_legs'])} legs quotable, "
+            f"mixed-sign delta intact)")
 
 
 def _books_verdict_check(mod_name: str, script: str, ledger: str) -> str:
@@ -736,6 +759,7 @@ CHECKS = (
     check_b163_derived_blocks,
     check_b143_derived_blocks,
     check_b141_rollover_blocks,
+    check_b190_merit_bar_blocks,
     check_b84_rr_gate_verdict,
     check_b86_range_kill_verdict,
     check_b88_defcon_verdict,

@@ -68,8 +68,13 @@ def m5_window_for(m5_stream: list[dict], m5_times: list[int],
     """b189 — the settled-M5 window live would hold at `decision_epoch`.
 
     ONE implementation of the slice, shared by `run_backtest`'s signal_fn and
-    by `scripts.b81_lane_rescore.funnel_fn`, so the two lab paths cannot drift
-    into pricing the b187 trigger off different bar sets (the b109/b169 class).
+    by `scripts.b190_merit_bar_live_trigger.coverage` (the trigger-fires-there
+    census), so the paths cannot price the b187 trigger off different bar sets
+    (the b109/b169 class). NOTE (b190, measured): `scripts.b81_lane_rescore.
+    funnel_fn` does NOT call this — it invokes `strategy_signal` without
+    `m5_rows` on M15 windows, which derives nothing — so every b81-based
+    ledger (b117/b118/b109/b119...) prices the funnel trigger-LESS; that is
+    exactly the gap the b190 re-baseline was built to price.
     """
     if not m5_stream or not isinstance(decision_epoch, (int, float)):
         return []
