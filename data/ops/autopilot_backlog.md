@@ -4353,3 +4353,5 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   after >=30 live b187 trades; slot expansion de-prioritized until fill count doubles.
 
 - [x] b191b TP GEOMETRY (done 2026-09-09): plan ladder beats ATR-clamps 0.96-1.61 vs raw 2.08 serial R/wk; tp1=mid worse; keep raw geometry, gate unchanged.
+
+- [x] b192 SIGNAL PARSER SANITY (done 2026-09-09): bare-number entry needs same-order-of-magnitude guard; promo "PROFIT 1236$" became BUY@1236; time-stamped replay of 52 logged signals: 45 unchanged, 1 ad killed, 6 corrected; 4 regression tests; deployed+restarted signal daemon.
