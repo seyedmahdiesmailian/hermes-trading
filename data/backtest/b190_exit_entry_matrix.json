@@ -1,0 +1,99 @@
+{
+  "legs": 45,
+  "days": 153.2,
+  "matrix": {
+    "A_immediate|P0_full": {
+      "fills": 43,
+      "par_win": 0.488,
+      "par_R": 8.52,
+      "ser_taken": 25,
+      "ser_win": 0.56,
+      "ser_R": 7.62,
+      "ser_R_wk": 0.348
+    },
+    "A_immediate|P2_half": {
+      "fills": 43,
+      "par_win": 0.512,
+      "par_R": 8.82,
+      "ser_taken": 24,
+      "ser_win": 0.583,
+      "ser_R": 8.67,
+      "ser_R_wk": 0.396
+    },
+    "A_immediate|P3_ride": {
+      "fills": 43,
+      "par_win": 0.395,
+      "par_R": 3.53,
+      "ser_taken": 20,
+      "ser_win": 0.45,
+      "ser_R": 0.67,
+      "ser_R_wk": 0.031
+    },
+    "A_immediate|P4_trail": {
+      "fills": 43,
+      "par_win": 0.512,
+      "par_R": 8.93,
+      "ser_taken": 25,
+      "ser_win": 0.6,
+      "ser_R": 7.55,
+      "ser_R_wk": 0.345
+    },
+    "A_immediate|T24": {
+      "fills": 43,
+      "par_win": 0.512,
+      "par_R": 8.82,
+      "ser_taken": 24,
+      "ser_win": 0.583,
+      "ser_R": 8.67,
+      "ser_R_wk": 0.396
+    },
+    "C_confirm3|P0_full": {
+      "fills": 32,
+      "par_win": 0.562,
+      "par_R": 39.84,
+      "ser_taken": 22,
+      "ser_win": 0.591,
+      "ser_R": 37.62,
+      "ser_R_wk": 1.718
+    },
+    "C_confirm3|P2_half": {
+      "fills": 32,
+      "par_win": 0.656,
+      "par_R": 44.89,
+      "ser_taken": 19,
+      "ser_win": 0.632,
+      "ser_R": 42.75,
+      "ser_R_wk": 1.953
+    },
+    "C_confirm3|P3_ride": {
+      "fills": 32,
+      "par_win": 0.5,
+      "par_R": 45.04,
+      "ser_taken": 16,
+      "ser_win": 0.5,
+      "ser_R": 45.96,
+      "ser_R_wk": 2.099
+    },
+    "C_confirm3|P4_trail": {
+      "fills": 32,
+      "par_win": 0.656,
+      "par_R": 43.59,
+      "ser_taken": 21,
+      "ser_win": 0.619,
+      "ser_R": 40.77,
+      "ser_R_wk": 1.862
+    },
+    "C_confirm3|T24": {
+      "fills": 32,
+      "par_win": 0.656,
+      "par_R": 44.89,
+      "ser_taken": 19,
+      "ser_win": 0.632,
+      "ser_R": 42.75,
+      "ser_R_wk": 1.953
+    }
+  },
+  "ledger": [],
+  "v2_note": "v2 conservative: stop touch-based close-only-targets; nearest real ladder rung TP1; serial K-sweep with real hold-time in b190_slot_sweep.json",
+  "verdict": "C_confirm3|P2_half = deployed config. Serial R/wk: P2 K1 +1.79, K2 +1.91, K3 +1.96 (win 0.63->0.71); P3_ride +2.10 flat but win 0.50 (high variance, longer holds). Slot expansion buys only ~0.15R/wk - NOT the binding constraint after b187/b188 cuts fills to ~19/153d. A_immediate rows confirm b187: 0.35-0.40 R/wk vs 1.79-2.10. T24==P2 (timeout never binds). Keep b187+P2; do NOT loosen exits; revisit slots only if fill count doubles."
+}
