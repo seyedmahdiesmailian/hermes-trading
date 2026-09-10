@@ -47,6 +47,38 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b205 HARVESTED (b47 run, 2026-09-10) TRADER PARITY DEFECT — THE POST-TP1 BREAKEVEN
+      MOVE WAS NOT A RATCHET (the b202 sibling verb): engines/trade_management's
+      `move_stop_to_breakeven` branch gated `new_sl` only against the MARKET (b44/b52
+      0.50$ gap), never against the SL already on the book. legacy_guards.evaluate_news_lock
+      REUSES that action name and DOES enforce `protective` — proof the codebase knows the
+      verb must tighten-only — so after a pre-TP1 news lock tightened SL, the post-TP1 BE
+      proposal (entry+0.15R) shipped a modify that GAVE THE LOCK BACK: probe reproduced
+      $46.8 of loosening on HEAD (entry 4430, lock 4485, BE 4438.25 at price 4492) and the
+      executor sends it straight to bridge.modify_position, refunding news protection in the
+      worst-volatility window. Parity: the funnel prices BE exactly once and never moves a
+      better stop backwards (engines/backtest.py t["sl"] only set when worse) — pure
+      lab/live drift, b123 class. Fix (parked by a killed run, harvested): `improves =
+      new_sl > sl if side_buy else new_sl < sl` ordered before the gap check; a
+      not-improving proposal falls through SILENTLY (an early hold RETURN would starve the
+      runner-trail branch BE is evaluated before — pinned by test). No gate loosened,
+      funnel unchanged, no ledger re-derivation. RENUMBERED b204->b205 at harvest: the
+      killed run's label had already been claimed by b183's procedure item (commit
+      3248234) twenty minutes before the park — a token collision b203's rule
+      caught; 5 tests (tests/test_b205_be_ratchet.py), probe
+      scripts/b205_be_ratchet_probe.py. [TRADER: live stop moves are tighten-only, both]
+- [ ] b206 REUSABLE PROCEDURE — BEFORE HARVEST RENAMES NOTHING, CHECK THE TOKEN
+      WAS NOT ALREADY CLAIMED (learned harvesting b205, 2026-09-10): a killed run's parked
+      work stamps its own chosen number in code comments and file names, but the backlog
+      item list is written by OTHER runs and may already contain that number — b183's
+      procedure item was committed AS b204 at 05:14 UTC (3248234) and the BE-ratchet
+      parked at 05:34 UTC (this morning's killed run) stamped the same token, so the
+      harvest would have committed a colliding label. RULE: before harvesting,
+      `grep -rhoE "\bb[0-9]{2,3}[a-z]*\b" backlog + all code | sort -u` and check the
+      parked token is NOT already a backlog item; if it is, rename files AND stamps in
+      the harvest commit and record the collision in the done-note (this run: blanket
+      b204->b205, collision documented in the test docstring). Cost: one grep; benefit:
+      the audit trail's primary key stays unique.
 - [x] b202 HARVESTED (b47 run, 2026-09-10) TRADER PARITY DEFECT — THE LIVE RUNNER TRAIL
       WAS NOT A RATCHET: engines/trade_management.evaluate_trade_management proposed
       `price ∓ trail_distance` on every post-TP2 tick with NO comparison to the SL already
