@@ -1,15 +1,15 @@
 {
   "_note": "b114: does each long-lived trading daemon run the code at HEAD? Python binds at import, so a committed change to the live ladder is inert until the service restarts.",
-  "_generated_at": "2026-09-09T00:00:06.965359+00:00",
-  "head": "357515555092fba81244f6e3eccfd65ef172a66d",
+  "_generated_at": "2026-09-10T06:58:46.157957+00:00",
+  "head": "4bec481b0b06fab2a83289c1d6f8aad9418ee3ac",
   "daemons": {
     "position_daemon.py": {
       "running": true,
-      "started_utc": "2026-09-03T14:45:01+00:00",
-      "stale_hours": 129.3,
+      "started_utc": "2026-09-09T05:15:45+00:00",
+      "stale_hours": 25.7,
       "boot_commit": {
-        "sha": "29bebc4d4f6f4d278a7dbee86ee7ba3025d9f4fb",
-        "committed_at": "2026-09-03T14:37:34+03:30"
+        "sha": "52827ad9f588d6a4aebd8e35e75de16b06241a2f",
+        "committed_at": "2026-09-09T08:29:56+03:30"
       },
       "closure_files": 17,
       "closure": [
@@ -33,67 +33,32 @@
       ],
       "changed_since_boot": [
         {
-          "file": "bridge_client.py",
-          "commits_since_boot": [
-            "dbb7268 2026-09-04T19:14:20+03:30",
-            "3b56148 2026-09-04T13:48:56+03:30"
-          ]
-        },
-        {
           "file": "engines/auto_executor.py",
           "commits_since_boot": [
-            "848e4de 2026-09-08T07:57:15+03:30",
-            "057376a 2026-09-08T03:54:20+03:30",
-            "df4e9d8 2026-09-07T05:55:13+03:30"
+            "3b9215d 2026-09-09T23:58:12+03:30"
           ]
         },
         {
-          "file": "engines/defcon.py",
+          "file": "engines/orchestrator.py",
           "commits_since_boot": [
-            "5c17f28 2026-09-06T00:31:28+03:30"
-          ]
-        },
-        {
-          "file": "engines/learning.py",
-          "commits_since_boot": [
-            "56c3344 2026-09-08T13:40:36+03:30",
-            "0fe6834 2026-09-08T11:44:14+03:30",
-            "6b65ef1 2026-09-05T00:57:57+03:30"
-          ]
-        },
-        {
-          "file": "engines/legacy_guards.py",
-          "commits_since_boot": [
-            "3575155 2026-09-09T02:47:55+03:30"
-          ]
-        },
-        {
-          "file": "engines/paths.py",
-          "commits_since_boot": [
-            "3b56148 2026-09-04T13:48:56+03:30"
+            "9995923 2026-09-10T00:41:26+03:30",
+            "6f83de6 2026-09-09T23:25:20+03:30",
+            "00ce842 2026-09-09T13:03:15+03:30"
           ]
         },
         {
           "file": "engines/plan.py",
           "commits_since_boot": [
-            "5f418f2 2026-09-08T21:37:23+03:30",
-            "df4e9d8 2026-09-07T05:55:13+03:30"
+            "9995923 2026-09-10T00:41:26+03:30",
+            "6f83de6 2026-09-09T23:25:20+03:30",
+            "3c25fb8 2026-09-09T20:37:59+03:30"
           ]
         },
         {
           "file": "engines/trade_management.py",
           "commits_since_boot": [
-            "df4e9d8 2026-09-07T05:55:13+03:30",
-            "d3a0ba0 2026-09-07T02:27:34+03:30",
-            "31c64f7 2026-09-03T18:15:18+03:30"
-          ]
-        },
-        {
-          "file": "position_daemon.py",
-          "commits_since_boot": [
-            "3575155 2026-09-09T02:47:55+03:30",
-            "df4e9d8 2026-09-07T05:55:13+03:30",
-            "d3a0ba0 2026-09-07T02:27:34+03:30"
+            "13a0b45 2026-09-10T10:21:28+03:30",
+            "3df8b7d 2026-09-10T07:41:03+03:30"
           ]
         }
       ],
@@ -101,11 +66,11 @@
     },
     "signal_daemon.py": {
       "running": true,
-      "started_utc": "2026-09-04T18:44:16+00:00",
-      "stale_hours": 101.3,
+      "started_utc": "2026-09-09T17:15:02+00:00",
+      "stale_hours": 13.7,
       "boot_commit": {
-        "sha": "9762faea91e10b7698bb0786b08c76669a313f2f",
-        "committed_at": "2026-09-04T21:31:34+03:30"
+        "sha": "3c25fb8da62bfa20a348684676c79015fd152221",
+        "committed_at": "2026-09-09T20:37:59+03:30"
       },
       "closure_files": 35,
       "closure": [
@@ -149,111 +114,34 @@
         {
           "file": "engines/auto_executor.py",
           "commits_since_boot": [
-            "848e4de 2026-09-08T07:57:15+03:30",
-            "057376a 2026-09-08T03:54:20+03:30",
-            "df4e9d8 2026-09-07T05:55:13+03:30"
+            "3b9215d 2026-09-09T23:58:12+03:30"
           ]
         },
         {
-          "file": "engines/defcon.py",
+          "file": "engines/orchestrator.py",
           "commits_since_boot": [
-            "5c17f28 2026-09-06T00:31:28+03:30"
-          ]
-        },
-        {
-          "file": "engines/dirty_work.py",
-          "commits_since_boot": [
-            "e5e44c4 2026-09-05T15:47:11+03:30"
-          ]
-        },
-        {
-          "file": "engines/learning.py",
-          "commits_since_boot": [
-            "56c3344 2026-09-08T13:40:36+03:30",
-            "0fe6834 2026-09-08T11:44:14+03:30",
-            "6b65ef1 2026-09-05T00:57:57+03:30"
-          ]
-        },
-        {
-          "file": "engines/legacy_guards.py",
-          "commits_since_boot": [
-            "3575155 2026-09-09T02:47:55+03:30"
+            "9995923 2026-09-10T00:41:26+03:30",
+            "6f83de6 2026-09-09T23:25:20+03:30"
           ]
         },
         {
           "file": "engines/plan.py",
           "commits_since_boot": [
-            "5f418f2 2026-09-08T21:37:23+03:30",
-            "df4e9d8 2026-09-07T05:55:13+03:30"
-          ]
-        },
-        {
-          "file": "engines/risk.py",
-          "commits_since_boot": [
-            "d0a7122 2026-09-05T21:55:47+03:30"
-          ]
-        },
-        {
-          "file": "engines/signal_decision.py",
-          "commits_since_boot": [
-            "1bdd92f 2026-09-09T00:54:19+03:30",
-            "835061a 2026-09-08T22:45:35+03:30"
-          ]
-        },
-        {
-          "file": "engines/signal_listener.py",
-          "commits_since_boot": [
-            "835061a 2026-09-08T22:45:35+03:30",
-            "1fc110b 2026-09-08T10:36:12+03:30",
-            "848e4de 2026-09-08T07:57:15+03:30",
-            "42cfc1d 2026-09-08T06:26:02+03:30",
-            "c32f4e8 2026-09-04T22:14:17+03:30"
+            "9995923 2026-09-10T00:41:26+03:30",
+            "6f83de6 2026-09-09T23:25:20+03:30"
           ]
         },
         {
           "file": "engines/signal_parser.py",
           "commits_since_boot": [
-            "1698e7d 2026-09-07T03:47:27+03:30",
-            "c32f4e8 2026-09-04T22:14:17+03:30"
-          ]
-        },
-        {
-          "file": "engines/smc.py",
-          "commits_since_boot": [
-            "583377c 2026-09-08T18:41:35+03:30",
-            "ce30d74 2026-09-08T17:34:07+03:30"
-          ]
-        },
-        {
-          "file": "engines/storage.py",
-          "commits_since_boot": [
-            "1fc110b 2026-09-08T10:36:12+03:30",
-            "848e4de 2026-09-08T07:57:15+03:30"
+            "8d8d71a 2026-09-09T20:45:54+03:30"
           ]
         },
         {
           "file": "engines/trade_management.py",
           "commits_since_boot": [
-            "df4e9d8 2026-09-07T05:55:13+03:30",
-            "d3a0ba0 2026-09-07T02:27:34+03:30"
-          ]
-        },
-        {
-          "file": "hermes_runtime.py",
-          "commits_since_boot": [
-            "3575155 2026-09-09T02:47:55+03:30",
-            "1fc110b 2026-09-08T10:36:12+03:30",
-            "848e4de 2026-09-08T07:57:15+03:30",
-            "df4e9d8 2026-09-07T05:55:13+03:30",
-            "d3a0ba0 2026-09-07T02:27:34+03:30"
-          ]
-        },
-        {
-          "file": "notifier/dashboards.py",
-          "commits_since_boot": [
-            "56c3344 2026-09-08T13:40:36+03:30",
-            "5c17f28 2026-09-06T00:31:28+03:30",
-            "25b305e 2026-09-05T15:26:51+03:30"
+            "13a0b45 2026-09-10T10:21:28+03:30",
+            "3df8b7d 2026-09-10T07:41:03+03:30"
           ]
         }
       ],
@@ -262,7 +150,7 @@
     "dashboard_bot.py": {
       "running": true,
       "started_utc": "2026-08-31T15:09:30+00:00",
-      "stale_hours": 200.8,
+      "stale_hours": 231.8,
       "boot_commit": {
         "sha": "920ed0d1dd621c6398a0b1331e4d2f3c264eae17",
         "committed_at": "2026-08-31T18:39:30+03:30"
@@ -316,6 +204,14 @@
           ]
         },
         {
+          "file": "engines/orchestrator.py",
+          "commits_since_boot": [
+            "9995923 2026-09-10T00:41:26+03:30",
+            "6f83de6 2026-09-09T23:25:20+03:30",
+            "00ce842 2026-09-09T13:03:15+03:30"
+          ]
+        },
+        {
           "file": "engines/paths.py",
           "commits_since_boot": [
             "3b56148 2026-09-04T13:48:56+03:30",
@@ -325,6 +221,9 @@
         {
           "file": "engines/plan.py",
           "commits_since_boot": [
+            "9995923 2026-09-10T00:41:26+03:30",
+            "6f83de6 2026-09-09T23:25:20+03:30",
+            "3c25fb8 2026-09-09T20:37:59+03:30",
             "5f418f2 2026-09-08T21:37:23+03:30",
             "df4e9d8 2026-09-07T05:55:13+03:30",
             "9f4adcb 2026-09-01T16:10:24+03:30"
