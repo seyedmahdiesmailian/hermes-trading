@@ -81,6 +81,7 @@ LEDGER_160 = os.path.join(BT, "b160_reanchor_symmetry.json")
 LEDGER_161 = os.path.join(BT, "b161_reanchor_symmetry_verdict.json")
 LEDGER_161_W = os.path.join(BT, "b161_w1_divergence.json")
 LEDGER_163 = os.path.join(BT, "b163_plan_age_census.json")
+LEDGER_136 = os.path.join(BT, "b136_regime_wiring_census.json")
 
 
 def _load(path: str) -> dict:
@@ -610,6 +611,117 @@ def check_b143_derived_blocks() -> str:
             f"({len(rec)} positions, 0 realized_net mismatches)")
 
 
+# ── b128 (2026-09-10): COVERAGE RATCHET — unregistered producers are DEBT ──
+# b128's rule: a script that WRITES a frozen ledger under data/backtest|data/ops
+# must have a reproduction check registered in CHECKS, or its name sits in the
+# BASELINE below. The baseline is the burned-down debt list, so the ratchet is
+# mechanical: a NEW producer script not in the baseline and not registered turns
+# test_b128 red; burning the debt down means registering a check AND removing
+# the token from the baseline in the SAME commit. Ownership rule: a script owns
+# an artifact only if the artifact's leading bNNN[token] equals the script's own
+# token, so a script that merely READS b68l_independent_windows.json (b77, b92,
+# ...) is not counted as its producer.
+
+def _registered_tokens(root: str = _ROOT) -> set[str]:
+    """Tokens of the check functions actually LISTED in CHECKS — parsed with
+    ast from the real top-level assignment (a text slice would pick up prose
+    mentions in docstrings and comments)."""
+    import ast as _ast
+    import re as _re
+    with open(os.path.join(root, "scripts",
+                           "b127_producer_reproduction.py")) as fh:
+        src = fh.read()
+    tree = _ast.parse(src)
+    names: list[str] = []
+    for node in tree.body:
+        if (isinstance(node, _ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], _ast.Name)
+                and node.targets[0].id == "CHECKS"
+                and isinstance(node.value, (_ast.Tuple, _ast.List))):
+            names = [e.id for e in node.value.elts
+                     if isinstance(e, _ast.Name)]
+    return set(m.group(1) for n in names
+               if (m := _re.match(r"check_(b\d+[a-z]*?)_", n + "_")))
+
+
+def uncovered_writers(root: str = _ROOT) -> list[str]:
+    """Deterministic coverage scan: tokens of scripts/bNNN*.py that json.dump
+    an OWNED artifact existing on disk, minus tokens registered in CHECKS."""
+    import glob as _glob
+    import re as _re
+    registered = _registered_tokens(root)
+    writers: set[str] = set()
+    for path in _glob.glob(os.path.join(root, "scripts", "b*_*.py")):
+        with open(path) as fh:
+            text = fh.read()
+        if "json.dump" not in text:
+            continue
+        m = _re.match(r"(b\d+[a-z]*)_", os.path.basename(path))
+        if not m:
+            continue
+        tok = m.group(1)
+        for art in _re.findall(r"([A-Za-z0-9_\-]+\.json)", text):
+            am = _re.match(r"(b\d+[a-z]*?)_", art)
+            if not am or am.group(1) != tok:
+                continue                     # read-only reference, not owned
+            if (os.path.exists(os.path.join(root, "data", "backtest", art))
+                    or os.path.exists(os.path.join(root, "data", "ops", art))):
+                writers.add(tok)
+                break
+    return sorted(writers - registered,
+                  key=lambda t: (int(_re.sub(r"\D", "", t)), len(t), t))
+
+
+BASELINE_UNCOVERED: tuple[str, ...] = (
+    "b61", "b62", "b63", "b63b", "b64", "b65", "b65b", "b66", "b66b", "b68",
+    "b68b", "b68c", "b68d", "b68e", "b68f", "b68g", "b68h", "b68i", "b68j",
+    "b68k", "b68l", "b68m", "b68n", "b68o", "b68p", "b68q", "b68r", "b70",
+    "b71", "b77", "b79", "b80", "b89", "b92", "b93", "b109", "b111", "b112",
+    "b117", "b149", "b150", "b152", "b157", "b158", "b160", "b182", "b184",
+    "b185", "b186", "b187", "b189", "b193",
+)
+
+
+def check_b128_coverage_ratchet(root: str = _ROOT) -> str:
+    """The scan must equal the baseline: nothing new unregistered (hard fail),
+    and nothing registered-but-still-listed (burn-down hygiene — remove the
+    token from BASELINE_UNCOVERED in the commit that adds the check)."""
+    got = uncovered_writers(root)
+    new = [t for t in got if t not in BASELINE_UNCOVERED]
+    assert not new, (
+        f"unregistered ledger producer(s) {new}: a script that writes a frozen "
+        f"ledger must register a check_bNNN_* reproduction in CHECKS in the "
+        f"same commit (b128 rule), or be added to BASELINE_UNCOVERED with a "
+        f"reason")
+    stale = [t for t in BASELINE_UNCOVERED if t not in got]
+    assert not stale, (
+        f"BASELINE_UNCOVERED still lists {stale} which the scan no longer "
+        f"reports — drop the token(s) from the baseline (burn-down)")
+    return (f"b128 coverage ratchet ({len(BASELINE_UNCOVERED)} debt tokens, "
+            f"scan matches exactly)")
+
+
+def check_b136_derived_blocks() -> str:
+    """b136's census (the regime-wiring fix evidence) is pure arithmetic on the
+    rows IT EMBEDDED in the ledger: derive(journal_walk + live_walk, size_probe,
+    ...) must reproduce _derived exactly, and the row arithmetic must be
+    self-consistent (fire counts sum to sample_cycles). The bridge/journal
+    collection half is NOT re-run: the deal feed keeps growing, so re-collecting
+    would certify a different dataset (b128's rule, same shape as b141)."""
+    from scripts import b136_regime_wiring_census as b136
+    led = _load(LEDGER_136)
+    d = led["_derived"]
+    rows = led["journal_walk"] + led["live_walk"]
+    got = b136.derive(rows, led["size_probe"], d["regimes_emittable"],
+                      d["regimes_wired_into_entry"])
+    assert got == d, ("b136.derive() no longer reproduces _derived — the "
+                      "regime-wiring verdict behind the risk.py fix moved")
+    assert sum(d["regime_fire_counts"].values()) == d["sample_cycles"] == len(rows), \
+        "b136 fire counts disagree with its own embedded rows"
+    return (f"b136 derive + row arithmetic ({len(rows)} walk rows, "
+            f"verdict {d['verdict']})")
+
+
 # ── b128 (2026-09-09): the producers b127 did not cover, now registered ─────
 # b128's rule: every frozen ledger with PURE post-processing gets a CHECKS
 # entry in the same commit that ships it, and a producer whose derived blocks
@@ -840,6 +952,8 @@ CHECKS = (
     check_b137_self_check_still_clean,
     check_b140_derive_and_self_check,
     check_b198_derived_blocks,
+    check_b136_derived_blocks,
+    check_b128_coverage_ratchet,
 )
 
 

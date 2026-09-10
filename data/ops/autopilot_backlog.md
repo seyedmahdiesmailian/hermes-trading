@@ -1675,7 +1675,7 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       pin only the pure post-processing half and say so in the test docstring.
       Do NOT re-run producer mains() in tests (they overwrite frozen ledgers);
       b118b's write-a-new-ledger-import-the-machinery pattern is the way.
-- [ ] b128 TRADER HYGIENE (reusable procedure from b127, 2026-09-07) — EVERY
+- [x] b128 TRADER HYGIENE (reusable procedure from b127, 2026-09-07) — EVERY
       NEW FROZEN LEDGER MUST REGISTER A CHECK IN scripts/
       b127_producer_reproduction.py::CHECKS AT SHIP TIME, AND THE PRODUCERS
       b127 DID NOT COVER GET ADDED THE SAME WAY. b127 pinned 9 producers / 18
@@ -1687,6 +1687,28 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       construction, so a new producer must write its derived blocks as a pure
       function of the ledger dict from day one and register it in CHECKS in
       the same commit.
+      DONE 2026-09-10: the rule is now a MECHANICAL RATCHET, not prose —
+      scripts/b127_producer_reproduction.py::check_b128_coverage_ratchet scans
+      every scripts/bNNN*.py that json.dumps an OWNED existing artifact
+      (ownership = artifact's leading token equals the script's token, so
+      read-only cross-reads like b77→b68l don't count), diffs against the ast-
+      parsed CHECKS tuple (a text slice matched prose mentions and the
+      b121/b121b token-prefix trap), and asserts EXACT equality with
+      BASELINE_UNCOVERED (52 frozen debt tokens): a new unregistered producer
+      is red, and a registered-but-untrimmed token is red, so the debt list can
+      only shrink. First burn-down shipped with the ratchet:
+      check_b136_derived_blocks re-runs b136.derive() over the 244 walk rows
+      the ledger embeds (verdict ALL_EMITTABLE_REGIMES_WIRED reproduces; the
+      bridge collection half is not re-run per b141's rule) — b136 is the census
+      that found the regime-wiring defect fixed in b139-era risk.py, so its
+      evidence is now rot-proofed. 7 tests
+      (tests/test_b128_coverage_ratchet.py): teeth on a synthetic tree (new
+      writer flagged red), read-only-reference exemption, registered-producer
+      leaves the scan, stale-baseline red, b136 burned-down pins, and a
+      no-order-endpoint/no-write pin. NEXT RUN: burn down one baseline token
+      per round, highest decision-weight first (b189 structure
+      counterfactuals, b187 entry confirmation, b184 gate recalibration each
+      gate a live rule; b6x labs are lowest).
 - [x] b119 TRADER RESEARCH — b66's "EXIT GEOMETRY IS LOCALLY OPTIMAL" WAS ALSO
       PRICED ON THE PHANTOM RUNNER (reusable procedure from b117, 2026-09-07).
       DONE 2026-09-07: b66b's load-bearing verdict is not merely smaller under
