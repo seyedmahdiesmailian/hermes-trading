@@ -47,6 +47,15 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b208 PROCEDURE (learned during b207, 2026-09-10): a killed verify_head/autopilot
+      run can leave a REGISTERED detached worktree (e.g. /tmp/repb) whose dir still
+      exists — `git worktree prune` cannot heal that (git sees a live tree) and it
+      fails the suite's worktree-cleanliness asserts (b141-style). Before trusting
+      any "N failures" suite result, run `git worktree list` and `git worktree
+      remove --force <stale>` for any non-main /tmp tree, then re-run. Also: to
+      prove a fix RED-first against pre-change code, `git worktree add --detach
+      /tmp/x HEAD` + copy ONLY the new test file in — never sed-revert a file into
+      the live tree.
 - [x] b207 TRADER ARCHITECTURE DEFECT (found by code review 2026-09-10, ~09:15 UTC,
       FIXED 2026-09-10 10:30 UTC: the ~200-line manage block was extracted from
       cycle() verbatim into hermes_runtime._manage_positions(); cycle now checks
