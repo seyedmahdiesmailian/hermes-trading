@@ -1333,3 +1333,11 @@ at,plan_id,event,old_bias,new_bias
 2026-09-10T10:00:02.407945+00:00,xau-a2a90661,reassess,neutral,neutral
 2026-09-10T10:15:02.082573+00:00,xau-72ecb580,reassess,neutral,neutral
 2026-09-10T10:28:35.873491+00:00,xau-f69cace9,reassess,neutral,neutral
+2026-09-10T10:45:02.466602+00:00,xau-72b86ff7,reassess,neutral,bearish
+2026-09-10T11:00:02.710277+00:00,xau-ae9df438,reassess,bearish,bearish
+2026-09-10T11:15:02.850154+00:00,xau-91b5d432,reassess,bearish,bearish
+2026-09-10T11:30:02.289414+00:00,xau-9db6ed4b,reassess,bearish,neutral
+2026-09-10T11:45:02.618119+00:00,xau-fee757df,reassess,neutral,neutral
+2026-09-10T12:00:02.145976+00:00,xau-cf360d22,reassess,neutral,bearish
+2026-09-10T12:15:01.904870+00:00,xau-c0ec623f,reassess,bearish,bearish
+2026-09-10T12:21:11.382264+00:00,xau-2dd9fd56,reassess,bearish,bearish

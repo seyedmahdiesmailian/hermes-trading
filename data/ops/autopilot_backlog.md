@@ -47,6 +47,57 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [ ] b210 TRADER GATE INPUT — daily_pnl IS GROSS-OF-COST: the regime, DEFCON and
+      daily-loss kill-switch legs all read compute_performance_state's daily_pnl,
+      which sums deal `profit` ONLY (engines/risk.py). MEASURED read-only on the
+      live 7-day feed (26 deals): profit -220.07 vs true net (profit+commission+
+      swap) -226.01 — commission -5.94 is 2.7% of the loss, so every money gate
+      sees a slightly SMALLER loss than the account actually took. Worst live day
+      (2026-09-09): gate sees -139.95 (-2.86% of ~4900), true -141.15 (-2.88%) —
+      7.05$ BELOW the -3% daily-loss kill leg (-147.00), i.e. today the gap is
+      not decision-changing, but the direction is always the loose way and near
+      a threshold a $6 swing flips a halt. engines/learning.group_positions
+      ALREADY has the right rule ('net' = profit+commission+swap+entry_commission,
+      b152), so this is a wiring/consistency fix, not a new idea. NOT shipped this
+      run: engines/risk.py's sha256 is stamped by BOTH b88 and b89 ledgers, so any
+      edit REQUIRES re-running scripts/b88_defcon_books.py (~50 min) and
+      scripts/b89_window_contract.py in the same change or those tests go red —
+      the same budget wall b141 hit. NEXT RUN: budget a full run, change the
+      accumulation to the b152 net formula, edit-not-delete the b88/b89 pins, and
+      census all three consumers on one state (b141's census script is the
+      template). Rule learned: a money gate's input must include every cash leg
+      the broker charges, or the gate is systematically biased toward trading.
+      PROGRESS 2026-09-10 12:18 UTC (fresh-trader-review run, reading only):
+      re-reviewed signal_decision, signal_listener.run_signal_check,
+      auto_executor.evaluate_proposal+execute_trade+evaluate_management_action,
+      defcon, risk, legacy_guards, trade_management, plan.apply_smc_merge,
+      signal_pending, macro_filter, kill_switch, market_hours, learning.
+      NO new shipping defect found; b210 stays the top trader item (b188a/b/c
+      verified already fixed/pinned: stale_at_birth shipped+b193 parity,
+      reassess closed by b198, bias-momentum awaits the human 60-trade bar).
+      Two cosmetic observations filed as b211 below. b210 NOT attempted again:
+      same 50-min b88/b89 re-derivation wall vs 55-min run.
+- [ ] b211 TRADER OBSERVABILITY/ROBUSTNESS (found by the 2026-09-10 code
+      re-review, NOT shipped — each needs <30 min, neither is a gate):
+      (a) engines/legacy_guards.evaluate_news_lock: `cur = str(ev.get(
+      "currency", ev.get("country", ""))).upper()` — when the key EXISTS but is
+      null, str(None)="NONE" and the event is silently skipped, so a real
+      high-impact event with a null currency field never fires the lock.
+      `ev.get("currency") or ev.get("country") or ""` is strictly MORE
+      protective (only ever fires more locks, never fewer). Add the RED test
+      first (probe with {'currency': None, 'impact': 'high', ...}).
+      (b) engines/signal_listener.run_signal_check calls bridge.get_account()
+      TWICE per signal (line ~475 for the open-positions overlay, and again
+      inside _performance_and_policy) — one extra bridge round-trip per
+      decision, harmless but the b207 "ONE read per cycle" lesson applies.
+- [ ] b212 PROCEDURE (learned 2026-09-10, budget-boundary run): before opening
+      ANY trader item, read autopilot_state.json's last_run_utc against
+      `date -u` — the 55-min wall is measured from the KICKOFF, and a run whose
+      early turns went to compaction has often spent >40 min already; at that
+      point the correct move is the wrap-up path (file findings as todos, no
+      code edit) INSTEAD of starting the review item itself. Do not let "I have
+      not implemented anything yet" push a code edit into the last 10 minutes:
+      an unverified HEAD is worse than a documented no-change run.
 - [ ] b208 PROCEDURE (learned during b207, 2026-09-10): a killed verify_head/autopilot
       run can leave a REGISTERED detached worktree (e.g. /tmp/repb) whose dir still
       exists — `git worktree prune` cannot heal that (git sees a live tree) and it
@@ -4679,6 +4730,29 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   ≥30 closes with at() ≥ 2026-09-09; if the 0.01-lot entry count is still 0 at
   that point, close b183 as option (a) ACCEPT with these three measurements as
   the evidence (inert lane + floor margin + (c) unmeasurable), no code needed.
+  PROGRESS 2026-09-10 (b209 run — THE REOPENING GATE WAS DEAD, NOW FIXED+TESTED):
+  the line above ("re-open when trade_journal shows >=30 closes with at() >=
+  2026-09-09") could never fire, for TWO independent reasons, and it is the
+  ONLY thing standing between this item and a permanent park: (1) the journal
+  has NO `at` column (header: ticket,close_time,side,volume,price,profit,
+  comment,journaled_at,position_id,commission,swap,entry_commission), so
+  `str(r.get('at') or '')[:10] >= ship` is ''>=... = False for every row;
+  (2) swapping in the real column does not rescue it either — `close_time` is
+  a UNIX-EPOCH string ('1788989529') and '1788…' < '2026-…' lexicographically,
+  so the string compare returns 0 as well. Both forms are pinned at 0 matches
+  on the live journal by tests/test_b183_reopen_gate.py. Replacement:
+  scripts/b183_reopen_gate.py — parses close_time the way engines/learning.py
+  does (epoch→UTC, ISO→UTC, garbage EXCLUDED and counted), GROUPS journal rows
+  by position_id before counting (a b182-lane trade is TP1-half + runner = two
+  OUT deals; counting rows would inflate n against a "~30 trades" bar), and
+  reports the 0.01-lot population separately because option (c) needs exactly
+  that lane. HONEST CURRENT READING (read-only, `python3 scripts/b183_reopen_gate.py`):
+  44 journal rows = 34 positions, post-ship n=2, lot mix {0.05:1, 0.15:1},
+  0.01-lot positions post-ship = 0 → reopen_met FALSE, so the 2026-09-10
+  finding stands (2 of ~30) but is now reproducible instead of prose.
+  REOPENING RULE FROM NOW ON: run the script; it says STAY PARKED / REOPEN
+  by itself, and if it ever says REOPEN with post_001_lot_positions == 0,
+  close b183 as option (a) ACCEPT (no code), per the note above. 13 tests.
 
 - [ ] b188 ANALYSIS RESIDUAL DEFECTS (measured by b185/b186/b187, NOT yet fixed):
   (a) STALE-AT-BIRTH PLANS: 159/231 directional plans (69%) have invalidation already
