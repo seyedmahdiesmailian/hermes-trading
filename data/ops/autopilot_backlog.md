@@ -89,6 +89,25 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       re-asserted), b50's leaked diagnostic worktrees from the prior run removed (registered
       as b200 todo). 82 targeted tests OK; full-suite verdict = verify_head on the fresh commit.
       [TRADER: lab parity with live's shipped gate, merit bar re-priced]
+- [ ] b204 REUSABLE PROCEDURE — CENSUS THE PREMISE'S FIRING RATE BEFORE
+      WAITING FOR THE SAMPLE SIZE A DECISION ITEM DEMANDS (learned on b183,
+      2026-09-10): a decision item often says "needs ~30 trades of policy X"
+      and a short autopilot run then has nothing to do but burn the clock.
+      Before accepting that frame, measure the population the defect applies
+      TO: b183 feared 0.01-lot trades under-earning on the full-exit lane, but
+      execution_log's minimum EXECUTED lot is 0.02 (30/30 entries) — the lane
+      has never fired, so the question is inert at n=0 regardless of how long
+      we wait for n=30, and option (b) (raise the min-risk lot) has a measurable
+      margin NOW (smallest risk_usd/stop-distance ratio 2.07 vs the 1.5 the
+      floor needs). RULE for any "wait for N trades" item: (1) count how many of
+      the last N executions actually landed in the affected lane (if 0, say so
+      and pre-register the close condition: "if still 0 at N closes, close as
+      ACCEPT"); (2) compute the static margin that decides the structural
+      options without any sample at all; (3) name the options that CANNOT be
+      priced on live history (a lot-conditional share the simulator applies
+      uniformly is unmeasurable without entries in that lane) instead of
+      queueing them behind the wait. Cheap, read-only, and it converts a blocked
+      item into a dated, checkable decision plan.
 - [ ] b201 REUSABLE PROCEDURE — A SCAN-BASED RATCHET'S BASELINE MUST BE
       REPRODUCIBLE IN A CLEAN WORKTREE (learned shipping b128, 2026-09-10):
       check_b128_coverage_ratchet scans data/backtest|data/ops files BY
@@ -4531,6 +4550,28 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   so more trades splittable, (c) 0.01-lot TP1 at 60% depth instead of 50%.
   Harness exists: b182/b184 simulator, P5_mid_cut is already coded there.
   (found by b182, 2026-09-09)
+  PROGRESS 2026-09-10 (autopilot run, time-boxed at 55min — census on existing
+  data only, NO live change, item stays todo): the n≈30 sample b183 demands
+  does not exist yet, and two sub-questions are already ANSWERABLE and
+  answered. (1) SAMPLE
+  COUNT: b182 shipped 2026-09-09 05:00Z (52827ad); closed deals since = 2
+  (both losses: 0.05@03:45Z pre-ship, 0.15@21:32Z post-ship) — 2 of the ~30
+  needed, so the lot-lane realized-R table cannot be built this round; do NOT
+  decide (a)/(b)/(c) on n=2. (2) FLOOR FIRING RATE: execution_log has 30
+  result_ok entries, MINIMUM executed lot = 0.02 — the 0.01 lane has produced
+  ZERO entries since logging began (journal's six 0.01 rows are all pre-b182:
+  HermesPartial halves + one HERMES_CLOSE_DEV20 test), so the under-earning
+  lane b183 fears is currently INERT in production. (3) OPTION (b) HAS NO
+  BITE TODAY: smallest risk_usd/stop_dist ratio over the 30 entries = 2.07
+  ($0.02 lot floor needs ratio < 1.5) — a 1.4x margin to the floor at live
+  balance ~4900 and base 2%; raising min-risk lot changes nothing on this
+  population. (4) OPTION (c) UNMEASURABLE ON LIVE: P5_mid_cut's only advantage
+  was on the 26-trade POPULATION average, and the simulator applies lot-agnostic
+  shares — pricing "60% depth only for 0.01 lots" needs the very entries that
+  number (2) says do not exist. NEXT RUN: re-open when trade_journal shows
+  ≥30 closes with at() ≥ 2026-09-09; if the 0.01-lot entry count is still 0 at
+  that point, close b183 as option (a) ACCEPT with these three measurements as
+  the evidence (inert lane + floor margin + (c) unmeasurable), no code needed.
 
 - [ ] b188 ANALYSIS RESIDUAL DEFECTS (measured by b185/b186/b187, NOT yet fixed):
   (a) STALE-AT-BIRTH PLANS: 159/231 directional plans (69%) have invalidation already
