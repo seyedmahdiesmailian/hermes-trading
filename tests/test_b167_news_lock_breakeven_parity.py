@@ -178,8 +178,18 @@ class TestB167FallbackNewsLockBreakeven(unittest.TestCase):
         repo = Path(__file__).resolve().parents[1]
         src = (repo / 'hermes_runtime.py').read_text(encoding='utf-8')
         tree = ast.parse(src)
-        cycle_fn = next(n for n in ast.walk(tree)
-                        if isinstance(n, ast.FunctionDef) and n.name == 'cycle')
+        # b207: the fallback manage body moved VERBATIM out of cycle() into
+        # _manage_positions_fallback (one manager, two callers: normal path +
+        # halted path). The pin must scan both, or the extraction 'passes' by
+        # shrinking the scan to an empty function.
+        scan_fns = [n for n in ast.walk(tree)
+                    if isinstance(n, ast.FunctionDef)
+                    and n.name in ('cycle', '_manage_positions_fallback')]
+        self.assertEqual(len(scan_fns), 2,
+                         'b207: cycle() and _manage_positions_fallback() must '
+                         'both exist — the manager body lives in one place and '
+                         'both callers ride on it')
+        cycle_fn = next(n for n in scan_fns if n.name == '_manage_positions_fallback')
         assigns = [n for n in ast.walk(cycle_fn)
                    if isinstance(n, ast.Assign) and any(
                        isinstance(t, ast.Subscript)

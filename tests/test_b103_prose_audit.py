@@ -313,8 +313,17 @@ class TestHistoryIsAMedium(unittest.TestCase):
 
     def test_the_real_parked_claims_are_still_found_in_history(self):
         """The point of rule 4's existence: the mention spare must NOT have
-        blinded the replay to the two claims it was written to catch."""
-        found = {item for _sha, item, _s in commit_claims(REPO)}
+        blinded the replay to the two claims it was written to catch.
+
+        b207-run FIX 2026-09-10: this replay used to read the DEFAULT rolling
+        window (prose_audit.COMMIT_WINDOW=100). History moves: by 2026-09-10
+        there were 287 commits and the b100/b101 pair had aged to #100-101, so
+        the assertion failed on an untouched repo — verify_head stamped HEAD
+        BROKEN for a rule about GIT ANCHORING that had nothing to do with the
+        code under review. A test that names specific historical commits must
+        scan deep enough to still see them; the window stays rolling for the
+        live-claim audits (they SHOULD expire with the window)."""
+        found = {item for _sha, item, _s in commit_claims(REPO, n=1000)}
         self.assertIn('b101', found, 'b100 parked b101 in prose and the '
                                      'replay no longer sees it')
         self.assertIn('b100', found, 'b99 parked b100 in prose and the '

@@ -47,6 +47,72 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b207 TRADER ARCHITECTURE DEFECT (found by code review 2026-09-10, ~09:15 UTC,
+      FIXED 2026-09-10 10:30 UTC: the ~200-line manage block was extracted from
+      cycle() verbatim into hermes_runtime._manage_positions(); cycle now checks
+      _watchdog_alive BEFORE the kill switch and runs the manager on a halted
+      cycle (entries still blocked — new tests/test_b207_halt_keeps_management.py
+      proves halt→manage-still-runs + no-open + no-double-manage, RED on old code);
+      b167 AST pin follows the move; payload gains manage_ran_during_halt.
+      — THE KILL-SWITCH HALT DISABLES THE ONLY EXIT PROTECTION THAT IS LEFT.
+      hermes_runtime.cycle() checks check_kill_switch at line ~484 and, when
+      halted, RETURNS at ~495 (`step: 'halted'`) BEFORE the plan block, BEFORE
+      "Manage Existing Positions" (~532) and before the entry monitor. So the halt
+      that exists to protect the account also cancels every protective ACTION on
+      the exposure already on the book: news_lock tightening, time_exit, TP1
+      partial, breakeven (b205 ratchet), runner trail (b202 ratchet) — for the whole
+      COOLDOWN_HOURS=4 window, repeating a "🛑 KILL SWITCH ACTIVE" ops message every
+      15-min cron tick and doing nothing else.
+      WHY THIS IS NOT COVERED ELSEWHERE: the primary manager is the position
+      watchdog (position_daemon.py main loop, 5s). It never consults the kill
+      switch (grep: the only halt readers are hermes_runtime.cycle,
+      signal_listener's account_policy and signal_daemon's pending cancel) — so it
+      manages through a halt, correctly. But the RUNTIME FALLBACK is by design the
+      last line of defence and runs only when the watchdog heartbeat is stale
+      (>60s) — the exact single-failure case b34 was written for ("the fallback
+      was DEAD ON ARRIVAL... the last line of defense"). Under halt that fallback
+      is skipped unconditionally, so the compound failure (kill switch fired AND
+      watchdog down/restarting) leaves a live position with its ORIGINAL stop and
+      no ladder, no guard, no time-exit.
+      THE TRIGGER ITSELF PROVES THERE IS EXPOSURE: check 2 of the halt is
+      `drawdown_pct = (balance - equity)/balance >= 10%` — equity < balance is
+      only possible while a position is OPEN and losing. So that leg cannot fire
+      on a flat account: it halts trading precisely when something must be
+      managed, then declines to manage it. (daily_loss/margin_ratio legs can fire
+      flat; the drawdown leg cannot.)
+      FIX (tightening-only, no gate loosened): the halt must keep blocking NEW
+      ENTRIES (return before plan build + monitor, as today) but must run the
+      management pass first when `positions and old_plan and not watchdog_alive`.
+      Shape: (1) hoist the watchdog_heartbeat age computation ABOVE the kill check
+      (pure read, no side effect) so both consumers share one value; (2) extract
+      the existing ~100-line fallback block into
+      `_manage_positions_fallback(bridge, plan, positions, runtime, tick, now,
+      dry_run, policy, performance)` returning `{'payload': dict|None,
+      'guard_status': dict|None}` — payload non-None means an action was taken and
+      cycle() returns it, verbatim the current early-return-on-first-action
+      semantics (b167/b169/b37 all ride on that block; extract, do not rewrite);
+      (3) the halted branch calls it, and on a payload merges the kill_switch dict
+      into the return so the ops brief still says HALTED (and states WHICH
+      protective action ran); (4) the normal path calls the same helper, so there
+      is ONE manager body (b109/b111 rule: a fix to the ladder must not need to be
+      applied twice).
+      TESTS TO SHIP (harness exists: tests/test_runtime_fallback_management.py
+      already drives the REAL cycle() with a stale heartbeat + production-shaped
+      position via fixtures_bridge): (a) RED-first — halted kill-switch state
+      (write data/kill_switch_state.json in the hermetic root, or monkeypatch
+      check_kill_switch) + stale heartbeat + a position past TP1 must produce
+      step 'manage' (or 'halted' carrying a management action) and a broker
+      modify/partial call recorded on ManageBridge.mgmt_calls; today it records
+      ZERO calls. (b) entries stay blocked under halt: zones positioned so the
+      monitor WOULD trigger, assert no send_order and step != 'execute'.
+      (c) watchdog ALIVE + halted → still no duplicate management from the runtime
+      (heartbeat fresh → mgmt_calls empty), pinning the single-manager rule.
+      (d) b37 guard-visibility line must still surface on the halted brief.
+      NO RE-DERIVATION NEEDED: the change touches no gate, no sizing, no funnel —
+      b88/b89 sha pins are on engines/risk.py, which stays untouched. Do NOT
+      confuse this with b141's rollover item (also a human-gate-flagged wiring
+      question): b141 is about the loss STREAK semantics feeding the halt; b207 is
+      about what the halt switches OFF. Budget: one focused run (extract + 4 tests).
 - [x] b205 HARVESTED (b47 run, 2026-09-10) TRADER PARITY DEFECT — THE POST-TP1 BREAKEVEN
       MOVE WAS NOT A RATCHET (the b202 sibling verb): engines/trade_management's
       `move_stop_to_breakeven` branch gated `new_sl` only against the MARKET (b44/b52

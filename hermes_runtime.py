@@ -461,6 +461,162 @@ def _skip_reason_detail(proposal: dict, brief: str) -> str:
     return "دلایل تکمیلی: " + " · ".join(parts[:4])
 
 
+def _watchdog_alive(now: datetime) -> bool:
+    """Is the 5s position watchdog reporting fresh? (b207: hoisted out of
+    cycle so the HALTED branch and the normal path share ONE heartbeat
+    reader — pure read, no side effect, same 60s bound, same fail-closed
+    'unknown heartbeat == dead' behaviour as before.)"""
+    hb = _plan_dir() / 'watchdog_heartbeat'
+    if not hb.exists():
+        return False
+    try:
+        age = (now - datetime.fromisoformat(hb.read_text().strip())).total_seconds()
+        return age < 60
+    except Exception:
+        return False
+
+
+def _manage_positions_fallback(bridge, plan, positions, runtime, tick,
+                               now, dry_run, policy, performance) -> dict:
+    """b207 — the runtime's FALLBACK management pass, extracted VERBATIM.
+
+    Returns {'payload': dict|None, 'guard_status': dict|None}. A non-None
+    payload means a protective action was taken (and possibly executed): the
+    caller returns it directly — the SAME early-return-on-first-action
+    semantics cycle() has had since b34/b37/b167/b169 (extract, do not
+    rewrite; b109/b111: a fix to this ladder must not need to be applied
+    twice). guard_status is the last position's legacy-guard outcome, for
+    the caller's brief visibility (b37).
+
+    b207: this body is ALSO reachable while the kill switch is HALTED
+    (heartbeat stale + open position + a plan) — the halt may block NEW
+    ENTRIES but must never cancel the last line of protective defence on
+    exposure already on the book.
+    """
+    guard_status_last: dict | None = None
+    tick_obj = _tick_obj(tick if isinstance(tick, dict) else {})
+    runtime_state = runtime
+    # b35: the bridge stamps position times on the BROKER SERVER clock
+    # (~UTC+3). The watchdog measures that offset from its live 5s tick
+    # stream and publishes it (engines/broker_clock); a 15-min cycle
+    # cannot re-measure it, so we read theirs. None = no trustworthy
+    # calibration → fall back to the watchdog's own detection time.
+    try:
+        from engines.broker_clock import load_offset
+        broker_offset = load_offset(now=now)
+    except Exception:
+        broker_offset = None
+    wd_positions = _paths.read_json_safe(
+        _paths.watchdog_state(), {}, label='watchdog_state') or {}
+    if not isinstance(wd_positions, dict):
+        wd_positions = {}
+    wd_positions = wd_positions.get('positions') or {}
+    for raw in positions:
+        p = _pos_obj(raw)
+        _side = 'BUY' if p.type == 0 else 'SELL'
+        trade = {
+            'symbol': p.symbol, 'side': _side, 'entry_price': p.price_open,
+            'sl': p.sl or plan.get('invalidation') or p.price_open,
+            # b169: THE SAME ladder the watchdog builds (b44 wrong-side
+            # filter + b60 midpoint rebuild), extracted to
+            # engines.trade_management.build_tp_ladder. This fallback path
+            # used to feed evaluate_trade_management the RAW plan targets:
+            # a stale TP1 on the wrong side of entry made
+            # _next_unfilled_target return a blocked level (the b44
+            # profit_side guard then dead-locks every farther target), so
+            # the manage loop could neither take profit, arm breakeven nor
+            # trail — it could only time-exit. That is exactly the
+            # b167/b168 lesson: a fix to this ladder must be censused on
+            # EVERY producer of the trade dict, not just the daemon.
+            'tp_levels': build_tp_ladder(
+                p.price_open, _side, p.tp,
+                (plan.get('execution') or {}).get('tp_levels') or plan.get('targets') or []),
+            'tp_shares': (plan.get('execution') or {}).get('tp_shares') or [0.5, 0.3, 0.2],
+            'scale_in_levels': (plan.get('execution') or {}).get('scale_in_levels') or [],
+            'filled_tp_levels': ((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('filled_tp_levels', []),
+            'breakeven_active': bool(((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('breakeven_active', False)),
+            'runner_active': bool(((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('runner_active', True)),
+            'scaled_in_levels': ((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('scaled_in_levels', []),
+            'volume': p.volume, 'regime': (plan.get('quality') or {}).get('regime'),
+            # b109: the ladder fields come from the ONE shared derivation
+            # (engines.trade_management.ladder_fields), same helper the
+            # watchdog and the live-parity backtest use. The values are
+            # byte-identical to the inline block this replaces.
+            **ladder_fields(plan.get('quality') or {},
+                            _infer_setup_grade(plan),
+                            session=plan.get('session')),
+        }
+        market_price = float(tick_obj.ask if trade['side'] == 'BUY' else tick_obj.bid)
+        management = evaluate_trade_management(trade, market_price, now)
+
+        # ── Legacy priority merge: news_lock(1) > time_exit(2) > legacy chain(3+) ──
+        # b37: was an inline `try: ... except Exception: pass` — a broken
+        # plan shape (context['macro']=None is written by the monitor path
+        # itself) or a calendar error dropped BOTH guards with no log and
+        # no trace in the report. Now a named helper that logs, tags the
+        # status, and hands it to the brief/payload.
+        management, guard_status = evaluate_legacy_guards(
+            management, plan, trade, p, market_price, now, broker_offset,
+            wd_entry=wd_positions.get(str(p.ticket)))
+        guard_status_last = guard_status
+
+        if management.get('action') != 'hold':
+            # AUTO-EXECUTE management action
+            # NOTE: DEFCON insights are deliberately NOT passed here.
+            # filter_management_by_insights() maps runner-disabled (YELLOW,
+            # i.e. loss_streak>=2) to `close_runner` = a FULL market close,
+            # so wiring it live would introduce an untested exit policy on a
+            # real account. The parity funnel models entries only, never
+            # management, so there is no evidence for it. Tracked as a todo.
+            mgmt_result = evaluate_management_action(
+                management, bridge, p.ticket, dry_run=dry_run)
+            management['position_ticket'] = p.ticket
+            management['execution_result'] = mgmt_result
+
+            # Only a broker-accepted action (or a dry-run simulation step)
+            # may move our view of the trade. A rejected modify used to be
+            # recorded as success → breakeven_active=True while MT5 still
+            # held the original stop.
+            _committed = bool(mgmt_result.get('executed')) or bool(mgmt_result.get('dry_run'))
+
+            # Update runtime management state
+            if management.get('action') == 'partial_take_profit':
+                filled = list(trade.get('filled_tp_levels', []))
+                filled.append(management.get('target_hit'))
+                management['filled_tp_levels'] = filled
+            elif management.get('action') == 'move_stop_to_breakeven':
+                # b167: a news lock REUSES this action name (b32's lesson,
+                # until now enforced only in the watchdog). Claiming the
+                # flag for it would suppress the REAL post-TP1 breakeven.
+                if not is_news_lock(management):
+                    management['breakeven_active'] = True
+            elif management.get('action') in {'close_runner', 'close_trade_early'}:
+                management['runner_active'] = False
+
+            brief = render_management_brief(plan, management)
+            brief += _guard_brief_line(guard_status, p.ticket)
+            if not _committed and mgmt_result.get('error'):
+                brief += (f"\n\n⚠️ اقدام مدیریت انجام نشد (بروکر رد کرد): "
+                          f"{mgmt_result['error'][:120]} — وضعیت قبلی دست‌نخورده")
+            # Persist management state (breakeven/filled TPs) — was a bug: not saved
+            mgmt_state = runtime.setdefault('management', {})
+            tstate = mgmt_state.setdefault(str(p.ticket), {})
+            if _committed:
+                if management.get('action') == 'partial_take_profit':
+                    tstate['filled_tp_levels'] = management.get('filled_tp_levels', tstate.get('filled_tp_levels', []))
+                elif management.get('action') == 'move_stop_to_breakeven':
+                    # b167: gate the PERSISTED flag too — this is the write
+                    # that survives into the next cycle; the in-memory dict
+                    # above is discarded on return.
+                    if not is_news_lock(management):
+                        tstate['breakeven_active'] = True
+                elif management.get('action') in {'close_runner', 'close_trade_early'}:
+                    tstate['runner_active'] = False
+            save_runtime_state(_plan_dir(), runtime)
+            return {'payload': {'ok': True, 'step': 'manage', 'plan_id': plan.get('plan_id'), 'management': management, 'guards': guard_status, 'brief': brief, 'will_execute_now': mgmt_result.get('executed', False), 'account_policy': policy, 'performance_state': performance}, 'guard_status': guard_status}
+    return {'payload': None, 'guard_status': guard_status_last}
+
+
 def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_calendar: dict | None = None) -> dict:
     """Main autonomous trading cycle.
 
@@ -480,6 +636,9 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     acct_policy = _performance_and_policy(bridge, account if isinstance(account, dict) else {}, now)
     performance = acct_policy['performance_state']
     policy = acct_policy['account_policy']
+    # b207: ONE heartbeat read per cycle, shared by the halted branch and the
+    # normal fallback gate below (pure read, no side effect).
+    watchdog_alive = _watchdog_alive(now)
 
     # ── Kill Switch Check ──
     kill = check_kill_switch(
@@ -494,11 +653,43 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
 
     if kill.get('halted'):
         brief = f"🛑 KILL SWITCH ACTIVE\nReason: {kill.get('reason')}\nResumes: {kill.get('resumes_at')}"
-        return {
+        halted_payload = {
             'ok': True, 'step': 'halted', 'kill_switch': kill,
             'brief': brief, 'will_execute_now': False,
             'account_policy': policy, 'performance_state': performance,
         }
+        # b207: the halt must block NEW ENTRIES (everything below this point —
+        # plan build, monitor, proposal, execution — stays unreachable) but it
+        # must NOT cancel the only protective manager that is left when the
+        # watchdog is ALSO down: news_lock, time_exit, TP1 partial, breakeven
+        # and the runner trail would otherwise freeze for the whole 4h
+        # cooldown on an open, losing position (the drawdown leg can only fire
+        # with a position on the book). Tightening-only: this pass can modify
+        # SL / partial-TP / close, never open. Handoff rule intact: it runs
+        # only when the watchdog heartbeat is stale, exactly like the normal
+        # path — no double-manager race.
+        if positions and old_plan and not watchdog_alive:
+            guard = _manage_positions_fallback(
+                bridge, old_plan, positions, runtime, tick, now, dry_run,
+                policy, performance)
+            if guard['payload'] is not None:
+                mp = guard['payload']
+                mp['kill_switch'] = kill
+                mp['halted'] = True
+                mp['brief'] += (f"\n\n🛑 توقف سوییچ فعال است ({kill.get('reason')}) — "
+                                "فقط اقدام حفاظتی بالا روی پوزیشن باز اجرا شد؛ "
+                                "ورود جدید مسدود است")
+                _runtime_log(f"b207: protective action "
+                             f"{(mp.get('management') or {}).get('action')} ran "
+                             f"UNDER kill-switch halt (watchdog stale)")
+                return mp
+            # No action due — but guard health must still reach the operator
+            # on the halted brief (b37 visibility on the halted path).
+            _gline = _guard_brief_line(guard['guard_status'], None)
+            if _gline:
+                halted_payload['brief'] += _gline
+                halted_payload['guards'] = guard['guard_status']
+        return halted_payload
 
     # ── Plan / Reassess Step ──
     if step in {'plan', 'reassess'}:
@@ -532,135 +723,13 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # ── Manage Existing Positions ──
     # Skip if position watchdog daemon is alive (manages every 5s)
     guard_status_last: dict | None = None
-    hb = _plan_dir() / 'watchdog_heartbeat'
-    watchdog_alive = False
-    if hb.exists():
-        try:
-            age = (now - datetime.fromisoformat(hb.read_text().strip())).total_seconds()
-            watchdog_alive = age < 60
-        except Exception:
-            pass
     if positions and not watchdog_alive:
-        tick_obj = _tick_obj(tick if isinstance(tick, dict) else {})
-        runtime_state = runtime
-        # b35: the bridge stamps position times on the BROKER SERVER clock
-        # (~UTC+3). The watchdog measures that offset from its live 5s tick
-        # stream and publishes it (engines/broker_clock); a 15-min cycle
-        # cannot re-measure it, so we read theirs. None = no trustworthy
-        # calibration → fall back to the watchdog's own detection time.
-        try:
-            from engines.broker_clock import load_offset
-            broker_offset = load_offset(now=now)
-        except Exception:
-            broker_offset = None
-        wd_positions = _paths.read_json_safe(
-            _paths.watchdog_state(), {}, label='watchdog_state') or {}
-        if not isinstance(wd_positions, dict):
-            wd_positions = {}
-        wd_positions = wd_positions.get('positions') or {}
-        for raw in positions:
-            p = _pos_obj(raw)
-            _side = 'BUY' if p.type == 0 else 'SELL'
-            trade = {
-                'symbol': p.symbol, 'side': _side, 'entry_price': p.price_open,
-                'sl': p.sl or plan.get('invalidation') or p.price_open,
-                # b169: THE SAME ladder the watchdog builds (b44 wrong-side
-                # filter + b60 midpoint rebuild), extracted to
-                # engines.trade_management.build_tp_ladder. This fallback path
-                # used to feed evaluate_trade_management the RAW plan targets:
-                # a stale TP1 on the wrong side of entry made
-                # _next_unfilled_target return a blocked level (the b44
-                # profit_side guard then dead-locks every farther target), so
-                # the manage loop could neither take profit, arm breakeven nor
-                # trail — it could only time-exit. That is exactly the
-                # b167/b168 lesson: a fix to this ladder must be censused on
-                # EVERY producer of the trade dict, not just the daemon.
-                'tp_levels': build_tp_ladder(
-                    p.price_open, _side, p.tp,
-                    (plan.get('execution') or {}).get('tp_levels') or plan.get('targets') or []),
-                'tp_shares': (plan.get('execution') or {}).get('tp_shares') or [0.5, 0.3, 0.2],
-                'scale_in_levels': (plan.get('execution') or {}).get('scale_in_levels') or [],
-                'filled_tp_levels': ((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('filled_tp_levels', []),
-                'breakeven_active': bool(((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('breakeven_active', False)),
-                'runner_active': bool(((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('runner_active', True)),
-                'scaled_in_levels': ((runtime_state.get('management') or {}).get(str(p.ticket), {}) or {}).get('scaled_in_levels', []),
-                'volume': p.volume, 'regime': (plan.get('quality') or {}).get('regime'),
-                # b109: the ladder fields come from the ONE shared derivation
-                # (engines.trade_management.ladder_fields), same helper the
-                # watchdog and the live-parity backtest use. The values are
-                # byte-identical to the inline block this replaces.
-                **ladder_fields(plan.get('quality') or {},
-                                _infer_setup_grade(plan),
-                                session=plan.get('session')),
-            }
-            market_price = float(tick_obj.ask if trade['side'] == 'BUY' else tick_obj.bid)
-            management = evaluate_trade_management(trade, market_price, now)
-
-            # ── Legacy priority merge: news_lock(1) > time_exit(2) > legacy chain(3+) ──
-            # b37: was an inline `try: ... except Exception: pass` — a broken
-            # plan shape (context['macro']=None is written by the monitor path
-            # itself) or a calendar error dropped BOTH guards with no log and
-            # no trace in the report. Now a named helper that logs, tags the
-            # status, and hands it to the brief/payload.
-            management, guard_status = evaluate_legacy_guards(
-                management, plan, trade, p, market_price, now, broker_offset,
-                wd_entry=wd_positions.get(str(p.ticket)))
-            guard_status_last = guard_status
-
-            if management.get('action') != 'hold':
-                # AUTO-EXECUTE management action
-                # NOTE: DEFCON insights are deliberately NOT passed here.
-                # filter_management_by_insights() maps runner-disabled (YELLOW,
-                # i.e. loss_streak>=2) to `close_runner` = a FULL market close,
-                # so wiring it live would introduce an untested exit policy on a
-                # real account. The parity funnel models entries only, never
-                # management, so there is no evidence for it. Tracked as a todo.
-                mgmt_result = evaluate_management_action(
-                    management, bridge, p.ticket, dry_run=dry_run)
-                management['position_ticket'] = p.ticket
-                management['execution_result'] = mgmt_result
-
-                # Only a broker-accepted action (or a dry-run simulation step)
-                # may move our view of the trade. A rejected modify used to be
-                # recorded as success → breakeven_active=True while MT5 still
-                # held the original stop.
-                _committed = bool(mgmt_result.get('executed')) or bool(mgmt_result.get('dry_run'))
-
-                # Update runtime management state
-                if management.get('action') == 'partial_take_profit':
-                    filled = list(trade.get('filled_tp_levels', []))
-                    filled.append(management.get('target_hit'))
-                    management['filled_tp_levels'] = filled
-                elif management.get('action') == 'move_stop_to_breakeven':
-                    # b167: a news lock REUSES this action name (b32's lesson,
-                    # until now enforced only in the watchdog). Claiming the
-                    # flag for it would suppress the REAL post-TP1 breakeven.
-                    if not is_news_lock(management):
-                        management['breakeven_active'] = True
-                elif management.get('action') in {'close_runner', 'close_trade_early'}:
-                    management['runner_active'] = False
-
-                brief = render_management_brief(plan, management)
-                brief += _guard_brief_line(guard_status, p.ticket)
-                if not _committed and mgmt_result.get('error'):
-                    brief += (f"\n\n⚠️ اقدام مدیریت انجام نشد (بروکر رد کرد): "
-                              f"{mgmt_result['error'][:120]} — وضعیت قبلی دست‌نخورده")
-                # Persist management state (breakeven/filled TPs) — was a bug: not saved
-                mgmt_state = runtime.setdefault('management', {})
-                tstate = mgmt_state.setdefault(str(p.ticket), {})
-                if _committed:
-                    if management.get('action') == 'partial_take_profit':
-                        tstate['filled_tp_levels'] = management.get('filled_tp_levels', tstate.get('filled_tp_levels', []))
-                    elif management.get('action') == 'move_stop_to_breakeven':
-                        # b167: gate the PERSISTED flag too — this is the write
-                        # that survives into the next cycle; the in-memory dict
-                        # above is discarded on return.
-                        if not is_news_lock(management):
-                            tstate['breakeven_active'] = True
-                    elif management.get('action') in {'close_runner', 'close_trade_early'}:
-                        tstate['runner_active'] = False
-                save_runtime_state(_plan_dir(), runtime)
-                return {'ok': True, 'step': 'manage', 'plan_id': plan.get('plan_id'), 'management': management, 'guards': guard_status, 'brief': brief, 'will_execute_now': mgmt_result.get('executed', False), 'account_policy': policy, 'performance_state': performance}
+        guard = _manage_positions_fallback(bridge, plan, positions, runtime,
+                                           tick, now, dry_run, policy,
+                                           performance)
+        guard_status_last = guard['guard_status']
+        if guard['payload'] is not None:
+            return guard['payload']
 
     # ── Monitor for New Entry ──
     # b37: if the fallback loop ran but took no action, a guard error or a

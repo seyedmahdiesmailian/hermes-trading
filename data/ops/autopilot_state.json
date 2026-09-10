@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-10T05:35:56.158913+00:00",
+ "last_run_utc": "2026-09-10T09:30:02.771911+00:00",
  "recent_commits": [
-  "3248234 autopilot: b183 sizing-exit census (0.01 lane inert n=0/30, floor margin 2.07>1.5, n=2 post-b182 -> wait, pre-registered close condition) + b204 procedure filed",
-  "b3081f9 autopilot: b47 harvest wrap \u2014 b202 done-note + b203 (parked-work verification order) filed",
-  "3df8b7d harvest: b202 live runner-trail RATCHET (parity with funnel's cand-vs-sl rule; strictly tightening, hold trail_stop_not_improving) + fixed 2 impossible fixture geometries from the killed run + re-derived stale b93 ledger + swept 26 leaked headverify worktrees",
-  "a56db37 autopilot: b128 wrap \u2014 file b201 (worktree-reproducible scan baseline)",
-  "81bb97d autopilot: b128 coverage ratchet \u2014 scan vs frozen baseline (52 debt tokens) in both directions + first burn-down b136 (derive over 244 embedded rows); 7 tests"
+  "e334824 autopilot: restore trailing newline eaten by the parallel-session sed; b205 harvest complete on HEAD",
+  "4bec481 autopilot: b205 harvest done-note filed + b206 (harvest token-collision check)",
+  "cac4e52 harvest: b205 BE-branch stop RATCHET (post-TP1 move_stop_to_breakeven was gated only on the market-gap, could loosen an accepted news-lock SL by $46.8 \u2014 probe-reproduced on HEAD, fix holds; parked by killed run under token b204 which the same-morning procedure item had claimed; renamed to b205 + 5 tests + probe)",
+  "13a0b45 b204: BE stop-move is a ratchet too \u2014 post-TP1 breakeven can no longer loosen an accepted news-lock SL (probe 46.8 give-back on 4-level geometry) + 5 pin tests",
+  "3248234 autopilot: b183 sizing-exit census (0.01 lane inert n=0/30, floor margin 2.07>1.5, n=2 post-b182 -> wait, pre-registered close condition) + b204 procedure filed"
  ]
 }
