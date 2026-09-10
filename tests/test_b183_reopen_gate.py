@@ -62,7 +62,7 @@ class CloseParsing(unittest.TestCase):
         for bad in ("", None, "not-a-date", "2026-13-99"):
             self.assertIsNone(G._close_dt(bad), bad)
 
-    def test_the_old_string_compare_cannot_work_on_epoch(self):
+    def test_b183_the_old_string_compare_cannot_work_on_epoch(self):
         # 'close_time' is epoch-as-string: '1788989529' < '2026-09-09' ('1'<'2'),
         # so a lexicographic >= ship-date matches NOTHING. This is the b116
         # misread the parked wording fell into even after the column name fix.
@@ -114,7 +114,7 @@ class GateCounting(unittest.TestCase):
         self.assertEqual(out["post_001_lot_positions"], 1)
         self.assertEqual(out["post_lot_mix"], {"0.01": 1, "0.05": 1})
 
-    def test_reopen_flag_fires_only_at_30(self):
+    def test_b183_reopen_flag_fires_only_at_30(self):
         with tempfile.TemporaryDirectory() as d:
             p = _write([_row(100 + i, TS_POST, "0.05", f"p{i}")
                         for i in range(G.REOPEN_MIN_TRADES)], d)
