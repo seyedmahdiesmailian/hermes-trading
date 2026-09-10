@@ -300,6 +300,24 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
             new_sl = max(new_sl, entry)
         else:
             new_sl = min(new_sl, entry)
+        # b202 RATCHET — a trail may only ever move the stop TOWARD price, never
+        # away from it. The live-parity funnel has always enforced this
+        # (engines/backtest.py: `if cand > t["sl"]` for a BUY, `<` for a SELL);
+        # the live evaluator did not, so on every pullback after TP2 it proposed
+        # an SL BEHIND the one already on the book and auto_executor shipped it
+        # straight to bridge.modify_position. For a SELL runner that means the
+        # stop moves UP (price + trail_distance) as price bounces, handing back
+        # locked profit and, once the bounce exceeds trail_distance, giving back
+        # the breakeven lock too. Strictly tightening: the existing (better) SL
+        # stays in force, no gate gets looser, and live now matches the geometry
+        # every stored exp_R was priced on.
+        improves = new_sl > sl if side_buy else new_sl < sl
+        if not improves:
+            return {
+                "action": "hold",
+                "reason": "trail_stop_not_improving",
+                "at": now.isoformat(),
+            }
         # b44: a stop on the wrong side of the market is rejected by the
         # broker (retcode 10025 — SELL SL must sit ABOVE current price with
         # the spread). #103326893: price ran back above entry, the clamp

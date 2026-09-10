@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-09T22:30:02.312949+00:00",
+ "last_run_utc": "2026-09-10T02:55:10.400302+00:00",
  "recent_commits": [
+  "a56db37 autopilot: b128 wrap \u2014 file b201 (worktree-reproducible scan baseline)",
+  "81bb97d autopilot: b128 coverage ratchet \u2014 scan vs frozen baseline (52 debt tokens) in both directions + first burn-down b136 (derive over 244 embedded rows); 7 tests",
+  "a5a94c2 autopilot: b199 repair broken HEAD baba431 \u2014 harvest parked b81 M5-parity re-quote (b117/b118 57/0.219 == b189 arm B), b119 knob probe 24->12 binds, b52 registers B198 knobs, b50 orphan worktrees removed, b200 filed",
   "baba431 autopilot: b188(c) reassess-flip census \u2014 premise FALSE (19 episode reversals vs 1 direct flip; flicker not stickiness); no live change; b127 check + 7 tests",
-  "bc8a2e1 autopilot: b197 sizing-epoch observability (b143 summary+derive, digest line, b127 check, +17 tests; read-only reporting, no sizing path)",
-  "3c93c17 b193b follow-up: track autopilot's b197 sizing-epoch test (written 21:05 UTC, caught mid-flight by the 21:12 verify; passes standalone)",
-  "9995923 b193b: fail-closed aggressive gate for m5_rows=None + kill 4 phantom resting-order actions (never placed; re-admitted b187 adverse selection); wait states with target_entry instead",
-  "3b9215d autopilot: b196 wire the account's tiered base_risk_pct into entry sizing (b136 class, tightening-only; +9 tests; b136/b137/b140 ledgers re-derived)"
+  "bc8a2e1 autopilot: b197 sizing-epoch observability (b143 summary+derive, digest line, b127 check, +17 tests; read-only reporting, no sizing path)"
  ]
 }

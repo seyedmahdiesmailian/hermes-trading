@@ -7,7 +7,7 @@
  },
  "cached": {
   "frame": {
-   "offset_sec_used": 10798.44,
+   "offset_sec_used": 10798.397,
    "naive_frame": {
     "weekday_hist": {
      "Mon": 552,
@@ -43,9 +43,9 @@
     ],
     "weekly_gap": {
      "gap_hours": 49.25,
-     "last_before": "2026-07-17T20:45:01.560000+00:00",
+     "last_before": "2026-07-17T20:45:01.603000+00:00",
      "last_before_dow": "Fri",
-     "first_after": "2026-07-19T22:00:01.560000+00:00",
+     "first_after": "2026-07-19T22:00:01.603000+00:00",
      "first_after_dow": "Sun"
     }
    }
@@ -61,7 +61,7 @@
  },
  "W1": {
   "frame": {
-   "offset_sec_used": 10798.44,
+   "offset_sec_used": 10798.397,
    "naive_frame": {
     "weekday_hist": {
      "Mon": 1186,
@@ -97,9 +97,9 @@
     ],
     "weekly_gap": {
      "gap_hours": 53.25,
-     "last_before": "2026-06-19T16:45:01.560000+00:00",
+     "last_before": "2026-06-19T16:45:01.603000+00:00",
      "last_before_dow": "Fri",
-     "first_after": "2026-06-21T22:00:01.560000+00:00",
+     "first_after": "2026-06-21T22:00:01.603000+00:00",
      "first_after_dow": "Sun"
     }
    }
@@ -115,7 +115,7 @@
  },
  "W2": {
   "frame": {
-   "offset_sec_used": 10798.44,
+   "offset_sec_used": 10798.397,
    "naive_frame": {
     "weekday_hist": {
      "Mon": 1242,
@@ -151,9 +151,9 @@
     ],
     "weekly_gap": {
      "gap_hours": 73.25,
-     "last_before": "2026-04-02T20:45:01.560000+00:00",
+     "last_before": "2026-04-02T20:45:01.603000+00:00",
      "last_before_dow": "Thu",
-     "first_after": "2026-04-05T22:00:01.560000+00:00",
+     "first_after": "2026-04-05T22:00:01.603000+00:00",
      "first_after_dow": "Sun"
     }
    }
@@ -169,7 +169,7 @@
  },
  "W3": {
   "frame": {
-   "offset_sec_used": 10798.44,
+   "offset_sec_used": 10798.397,
    "naive_frame": {
     "weekday_hist": {
      "Mon": 1221,
@@ -205,9 +205,9 @@
     ],
     "weekly_gap": {
      "gap_hours": 51.5,
-     "last_before": "2025-11-28T18:30:01.560000+00:00",
+     "last_before": "2025-11-28T18:30:01.603000+00:00",
      "last_before_dow": "Fri",
-     "first_after": "2025-11-30T22:00:01.560000+00:00",
+     "first_after": "2025-11-30T22:00:01.603000+00:00",
      "first_after_dow": "Sun"
     }
    }
@@ -223,7 +223,7 @@
  },
  "W4": {
   "frame": {
-   "offset_sec_used": 10798.44,
+   "offset_sec_used": 10798.397,
    "naive_frame": {
     "weekday_hist": {
      "Mon": 1186,
@@ -259,9 +259,9 @@
     ],
     "weekly_gap": {
      "gap_hours": 49.25,
-     "last_before": "2025-07-11T20:45:01.560000+00:00",
+     "last_before": "2025-07-11T20:45:01.603000+00:00",
      "last_before_dow": "Fri",
-     "first_after": "2025-07-13T22:00:01.560000+00:00",
+     "first_after": "2025-07-13T22:00:01.603000+00:00",
      "first_after_dow": "Sun"
     }
    }
@@ -276,12 +276,12 @@
   }
  },
  "live_record": {
-  "cycles": 711,
-  "first": "2026-09-01T12:30:02.321783+00:00",
-  "last": "2026-09-08T17:15:01.633464+00:00",
-  "span_days": 7.2,
+  "cycles": 712,
+  "first": "2026-09-03T00:30:02.732637+00:00",
+  "last": "2026-09-10T04:00:02.859555+00:00",
+  "span_days": 7.15,
   "cycles_blocked_by_market_hours": 201,
-  "share_of_cycles_blocked": 0.2827,
+  "share_of_cycles_blocked": 0.2823,
   "blocked_by_weekday": {
    "Fri": 8,
    "Sat": 96,
@@ -341,20 +341,20 @@
  "boundary_vs_reality": {
   "sessions_found": 7,
   "first_bar_of_week_true_utc": [
-   "2026-07-19T22:00:01.560000+00:00",
-   "2026-07-26T22:00:01.560000+00:00",
-   "2026-08-02T22:00:01.560000+00:00",
-   "2026-08-09T22:00:01.560000+00:00",
-   "2026-08-16T22:00:01.560000+00:00",
-   "2026-08-23T22:00:01.560000+00:00"
+   "2026-07-19T22:00:01.603000+00:00",
+   "2026-07-26T22:00:01.603000+00:00",
+   "2026-08-02T22:00:01.603000+00:00",
+   "2026-08-09T22:00:01.603000+00:00",
+   "2026-08-16T22:00:01.603000+00:00",
+   "2026-08-23T22:00:01.603000+00:00"
   ],
   "last_bar_of_week_true_utc": [
-   "2026-07-17T20:45:01.560000+00:00",
-   "2026-07-24T20:45:01.560000+00:00",
-   "2026-07-31T20:45:01.560000+00:00",
-   "2026-08-07T20:45:01.560000+00:00",
-   "2026-08-14T20:45:01.560000+00:00",
-   "2026-08-21T20:45:01.560000+00:00"
+   "2026-07-17T20:45:01.603000+00:00",
+   "2026-07-24T20:45:01.603000+00:00",
+   "2026-07-31T20:45:01.603000+00:00",
+   "2026-08-07T20:45:01.603000+00:00",
+   "2026-08-14T20:45:01.603000+00:00",
+   "2026-08-21T20:45:01.603000+00:00"
   ],
   "inferred_weekly_open_utc": "Sun 22:00",
   "inferred_weekly_close_utc": "Fri 21:00",
@@ -369,7 +369,7 @@
   "blocked_bars_true_frame_total": 235,
   "book_can_price_this_gate": false,
   "book_verdict": "INVERTED POPULATION \u2014 the naive frame's kills are open-market bars and its zero-Sunday reading hides the truly closed ones; a book number here is meaningless in either frame, which is exactly what b93's rule is for (and it retroactively voids b92's '0 Sunday bars' as a coverage statement: the bars exist, the frame hid them)",
-  "live_fire_rate": "201/711 cycles",
+  "live_fire_rate": "201/712 cycles",
   "shadow_verdict": "DISJOINT \u2014 cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar",
   "adaptive_reachable": false,
   "boundary_mismatch": "gate Sun 23:00/Fri 22:00 vs broker Sun 22:00/Fri 21:00",
