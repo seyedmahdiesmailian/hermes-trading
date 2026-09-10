@@ -1,10 +1,10 @@
 {
- "last_run_utc": "2026-09-10T04:28:42.370846+00:00",
+ "last_run_utc": "2026-09-10T05:35:56.158913+00:00",
  "recent_commits": [
+  "3248234 autopilot: b183 sizing-exit census (0.01 lane inert n=0/30, floor margin 2.07>1.5, n=2 post-b182 -> wait, pre-registered close condition) + b204 procedure filed",
   "b3081f9 autopilot: b47 harvest wrap \u2014 b202 done-note + b203 (parked-work verification order) filed",
   "3df8b7d harvest: b202 live runner-trail RATCHET (parity with funnel's cand-vs-sl rule; strictly tightening, hold trail_stop_not_improving) + fixed 2 impossible fixture geometries from the killed run + re-derived stale b93 ledger + swept 26 leaked headverify worktrees",
   "a56db37 autopilot: b128 wrap \u2014 file b201 (worktree-reproducible scan baseline)",
-  "81bb97d autopilot: b128 coverage ratchet \u2014 scan vs frozen baseline (52 debt tokens) in both directions + first burn-down b136 (derive over 244 embedded rows); 7 tests",
-  "a5a94c2 autopilot: b199 repair broken HEAD baba431 \u2014 harvest parked b81 M5-parity re-quote (b117/b118 57/0.219 == b189 arm B), b119 knob probe 24->12 binds, b52 registers B198 knobs, b50 orphan worktrees removed, b200 filed"
+  "81bb97d autopilot: b128 coverage ratchet \u2014 scan vs frozen baseline (52 debt tokens) in both directions + first burn-down b136 (derive over 244 embedded rows); 7 tests"
  ]
 }

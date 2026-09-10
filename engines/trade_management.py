@@ -269,6 +269,18 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
 
     if filled and not trade.get("breakeven_active"):
         new_sl, reason = _breakeven_stop(trade)
+        # b205 RATCHET — the BE move is a STOP MOVE, same contract b202 pinned
+        # for trail_stop: it may only ever tighten. The branch below compares
+        # new_sl to the MARKET (b44/b52 gap guard) but never to the CURRENT
+        # stop, so after legacy_guards.evaluate_news_lock tightened SL to
+        # price-0.5*ATR pre-TP1 (it DOES enforce `protective` — proof the
+        # codebase knows this verb must never loosen), a post-TP1
+        # entry+0.15R BE proposal sat $46 BELOW the accepted lock (probe:
+        # scripts/b205_be_ratchet_probe.py) and the executor would have
+        # shipped the loosening modify straight to the broker, refunding the
+        # news protection exactly when volatility is worst. Strictly
+        # tightening: an equal or better existing SL stays in force.
+        improves = new_sl > sl if side_buy else new_sl < sl
         # b44: the broker rejects a stop on the wrong side of the market
         # (retcode 10016 — SELL needs SL ABOVE price). Before this guard the
         # watchdog hammered the same invalid modify every 5s for minutes.
@@ -278,13 +290,18 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
         # 10025 (#103636278 hammered ~28x, 03:42-03:45 UTC). 0.5 covers
         # XAUUSD spread+stops with room; below that we hold, existing SL stays.
         gap_ok = (new_sl < market_price - 0.50) if side_buy else (new_sl > market_price + 0.50)
-        if gap_ok:
+        if improves and gap_ok:
             return {
                 "action": "move_stop_to_breakeven",
                 "new_sl": new_sl,
                 "reason": reason,
                 "at": now.isoformat(),
             }
+        # b205: when `improves` is False the existing (better) SL stays in
+        # force — silent fall-through, exactly like the b52 gap guard above.
+        # An early `hold` RETURN here would starve the runner-trail branch
+        # below (BE is evaluated first), so the reason is only observable via
+        # the trailing `trail_stop_not_improving` / final hold paths.
 
     if len(filled) >= 2 and trade.get("runner_active"):
         if _runner_should_die(trade):
