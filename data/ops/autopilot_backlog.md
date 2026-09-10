@@ -47,6 +47,36 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
+- [x] b202 HARVESTED (b47 run, 2026-09-10) TRADER PARITY DEFECT — THE LIVE RUNNER TRAIL
+      WAS NOT A RATCHET: engines/trade_management.evaluate_trade_management proposed
+      `price ∓ trail_distance` on every post-TP2 tick with NO comparison to the SL already
+      on the book; the funnel (engines/backtest.py cand>t["sl"]) always ratcheted — b123/b189
+      drift class in mirror (lab stricter than live): each bounce donated back locked runner
+      profit and could erase the breakeven lock, while every stored exp_R was priced on the
+      ratcheting geometry. Fix (parked by a killed run, harvested here): strictly-tightening
+      hold `trail_stop_not_improving`, ordered BEFORE the b44 broker-validity check; no gate
+      loosened, funnel unchanged, so no ledger re-derivation. 9 tests
+      (tests/test_b202_trail_ratchet.py) — TWO of the parked fixtures were arithmetically
+      impossible (claimed a hold where cand>sl really improves, and used sl=entry+2 which
+      _runner_should_die never reaches with risk<=dist); re-derived by hand against the live
+      evaluator, fixtures fixed, code kept. Also swept this run: 26 leaked
+      /tmp/hermes_headverify_* dirs + 1 locked registered worktree (dead owner.pid, the
+      b200/b166 class, unregistered), and re-derived b93's stale live_record (drift 0.073>
+      0.06 — the snapshot, not the gate, was 2 days old). 1683 tests OK in the clean HEAD
+      worktree. [TRADER: live==funnel trail geometry, tightening-only]
+- [ ] b203 REUSABLE PROCEDURE — A RED TEST FROM PARKED/KILLED-RUN WORK IS NOT
+      EVIDENCE OF RED CODE (learned harvesting b202, 2026-09-10): the detector says
+      "code untouched 1.5h", and its tests may have been written at 3am by a run that
+      never executed them. Before fixing code or deleting a parked test, re-derive each
+      failing fixture's arithmetic BY HAND against the actual function (compute the
+      branch it enters, the clamp it hits, the gate that pre-empts it) and run the
+      evaluator directly on the fixture: b202's two failures were both impossible
+      geometries (a "loosening" cand that really improved; a runner state the death
+      check never reaches) — the parked code was right and shipped as-is. ORDER for
+      verifying harvested work: (1) run the new tests alone, (2) hand-check every
+      failure, (3) full suite, (4) classify remaining reds as environmental (untracked
+      file = b42, leaked worktree = b50/b200, stale snapshot ledger = b93 class) before
+      touching anything the killed run wrote.
 - [x] b199 REPAIR BROKEN HEAD baba431 — b193b's fail-CLOSED M5 gate silently unpriced every
       b81.funnel_fn ledger (M15 legs carry no M5 stream -> strategy_signal emits 0 trades ->
       b119 knob probe read None==None, verify_head called HEAD BROKEN). Harvested the prior
