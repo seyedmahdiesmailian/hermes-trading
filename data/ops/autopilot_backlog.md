@@ -59,6 +59,20 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       re-asserted), b50's leaked diagnostic worktrees from the prior run removed (registered
       as b200 todo). 82 targeted tests OK; full-suite verdict = verify_head on the fresh commit.
       [TRADER: lab parity with live's shipped gate, merit bar re-priced]
+- [ ] b201 REUSABLE PROCEDURE — A SCAN-BASED RATCHET'S BASELINE MUST BE
+      REPRODUCIBLE IN A CLEAN WORKTREE (learned shipping b128, 2026-09-10):
+      check_b128_coverage_ratchet scans data/backtest|data/ops files BY
+      EXISTENCE, but verify_head.sh runs the FULL suite inside a clean detached
+      worktree of HEAD — any owned artifact present in the working dir but
+      UNTRACKED by git is invisible there, so the worktree scan != baseline and
+      the ratchet goes red without anything being wrong in the working tree
+      (b44's disease, new host). RULE: after adding any scan-over-files check
+      with a frozen baseline, run `git ls-files` vs the scan's file set and
+      commit the artifacts (or make the scan git-aware: `git ls-files` instead
+      of os.path.exists). The 2026-09-10 tree was verified clean (0 untracked
+      owned artifacts); the ratchet should encode that proof instead of
+      trusting it. Small, safe: switch uncovered_writers' existence test to
+      tracked-files lookup and pin it with one test.
 - [ ] b200 REUSABLE PROCEDURE — A DIAGNOSTIC/HAND-MADE WORKTREE IS A LEAK UNTIL REGISTERED
       (filed by b199, 2026-09-09): b193's run left /tmp/b193wt2/b193wt3/prewt/prewt2 attached;
       b50's unowned-leftover test went red on a healthy repo two rounds later, and the sweep in
