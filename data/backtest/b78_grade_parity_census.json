@@ -1,113 +1,5 @@
 [
  {
-  "t": 1788969900,
-  "decision_utc": "09-09 16:05",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1788970200,
-  "decision_utc": "09-09 16:10",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "aligned",
-  "grade": "B",
-  "qgate": true,
-  "exec_ok": true,
-  "exec_reason": "auto_approved",
-  "on_grid": false
- },
- {
-  "t": 1789015800,
-  "decision_utc": "09-10 04:50",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789016700,
-  "decision_utc": "09-10 05:05",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789017000,
-  "decision_utc": "09-10 05:10",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789024200,
-  "decision_utc": "09-10 07:10",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789024500,
-  "decision_utc": "09-10 07:15",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": true
- },
- {
-  "t": 1789024800,
-  "decision_utc": "09-10 07:20",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789027500,
-  "decision_utc": "09-10 08:05",
-  "bias": "bullish",
-  "style": "pullback_continuation",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
   "t": 1789044000,
   "decision_utc": "09-10 12:40",
   "bias": "bearish",
@@ -118,18 +10,6 @@
   "exec_ok": true,
   "exec_reason": "auto_approved",
   "on_grid": false
- },
- {
-  "t": 1789045200,
-  "decision_utc": "09-10 13:00",
-  "bias": "bearish",
-  "style": "pullback_continuation",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": true
  },
  {
   "t": 1789047300,
@@ -154,42 +34,6 @@
   "exec_ok": true,
   "exec_reason": "auto_approved",
   "on_grid": false
- },
- {
-  "t": 1789050300,
-  "decision_utc": "09-10 14:25",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789052100,
-  "decision_utc": "09-10 14:55",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789052400,
-  "decision_utc": "09-10 15:00",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": true
  },
  {
   "t": 1789052700,
@@ -240,30 +84,6 @@
   "on_grid": true
  },
  {
-  "t": 1789067700,
-  "decision_utc": "09-10 19:15",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": true
- },
- {
-  "t": 1789072800,
-  "decision_utc": "09-10 20:40",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
   "t": 1789074300,
   "decision_utc": "09-10 21:05",
   "bias": "bearish",
@@ -312,54 +132,6 @@
   "on_grid": false
  },
  {
-  "t": 1789090500,
-  "decision_utc": "09-11 01:35",
-  "bias": "bearish",
-  "style": "aggressive_value_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789090800,
-  "decision_utc": "09-11 01:40",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
-  "t": 1789091100,
-  "decision_utc": "09-11 01:45",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "aligned",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": true
- },
- {
-  "t": 1789095300,
-  "decision_utc": "09-11 02:55",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "mixed",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
   "t": 1789104900,
   "decision_utc": "09-11 05:35",
   "bias": "bearish",
@@ -372,39 +144,15 @@
   "on_grid": false
  },
  {
-  "t": 1789109100,
-  "decision_utc": "09-11 06:45",
-  "bias": "bearish",
-  "style": "aggressive_discount_entry",
-  "align": "neutral",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": true
- },
- {
-  "t": 1789116000,
-  "decision_utc": "09-11 08:40",
-  "bias": "bullish",
-  "style": "aggressive_premium_entry",
-  "align": "neutral",
-  "grade": "C",
-  "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
-  "on_grid": false
- },
- {
   "t": 1789116300,
   "decision_utc": "09-11 08:45",
   "bias": "bullish",
   "style": "aggressive_premium_entry",
-  "align": "mixed",
-  "grade": "C",
+  "align": "aligned",
+  "grade": "B",
   "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
+  "exec_ok": true,
+  "exec_reason": "auto_approved",
   "on_grid": true
  },
  {
@@ -412,11 +160,11 @@
   "decision_utc": "09-11 08:50",
   "bias": "bullish",
   "style": "aggressive_premium_entry",
-  "align": "mixed",
-  "grade": "C",
+  "align": "aligned",
+  "grade": "B",
   "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
+  "exec_ok": true,
+  "exec_reason": "auto_approved",
   "on_grid": false
  },
  {
@@ -424,11 +172,11 @@
   "decision_utc": "09-11 09:10",
   "bias": "bullish",
   "style": "aggressive_premium_entry",
-  "align": "mixed",
-  "grade": "C",
+  "align": "aligned",
+  "grade": "A",
   "qgate": true,
-  "exec_ok": false,
-  "exec_reason": "setup_grade_C",
+  "exec_ok": true,
+  "exec_reason": "auto_approved",
   "on_grid": false
  }
 ]

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from engines.orchestrator import compute_xau_position_size
-from engines.plan import setup_grade
+from engines.plan import setup_grade, MIN_SETUP_GRADE  # b79d: threshold lives
 from engines.market_hours import is_market_open
 from engines.defcon import filter_management_by_insights
 
@@ -29,7 +29,10 @@ MAX_OPEN_POSITIONS = 1              # max simultaneous positions. Was 2 — a
                                     # the grade-B audit (b14) justified MIN_SETUP_GRADE
                                     # on the single-slot constraint. Live now matches
                                     # both (tightening only, never loosening).
-MIN_SETUP_GRADE = "B"               # backtest 2026-08-29: C-grade (weak trend) entries drag win-rate; B keeps 13-trade sample with 61.5% WR
+# b79d: MIN_SETUP_GRADE is IMPORTED from engines.plan above (re-export for
+# the entry gate, tests and lab_harness) — the value lives next to
+# setup_grade so the monitor gate and Check 6 cannot carry two literals
+# that drift. Do not rebind it here: the imported name IS the gate.
 # b53: per-entry-style risk multiplier (M5 parity backtest, 6500 bars,
 # 2026-09-01). aggressive_discount_entry = no-trigger chase of a move that
 # already left the zone: WR 52% vs premium 65%, and it produced the two

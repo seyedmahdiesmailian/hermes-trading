@@ -98,6 +98,17 @@ def apply_smc_merge(ctx: dict, merged: dict, *, entry_close: float,
 REANCHOR_STOP_ATR_CAP = 2.0
 # ...and keep at least this reward:risk after re-anchoring.
 REANCHOR_MIN_RR = 1.5
+# b79d: THE grade threshold lives here, next to THE grade rule, so the
+# monitor gate (orchestrator) and the entry gate (auto_executor Check 6)
+# cannot carry two literals that drift. auto_executor re-exports it.
+# backtest 2026-08-29: C-grade (weak trend) entries drag win-rate; B keeps
+# 13-trade sample with 61.5% WR.
+MIN_SETUP_GRADE = "B"
+
+
+def grade_qualifies(grade: str) -> bool:
+    """A < B < C alphabetically, A is best: qualifies iff grade <= min."""
+    return str(grade or "").upper() <= MIN_SETUP_GRADE
 
 
 def setup_grade(plan: dict) -> str:

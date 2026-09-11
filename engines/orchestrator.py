@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from math import floor
 from uuid import uuid4
 
-from engines.plan import decide_execution_action
+from engines.plan import decide_execution_action, grade_qualifies, setup_grade
 
 
 def _parse_dt(value: str | None):
@@ -50,16 +50,18 @@ def build_plan_from_context(ctx: dict, now: datetime | None = None) -> dict:
 
 
 def _passes_quality_gate(plan: dict) -> bool:
-    quality = plan.get("quality", {})
-    alignment = quality.get("alignment")
-    trend_strength = float(quality.get("trend_strength", 0.0) or 0.0)
-    smc_conf = float(quality.get("smc_confidence", 0) or 0)
-    # Allow if aligned AND trend strong (ATR units), OR if SMC is confident
-    if alignment == 'aligned' and trend_strength >= 1.0:
-        return True
-    if smc_conf >= 0.4:
-        return True
-    return False
+    """b79d: ONE grade rule, one world. This used to be a SECOND, LOOSER
+    rule (aligned+trend>=1.0 OR smc_confidence>=0.4), so the monitor stamped
+    market_entry_now on plans the executor's Check 6 (setup_grade vs
+    MIN_SETUP_GRADE) was guaranteed to kill: 144 of 287 C-grade live plans
+    passed here, and 23 of 36 b78-replay fires died exactly that death
+    (data/backtest/b78_grade_parity_census.json). Dead fires are not free —
+    they inflate every census and make the funnel look worse-open than it
+    is (same lie class as b108's missing grade parity and b193's bypassed
+    M5 gate). Defer to the canonical rule; the smc_confidence back-door is
+    gone. Tightening only: no plan that live EXECUTES today was blocked
+    before — the executor already killed it one layer down."""
+    return grade_qualifies(setup_grade(plan))
 
 
 def compute_xau_position_size(
