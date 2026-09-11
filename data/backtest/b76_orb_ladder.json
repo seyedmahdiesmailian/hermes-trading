@@ -1,0 +1,30 @@
+{
+ "signals_raw": 21,
+ "book": {
+  "trades": 21,
+  "exp_R": -0.222,
+  "WR%": 47.6,
+  "avg_win_R": 0.66,
+  "avg_loss_R": -1.02,
+  "net_R": -4.7,
+  "maxDD_R": -4.8,
+  "mean_hold_bars": 8.2,
+  "p95_hold_bars": 20,
+  "max_hold_bars": 23,
+  "holds_over_time_exit": 0
+ },
+ "legs": {
+  "L1": {
+   "n": 7,
+   "exp_R": -0.272
+  },
+  "L2": {
+   "n": 6,
+   "exp_R": 0.045
+  },
+  "L3": {
+   "n": 8,
+   "exp_R": -0.379
+  }
+ }
+}

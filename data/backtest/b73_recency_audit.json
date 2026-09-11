@@ -1,0 +1,60 @@
+{
+ "N3_newest": {
+  "trades": 60,
+  "exp_R": 0.284,
+  "WR%": 71.7,
+  "avg_win_R": 0.79,
+  "avg_loss_R": -0.99,
+  "net_R": 17.0,
+  "maxDD_R": -2.3,
+  "mean_hold_bars": 9.4,
+  "p95_hold_bars": 37,
+  "max_hold_bars": 57,
+  "holds_over_time_exit": 0,
+  "_span": [
+   "08-27",
+   "09-11"
+  ],
+  "_bars": 3000
+ },
+ "N2_mid": {
+  "trades": 54,
+  "exp_R": 0.12,
+  "WR%": 63.0,
+  "avg_win_R": 0.79,
+  "avg_loss_R": -1.02,
+  "net_R": 6.5,
+  "maxDD_R": -2.5,
+  "mean_hold_bars": 9.6,
+  "p95_hold_bars": 32,
+  "max_hold_bars": 55,
+  "holds_over_time_exit": 0,
+  "_span": [
+   "08-12",
+   "08-27"
+  ],
+  "_bars": 3000
+ },
+ "N1_older": {
+  "trades": 60,
+  "exp_R": 0.285,
+  "WR%": 71.7,
+  "avg_win_R": 0.8,
+  "avg_loss_R": -1.02,
+  "net_R": 17.1,
+  "maxDD_R": -2.3,
+  "mean_hold_bars": 8.1,
+  "p95_hold_bars": 20,
+  "max_hold_bars": 33,
+  "holds_over_time_exit": 0,
+  "_span": [
+   "07-28",
+   "08-12"
+  ],
+  "_bars": 3000
+ },
+ "_book_reference": {
+  "parity": "57 trades exp_R 0.219 (Jul-Aug)",
+  "b48h": "b72: 14 trades exp_R -0.046 (Sep 9-11)"
+ }
+}

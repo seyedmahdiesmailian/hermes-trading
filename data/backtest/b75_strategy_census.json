@@ -1,0 +1,91 @@
+{
+ "_span": [
+  "08-12",
+  "09-11"
+ ],
+ "_windows_utc": "asia 00-07, LON open 07-07:30 (entry->10), NY open 12:30-13 (entry->15)",
+ "F1_ORB_LON": {
+  "signals": 21,
+  "exp_R": 0.169,
+  "wr": 38.1,
+  "net_R": 3.56,
+  "legs": {
+   "L1": {
+    "n": 7,
+    "exp_R": -0.063
+   },
+   "L2": {
+    "n": 6,
+    "exp_R": 0.5
+   },
+   "L3": {
+    "n": 8,
+    "exp_R": 0.125
+   }
+  },
+  "PROMOTE": true
+ },
+ "F1b_ORB_NY": {
+  "signals": 21,
+  "exp_R": 0.143,
+  "wr": 38.1,
+  "net_R": 3.0,
+  "legs": {
+   "L1": {
+    "n": 8,
+    "exp_R": 0.5
+   },
+   "L2": {
+    "n": 6,
+    "exp_R": 0.0
+   },
+   "L3": {
+    "n": 7,
+    "exp_R": -0.143
+   }
+  },
+  "PROMOTE": false
+ },
+ "F2_SWEEP": {
+  "signals": 13,
+  "exp_R": 0.385,
+  "wr": 46.2,
+  "net_R": 5.0,
+  "legs": {
+   "L1": {
+    "n": 5,
+    "exp_R": -0.4
+   },
+   "L2": {
+    "n": 2,
+    "exp_R": 2.0
+   },
+   "L3": {
+    "n": 6,
+    "exp_R": 0.5
+   }
+  },
+  "PROMOTE": false
+ },
+ "F3_NRC": {
+  "signals": 1,
+  "exp_R": -1.0,
+  "wr": 0.0,
+  "net_R": -1.0,
+  "legs": {
+   "L1": {
+    "n": 0,
+    "exp_R": null
+   },
+   "L2": {
+    "n": 0,
+    "exp_R": null
+   },
+   "L3": {
+    "n": 1,
+    "exp_R": -1.0
+   }
+  },
+  "PROMOTE": false
+ }
+}
