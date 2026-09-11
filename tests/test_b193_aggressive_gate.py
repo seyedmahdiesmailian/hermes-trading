@@ -29,13 +29,21 @@ def _dict_rows(closes):
 
 
 def _plan(bias="bullish"):
-    # mirrors the 2026-09-09 18:15 live plan: zone 4414.3-4415.9, value band up
+    # mirrors the 2026-09-09 18:15 live plan: zone 4414.3-4415.9, value band up.
+    # b79d: the quality dict now carries the fields THE grade rule reads
+    # (alignment/trend_strength) — the real 18:15 plan was graded B by the
+    # executor, which let it through (ticket 105702248). The old fixture
+    # only had smc_confidence, which passed SOLELY through b79d's dead
+    # back-door; that fiction is gone.
     zones = {"long_entry_low": 4414.3, "long_entry_high": 4415.9,
              "short_entry_low": 4417.5, "short_entry_high": 4419.1,
              "value_low": 4415.9, "value_high": 4417.5}
     return {"plan_id": "t-b193", "symbol": "XAUUSD", "bias": bias, "zones": zones,
             "invalidation": 4388.5, "targets": [4425.0, 4440.0],
-            "atr": 3.15, "quality": {"smc_confidence": 0.9},
+            "atr": 3.15, "quality": {"smc_confidence": 0.9,
+                                     "alignment": "aligned",
+                                     "trend_strength": 1.5,
+                                     "regime": "pullback_continuation"},
             "execution": {"breakout_trigger": 4419.0}}
 
 

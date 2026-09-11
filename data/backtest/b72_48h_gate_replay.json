@@ -1,77 +1,37 @@
 {
  "window": [
-  "2026-09-09T03:00:00+00:00",
-  "2026-09-11T06:55:00+00:00"
+  "2026-09-09T10:05:00+00:00",
+  "2026-09-11T14:00:00+00:00"
  ],
  "bars": 600,
  "deployed_book": {
-  "trades": 14,
-  "exp_R": -0.046,
-  "WR%": 57.1,
-  "avg_win_R": 0.69,
+  "trades": 13,
+  "exp_R": -0.199,
+  "WR%": 46.2,
+  "avg_win_R": 0.76,
   "avg_loss_R": -1.02,
-  "net_R": -0.6,
-  "maxDD_R": -2.6,
-  "mean_hold_bars": 9.6,
-  "p95_hold_bars": 16,
+  "net_R": -2.6,
+  "maxDD_R": -3.6,
+  "mean_hold_bars": 10.5,
+  "p95_hold_bars": 18,
   "max_hold_bars": 57,
   "holds_over_time_exit": 0
  },
  "looser_book": {
-  "trades": 14,
-  "exp_R": -0.046,
-  "WR%": 57.1,
-  "avg_win_R": 0.69,
+  "trades": 13,
+  "exp_R": -0.199,
+  "WR%": 46.2,
+  "avg_win_R": 0.76,
   "avg_loss_R": -1.02,
-  "net_R": -0.6,
-  "maxDD_R": -2.6,
-  "mean_hold_bars": 9.6,
-  "p95_hold_bars": 16,
+  "net_R": -2.6,
+  "maxDD_R": -3.6,
+  "mean_hold_bars": 10.5,
+  "p95_hold_bars": 18,
   "max_hold_bars": 57,
   "holds_over_time_exit": 0
  },
  "census": {
   "market_entry_now": [
-   {
-    "t": "09-09 14:40",
-    "price": 4405.54,
-    "bias": "bullish",
-    "trend": 3.13,
-    "smc": 0.54,
-    "align": "mixed",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-09 16:00",
-    "price": 4407.1,
-    "bias": "bullish",
-    "trend": 0.55,
-    "smc": 0.49,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-09 16:05",
-    "price": 4409.86,
-    "bias": "bullish",
-    "trend": 1.25,
-    "smc": 0.49,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-09 20:40",
-    "price": 4413.6,
-    "bias": "bullish",
-    "trend": 1.47,
-    "smc": 0.45,
-    "align": "neutral",
-    "action": "market_entry_now",
-    "reason": null
-   },
    {
     "t": "09-10 02:35",
     "price": 4394.07,
@@ -83,81 +43,11 @@
     "reason": null
    },
    {
-    "t": "09-10 04:45",
-    "price": 4413.21,
-    "bias": "bullish",
-    "trend": 2.15,
-    "smc": 0.9,
-    "align": "neutral",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 05:00",
-    "price": 4415.11,
-    "bias": "bullish",
-    "trend": 0.89,
-    "smc": 0.49,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 05:05",
-    "price": 4416.61,
-    "bias": "bullish",
-    "trend": 0.2,
-    "smc": 0.49,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 05:25",
-    "price": 4417.09,
-    "bias": "bullish",
-    "trend": 1.22,
-    "smc": 0.43,
-    "align": "mixed",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 08:05",
-    "price": 4414.57,
-    "bias": "bullish",
-    "trend": 0.44,
-    "smc": 0.61,
-    "align": "mixed",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 09:55",
-    "price": 4425.29,
-    "bias": "bullish",
-    "trend": 1.04,
-    "smc": 0.4,
-    "align": "mixed",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
     "t": "09-10 12:35",
     "price": 4390.88,
     "bias": "bearish",
     "trend": 2.13,
     "smc": 0.53,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 12:55",
-    "price": 4394.1,
-    "bias": "bearish",
-    "trend": 0.22,
-    "smc": 0.52,
     "align": "aligned",
     "action": "market_entry_now",
     "reason": null
@@ -188,16 +78,6 @@
     "bias": "bearish",
     "trend": 2.03,
     "smc": 0.5,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 14:55",
-    "price": 4374.57,
-    "bias": "bearish",
-    "trend": 0.7,
-    "smc": 0.48,
     "align": "aligned",
     "action": "market_entry_now",
     "reason": null
@@ -238,16 +118,6 @@
     "bias": "bearish",
     "trend": 2.99,
     "smc": 0.45,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-10 20:35",
-    "price": 4358.51,
-    "bias": "bearish",
-    "trend": 0.37,
-    "smc": 0.43,
     "align": "aligned",
     "action": "market_entry_now",
     "reason": null
@@ -303,36 +173,6 @@
     "reason": null
    },
    {
-    "t": "09-11 01:30",
-    "price": 4318.39,
-    "bias": "bearish",
-    "trend": 0.5,
-    "smc": 0.52,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-11 01:35",
-    "price": 4316.13,
-    "bias": "bearish",
-    "trend": 0.31,
-    "smc": 0.51,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
-    "t": "09-11 01:40",
-    "price": 4316.09,
-    "bias": "bearish",
-    "trend": 0.58,
-    "smc": 0.51,
-    "align": "aligned",
-    "action": "market_entry_now",
-    "reason": null
-   },
-   {
     "t": "09-11 02:50",
     "price": 4313.06,
     "bias": "bearish",
@@ -371,15 +211,205 @@
     "align": "aligned",
     "action": "market_entry_now",
     "reason": null
+   },
+   {
+    "t": "09-11 09:05",
+    "price": 4355.76,
+    "bias": "bullish",
+    "trend": 3.46,
+    "smc": 0.75,
+    "align": "aligned",
+    "action": "market_entry_now",
+    "reason": null
+   },
+   {
+    "t": "09-11 11:35",
+    "price": 4354.24,
+    "bias": "bullish",
+    "trend": 2.11,
+    "smc": 0.44,
+    "align": "aligned",
+    "action": "market_entry_now",
+    "reason": null
    }
   ],
   "quality_vetoes": [
+   {
+    "t": "09-10 04:45",
+    "price": 4413.21,
+    "bias": "bullish",
+    "trend": 2.15,
+    "smc": 0.9,
+    "align": "neutral",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 05:00",
+    "price": 4415.11,
+    "bias": "bullish",
+    "trend": 0.89,
+    "smc": 0.49,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 05:05",
+    "price": 4416.61,
+    "bias": "bullish",
+    "trend": 0.2,
+    "smc": 0.49,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 05:25",
+    "price": 4417.09,
+    "bias": "bullish",
+    "trend": 1.22,
+    "smc": 0.43,
+    "align": "mixed",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
    {
     "t": "09-10 08:00",
     "price": 4409.57,
     "bias": "bullish",
     "trend": 1.08,
     "smc": 0.35,
+    "align": "mixed",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 08:05",
+    "price": 4414.57,
+    "bias": "bullish",
+    "trend": 0.44,
+    "smc": 0.61,
+    "align": "mixed",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 09:55",
+    "price": 4425.29,
+    "bias": "bullish",
+    "trend": 1.04,
+    "smc": 0.4,
+    "align": "mixed",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 12:55",
+    "price": 4394.1,
+    "bias": "bearish",
+    "trend": 0.22,
+    "smc": 0.52,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 14:55",
+    "price": 4374.57,
+    "bias": "bearish",
+    "trend": 0.7,
+    "smc": 0.48,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-10 20:35",
+    "price": 4358.51,
+    "bias": "bearish",
+    "trend": 0.37,
+    "smc": 0.43,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 01:30",
+    "price": 4318.39,
+    "bias": "bearish",
+    "trend": 0.5,
+    "smc": 0.52,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 01:35",
+    "price": 4316.13,
+    "bias": "bearish",
+    "trend": 0.31,
+    "smc": 0.51,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 01:40",
+    "price": 4316.09,
+    "bias": "bearish",
+    "trend": 0.58,
+    "smc": 0.51,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 08:35",
+    "price": 4338.58,
+    "bias": "bullish",
+    "trend": 2.29,
+    "smc": 0.77,
+    "align": "neutral",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 08:40",
+    "price": 4342.87,
+    "bias": "bullish",
+    "trend": 2.52,
+    "smc": 0.68,
+    "align": "mixed",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 08:45",
+    "price": 4345.0,
+    "bias": "bullish",
+    "trend": 2.73,
+    "smc": 0.69,
+    "align": "mixed",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 10:00",
+    "price": 4354.92,
+    "bias": "bullish",
+    "trend": 0.18,
+    "smc": 0.44,
+    "align": "aligned",
+    "action": "wait_for_trigger",
+    "reason": "quality_filter"
+   },
+   {
+    "t": "09-11 12:55",
+    "price": 4346.33,
+    "bias": "bullish",
+    "trend": 0.19,
+    "smc": 0.52,
     "align": "mixed",
     "action": "wait_for_trigger",
     "reason": "quality_filter"
