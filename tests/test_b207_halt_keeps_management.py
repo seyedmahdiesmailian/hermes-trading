@@ -43,9 +43,21 @@ from test_runtime_fallback_management import (ManageBridge, production_plan,
 
 
 def halt_now(now: datetime | None = None) -> datetime:
-    """A deterministic 'now' that is NOT inside the daily market close
-    window (b93 gate: ~22:00-23:00 UTC) — tests must not flip on wall time."""
-    return now or datetime(2026, 9, 10, 10, 0, tzinfo=timezone.utc)
+    """A 'now' for arming the test halt. b79: was a FIXED 2026-09-10 10:00,
+    which turned this whole file into a time bomb — once wall time passed
+    that day's resumes_at, check_kill_switch legitimately AUTO-RESUMED and
+    every halted assertion broke. Now: real wall time (so the 3h halt
+    always lives ahead of cycle's own _now), shifted PAST the daily market
+    close window (b93 gate ~22:00-23:00 UTC) so the tests still never flip
+    on wall time. A forward shift is safe: halted_until = shifted+3h is
+    still ahead of real now, so the halt stays armed either way.
+    """
+    if now is not None:
+        return now
+    now = datetime.now(timezone.utc)
+    if 22 <= now.hour:                      # inside/close to the b93 window
+        now = now + timedelta(hours=24 - now.hour + 1)   # -> next day 00/01h
+    return now
 
 
 def arm_halt(now: datetime | None = None, reason='autopilot-test-halt'):

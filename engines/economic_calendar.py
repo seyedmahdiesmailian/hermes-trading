@@ -53,7 +53,11 @@ GOLD_IMPACT_CURRENCIES = {"USD", "XAU", "GOLD", ""}
 
 
 def _is_gold_relevant(event: dict) -> bool:
-    return str(event.get("currency", event.get("country", ""))).upper() \
+    # b211(a): same null-currency class as legacy_guards.evaluate_news_lock
+    # (the filter this set must stay in sync with) — currency: null became
+    # "NONE" and lost its tier-0 sort slot, so an RBNZ filler could push a
+    # real FOMC row out of the 10-slot cap.
+    return str(event.get("currency") or event.get("country") or "").upper() \
         in GOLD_IMPACT_CURRENCIES
 
 
@@ -204,7 +208,7 @@ def _is_high_impact(event: dict) -> bool:
     impact = str(event.get("impact", "")).lower()
     if impact == "high":
         return True
-    currency = str(event.get("currency", "")).upper()
+    currency = str(event.get("currency") or event.get("country") or "").upper()
     if currency not in HIGH_IMPACT_CURRENCIES:
         return False
     title = str(event.get("title", "")).lower()

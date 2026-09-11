@@ -116,7 +116,14 @@ def evaluate_news_lock(
         try:
             if str(ev.get("impact", "")).lower() != "high":
                 continue
-            cur = str(ev.get("currency", ev.get("country", ""))).upper()
+            # b211(a): two-arg .get() only defaults on a MISSING key — a feed
+            # that emits currency: null gave str(None)="NONE", in neither the
+            # gold set nor any country code, so a real high-impact FOMC row
+            # was silently skipped and the lock never fired. The `or` chain
+            # (the fetcher's own normalization at economic_calendar:125) is
+            # strictly more protective: null/empty fall through to country
+            # and finally "" = unknown = assume gold-relevant.
+            cur = str(ev.get("currency") or ev.get("country") or "").upper()
             if cur not in {"USD", "XAU", "GOLD", ""}:
                 continue
             t_raw = (ev.get("timestamp") or ev.get("datetime_utc")

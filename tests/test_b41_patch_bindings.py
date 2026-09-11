@@ -81,6 +81,18 @@ ALLOWED = {
      'hermes_runtime'):
         'same as load_current_plan: lazy consumer under test, real binding '
         'pre-captured by the up-front import.',
+    ('test_b211_null_currency_and_single_read.py', 'engines.storage.load_current_plan',
+     'hermes_runtime'):
+        "patch targets signal_listener's LAZY import (inside "
+        'run_signal_check) — the path under test. hermes_runtime keeps the '
+        'real binding: the file imports it module-level (leak half closed) '
+        'and additionally mirrors the fake onto hermes_runtime itself inside '
+        'the window, restoring the original in finally.',
+    ('test_b211_null_currency_and_single_read.py', 'engines.storage.append_execution_log',
+     'hermes_runtime'):
+        'same shape as the b211 load_current_plan exemption: lazy consumer '
+        'under test, module-level import closes the leak, and the fake is '
+        'mirrored onto hermes_runtime + restored in finally.',
     ('test_failclosed_news_spread.py', 'engines.storage.load_current_plan',
      'hermes_runtime'):
         'same pattern as test_audit_fixes; the file now also pre-imports '

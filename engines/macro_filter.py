@@ -22,7 +22,11 @@ def evaluate_macro_filter(calendar: dict | None, now: str | datetime, blackout_m
     for event in events:
         if str(event.get("impact", "")).lower() != "high":
             continue
-        currency = str(event.get("currency", "")).upper()
+        # b211(a): same null-currency skip class as legacy_guards — a
+        # currency: null event became "NONE" and passed the blackout.
+        # Read country as the fallback the fetcher normalizes from, then ""
+        # (unknown = treated as gold-relevant). Only ever fires MORE blocks.
+        currency = str(event.get("currency") or event.get("country") or "").upper()
         if currency not in {"USD", "XAU", "GOLD", ""}:
             continue
         try:

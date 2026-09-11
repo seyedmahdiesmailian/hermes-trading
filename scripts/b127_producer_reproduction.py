@@ -679,6 +679,11 @@ BASELINE_UNCOVERED: tuple[str, ...] = (
     "b71", "b77", "b79", "b80", "b89", "b92", "b93", "b109", "b111", "b112",
     "b117", "b149", "b150", "b152", "b157", "b158", "b160", "b182", "b184",
     "b185", "b186", "b187", "b189", "b193",
+    # b79 era: offline investigation ledgers (gate replay, recency, strategy
+    # census, ORB/NY ladder pricing, grade-parity census). Read-only census
+    # artifacts over fixed history — deterministic given the same MT5 data,
+    # but not re-derived in CI (same debt class as b77/b79 above).
+    "b72", "b73", "b75", "b76", "b78",
 )
 
 

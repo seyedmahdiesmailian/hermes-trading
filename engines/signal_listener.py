@@ -588,8 +588,15 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             from engines.storage import load_current_plan as _load_plan
             _cur_plan = _load_plan(PLAN_DIR) or {}
             from hermes_runtime import _performance_and_policy
+            # b211(b): ONE account read per signal. This used to be a second
+            # bridge.get_account() call whose fresh value fed the policy while
+            # the open_positions overlay 3 lines below used the EARLIER read
+            # from the top of run_signal_check — two consumers, two snapshots,
+            # one extra bridge round-trip per decision. account_resp IS this
+            # cycle's snapshot; positions stay fresh because
+            # _performance_and_policy re-counts them from get_positions (b45).
             _pp = _performance_and_policy(
-                bridge, bridge.get_account() or {}, datetime.now(timezone.utc))
+                bridge, account_resp or {}, datetime.now(timezone.utc))
             _perf_state = _pp['performance_state']
             _acct_policy = _pp['account_policy']
             _acct_data = (account_resp or {}).get('data', account_resp) or {}

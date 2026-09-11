@@ -107,6 +107,45 @@ def _tick_price(tick: dict) -> float:
     return float(data.get('ask') or data.get('bid') or data.get('price') or 0)
 
 
+def settled_confirm_rows(rows, now: datetime | None = None,
+                         broker_offset: float | None = None) -> list[dict]:
+    """b79 FIX — the M5 window for the monitor, immune to the broker clock.
+
+    The bridge stamps every bar `time` on the BROKER SERVER clock (~UTC+3
+    for CapitalXtend; measured 10798s via position_daemon calibration),
+    while `now` is real UTC. The pre-b79 filter `_bt + 300 <= wall_now`
+    therefore compared broker seconds against UTC seconds and rejected
+    EVERY row: live m5_confirm_rows was permanently empty (proof:
+    scripts/b79b_live_window_proof.py — 12 fetched, 0 kept, freshest bar
+    "closes" 183 min in the future). Post-b193b that starves BOTH trigger
+    lanes (pullback AND aggressive) -> no entry could fire live at all.
+
+    Contract: the ONLY clock-safe settledness test is bar-relative — the
+    bridge returns the forming bar LAST (b189), so a row strictly older
+    than the freshest open has closed on any broker clock. The freshest
+    row is kept only when a trustworthy broker calibration proves its
+    close (open - offset + 300 <= now_utc); uncalibrated -> dropped.
+    Degradations are conservative: at worst one extra closed bar is
+    ignored for one cycle; a forming close can never enter (lookahead).
+    """
+    parsed = []
+    for r in rows or []:
+        bt = _bar_time(r)
+        if bt is not None:
+            parsed.append((bt, r))
+    if not parsed:
+        return []
+    freshest = max(bt for bt, _ in parsed)
+    now = now or datetime.now(timezone.utc)
+    out = []
+    for bt, r in parsed:
+        if bt < freshest:
+            out.append(r)                      # closed bar on ANY broker clock
+        elif broker_offset is not None and (bt - broker_offset + 300) <= now.timestamp():
+            out.append(r)                      # calibration proves it just closed
+    return out
+
+
 def _tick_obj(tick: dict):
     data = tick.get('data', tick) if isinstance(tick, dict) else {}
     ask = float(data.get('ask') or data.get('price') or 0)
@@ -740,17 +779,20 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # VISIBILITY problem, not a gate-bypass one.)
     guard_note = _guard_brief_line(guard_status_last, None) if positions else ''
     # b187: the entry trigger needs real M5 confirmation, not just "price is in
-    # the zone". Fetch settled M5 closes (the bridge returns the forming bar
-    # last - counting it would be lookahead) and hand them to the monitor.
-    m5_confirm_rows = []
+    # the zone". b79: the window must be built clock-safe — bar stamps are on
+    # the BROKER clock (~UTC+3) while `now` is real UTC, so the old wall-clock
+    # filter kept NOTHING and every entry lane was dead since b193b shipped.
+    # settled_confirm_rows uses bar-relative settledness (forming bar = the
+    # freshest open) plus the daemon's published broker calibration for the
+    # freshest row only. Fail-closed intact: empty/absent rows => no trigger.
     try:
-        _now_epoch = int(now.timestamp())
-        for _row in _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, 12)):
-            _bt = _bar_time(_row)
-            if _bt is not None and _bt + 300 <= _now_epoch:
-                m5_confirm_rows.append(_row)
-    except Exception:  # noqa: BLE001 - fail-closed: no rows => no trigger
-        m5_confirm_rows = []
+        from engines.broker_clock import load_offset
+        _broker_off = load_offset(now=now)
+    except Exception:
+        _broker_off = None
+    m5_confirm_rows = settled_confirm_rows(
+        _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, 12)), now=now,
+        broker_offset=_broker_off)
     monitor = evaluate_monitor_cycle(plan, price=price, now=now, m5_rows=m5_confirm_rows)
     # Stale plan (price ran far from zones) → force reassess next cycle
     if 'plan_stale' in str(monitor.get('reason', '')):
