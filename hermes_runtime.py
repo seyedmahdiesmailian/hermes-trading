@@ -1023,8 +1023,7 @@ def main():
     except ImportError:
         from env_loader import load_dotenv  # python-dotenv missing → local fallback
     load_dotenv(Path(__file__).resolve().parent / '.env')
-    from engines.config import dry_run as _dry_run  # WP2: canonical parse
-    dry_run = _dry_run()
+    dry_run = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
     from bridge_client import BridgeClient
     bridge = BridgeClient()
     bridge.health()

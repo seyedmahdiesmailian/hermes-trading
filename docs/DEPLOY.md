@@ -44,7 +44,7 @@
 | `ops/systemd/` | فایل‌های سرویس (نسخهٔ مرجع) |
 | `ops/cron/crontab.backup.txt` | کرون‌تب کامل فعلی (نسخهٔ مرجع) |
 | `tests/` | ۱۲۰+ تست hermetic (`python3 -m unittest discover -s tests`) |
-| `data/` | state زنده در بکاپ است نه گیت؛ شواهد پژوهشی (`backtest/`، `radin/`، آرشیو تقویم) ترک می‌شوند — سیاست کامل: `data/README.md` |
+| `data/` | state زنده: پلن، ژورنال، یادگیری — **در بکاپ، نه در گیت** |
 
 ## ریکاوری روی سرور تازه — مرحله‌به‌مرحله
 

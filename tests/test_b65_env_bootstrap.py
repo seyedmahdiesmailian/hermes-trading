@@ -276,28 +276,17 @@ class TestB65EnvBootstrap(unittest.TestCase):
             self.assertIn("TOKEN=True", r.stdout + r2.stdout,
                           "hermes_runtime.main() no longer loads .env")
         src = (REPO / "hermes_runtime.py").read_text(encoding="utf-8")
-        # WP2 (2026-09-18, edited not deleted per b102): the safe default
-        # moved to engines.config.dry_run() (default-true pinned by
-        # tests/test_wp2_config_parity.py); main() must still resolve
-        # through it (the behavioural halves above prove the wiring).
-        self.assertIn("engines.config", src)
-        self.assertIn("dry_run", src,
-                      "hermes_runtime.main() lost its safe default — unset "
-                      "HERMES_DRY_RUN must mean dry-run (b65)")
+        self.assertRegex(
+            src, r"os\.getenv\(['\"]HERMES_DRY_RUN['\"],\s*['\"]true['\"]\)",
+            "hermes_runtime.main() lost its safe default — unset "
+            "HERMES_DRY_RUN must mean dry-run (b65)")
 
     def test_production_entry_still_owns_the_live_knob(self):
         """Pin the contract this fix leans on: hermes_master parses
         HERMES_DRY_RUN with default-true and passes it to cycle() — if that
         ever changes, the 'safe default' reasoning above is stale."""
         src = (REPO / "hermes_master.py").read_text(encoding="utf-8")
-        # WP2 (2026-09-18, edited not deleted per b102): the knob moved to
-        # engines.config.dry_run() (default-true pinned by
-        # tests/test_wp2_config_parity.py); the entry still OWNS it by
-        # resolving DRY_RUN at import and passing it to cycle().
-        self.assertIn("engines.config", src)
-        self.assertIn("dry_run", src)
-        self.assertRegex(src, r"(?m)^DRY_RUN\s*=",
-                         "hermes_master no longer resolves DRY_RUN")
+        self.assertIn("os.getenv('HERMES_DRY_RUN', 'true')", src)
         self.assertIn("cycle(bridge, dry_run=DRY_RUN)", src)
 
 

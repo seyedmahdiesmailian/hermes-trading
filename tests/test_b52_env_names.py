@@ -519,16 +519,6 @@ class TestB52EnvNames(unittest.TestCase):
             src = (REPO / rel).read_text(encoding="utf-8")
             names = {k for k, _d, _l in env_reads(src, rel)}
             self.assertNotIn(dead, names, f"{rel} reads dead '{dead}' again")
-            # WP2 (2026-09-18, edited not deleted per b102): weekly_report
-            # now reads the bridge URL through engines.config (the ONE
-            # canonical resolver) instead of spelling os.getenv inline. The
-            # delegation below IS the live read — the dead-name pin above
-            # and the behavioural precedence proof in
-            # test_healed_consumers_follow_the_documented_host are unchanged.
-            if rel == "scripts/weekly_report.py" and "engines.config" in src:
-                self.assertIn("bridge_url", src,
-                              f"{rel} imports config but never resolves it")
-                continue
             self.assertIn("HERMES_BRIDGE_TOKEN" if dead == "BRIDGE_TOKEN"
                           else "HERMES_BRIDGE_URL", names,
                           f"{rel} lost the real bridge env read entirely")
@@ -647,22 +637,14 @@ class TestB52EnvNames(unittest.TestCase):
         HERMES_WIN_IP (explicit override still possible), not carry its own
         copy of the IP as a first-resort default."""
         src = (REPO / "scripts" / "offsite_backup.py").read_text(encoding="utf-8")
-        # WP2 (2026-09-18, edited not deleted per b102): the b62 chain moved
-        # to engines.config.win_host() (precedence pinned behaviourally by
-        # test_win_host_resolution_is_behavioural below AND by the WP2
-        # parity test). Delegation import + call IS the chain now.
-        self.assertIn("engines.config", src)
-        self.assertIn("win_host", src)
-        self.assertRegex(src, r"(?m)^WIN_HOST\s*=\s*_win_host\(\)",
-                         "offsite_backup no longer resolves via the b62 "
-                         "chain (engines.config.win_host)")
+        self.assertRegex(
+            src, r"os\.getenv\(['\"]WIN_HOST['\"]\)\s*or\s*os\.getenv\(['\"]HERMES_WIN_IP['\"]",
+            "offsite_backup no longer chains WIN_HOST -> HERMES_WIN_IP (b62)")
         self.assertNotIn("os.getenv('WIN_HOST', ", src,
                          "WIN_HOST regained a standalone inline default — "
                          "the exact shadow shape b62 exists to kill")
         # the shadow scan must see the read itself (chain form, no literal)
-        # WP2: the read moved to engines.config — the scan follows it there.
-        _cfg = (REPO / "engines" / "config.py").read_text(encoding="utf-8")
-        self.assertIn("WIN_HOST", {k for k, _d, _l in env_reads(_cfg, "config.py")})
+        self.assertIn("WIN_HOST", {k for k, _d, _l in env_reads(src, "offsite_backup.py")})
 
     def test_win_host_resolution_is_behavioural(self):
         """Not just source text: run the REAL module resolution in a fresh

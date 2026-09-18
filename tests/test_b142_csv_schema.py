@@ -44,12 +44,6 @@ LIVE_LOG = REPO / "data" / "xau_plan" / "execution_log.csv"
 
 
 def _live_header() -> list[str]:
-    # WP1: execution_log.csv is untracked live state (restores from the
-    # offsite backup, not the repo). Every consumer of this helper guards a
-    # LIVE-box property, so a checkout without the ledger skips — the same
-    # skipTest discipline as b165/b106, never a silent pass.
-    if not LIVE_LOG.exists():
-        raise unittest.SkipTest("no live execution_log on this checkout")
     with LIVE_LOG.open(newline="", encoding="utf-8-sig") as f:
         return next(csv.reader(f))
 
@@ -58,20 +52,14 @@ class TestLiveLedgerShape(unittest.TestCase):
     """The premise of the whole item: the ledger exists and is 12-wide."""
 
     def test_execution_log_exists_with_a_twelve_column_header(self):
-        # WP1 (2026-09-18, edited not deleted per b102): the ledger is
-        # untracked live state — absent BY DESIGN on a bare checkout (the
-        # writer recreates it on next append), so absence skips; where the
-        # file exists the 12-wide premise is still pinned exactly.
-        if not LIVE_LOG.exists():
-            self.skipTest("no live execution_log on this checkout")
+        self.assertTrue(LIVE_LOG.exists(),
+                        "the premise of b142 is the EXISTING ledger; if this "
+                        "file is gone the migration question is moot")
         self.assertEqual(len(_live_header()), 12, _live_header())
 
     def test_every_live_row_has_exactly_the_header_width(self):
         """No row already carries a 13th field — so the trap below is live,
         not hypothetical: the next appended row is the first to differ."""
-        # WP1: live-state guard, see _live_header() above.
-        if not LIVE_LOG.exists():
-            self.skipTest("no live execution_log on this checkout")
         rows = list(csv.reader(io.StringIO(
             LIVE_LOG.read_text(encoding="utf-8-sig"))))
         widths = {len(r) for r in rows[1:]}

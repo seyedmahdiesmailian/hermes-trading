@@ -1,15 +1,14 @@
 """Bridge smoke test — read-only (docs/DEPLOY.md step 5).
 
 b64: was a hand-rolled urllib call with the bridge host hardcoded as
-a literal URL and NO env read at all. That is the exact shape
+'http://192.168.10.51:5050' and NO env read at all. That is the exact shape
 the b63 audit found in the health watchdog: this file is the command an
 operator runs to verify a FRESH server, so a hardcoded host means the smoke
 test keeps poking the OLD box after a relocation and reports a healthy
 bridge that the trading path is not even talking to. Now it resolves through
-bridge_client → engines.config — the ONE canonical resolver
-(HERMES_BRIDGE_URL > derived from HERMES_WIN_IP > last-known default) — so
-it can never disagree with the trading path.
-Read-only endpoints only (account/tick/positions/deals).
+bridge_client — the ONE canonical resolver (HERMES_BRIDGE_URL > derived from
+HERMES_WIN_IP > last-known default) — so it can never disagree with the
+trading path. Read-only endpoints only (account/tick/positions/deals).
 """
 import json
 import sys

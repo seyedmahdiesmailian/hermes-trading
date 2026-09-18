@@ -10,17 +10,12 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
-sys.path.insert(0, str(BASE))
-from engines.config import bridge_url as _bridge_url  # WP2: canonical (noqa: E402)
-from engines.config import ops_bot_token as _ops_token  # noqa: E402
-from engines.config import ops_chat_id as _ops_chat  # noqa: E402
 LOG_FILE = BASE / 'logs' / 'bridge_health.log'
 STATE_FILE = BASE / 'data' / 'bridge_health_state.json'
 FAIL_THRESHOLD = 3
@@ -37,7 +32,9 @@ def bridge_urls() -> tuple[str, str]:
     last-known default. Call-time, not import-time, because main() loads
     .env first (b39 lesson).
     """
-    url = _bridge_url().rstrip('/')  # WP2: canonical precedence (b52/b63)
+    url = (os.getenv('HERMES_BRIDGE_URL')
+           or f"http://{os.getenv('HERMES_WIN_IP', '192.168.10.51')}:5050")
+    url = url.rstrip('/')
     return f"{url}/health", f"{url}/"
 
 
@@ -67,8 +64,8 @@ def fetch(url: str, timeout=5) -> tuple[bool, str]:
 
 
 def send_telegram(text: str):
-    token = _ops_token()
-    chat = _ops_chat()
+    token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', '')
+    chat = os.getenv('AUTOPILOT_REPORT_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID', '194015957'))
     if not token:
         return
     try:
