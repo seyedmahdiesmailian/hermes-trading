@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from engines import paths  # resolved at CALL time so tests can redirect the tree
+from engines import store  # WP4: SQLite mirror (fail-open; CSV stays source of truth)
 
 # Static ceilings — learning may never exceed these
 RISK_PCT_CEILING = 0.02          # same as auto_executor.MAX_RISK_PER_TRADE_PCT
@@ -202,6 +203,13 @@ def journal(bridge, days: int = 30) -> int:
         if not journal_csv.exists() or journal_csv.stat().st_size == 0:
             w.writeheader()
         w.writerows(rows)
+    # WP4 (2026-09-18): SQLite mirror AFTER the CSV write succeeds (fail-open,
+    # CSV is the source of truth — journal() uses the global paths root, so
+    # mirror_journal() resolves the db from the same tree).
+    try:
+        store.mirror_journal(rows)
+    except Exception:
+        pass
     return len(rows)
 
 
