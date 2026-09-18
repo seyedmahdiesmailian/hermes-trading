@@ -34,6 +34,11 @@ load_dotenv(BASE / '.env')
 
 from bridge_client import BridgeClient
 from engines import paths
+from engines.config import dry_run as _dry_run  # WP2: canonical DRY_RUN parse
+from engines.config import ops_bot_token as _ops_token  # WP2: canonical tokens
+from engines.config import ops_chat_id as _ops_chat  # WP2: canonical chat ids
+from engines.config import telegram_bot_token as _tg_token
+from engines.config import telegram_chat_id as _tg_chat
 from engines.bridge_payload import positions_list
 from engines.trade_management import evaluate_trade_management, ladder_fields, build_tp_ladder
 from engines.plan import setup_grade   # b111: ONE grade rule for all producers
@@ -44,7 +49,7 @@ from engines.legacy_guards import (evaluate_news_lock, evaluate_time_exit,
 # b39: LOG_FILE removed — it was a dead import-time binding of
 # paths.logs_dir() (log() below already resolves per call). Keeping it alive
 # was a trap: any new caller would write to production logs under a test root.
-DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
+DRY_RUN = _dry_run()  # WP2: canonical parse (same values)
 POLL_SEC = 5
 
 
@@ -63,17 +68,16 @@ def log(msg: str):
 
 
 def send_telegram(text: str):
-    _tg(text, os.getenv('TELEGRAM_BOT_TOKEN', ''))
+    _tg(text, _tg_token())
 
 
 def send_ops(text: str):
     """b37: system-status alerts -> 3rd ops bot."""
-    _tg(text, os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', ''),
-        chat=os.getenv('AUTOPILOT_REPORT_CHAT_ID', '194015957'))
+    _tg(text, _ops_token(), chat=_ops_chat())
 
 
 def _tg(text: str, token: str, chat: str | None = None):
-    chat = chat or os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    chat = chat or _tg_chat()
     if not token:
         return
     try:

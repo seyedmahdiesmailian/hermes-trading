@@ -27,11 +27,14 @@ __all__ = ["check_signals", "run_signal_check"]
 
 from engines import paths  # resolved at CALL time so tests can redirect the tree
 from engines import signal_pending
+from engines.config import signal_group as _signal_group  # WP2: canonical
+from engines.config import telegram_bot_token as _tg_token
+from engines.config import telegram_chat_id as _tg_chat
 
 
 def _get_env():
-    token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-    chat_id = os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    token = _tg_token()
+    chat_id = _tg_chat()
     return token, chat_id
 
 
@@ -147,7 +150,7 @@ def _serve_trade_callback(cb: dict):
     qid = cb.get("id", "")
     data = ((cb.get("data") or "") + "")
     chat = str(((cb.get("message") or {}).get("chat") or {}).get("id", ""))
-    owner = str(os.getenv('TELEGRAM_CHAT_ID', '194015957'))
+    owner = str(_tg_chat())
     if chat != owner:
         _telegram_api("answerCallbackQuery", {"callback_query_id": qid,
                                               "text": "دسترسی نیست", "show_alert": True})
@@ -214,7 +217,7 @@ def fetch_new_messages() -> list[dict]:
         # signals: getUpdates replays a 24h buffer after a restart.
         _txt = ((msg.get("text") or "") or "").strip()
         _cid = str(((msg.get("chat") or {}).get("id", "")))
-        if _txt.startswith('/') and _cid == str(os.getenv('TELEGRAM_CHAT_ID', '194015957')):
+        if _txt.startswith('/') and _cid == str(_tg_chat()):
             if datetime.now(timezone.utc).timestamp() - float(msg.get("date") or 0) <= 600:
                 _serve_trade_command(_cid, _txt)
             continue
@@ -266,7 +269,7 @@ def check_signals(bridge=None) -> list[dict]:
 
     messages = fetch_new_messages()
     signals_found = []
-    allowed_chats = {c.strip() for c in (os.getenv('TELEGRAM_SIGNAL_GROUP', '') or '').split(',') if c.strip()}
+    allowed_chats = {c.strip() for c in (_signal_group() or '').split(',') if c.strip()}
 
     for msg in messages:
         # Only accept signals from the configured signal group(s)
