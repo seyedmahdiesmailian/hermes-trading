@@ -404,9 +404,22 @@ def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
     now = now or datetime.now(timezone.utc)
     tkt_s = str(tkt)
     trade = build_trade(p, plan, tracked[tkt_s])
-    mgmt = evaluate_trade_management(trade, price, now)
-    mgmt_core = mgmt
-    mgmt = apply_legacy_guards(mgmt, trade, tracked[tkt_s], price, int(tkt),
+    if plan:
+        mgmt_core = evaluate_trade_management(trade, price, now)
+    else:
+        # C1 (2026-09-17): current_plan.json missing/unreadable. The old
+        # loop gate (dry-run AND plan required) switched off ALL
+        # management here — TP ladder, breakeven, trail AND the
+        # news_lock/time_exit guards — silently, for as long as the file
+        # stayed broken; the broker's static SL/TP was the only protection
+        # left and ops was never told. The plan-INDEPENDENT protections
+        # (guards: priority 1 news lock, priority 2 time exit) still run —
+        # apply_legacy_guards re-reads the plan itself but needs none of
+        # its fields (ATR falls back, calendar is re-fetched). The
+        # plan-DEPENDENT core (ladder/BE/trail grade comes from plan
+        # quality) is skipped rather than run on guessed data.
+        mgmt_core = {'action': 'hold', 'priority': 3}
+    mgmt = apply_legacy_guards(mgmt_core, trade, tracked[tkt_s], price, int(tkt),
                               now, broker_offset)
     is_guard = mgmt is not mgmt_core
     if mgmt.get('action') in (None, 'hold'):
@@ -527,6 +540,8 @@ def main():
     state = load_state()
     tracked = state.setdefault('positions', {})
     errors = 0
+    # C1: bookkeeping for the no-plan alert state (deduped, hourly reminder)
+    _no_plan = {'active': False, 'at': 0.0, 'first': 0.0}
 
     while True:
         try:
@@ -559,6 +574,33 @@ def main():
             for p in live.values():
                 if 'open_price' not in p and 'price_open' in p:
                     p['open_price'] = p['price_open']
+
+            # ── C1 (2026-09-17): the no-plan state must be LOUD ──
+            # One alert when it starts, an hourly reminder while it lasts,
+            # one recovery note when the plan comes back (b37 dedupe: the
+            # 5s loop must not page every cycle).
+            if live and not plan:
+                _now_ts = datetime.now(timezone.utc).timestamp()
+                if not _no_plan['active']:
+                    _no_plan['active'] = True
+                    _no_plan['first'] = _now_ts
+                    _no_plan['at'] = _now_ts
+                    log('C1: current_plan.json missing/unreadable — core '
+                        'management (TP/BE/trail) disabled; news_lock/'
+                        'time_exit guards still active')
+                    send_ops('⚠️ واتچ‌داگ: پلن جاری (current_plan.json) در '
+                             'دسترس نیست — مدیریت اصلی (TP/BE/تریل) متوقف '
+                             'شد؛ news_lock و time_exit همچنان فعال‌اند. '
+                             'فایل پلن را بررسی کنید.')
+                elif _now_ts - _no_plan['at'] >= 3600:
+                    _no_plan['at'] = _now_ts
+                    _hours = int((_now_ts - _no_plan['first']) / 3600)
+                    send_ops(f'⚠️ واتچ‌داگ: هنوز بدون پلن ({_hours}h) — مدیریت '
+                             'اصلی خاموش، فقط گاردها فعال')
+            elif plan and _no_plan['active']:
+                _no_plan['active'] = False
+                log('C1: plan recovered — full management resumed')
+                send_ops('✅ واتچ‌داگ: پلن بازیابی شد — مدیریت کامل از سر گرفته شد')
 
             # ── Detect CLOSED positions → report ──
             for tkt in list(tracked.keys()):
@@ -650,7 +692,9 @@ def main():
                 # manage_position() so it is unit-testable against a fake
                 # bridge. The live loop used to inline it, which is why an
                 # exit-path change could only ever be verified in production.
-                if not DRY_RUN and plan:
+                # C1: no `and plan` anymore — manage_position itself
+                # degrades to guards-only when the plan is empty.
+                if not DRY_RUN:
                     manage_position(int(tkt), p, plan, tracked, bridge,
                                     bid if side == 'SELL' else ask,
                                     datetime.now(timezone.utc), broker_offset)
