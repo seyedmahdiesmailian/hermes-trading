@@ -1,0 +1,7 @@
+at,lane,plan_id,side,lot,entry,sl,tp,grade,base_risk_pct,learning_risk_mult,execution_style,style_mult,defcon_override,regime,regime_mult,final_risk_pct,risk_usd,ticket
+2026-09-08T07:00:02.130487+00:00,plan,xau-53c22a23,SELL,0.02,4403.63,4413.13,4388.9,B,0.02,1.0,aggressive_discount_entry,0.5,,defensive,0.5,0.005,24.95,105180034
+2026-09-08T09:30:02.761249+00:00,plan,xau-39b5ede8,SELL,0.03,4392.91,4400.39,4381.32,B,0.02,1.0,aggressive_discount_entry,0.5,,defensive,0.5,0.005,25.03,105222761
+2026-09-08T18:05:18.454879+00:00,plan,xau-f3b667f2,SELL,0.03,4386.72,4394.0,4375.44,A,0.02,1.0,aggressive_discount_entry,0.5,,defensive,0.5,0.005,24.91,105396538
+2026-09-08T19:00:02.126036+00:00,plan,xau-39498040,SELL,0.04,4375.19,4386.4,4357.81,B,0.02,1.0,pullback_continuation,1.0,,defensive,0.5,0.01,50.0,105410718
+2026-09-09T00:30:02.380727+00:00,plan,xau-680a8b58,SELL,0.05,4347.22,4355.98,4333.64,B,0.02,1.0,aggressive_discount_entry,0.5,,normal,1.0,0.01,50.39,105443817
+2026-09-09T18:15:02.940749+00:00,plan,xau-527e9073,BUY,0.15,4420.48,4414.18,4430.24,B,0.02,1.0,aggressive_premium_entry,1.0,,normal,1.0,0.02,99.88,105702248

@@ -8,22 +8,3 @@ data/xau_plan/watchdog_state.json
 data/signals/listener_state.json
 .git_token
 backups/
-
-# WP1: LIVE STATE is not tracked — it restores from the offsite backup
-# (Windows C:\HermesBackups), never from git. Research evidence stays
-# tracked: data/backtest/, data/radin/, the calendar archive, the autopilot
-# backlog and the frozen b114 finding (tests pin claims against them).
-# See data/README.md for the full policy.
-/data/xau_plan/
-/data/signals/signals_log.json
-/data/signals/pending_orders.json
-/data/trading/
-/data/calendar/economic_calendar.json
-/data/bridge_health_state.json
-/data/cooldown_state.json
-/data/kill_switch_state.json
-/data/ops/autopilot_state.json
-/data/ops/autopilot_report_state.json
-/data/ops/dashboard_state.json
-/data/ops/head_verified.json
-/data/ops/daemon_code_drift.json

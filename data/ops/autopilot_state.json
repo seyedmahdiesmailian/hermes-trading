@@ -1,0 +1,10 @@
+{
+ "last_run_utc": "2026-09-10T11:34:57.896334+00:00",
+ "recent_commits": [
+  "2e5da6f autopilot: b208 procedure todo (stale registered worktree cleanup + RED-first worktree recipe)",
+  "8b440fe autopilot: b207 kill-switch halt no longer blocks protective management (extract _manage_positions, RED-proven tests)",
+  "e334824 autopilot: restore trailing newline eaten by the parallel-session sed; b205 harvest complete on HEAD",
+  "4bec481 autopilot: b205 harvest done-note filed + b206 (harvest token-collision check)",
+  "cac4e52 harvest: b205 BE-branch stop RATCHET (post-TP1 move_stop_to_breakeven was gated only on the market-gap, could loosen an accepted news-lock SL by $46.8 \u2014 probe-reproduced on HEAD, fix holds; parked by killed run under token b204 which the same-morning procedure item had claimed; renamed to b205 + 5 tests + probe)"
+ ]
+}

@@ -105,25 +105,24 @@ PRODUCTION_SH_GLOBS = ("*.sh", "scripts/*.sh")
 # --------------------------------------------------------------------------
 # THE ALLOWLIST — justified last-resort defaults, one entry per (file, host).
 # --------------------------------------------------------------------------
-# WP2 (2026-09-18): the five chain-tail literals that lived in
-# bridge_client.py, scripts/bridge_health_monitor.py, scripts/offsite_backup.py
-# and scripts/weekly_report.py are now derived from the ONE canonical holder
-# below (engines.config). Their allowlist entries were dropped WITH the
-# literals (b40 rule: a dead exemption is a silent hole, and the liveness
-# check in test_scan_actually_sees_the_literals_it_certifies enforces it).
-# Exempted surface shrank 7 files -> 4; the scan still pins every remaining
-# literal by (file, host).
 LITERAL_HOST_ALLOWLIST: dict[str, dict[str, str]] = {
-    "engines/config.py": {
+    "bridge_client.py": {
         "192.168.10.51":
-            "WP2: the ONE canonical last-resort bridge host (DEFAULT_WIN_IP). "
-            "Every consumer chain prefers the documented key first "
-            "(HERMES_BRIDGE_URL > HERMES_WIN_IP > this); the literal only "
-            "bites on a box with no .env at all, exactly the b63/b64 design",
+            "the ONE canonical last-resort bridge host: WIN_IP = "
+            "getenv('HERMES_WIN_IP', <this>) and every other consumer derives "
+            "from HERMES_WIN_IP, so the documented key always wins when set "
+            "(b63/b64 design decision — the default only bites on a box with "
+            "no .env at all)",
+    },
+    "scripts/offsite_backup.py": {
+        "192.168.10.51":
+            "b62 chain tail: WIN_HOST = getenv('WIN_HOST') or "
+            "getenv('HERMES_WIN_IP', <this>) — documented key wins, literal "
+            "is the last resort for the daily off-box backup",
         "192.168.10.18":
-            "WP2: DEFAULT_LAN_IP = THIS Linux box's own address as seen by "
-            "the Windows VM (offsite_backup tarball-pull URL tail); moved "
-            "here verbatim from offsite_backup.py, same chain shape",
+            "HERMES_LAN_IP default = THIS Linux box's own address, used only "
+            "to build the URL the Windows VM pulls the tarball from "
+            "(offsite_backup); not a remote host identity",
     },
     "scripts/_deploy_pending_bridge.py": {
         "192.168.10.51":
@@ -131,6 +130,18 @@ LITERAL_HOST_ALLOWLIST: dict[str, dict[str, str]] = {
             "WIN_HOST = getenv('WIN_HOST') or getenv('HERMES_WIN_IP', <this>) "
             "— documented key wins; literal is the last-resort tail for the "
             "WinRM target of the /api/pending bridge deploy",
+    },
+    "scripts/weekly_report.py": {
+        "192.168.10.51":
+            "b63 derivation tail: HERMES_BRIDGE_URL > f'http://{HERMES_WIN_IP}"
+            ":5050' > <this> — the URL is DERIVED, the literal only covers an "
+            "unset HERMES_WIN_IP (Friday cron report)",
+    },
+    "scripts/bridge_health_monitor.py": {
+        "192.168.10.51":
+            "b63 derivation tail inside bridge_urls() (resolved at CALL time): "
+            "HERMES_BRIDGE_URL > derived from HERMES_WIN_IP > <this>; the "
+            "watchdog follows the documented host (cron */5)",
     },
     "scripts/_deploy_bridge.py": {
         "192.168.10.51":
@@ -459,14 +470,11 @@ class TestB64LiteralHosts(unittest.TestCase):
         tripwire would certify nothing."""
         hits = all_literal_hits()
         files = {h["file"] for h in hits}
-        # WP2 (2026-09-18): floor 5 -> 4 — the centralization DELETED literals
-        # (four chain tails folded into engines.config), so a scan that still
-        # saw 5 files would be the broken one. Both languages stay pinned.
-        self.assertGreaterEqual(len(files), 4,
+        self.assertGreaterEqual(len(files), 5,
                                 f"literal-host scan saw only {files} — broken?")
-        self.assertIn("engines/config.py", files)
-        self.assertIn("scripts/_deploy_bridge.py", files)
-        self.assertIn("scripts/_deploy_pending_bridge.py", files)
+        self.assertIn("bridge_client.py", files)
+        self.assertIn("scripts/offsite_backup.py", files)
+        self.assertIn("scripts/bridge_health_monitor.py", files)
         self.assertIn("scripts/autopilot.sh", files,
                       "the shell half of the scan found nothing — glob broken?")
         kinds = {h["kind"] for h in hits}

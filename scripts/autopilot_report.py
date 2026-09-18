@@ -37,8 +37,6 @@ load_dotenv(ROOT / '.env')
 
 # b49: leaf seam imported outside the guard blocks (os/sys only).
 from engines import dirty_work, selfcheck
-from engines.config import ops_bot_token as _ops_token  # WP2: canonical
-from engines.config import ops_chat_id as _ops_chat
 from engines.autopilot_report_lib import classify_commits, run_start_from_log
 
 _SELFCHECK = selfcheck.enabled()
@@ -160,8 +158,8 @@ if not new_commits and done_now == prev.get('done', done_now) and rc == 0:
     print('nothing to report')
     sys.exit(0)
 
-token = _ops_token()
-chat = _ops_chat()
+token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', '')
+chat = os.getenv('AUTOPILOT_REPORT_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID', '194015957'))
 if token and chat and not _SELFCHECK:
     req = urllib.request.Request(
         f'https://api.telegram.org/bot{token}/sendMessage',

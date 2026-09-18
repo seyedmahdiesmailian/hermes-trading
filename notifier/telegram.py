@@ -6,10 +6,6 @@ from pathlib import Path
 import requests
 
 from engines import paths as _paths   # b39: state paths at CALL time
-from engines.config import ops_bot_token as _ops_token  # WP2: canonical
-from engines.config import ops_chat_id as _ops_chat
-from engines.config import telegram_bot_token as _tg_token
-from engines.config import telegram_chat_id as _tg_chat
 
 # b39: BASE_DIR import-time constant removed (unused); the message log
 # resolves through _log_dir() below.
@@ -26,17 +22,18 @@ def _log_dir() -> Path:
 
 
 def send_telegram(message: str) -> bool:
-    return _send(message, _tg_token())
+    return _send(message, os.getenv('TELEGRAM_BOT_TOKEN'))
 
 
 def send_ops(message: str) -> bool:
     """b37: system/ops alerts -> dedicated 3rd bot (autopilot, health, backup,
     watchdog). Falls back to the main bot if ops bot is not configured."""
-    return _send(message, _ops_token(), chat=_ops_chat())
+    return _send(message, os.getenv('AUTOPILOT_REPORT_BOT_TOKEN') or os.getenv('TELEGRAM_BOT_TOKEN'),
+                 chat=os.getenv('AUTOPILOT_REPORT_CHAT_ID', '194015957'))
 
 
 def _send(message: str, token: str | None, chat: str | None = None) -> bool:
-    chat_id = chat or _tg_chat()
+    chat_id = chat or os.getenv('TELEGRAM_CHAT_ID','194015957')
     log_dir = _log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
     with (log_dir / 'telegram_messages.log').open('a', encoding='utf-8') as f:

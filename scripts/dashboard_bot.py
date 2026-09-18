@@ -24,7 +24,6 @@ load_dotenv(ROOT / '.env')
 
 from notifier import dashboards  # noqa: E402
 from engines import paths  # noqa: E402
-from engines.config import ops_chat_id as _ops_chat  # WP2: canonical (noqa: E402)
 
 STATE = ROOT / 'data/ops/dashboard_state.json'
 PANELS = {'sys': '🖥 سیستم', 'auto': '🤖 اتوپایلوت', 'ops': '💾 بکاپ/سلامت',
@@ -85,7 +84,7 @@ def send_panel(token: str, chat_id: str, panel: str, msg_id=None):
 
 def main():
     token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '')
-    owner = str(_ops_chat())  # WP2: nested chain (was flat default; same on prod .env)
+    owner = str(os.getenv('AUTOPILOT_REPORT_CHAT_ID', '194015957'))
     if not token:
         log('AUTOPILOT_REPORT_BOT_TOKEN missing — exiting')
         return 1
