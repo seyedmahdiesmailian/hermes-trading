@@ -169,6 +169,12 @@ class TestLiveRecord(unittest.TestCase):
         tolerance, the COUNT is compared exactly ONLY while the window is
         intact, and a stale window must be a LOUD freshness failure, never a
         silent count mismatch."""
+        # WP1: plan_history is live state, no longer tracked in git. The
+        # freshness tripwire below is only meaningful on a box that HAS a
+        # live window — a bare checkout skips instead of certifying nothing.
+        _hist = REPO / "data/xau_plan/plan_history"
+        if not _hist.is_dir() or not any(_hist.glob("*.json")):
+            self.skipTest("no live plan_history on this checkout")
         lr = _led()["live_record"]
         cutoff = dt.datetime.fromisoformat(lr["last"])
         first = dt.datetime.fromisoformat(lr["first"])

@@ -166,6 +166,12 @@ class TestLedgerContract(unittest.TestCase):
         """The shipped live sidecar (6+ rows, all pre-5000) must classify
         with zero unknown/mismatch — the reader's first real data is its
         regression sample."""
+        # WP1: risk_ledger.csv is untracked live state — no sidecar on a bare
+        # checkout. The pure-logic half stays covered by
+        # test_derive_carries_the_block (synthetic rows); this live-rows half
+        # skips where there is no live box to regress against.
+        if not R.LEDGER.exists():
+            self.skipTest("no live risk_ledger on this checkout")
         rows = R.read_ledger()
         buckets = {R.sizing_epoch(r) for r in rows}
         self.assertTrue(rows, "live risk_ledger vanished — investigate, "
@@ -183,6 +189,12 @@ class TestDigestWiring(unittest.TestCase):
         self.assertNotIn("risk_ledger.csv", src)
 
     def test_digest_selfcheck_end_to_end(self):
+        # WP1: this test asserts the sizing line RENDERS, which needs live
+        # ledger rows (untracked state). Bare checkouts skip; graceful
+        # degradation without a ledger stays covered by
+        # test_digest_survives_broken_ledger_read.
+        if not R.LEDGER.exists():
+            self.skipTest("no live risk_ledger on this checkout")
         env = dict(os.environ)
         env["AUTOPILOT_REPORT_BOT_TOKEN"] = "123:fake-b197-token"
         r = subprocess.run([sys.executable, "scripts/autopilot_digest.py",

@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import os
 import urllib.parse
 import requests
 
-WIN_IP = os.getenv("HERMES_WIN_IP", "192.168.10.51")
-BRIDGE_URL = os.getenv("HERMES_BRIDGE_URL", f"http://{WIN_IP}:5050")
+# WP2: network identity lives in engines.config (one reader, same values,
+# same import-time binding). WIN_IP/BRIDGE_URL stay as module constants so
+# every existing import shape keeps working.
+from engines.config import (BRIDGE_TIMEOUT_GET, BRIDGE_TIMEOUT_HEALTH,
+                            BRIDGE_TIMEOUT_POST, bridge_token, bridge_url,
+                            win_ip)
+
+WIN_IP = win_ip()
+BRIDGE_URL = bridge_url()
 
 class BridgeClient:
     def __init__(self, url: str = BRIDGE_URL, token: str | None = None):
         self.url = url.rstrip("/")
-        self.token = token or os.getenv("HERMES_BRIDGE_TOKEN")
+        self.token = token or bridge_token()
         self.connected = False
 
     def _headers(self):
         return {"Authorization": f"Bearer {self.token}"} if self.token else {}
 
-    def _get(self, endpoint: str, timeout: int = 8) -> dict:
+    def _get(self, endpoint: str, timeout: int = BRIDGE_TIMEOUT_GET) -> dict:
         try:
             r = requests.get(f"{self.url}{endpoint}", headers=self._headers(), timeout=timeout)
             try:
@@ -30,7 +36,7 @@ class BridgeClient:
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
-    def _post(self, endpoint: str, payload: dict, timeout: int = 12) -> dict:
+    def _post(self, endpoint: str, payload: dict, timeout: int = BRIDGE_TIMEOUT_POST) -> dict:
         try:
             r = requests.post(f"{self.url}{endpoint}", json=payload, headers=self._headers(), timeout=timeout)
             try:
@@ -45,11 +51,11 @@ class BridgeClient:
 
     def health(self):
         # prefer real health endpoint; fallback to root for old bridge
-        h = self._get("/health", timeout=5)
+        h = self._get("/health", timeout=BRIDGE_TIMEOUT_HEALTH)
         if h.get("ok"):
             self.connected = True
             return h
-        r = self._get("/", timeout=5)
+        r = self._get("/", timeout=BRIDGE_TIMEOUT_HEALTH)
         self.connected = isinstance(r, dict) and (r.get("ok") is True or "Hermes" in str(r))
         return {"ok": self.connected, "health": h, "root": r}
 

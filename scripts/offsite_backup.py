@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Off-box backup of Hermes trading state (b31, daily 03:15 Tehran).
 
-Without this, a disk loss on 192.168.10.18 destroys .env (tokens), the trade
+Without this, a disk loss on this Linux box destroys .env (tokens), the trade
 journal/learning state, and the git repo history — everything. Pushes a
-tar.gz of {data/, .env, git bundle of repo} to the Windows VM (192.168.10.51)
+tar.gz of {data/, .env, git bundle of repo} to the Windows VM (see WIN_HOST)
 over WinRM, keeps the last 14 copies there.
 
 Restore: pull D:\\HermesBackups\\hermes_backup_<ts>.tar.gz, tar xzf,
@@ -34,10 +34,15 @@ load_dotenv(BASE / '.env')
 # trading path but the daily backup silently kept pushing to the OLD IP (the
 # default won, no error anywhere). Precedence now: explicit WIN_HOST override
 # > documented HERMES_WIN_IP > last-known default.
-WIN_HOST = os.getenv('WIN_HOST') or os.getenv('HERMES_WIN_IP', '192.168.10.51')
-WIN_USER = os.getenv('WIN_USER', 'Administrator')
-WIN_PASS = os.getenv('WIN_PASS', '')
-REMOTE_DIR = os.getenv('WIN_BACKUP_DIR', 'C:\\HermesBackups')  # D: is FULL (0 bytes free, b31)
+from engines.config import win_host as _win_host  # WP2: canonical (noqa: E402)
+from engines.config import win_user as _win_user  # noqa: E402
+from engines.config import win_pass as _win_pass  # noqa: E402
+from engines.config import win_backup_dir as _win_backup_dir  # noqa: E402
+from engines.config import lan_ip as _lan_ip  # noqa: E402
+WIN_HOST = _win_host()
+WIN_USER = _win_user()
+WIN_PASS = _win_pass()
+REMOTE_DIR = _win_backup_dir()  # D: is FULL (0 bytes free, b31)
 KEEP = 14
 
 
@@ -83,7 +88,7 @@ def push(remote_path: str, data: bytes, port: int = 0) -> str:
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
     port = srv.server_address[1]
-    local_ip = os.getenv('HERMES_LAN_IP', '192.168.10.18')
+    local_ip = _lan_ip()
 
     s = winrm.Session(WIN_HOST, auth=(WIN_USER, WIN_PASS), transport='ntlm',
                       server_cert_validation='ignore', read_timeout_sec=180)

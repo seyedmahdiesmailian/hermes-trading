@@ -9,6 +9,7 @@ from engines import paths  # resolved at CALL time so tests can redirect the tre
 # NOTE: functions below bind a LOCAL variable named `paths` (the dir dict), so
 # the durable-JSON helpers are imported by name, not via the module.
 from engines.paths import read_json_safe, write_json_atomic
+from engines import store  # WP4: SQLite mirror (fail-open; CSV stays source of truth)
 
 DEFAULT_BASE_DIR = None  # None → paths.plan_dir() (production default)
 
@@ -86,6 +87,14 @@ def _append_csv_row(path: Path, row: dict):
 def append_execution_log(base_dir: str | Path | None, row: dict):
     paths = ensure_xau_plan_dirs(base_dir)
     _append_csv_row(paths["execution_log_path"], row)
+    # WP4 (2026-09-18): SQLite mirror AFTER the CSV write succeeds. Fail-open
+    # by contract — the CSV above is the source of truth and a mirror failure
+    # must never break the trading path (belt-and-braces: _mirror() already
+    # swallows internally, this guards the call itself).
+    try:
+        store.mirror_execution(base_dir, row)
+    except Exception:
+        pass
 
 
 def append_reassessment_log(base_dir: str | Path | None, row: dict):
@@ -179,6 +188,12 @@ def append_risk_ledger(base_dir: str | Path | None, row: dict):
         if not path.exists() or path.stat().st_size == 0:
             writer.writeheader()
         writer.writerow({k: row.get(k, "") for k in RISK_LEDGER_FIELDS})
+    # WP4 (2026-09-18): SQLite mirror AFTER the CSV write succeeds (fail-open,
+    # CSV is the source of truth — see append_execution_log).
+    try:
+        store.mirror_risk_ledger(base_dir, row)
+    except Exception:
+        pass
 
 
 def load_runtime_state(base_dir: str | Path | None = None) -> dict:
