@@ -21,7 +21,10 @@ pip3 install -q requests python-dotenv pywinrm requests_ntlm pandas numpy python
   echo "⚠️  pip install failed — install deps manually (docs/DEPLOY.md step 2)"
 
 # 3. Directories + exec bits
-mkdir -p logs data/commands data/xau_plan data/trading
+# WP1: full runtime tree — live state is untracked in git, so a fresh clone
+# must create every directory the daemons write to (files self-create).
+mkdir -p logs data/commands data/xau_plan/plan_history data/trading \
+  data/signals data/calendar data/ops data/backtest
 chmod +x scripts/*.sh scripts/hermes_cron.sh scripts/bridge_health_monitor.py 2>/dev/null || true
 
 # 4. systemd user services (position + signal daemons + ops dashboard bot)

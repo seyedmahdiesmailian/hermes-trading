@@ -156,6 +156,11 @@ class TestB114ProbeMachinery(unittest.TestCase):
                                 "read as zero")
 
     def test_b114_the_live_ledger_is_bound_to_the_running_processes(self):
+        # WP1: the live drift ledger is untracked state (only the frozen
+        # b114 finding ships with the repo). No ledger on this machine →
+        # nothing to reality-bind; skip like the finding test does.
+        if not os.path.exists(LIVE):
+            self.skipTest("no drift ledger on this machine")
         # Reality-binding, in the direction that cannot false-alarm:
         #  (a) the ledger's changed-set must be reproducible ARITHMETIC from
         #      its own boot commit + recorded head (so the numbers cannot be
@@ -201,6 +206,9 @@ class TestB114ProbeMachinery(unittest.TestCase):
                       "scripts/b114_daemon_code_drift.py to refresh")
 
     def test_b114_boot_commit_is_always_an_ancestor_of_head(self):
+        # WP1: see the skip guard above — the live ledger is untracked state.
+        if not os.path.exists(LIVE):
+            self.skipTest("no drift ledger on this machine")
         led = _read(LIVE)
         for name, d in led["daemons"].items():
             if not d.get("running"):
