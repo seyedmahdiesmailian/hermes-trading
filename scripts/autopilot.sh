@@ -18,6 +18,9 @@ LOCK=/tmp/hermes_autopilot.lock
 exec 9>"$LOCK"
 flock -n 9 || { echo "$(date -u +%FT%TZ) already running, skip"; exit 0; }
 
+# review-fix (2026-09-17): logs/ is gitignored — a fresh
+# clone has no logs/ and every append below would die.
+mkdir -p logs
 LOG=logs/autopilot.log
 
 # b40: operator pause — dashboard control panel writes this flag; the hourly
