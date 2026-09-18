@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import base64
 import os
+import secrets
 import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 BASE = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 sys.path.insert(0, str(BASE))
@@ -65,20 +67,55 @@ def build_archive():
     return out, bundle
 
 
+def _authed_handler(token: str):
+    """B1 (2026-09-17, review row 4): a one-shot request handler that
+    refuses every request without the per-pull random token.
+
+    The archive this server exposes contains .env (EVERY bot token), the
+    Windows VM password and .git_token. The old handler was a bare
+    SimpleHTTPRequestHandler on 0.0.0.0 with NO authentication — any LAN
+    port scanner that found the ephemeral port during the pull window
+    owned the whole secret set. 404 (not 403) on a bad token: no
+    existence oracle for a scanner.
+    """
+    from http.server import SimpleHTTPRequestHandler
+
+    class _TokenHandler(SimpleHTTPRequestHandler):
+        def do_GET(self):
+            parsed = urlparse(self.path)
+            supplied = (parse_qs(parsed.query).get('token') or [None])[0] \
+                or self.headers.get('X-Backup-Token')
+            if not supplied or not secrets.compare_digest(supplied, token):
+                self.send_error(404)
+                return
+            self.path = parsed.path  # strip the token before path math
+            super().do_GET()
+
+        def log_message(self, *args):  # keep the cron log quiet
+            pass
+
+    return _TokenHandler
+
+
 def push(remote_path: str, data: bytes, port: int = 0) -> str:
     """b31: Windows PULLS the file over LAN HTTP from a throwaway server here.
     WinRM push is unusable for MB-sized files: envelope limit (413) and the
-    32KB PowerShell command-line limit (both hit in testing)."""
+    32KB PowerShell command-line limit (both hit in testing).
+
+    B1 (2026-09-17): the pull is token-authenticated — a fresh random
+    token per push, carried in the URL Windows fetches over the
+    already-encrypted WinRM channel, checked constant-time server-side."""
     import winrm
     import threading
-    from http.server import SimpleHTTPRequestHandler, HTTPServer
+    from http.server import HTTPServer
     import functools
 
     fname = remote_path.rsplit('\\', 1)[-1]
     serve_dir = tempfile.mkdtemp(prefix='hermes_bk_')
     (Path(serve_dir) / fname).write_bytes(data)
 
-    handler = functools.partial(SimpleHTTPRequestHandler, directory=serve_dir)
+    token = secrets.token_urlsafe(32)
+    handler = functools.partial(_authed_handler(token), directory=serve_dir)
     srv = HTTPServer(('0.0.0.0', 0), handler)  # ephemeral port
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
@@ -99,7 +136,7 @@ def push(remote_path: str, data: bytes, port: int = 0) -> str:
     try:
         run_ps(f"New-Item -ItemType Directory -Force -Path '{REMOTE_DIR}' | Out-Null; 'ok'")
         out = run_ps(
-            f"Invoke-WebRequest -UseBasicParsing -Uri 'http://{local_ip}:{port}/{fname}' "
+            f"Invoke-WebRequest -UseBasicParsing -Uri 'http://{local_ip}:{port}/{fname}?token={token}' "
             f"-OutFile '{remote_path}' -TimeoutSec 120; "
             f"'written ' + (Get-Item '{remote_path}').Length + ' bytes'")
         if 'written' not in out:
