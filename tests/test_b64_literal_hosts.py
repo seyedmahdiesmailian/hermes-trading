@@ -124,13 +124,6 @@ LITERAL_HOST_ALLOWLIST: dict[str, dict[str, str]] = {
             "to build the URL the Windows VM pulls the tarball from "
             "(offsite_backup); not a remote host identity",
     },
-    "scripts/_deploy_pending_bridge.py": {
-        "192.168.10.51":
-            "b71 one-off deploy helper, same chain shape as offsite_backup: "
-            "WIN_HOST = getenv('WIN_HOST') or getenv('HERMES_WIN_IP', <this>) "
-            "— documented key wins; literal is the last-resort tail for the "
-            "WinRM target of the /api/pending bridge deploy",
-    },
     "scripts/weekly_report.py": {
         "192.168.10.51":
             "b63 derivation tail: HERMES_BRIDGE_URL > f'http://{HERMES_WIN_IP}"

@@ -157,6 +157,20 @@ class SignalNewsHardBlockTests(unittest.TestCase):
 class SignalTickFailClosedTests(unittest.TestCase):
     """A dead tick read must SKIP the signal — never trade unchecked."""
 
+    def setUp(self):
+        # review-fix A1 (2026-09-17): this class was the last one in the
+        # file without a temp root, so check_kill_switch's every-check
+        # state write went to the REAL data tree — on the production box the
+        # suite stamped the live kill_switch_state.json's last_check, and on
+        # any other checkout (/home/ai absent) the write raised, the
+        # fail-closed account handler fired policy_error, and the tick
+        # fail-closed path under test never ran. Same hermetic switch the
+        # two classes above already use.
+        self.root = hermetic.use_temp_data_root()
+
+    def tearDown(self):
+        hermetic.release()
+
     def _run(self, tick_mode):
         from engines import signal_listener as sl
         import engines.storage as st

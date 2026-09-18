@@ -5,8 +5,15 @@
 2. The signal path must run through evaluate_proposal — sizing comes from
    our risk model, never from the channel's raw lot.
 """
+import sys
 import unittest
 from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests'))
+
+import hermetic  # noqa: E402  (shared temp-root switch)
 
 # IMPORTANT: force the real module bindings BEFORE any monkeypatching.
 # hermes_runtime does `from engines.storage import load_current_plan` at import
@@ -137,6 +144,19 @@ class TestPositionCapParity(unittest.TestCase):
 class TestSignalSpreadGate(unittest.TestCase):
     """The plan path refuses entries when ask-bid > MAX_ENTRY_SPREAD; the
     signal path must too (news/rollover spikes blow past 2.0$)."""
+
+    def setUp(self):
+        # review-fix A1 (2026-09-17): _run stubs the helpers that write
+        # performance_state.json / execution_log.csv, but check_signals
+        # ALSO calls check_kill_switch, whose every-check save writes
+        # kill_switch_state.json — on the production box the suite stamped
+        # the live switch's last_check, and on any other checkout (/home/ai
+        # absent) the write raised and the account block failed into
+        # policy_error before the spread gate under test could run.
+        self.root = hermetic.use_temp_data_root()
+
+    def tearDown(self):
+        hermetic.release()
 
     def _run(self, ask, bid):
         import os

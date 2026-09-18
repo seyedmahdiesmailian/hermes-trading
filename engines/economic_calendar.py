@@ -303,16 +303,18 @@ def get_upcoming_events(hours_ahead: int = 24) -> dict:
 
 
 def get_news_blackout_check(now: datetime | None = None, blackout_minutes: int = 30) -> dict:
-    """Check if we're inside a news blackout window."""
-    now = now or _now_utc()
-    upcoming = get_upcoming_events(hours_ahead=1)
-    high_impact = upcoming.get("high_impact", [])
+    """Single-call news-blackout helper (legacy API kept for tests/ops).
 
-    if high_impact:
-        return {
-            "allowed": False,
-            "reason": "high_impact_news_upcoming",
-            "events": high_impact,
-            "blackout_until": (now + timedelta(minutes=blackout_minutes)).isoformat(),
-        }
-    return {"allowed": True, "reason": None, "events": []}
+    review-fix A5 (2026-09-17): this function had NO production caller and
+    carried its own divergent semantics — a one-sided "next 60 minutes"
+    upcoming-events window with no currency filter — so it could disagree
+    with the canonical macro_filter.evaluate_macro_filter that actually
+    gates entries (symmetric +/- window, gold-currency filter, b30
+    fail-closed on an unavailable calendar). It now delegates to that
+    canonical implementation so the codebase has exactly ONE blackout
+    semantics instead of two.
+    """
+    from engines.macro_filter import evaluate_macro_filter  # call-time: no import cycle
+
+    calendar = fetch_economic_calendar()
+    return evaluate_macro_filter(calendar, now or _now_utc(), blackout_minutes)

@@ -13,32 +13,40 @@ from engines.paths import read_json_safe, write_json_atomic
 DEFAULT_BASE_DIR = None  # None → paths.plan_dir() (production default)
 
 
-def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
+def xau_plan_paths(base_dir: str | Path | None = None) -> dict:
+    """Pure path computation for the plan tree — NO mkdir, ever.
+
+    review-fix A1 (2026-09-17): every READ used to go through
+    ensure_xau_plan_dirs, so its mkdir ran on the read path — and on any
+    box where the production root (/home/ai/hermes-trading) is absent (DR
+    checkout, CI, a moved install) read_json_safe never got a chance to
+    honestly return None: the mkdir raised PermissionError first and every
+    signal was rejected with policy_error. Reads must never need to create
+    anything; writers keep the mkdir via ensure_xau_plan_dirs below.
+    """
     root = Path(base_dir) if base_dir else paths.plan_dir()
-    plan_history_dir = root / "plan_history"
-    current_plan_path = root / "current_plan.json"
-    runtime_state_path = root / "runtime_state.json"
-    performance_state_path = root / "performance_state.json"
-    execution_log_path = root / "execution_log.csv"
-    reassessment_log_path = root / "reassessment_log.csv"
-    risk_ledger_path = root / "risk_ledger.csv"
-    pending_orders_path = root / "pending_orders.json"
-    plan_history_dir.mkdir(parents=True, exist_ok=True)
     return {
         "base_dir": root,
-        "plan_history_dir": plan_history_dir,
-        "current_plan_path": current_plan_path,
-        "runtime_state_path": runtime_state_path,
-        "performance_state_path": performance_state_path,
-        "execution_log_path": execution_log_path,
-        "reassessment_log_path": reassessment_log_path,
-        "risk_ledger_path": risk_ledger_path,
-        "pending_orders_path": pending_orders_path,
+        "plan_history_dir": root / "plan_history",
+        "current_plan_path": root / "current_plan.json",
+        "runtime_state_path": root / "runtime_state.json",
+        "performance_state_path": root / "performance_state.json",
+        "execution_log_path": root / "execution_log.csv",
+        "reassessment_log_path": root / "reassessment_log.csv",
+        "risk_ledger_path": root / "risk_ledger.csv",
+        "pending_orders_path": root / "pending_orders.json",
     }
 
 
+def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
+    """Compute the plan-tree paths AND create plan_history/ (writers only)."""
+    dirs = xau_plan_paths(base_dir)
+    dirs["plan_history_dir"].mkdir(parents=True, exist_ok=True)
+    return dirs
+
+
 def load_current_plan(base_dir: str | Path | None = None):
-    paths = ensure_xau_plan_dirs(base_dir)
+    paths = xau_plan_paths(base_dir)  # A1: read-only, never mkdir
     return read_json_safe(paths["current_plan_path"], None, label="current_plan")
 
 
@@ -182,7 +190,7 @@ def append_risk_ledger(base_dir: str | Path | None, row: dict):
 
 
 def load_runtime_state(base_dir: str | Path | None = None) -> dict:
-    paths = ensure_xau_plan_dirs(base_dir)
+    paths = xau_plan_paths(base_dir)  # A1: read-only
     return read_json_safe(paths["runtime_state_path"], {}, label="runtime_state")
 
 
@@ -192,7 +200,7 @@ def save_runtime_state(base_dir: str | Path | None, state: dict) -> Path:
 
 
 def load_performance_state(base_dir: str | Path | None = None) -> dict:
-    paths = ensure_xau_plan_dirs(base_dir)
+    paths = xau_plan_paths(base_dir)  # A1: read-only
     return read_json_safe(paths["performance_state_path"], {}, label="performance_state")
 
 

@@ -94,11 +94,19 @@ loginctl enable-linger $USER   # سرویس‌ها بدون لاگین هم زن
 ```
 
 ### ۵. بریج ویندوز (اگر VM ویندوز هم رفته)
-روی ویندوز: MT5 را نصب و لاگین کن (اکانت دمو/ریل بروکر)، بعد:
+روی ویندوز: MT5 را نصب و لاگین کن (اکانت دمو/ریل بروکر) و `HERMES_BRIDGE_TOKEN`
+را به‌عنوان متغیر محیطی **System** ست کن (هم‌مقدار با `.env` لینوکس — بدون آن
+بریج اصلاً بالا نمی‌آید). بعد از لینوکس:
 ```bash
-python3 scripts/_deploy_bridge.py   # از لینوکس، با WIN_USER/WIN_PASS در .env
+python3 scripts/_deploy_bridge.py   # با WIN_USER/WIN_PASS در .env
 ```
-بریج روی `:5050` با Bearer token بالا می‌آید. تست: `python3 scripts/_check_bridge.py`
+اسکریپت سورس canonical را از گیت (`scripts/mt5_http_server_v2.py`) می‌گیرد،
+compile-check می‌کند، از فایل زندهٔ فعلی بکاپ می‌گیرد، آن را به
+`C:\Temp\bridge.py` push می‌کند و لیسنر ۵۰۵۰ را ری‌استارت می‌کند
+(فیکس ۲۰۲۶-۰۹-۱۷: قبلاً مرحلهٔ اول «دانلود بریج زنده» بود که روی VM تازه
+fail می‌شد و نسخهٔ بدون auth داخل ریپو تنها گزینه بود). بریج روی `:5050`
+با waitress سرو می‌شود؛ همهٔ endpoint ها جز `/health` توکن Bearer می‌خواهند.
+تست: `python3 scripts/_check_bridge.py`
 
 ### ۶. آزمون سلامت
 ```bash
