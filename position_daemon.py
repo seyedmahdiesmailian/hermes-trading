@@ -454,13 +454,13 @@ def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
                           f'اتصال/SL اصلی هنوز فعال — تلاش مجدد خودکار')
 
 
-def realized_pnl_usd(bridge, ticket: int):
-    """b44: sum of broker-confirmed OUT deals for one position ticket.
+def _ticket_deals(bridge, ticket: int) -> list | None:
+    """All broker history deals belonging to one position ticket.
 
-    The close report used `last_profit` — the FLOATING pnl of the volume
-    remaining at the final poll. After partial closes that number is not the
-    trade result (#103326893: report said +1.83$, broker deals summed to
-    -0.27$). Returns None when the bridge cannot answer (caller falls back).
+    None means the history is NOT usable (bridge error, or no OUT deal yet —
+    an IN-only history cannot describe a closed trade). Shared by the b44
+    realized-pnl sum and the D3 exit-fill lookup so both read the SAME
+    grouping rules instead of drifting apart.
     """
     try:
         res = bridge.get_history_deals(days=1) or {}
@@ -470,11 +470,47 @@ def realized_pnl_usd(bridge, ticket: int):
         # require at least one OUT deal — otherwise history is not complete
         if not mine or not any(int(d.get('entry', 0)) != 0 for d in mine):
             return None
-        # all deals incl. the IN one: its commission belongs to the trade too
-        return round(sum(float(d.get('profit', 0)) + float(d.get('commission', 0))
-                         + float(d.get('swap', 0)) for d in mine), 2)
+        return mine
     except Exception:
         return None
+
+
+def realized_pnl_usd(bridge, ticket: int):
+    """b44: sum of broker-confirmed OUT deals for one position ticket.
+
+    The close report used `last_profit` — the FLOATING pnl of the volume
+    remaining at the final poll. After partial closes that number is not the
+    trade result (#103326893: report said +1.83$, broker deals summed to
+    -0.27$). Returns None when the bridge cannot answer (caller falls back).
+    """
+    mine = _ticket_deals(bridge, ticket)
+    if mine is None:
+        return None
+    # all deals incl. the IN one: its commission belongs to the trade too
+    return round(sum(float(d.get('profit', 0)) + float(d.get('commission', 0))
+                     + float(d.get('swap', 0)) for d in mine), 2)
+
+
+def exit_fill_price(bridge, ticket: int) -> float | None:
+    """D3: the exact broker fill price of the position's FINAL out-deal.
+
+    The close report used to label every exit by comparing the POLLING-time
+    ask against the tracked SL/TP — a price the trade never traded at, up to
+    a full poll cycle after the real fill, and always the ask side even for
+    SELL exits. Modified stops (BE/trail) and gaps therefore got mislabeled
+    ("TP hit" vs "SL hit"). The OUT deal's own price is the fill that
+    actually happened. None → caller falls back to the polling price,
+    exactly as before (reporting-only change; no gate reads this).
+    """
+    mine = _ticket_deals(bridge, ticket)
+    if mine is None:
+        return None
+    outs = [d for d in mine if int(d.get('entry', 0)) != 0]
+    try:
+        price = float(outs[-1].get('price') or 0)
+    except (TypeError, ValueError):
+        return None
+    return price or None
 
 
 def close_reason(final_sl: float, final_tp: float, exit_price: float, side: str) -> str:
@@ -533,6 +569,14 @@ def main():
                     entry = w.get('entry', 0)
                     dur_min = (datetime.now(timezone.utc) - datetime.fromisoformat(w['opened_at'])).total_seconds() / 60
                     mfe = w.get('mfe', 0.0); mae = w.get('mae', 0.0)
+                    # D3 (2026-09-17): label the exit from the broker's own
+                    # OUT-deal fill, not the polling-time ask — the latter is
+                    # up to a full cycle late and the wrong side for SELL,
+                    # so modified/gapped exits were mislabeled. Fall back to
+                    # the polling price when history cannot answer (as before).
+                    fill = exit_fill_price(bridge, int(tkt))
+                    if fill:
+                        exit_price = fill
                     reason = close_reason(w.get('sl', 0), w.get('tp', 0), exit_price, side)
                     pnl_pts = (entry - exit_price) if side == 'SELL' else (exit_price - entry)
                     # b44: 'last_profit' is the FLOATING pnl of whatever volume

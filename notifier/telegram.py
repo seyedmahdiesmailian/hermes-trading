@@ -36,8 +36,11 @@ def _send(message: str, token: str | None, chat: str | None = None) -> bool:
     chat_id = chat or os.getenv('TELEGRAM_CHAT_ID','194015957')
     log_dir = _log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
+    # review-fix A4 (2026-09-17): the write below used a LITERAL backslash-n,
+    # so every record ran together on one line and no line-oriented tool
+    # could read the log. A real newline, same as every other log file.
     with (log_dir / 'telegram_messages.log').open('a', encoding='utf-8') as f:
-        f.write(f"{datetime.now(timezone.utc).isoformat()}	{message[:1000]}\\n")
+        f.write(f"{datetime.now(timezone.utc).isoformat()}	{message[:1000]}\n")
     if not token:
         print('[TELEGRAM SKIP] token not set')
         return False

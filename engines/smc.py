@@ -435,7 +435,11 @@ def smc_analyse(rows: list[dict], now: Optional[datetime] = None, h1_rows: Optio
     Returns complete SMC analysis dict with bias, signal, confidence, etc.
     """
     if now is None:
-        now = datetime.utcnow()
+        # review-fix: naive utcnow() is timezone-less (deprecated in
+        # 3.12) while every caller passes an aware datetime -- keep the
+        # aware contract on the default path too.
+        from datetime import timezone as _tz
+        now = datetime.now(_tz.utc)
 
     if len(rows) < 10:
         return _empty_smc_result(now)
@@ -897,17 +901,24 @@ def detect_turtle_soup(rows: list[dict], lookback: int = 10) -> dict:
 # ── 6. Silver Bullet ─────────────────────────────────────────────────────────
 
 def evaluate_silver_bullet_setup(now=None) -> dict:
-    """10-11 AM and 2-3 PM NY time windows."""
+    """10-11 AM and 2-3 PM NY time windows.
+
+    review-fix (2026-09-17): the old wall-clock UTC check (14 / 18-19
+    UTC) was wrong twice over -- the PM "window" spanned TWO hours (18
+    and 19 UTC) while the label says 2-3, and neither window accounted
+    for DST, so every winter the whole schedule shifted an hour.
+    Compute the hour in America/New_York (zoneinfo, stdlib) so the
+    label and the code agree all year. Observability-only: nothing
+    consumes this for a gate.
+    """
     if now is None:
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
-    hour = now.hour
-    minute = now.minute
-    am = (hour == 14 and 0 <= minute < 60)
-    pm = (hour == 18 or (hour == 19 and 0 <= minute < 60))
-    if am:
+    from zoneinfo import ZoneInfo
+    ny_hour = now.astimezone(ZoneInfo("America/New_York")).hour
+    if ny_hour == 10:
         return {"active": True, "window": "am", "label": "Silver Bullet AM (10-11 NY)"}
-    elif pm:
+    if ny_hour == 14:
         return {"active": True, "window": "pm", "label": "Silver Bullet PM (2-3 NY)"}
     return {"active": False, "window": None, "label": None}
 
