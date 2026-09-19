@@ -1,0 +1,15 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+*/5 * * * * cd /home/ai/hermes-trading && bash scripts/hermes_cron.sh >> /home/ai/hermes-trading/logs/cron.log 2>&1
+
+*/5 * * * * cd /home/ai/hermes-trading && python3 scripts/bridge_health_monitor.py >> /home/ai/hermes-trading/logs/bridge_health.log 2>&1
+
+5 * * * * cd /home/ai/hermes-trading && bash scripts/autopilot.sh >> logs/autopilot_cron.log 2>&1
+
+0 2 * * * cd /home/ai/hermes-trading && python3 scripts/autopilot_digest.py >> logs/autopilot_digest.log 2>&1
+30 22 * * 5 cd /home/ai/hermes-trading && python3 scripts/weekly_report.py >> logs/weekly_report.log 2>&1
+# b31: off-box backup daily 03:15 Tehran (UTC 23:45 prev day) -> Windows C:\HermesBackups
+45 23 * * * /home/ai/.hermes/hermes-agent/venv/bin/python3 /home/ai/hermes-trading/scripts/offsite_backup.py >> /home/ai/hermes-trading/logs/offsite_backup.log 2>&1
+# b34: GitHub sync after each 15-min master tick
+*/15 * * * * /bin/bash /home/ai/hermes-trading/scripts/git_sync.sh

@@ -1,0 +1,9 @@
+services:
+  forwarder:
+    image: IMAGE_FULL
+    env_file:
+      - .env
+    volumes:
+      - /root/forwarder:/app/data
+      - /root/forwarder/config.json:/app/config.json
+    restart: always

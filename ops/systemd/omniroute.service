@@ -1,0 +1,22 @@
+[Unit]
+Description=OmniRoute - Smart AI Router with Auto Fallback
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/home/ai/.local/bin/omniroute serve
+WorkingDirectory=/home/ai/.omniroute
+Environment="HOME=/home/ai"
+Environment="PATH=/home/ai/.local/bin:/home/ai/.local/lib/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Restart=always
+RestartSec=5
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

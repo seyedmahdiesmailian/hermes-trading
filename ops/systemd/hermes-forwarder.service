@@ -1,0 +1,16 @@
+[Unit]
+Description=Telegram Forwarder (dockerized version, running natively)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai/projects/forwarder-telegram-dockerized
+ExecStart=/home/ai/projects/forwarder-telegram-dockerized/.venv/bin/python main.py
+Restart=on-failure
+RestartSec=15
+StandardOutput=append:/home/ai/projects/forwarder-telegram-dockerized/data/systemd.log
+StandardError=append:/home/ai/projects/forwarder-telegram-dockerized/data/systemd.log
+
+[Install]
+WantedBy=default.target

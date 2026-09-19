@@ -1,0 +1,15 @@
+[Unit]
+Description=Hermes Web Dashboard (browser chat + session manager)
+Documentation=https://hermes-agent.nousresearch.com/docs/user-guide/features/web-dashboard
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/ai/.hermes/hermes-agent
+EnvironmentFile=%h/.hermes/.env
+ExecStart=/home/ai/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main dashboard --host 0.0.0.0 --port 9119 --no-open --skip-build
+Restart=always
+RestartSec=10
+Nice=10
+
+[Install]
+WantedBy=default.target
