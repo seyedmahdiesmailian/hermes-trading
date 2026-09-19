@@ -1,0 +1,33 @@
+# Hermes Trading — Python dependencies (Linux brain + Windows bridge)
+# Generated 2026-09-19 by scanning all *runtime* imports (excludes tests/scrap/research).
+# Install on Linux:  pip3 install -r requirements.txt
+# MetaTrader5 cannot be installed on Linux (Windows-only); it runs on the Windows
+# bridge box. The bridge source lives in windows_bridge/ and is NOT imported here.
+
+# ---- Runtime (Linux brain + signal daemon + ops) ----
+requests>=2.31            # bridge_client, notifier, signal sources
+python-dotenv>=1.0        # .env loading (env_loader.py is the no-dep fallback)
+pywinrm>=0.4.3            # Windows deployment + off-box backup (WinRM)
+requests-ntlm>=1.1.0      # NTLM auth over WinRM for WS2022
+pandas>=2.0              # backtest, macro snapshot, reports
+numpy>=1.24             # backtest, SMC/indicators
+python-telegram-bot>=20   # notifier/telegram.py + ops dashboard bot
+flask>=3.0               # only if a local HTTP helper is used (bridge server runs on Windows)
+waitress>=3.0            # production WSGI for the bridge on Windows (windows_bridge/)
+
+# ---- Forwarder (signal source; runs natively via hermes-forwarder.service) ----
+telethon>=1.34           # forwarder/main.py Telegram client
+qrcode>=7.4             # forwarder/login_qr*.py device-auth QR
+
+# ---- Reports (hermes-trading-reports) ----
+python-docx>=1.1         # Persian RTL Word reports (docs/)
+matplotlib>=3.7          # chart exports in reports/backtest (optional-ish, but used)
+
+# ---- Dev / tests (not needed for production runtime) ----
+# pytest>=7     # test suite (run with: python3 -m pytest tests/ or python3 -m unittest)
+#
+# Windows bridge only (NOT on Linux — do not install here):
+#   MetaTrader5   # on the Windows box: pip install MetaTrader5
+#
+# Optional research/scrap scripts (data/backtest one-shots) may reference:
+#   yfinance      # only used by a few b1xx census scripts; skip unless needed.
