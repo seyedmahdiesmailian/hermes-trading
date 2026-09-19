@@ -80,6 +80,84 @@ def derive_trade_zones(value_low: float, value_high: float, atr: float) -> dict:
     }
 
 
+# H1 structure zones (B1): last N hours of H1 define discount/premium.
+# The old 12-bar M5 mid produced a ~0.5 ATR value zone (~$2 on gold) and a
+# plan-TP1/SL RR median of 0.24 — 91% of live plans failed MIN_RR=1.5 and
+# were then reanchored into a 1.5R scalp whose winners the manager cut.
+H1_ZONE_BARS = 24
+DISCOUNT_FRACTION = 0.30
+PREMIUM_FRACTION = 0.30
+INVALIDATION_ATR_BUFFER = 0.35
+
+
+def compute_htf_structure_zones(h1_rows: list[dict], atr: float) -> dict:
+    """Entry zones from the H1 swing, not the last hour of M5 noise."""
+    if not h1_rows:
+        return {}
+    lookback = h1_rows[-H1_ZONE_BARS:] if len(h1_rows) >= 8 else h1_rows
+    swing_low = min(r["low"] for r in lookback)
+    swing_high = max(r["high"] for r in lookback)
+    rng = swing_high - swing_low
+    atr = float(atr or 0) or 5.0
+    if rng < max(atr * 0.8, 1.0):
+        mid = (swing_low + swing_high) / 2.0
+        half = max(atr * 1.0, 2.0)
+        swing_low = mid - half
+        swing_high = mid + half
+        rng = swing_high - swing_low
+    discount_hi = swing_low + DISCOUNT_FRACTION * rng
+    premium_lo = swing_high - PREMIUM_FRACTION * rng
+    return {
+        "value_low": round(discount_hi, 2),
+        "value_high": round(premium_lo, 2),
+        "long_entry_low": round(swing_low, 2),
+        "long_entry_high": round(discount_hi, 2),
+        "short_entry_low": round(premium_lo, 2),
+        "short_entry_high": round(swing_high, 2),
+        "swing_low": round(swing_low, 2),
+        "swing_high": round(swing_high, 2),
+        "zone_source": "h1_swing",
+    }
+
+
+def apply_bias_geometry(ctx: dict) -> bool:
+    """Recompute execution / invalidation / targets for ctx['bias'].
+
+    Called at plan birth AND after SMC flips the direction (A2). Empty or
+    incomplete zones return False and leave the existing levels alone so
+    lab fixtures that only carry invalidation keep working.
+    """
+    zones = ctx.get("zones") or {}
+    needed = ("value_low", "value_high", "long_entry_low", "long_entry_high",
+              "short_entry_low", "short_entry_high")
+    try:
+        if any(zones.get(k) is None for k in needed):
+            return False
+        atr = float(ctx.get("atr") or 0) or 5.0
+    except (TypeError, ValueError):
+        return False
+    bias = ctx.get("bias") or "neutral"
+    regime = (ctx.get("quality") or {}).get("regime") or "range"
+    if bias not in {"bullish", "bearish"}:
+        regime = "range"
+    execution = _build_execution_plan(bias=bias, zones=zones, atr=atr, regime=regime)
+    swing_low = float(zones.get("swing_low") or zones["long_entry_low"])
+    swing_high = float(zones.get("swing_high") or zones["short_entry_high"])
+    if bias == "bullish":
+        invalidation = round(swing_low - (atr * INVALIDATION_ATR_BUFFER), 2)
+        targets = execution["tp_levels"] or [zones["short_entry_low"], zones["short_entry_high"]]
+    elif bias == "bearish":
+        invalidation = round(swing_high + (atr * INVALIDATION_ATR_BUFFER), 2)
+        targets = execution["tp_levels"] or [zones["long_entry_high"], zones["long_entry_low"]]
+    else:
+        invalidation = round(swing_low - (atr * 0.25), 2)
+        targets = []
+    ctx["execution"] = execution
+    ctx["invalidation"] = invalidation
+    ctx["targets"] = targets
+    return True
+
+
 def _alignment_label(m5_bias: str, h1_bias: str, h4_bias: str) -> str:
     votes = [m5_bias, h1_bias, h4_bias]
     directional = [v for v in votes if v in {"bullish", "bearish"}]
@@ -128,6 +206,10 @@ def _detect_regime(
 
 
 def _build_execution_plan(bias: str, zones: dict, atr: float, regime: str) -> dict:
+    # Neutral is not a short: the old else-branch built SELL geometry for
+    # any non-bullish bias, including wait states after a merge veto.
+    if bias not in {"bullish", "bearish"}:
+        regime = "range"
     if regime == "range":
         # Range: use value zone edges as targets (mean reversion)
         return {
@@ -197,19 +279,26 @@ def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[d
     A/B on 282h real data (scripts/ab_entry_tf.py) showed M15 as an entry
     lane is worse than M5 (+991 vs +1680 $/1000h, unique trades WR 48%)."""
     atr = estimate_atr(m5_rows)
-    # Zones come from the last hour of entry-TF structure (M5 in live). The old
-    # H1 percentile value zone was computed and immediately overwritten — dead.
-    m5_zones = compute_m5_zones(m5_rows, atr)
-    value_low = m5_zones["value_low"]
-    value_high = m5_zones["value_high"]
     m5_bias = classify_bias(m5_rows)
     m15_bias = classify_bias(m15_rows) if m15_rows else None
     h1_bias = classify_bias(h1_rows)
     h4_bias = classify_bias(h4_rows)
-    bias = h4_bias if h4_bias != "neutral" else h1_bias
-    if bias == "neutral":
-        bias = m5_bias
-    zones = derive_trade_zones(value_low=value_low, value_high=value_high, atr=atr)
+    # B3: a directional plan needs H4 to take a side. Falling back to H1/M5
+    # while H4 is neutral is how the book sold into the larger uptrend
+    # (journal: 22 SELL −$128 vs 12 BUY +$26). Votes are still recorded.
+    bias = h4_bias if h4_bias in {"bullish", "bearish"} else "neutral"
+    zones = compute_htf_structure_zones(h1_rows, atr)
+    if not zones:
+        m5_zones = compute_m5_zones(m5_rows, atr)
+        zones = derive_trade_zones(
+            value_low=m5_zones["value_low"],
+            value_high=m5_zones["value_high"],
+            atr=atr,
+        )
+        swing_window = m5_rows[-12:] if len(m5_rows) >= 12 else m5_rows
+        zones["swing_low"] = round(min(r["low"] for r in swing_window), 2)
+        zones["swing_high"] = round(max(r["high"] for r in swing_window), 2)
+        zones["zone_source"] = "m5_fallback"
     last_price = m5_rows[-1]["close"]
     # trend_strength = recent push on the ENTRY timeframe, in ATR units of that
     # same timeframe. The old formula divided a 4-bar H4 delta (30-130 USD on
@@ -234,7 +323,6 @@ def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[d
         h1_bias=h1_bias,
         h4_bias=h4_bias,
     )
-    execution = _build_execution_plan(bias=bias, zones=zones, atr=atr, regime=regime)
     quality = {
         "trend_strength": trend_strength,
         "alignment": alignment,
@@ -243,32 +331,21 @@ def build_plan_context(m5_rows: list[dict], h1_rows: list[dict], h4_rows: list[d
         "bias_votes": {"m5": m5_bias, "h1": h1_bias, "h4": h4_bias,
                        **({"m15": m15_bias} if m15_bias else {})},
         "regime": regime,
+        "zone_source": zones.get("zone_source", "h1_swing"),
+        "htf_bias": h4_bias,
     }
-    # Tight invalidation: recent 1-hour M5 swing ± 0.5 ATR (scalping-grade stop)
-    swing_low = min(r["low"] for r in m5_rows[-12:])
-    swing_high = max(r["high"] for r in m5_rows[-12:])
-    if bias == "bullish":
-        invalidation = round(min(swing_low, zones["long_entry_low"]) - (atr * 0.5), 2)
-        targets = execution["tp_levels"] or [zones["short_entry_low"], zones["short_entry_high"]]
-    elif bias == "bearish":
-        invalidation = round(max(swing_high, zones["short_entry_high"]) + (atr * 0.5), 2)
-        targets = execution["tp_levels"] or [zones["long_entry_high"], zones["long_entry_low"]]
-    else:
-        invalidation = zones["long_entry_low"] - (atr * 0.25)
-        targets = []
-    return {
+    ctx = {
         "symbol": "XAUUSD",
         "session": session_name,
         "bias": bias,
         "atr": atr,
         "zones": zones,
-        "invalidation": invalidation,
-        "targets": targets,
         "quality": quality,
-        "execution": execution,
         "context": {
             "m5_last": last_price,
             "h1_last": h1_rows[-1]["close"],
             "h4_last": h4_rows[-1]["close"],
         },
     }
+    apply_bias_geometry(ctx)
+    return ctx

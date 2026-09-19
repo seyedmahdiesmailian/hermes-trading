@@ -48,9 +48,42 @@ def _entry_close(rows) -> float:
         return 0.0
 
 
+def _plan_atr(plan: dict) -> float:
+    """ATR used for reanchor / geometry. Never fall back to 20 (that was
+    4-5× live gold M5 ATR and built giant stops when plan.atr was missing).
+    quality.atr is not a producer key — don't look there.
+    """
+    try:
+        v = float(plan.get("atr") or 0)
+    except (TypeError, ValueError):
+        v = 0.0
+    return v if v > 0 else 5.0
+
+
+def _pd_veto(ctx: dict, smc_result: dict | None) -> str | None:
+    """Don't buy premium / don't sell discount — the SMC signal already
+    computed this but merge used bias, not signal. Live plan 2026-09-10
+    was bearish with smc_signal=wait.
+    """
+    if not smc_result:
+        return None
+    zone = (smc_result.get("premium_discount") or {}).get("zone")
+    bias = ctx.get("bias")
+    if bias == "bullish" and zone == "premium":
+        ctx["bias"] = "neutral"
+        ctx.setdefault("quality", {})["pd_veto"] = "no_buy_premium"
+        return "no_buy_premium"
+    if bias == "bearish" and zone == "discount":
+        ctx["bias"] = "neutral"
+        ctx.setdefault("quality", {})["pd_veto"] = "no_sell_discount"
+        return "no_sell_discount"
+    return None
+
+
 def apply_smc_merge(ctx: dict, merged: dict, *, entry_close: float,
                     range_kill_conf: float = RANGE_KILL_CONF,
-                    smc_result: dict | None = None) -> bool:
+                    smc_result: dict | None = None,
+                    rebuild=None) -> bool:
     """THE bias-merge + b188(a) stale-at-birth guard — ONE definition, TWO paths.
 
     hermes_runtime.build_live_plan and backtest_real.strategy_signal each carried
@@ -86,11 +119,27 @@ def apply_smc_merge(ctx: dict, merged: dict, *, entry_close: float,
         ctx.setdefault('context', {})['smc'] = smc_result
         ctx.setdefault('context', {})['merged'] = {
             k: v for k, v in merged.items() if k != 'smc_result'}
+    # Honour the PD veto that _compute_smc_signal already made (merge used
+    # to take bias and ignore signal=wait).
+    _pd_veto(ctx, smc_result)
+    # A2: rebuild SL/TP for the NEW bias. The callable lives in
+    # engines.context (plan.py stays a leaf — b111). Incomplete zones
+    # make rebuild a no-op so lab fixtures keep the original veto.
+    if rebuild is not None:
+        try:
+            rebuild(ctx)
+        except Exception:
+            pass
     # b188(a) STALE-AT-BIRTH: a plan whose thesis is already wrong at t=0 is a
     # neutral plan (measured pre-fix: 69% of plan_history rows, b185).
     if stale_at_birth(ctx.get('bias'), ctx.get('invalidation'), entry_close):
         ctx['bias'] = 'neutral'
         ctx.setdefault('quality', {})['stale_at_birth'] = True
+        if rebuild is not None:
+            try:
+                rebuild(ctx)
+            except Exception:
+                pass
         return True
     return False
 
@@ -255,10 +304,10 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
 
     if zones["long_entry_low"] <= price <= zones["long_entry_high"]:
         if trigger_ok:
+            # B2: a confirmed pullback keeps the structural SL/TP ladder.
+            # Reanchor was discarding the 3-level plan and fabricating a
+            # 1.5R scalp — journal avg win $30 vs avg loss $63.
             bp = build_trade_blueprint(plan, price=price, trigger_ok=trigger_ok)
-            bp = _reanchor_blueprint(
-                bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
-            )
             return {
                 "action": "market_entry_now",
                 "zone": "long_zone",
@@ -292,7 +341,7 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
 
     if price >= zones["value_high"] and plan.get("bias") == "bullish":
         # Aggressive premium entry — only when close to zone
-        atr_val = float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
+        atr_val = _plan_atr(plan)
         dist_above = price - zones["value_high"]
         if dist_above > atr_val * 1.5:
             return {
@@ -323,9 +372,7 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
             smc_conf = plan.get("quality", {}).get("smc_confidence", 0) or 0
             if smc_conf >= SMC_CONF_FLOOR and m5_ok:  # b193: no unconfirmed aggressive entry
                 bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
-                bp = _reanchor_blueprint(
-                    bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
-                )
+                bp = _reanchor_blueprint(bp, price, _plan_atr(plan))
                 return {
                     "action": "market_entry_now",
                     "zone": "value_zone",
@@ -373,9 +420,6 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
     if zones["short_entry_low"] <= price <= zones["short_entry_high"]:
         if trigger_ok:
             bp = build_trade_blueprint(plan, price=price, trigger_ok=trigger_ok)
-            bp = _reanchor_blueprint(
-                bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
-            )
             return {
                 "action": "market_entry_now",
                 "zone": "short_zone",
@@ -408,9 +452,7 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
         near_value_low = abs(price - zones["value_low"]) < (zones["value_high"] - zones["value_low"]) * 0.3
         if near_value_low and plan.get("quality", {}).get("smc_confidence", 0) >= SMC_CONF_FLOOR and m5_ok:  # b193
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
-            bp = _reanchor_blueprint(
-                bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
-            )
+            bp = _reanchor_blueprint(bp, price, _plan_atr(plan))
             return {
                 "action": "market_entry_now",
                 "zone": "value_zone",
@@ -430,7 +472,7 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
     # BUT only if price is close to the zone (not 100+ points away = stale plan)
     if price < zones["value_low"] and plan.get("bias") == "bearish":
         smc_conf = plan.get("quality", {}).get("smc_confidence", 0) or 0
-        atr_val = float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
+        atr_val = _plan_atr(plan)
         dist_below = zones["value_low"] - price
         if dist_below > atr_val * 1.5:
             return {
@@ -444,9 +486,7 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
             # Re-anchor the blueprint to current market conditions, otherwise the
             # stale plan TP (far below after a long move) breaks trade geometry.
             bp = build_trade_blueprint(plan, price=price, trigger_ok=True)
-            bp = _reanchor_blueprint(
-                bp, price, float(plan.get("atr") or plan.get("quality", {}).get("atr") or 20)
-            )
+            bp = _reanchor_blueprint(bp, price, atr_val)
             return {
                 "action": "market_entry_now",
                 "zone": "discount",

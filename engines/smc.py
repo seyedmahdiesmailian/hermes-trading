@@ -464,6 +464,14 @@ def smc_analyse(rows: list[dict], now: Optional[datetime] = None, h1_rows: Optio
 
     # ── 3. Liquidity sweep (M15) ──
     swept, swept_level = detect_liquidity_sweep(rows)
+    # Direction of the hunt: a high sweep is sell-side liquidity taken
+    # (bearish), a low sweep is buy-side (bullish). `_derive_smc_bias`
+    # used to take `swept` and never read it.
+    last_close_for_sweep = rows[-1]["close"]
+    if swept and swept_level is not None:
+        sweep_side = "bearish" if swept_level >= last_close_for_sweep else "bullish"
+    else:
+        sweep_side = None
 
     # ── 4. Market structure (M15 + H1) ──
     structure_phase, structure_confidence = market_structure_phase(rows)
@@ -599,7 +607,7 @@ def _empty_smc_result(now: datetime) -> dict:
 
 def _derive_smc_bias(
     obs, unmitigated_obs, fvgs, unfilled_fvgs,
-    swept, structure_phase, pd_zone, killzone_weight,
+    sweep_side, structure_phase, pd_zone, killzone_weight,
 ) -> tuple[str, float]:
     """Derive SMC-based market bias from all signals."""
     bullish_score = 0.0
@@ -620,6 +628,12 @@ def _derive_smc_bias(
                 bullish_score += 1.5
             else:
                 bearish_score += 1.5
+
+    # Liquidity sweep (was passed in and unused)
+    if sweep_side == "bullish":
+        bullish_score += 1.5
+    elif sweep_side == "bearish":
+        bearish_score += 1.5
 
     # Structure
     if structure_phase == "bos_bullish":
@@ -682,8 +696,14 @@ def merge_smc_with_classic(classic_context: dict, smc_result: dict) -> dict:
     and both source analyses preserved.
     """
     classic_bias = classic_context.get("bias", "neutral")
-    classic_regime = classic_context.get("regime", "range")
     classic_quality = classic_context.get("quality", {})
+    # quality.regime is the key build_plan_context actually writes; the
+    # top-level read is a fallback for hand-built lab contexts. Reading the
+    # missing top-level key defaulted EVERY live plan to "range" and halved
+    # aligned classic confidence (0.7 → 0.35) — 800/800 recent plans.
+    classic_regime = (classic_quality.get("regime")
+                      or classic_context.get("regime")
+                      or "range")
     classic_alignment = classic_quality.get("alignment", "neutral")
 
     smc_bias = smc_result.get("bias", "neutral")

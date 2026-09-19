@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
-from engines.context import build_plan_context
+from engines.context import build_plan_context, apply_bias_geometry
 from engines.bridge_payload import positions_list
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
@@ -218,7 +218,7 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     # identical to the old inline code, including the display-only smc_* stamps
     # (passed via smc_result — the backtest omits them by passing nothing).
     apply_smc_merge(ctx, merged, entry_close=_entry_close(m5),
-                    smc_result=smc_result)
+                    smc_result=smc_result, rebuild=apply_bias_geometry)
     plan = build_plan_from_context(ctx, now=now)
     return plan, None
 

@@ -474,11 +474,20 @@ def adjustments() -> dict:
     # but may never be raised here — relaxation is done by the operator, not by
     # a small-sample win streak (legacy bug: it relaxed at WR>=0.55 which let a
     # lucky cluster re-inflate risk right before a losing streak).
-    if wr < 0.40 and avg < 0:
+    if avg < 0 and wr < 0.40:
         if cur_rr < RR_FLOOR_CEILING:
             changes['min_rr'] = _clamp(cur_rr + 0.25, RR_FLOOR_FLOOR, RR_FLOOR_CEILING)
         if cur_grade_idx < GRADES.index(GRADE_CEILING):
             changes['min_grade'] = GRADES[cur_grade_idx + 1]
+        changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
+    elif avg < 0 and wr >= 0.50:
+        # Live journal shape: WR 0.65, avg win $30, avg loss $63. The old
+        # trigger (wr<0.40 AND avg<0) never fired, so learning was blind to
+        # the exact failure mode. Raise the RR floor so winners must be
+        # larger; cut size. Do NOT raise min_grade — that would starve the
+        # 65% winners instead of fixing payoff.
+        if cur_rr < RR_FLOOR_CEILING:
+            changes['min_rr'] = _clamp(cur_rr + 0.25, RR_FLOOR_FLOOR, RR_FLOOR_CEILING)
         changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
     # NOTE: sell_rr_extra was removed — it was produced here but never consumed
     # by any consumer (dead config).
