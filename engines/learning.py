@@ -7,7 +7,9 @@ performance". This module closes the loop:
                     history) into data/xau_plan/trade_journal.csv
 2. analyze()      — computes stats per setup-grade / session / side, plus a
                     session × regime breakdown (asia/london/newyork ×
-                    trend/range) so risk_mult can become session-aware later
+                    trend/range). Session size is a STATIC prior on the
+                    executor (SESSION_RISK_MULT: asia 0.5) — this module
+                    still only tightens the GLOBAL risk_mult.
 3. adjustments()  — proposes parameter deltas (risk budget, min grade,
                     RR floor) from the stats, with hard safety clamps
 4. apply()        — writes the deltas into data/xau_plan/learning_state.json

@@ -111,7 +111,7 @@ class TestStackCapturedAtSource(unittest.TestCase):
         st = _eval(style=style, regime=tight)["risk_stack"]
         product = (st["base_risk_pct"] * st["learning_risk_mult"]
                    * st["style_mult"] * (st["defcon_override"] or 1.0)
-                   * st["regime_mult"])
+                   * st["regime_mult"] * st.get("session_mult", 1.0))
         self.assertAlmostEqual(product, st["final_risk_pct"], places=10)
 
 
@@ -201,7 +201,7 @@ class TestNoGateChanged(unittest.TestCase):
         want = compute_xau_position_size(
             balance=5000.0, risk_pct=r2["risk_stack"]["final_risk_pct"],
             stop_distance_price=10.0, point=0.01, point_value_per_lot=1.0,
-            volume_min=0.01, volume_step=0.01, volume_max=1.0,
+            volume_min=0.01, volume_step=0.01, volume_max=AE.MAX_LOT,
             min_meaningful_lot=0.01)
         self.assertEqual(r2["command"]["lot"], want["lot"])
 
