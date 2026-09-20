@@ -35,7 +35,12 @@ def open_shell(p):
 
 
 def main():
-    p = Protocol(endpoint='http://192.168.10.51:5985/wsman', transport='ntlm',
+    # b64: the Windows address resolves from the environment, never a literal
+    # — a rebuilt or relocated box must not keep the old address. Precedence
+    # matches offsite_backup.py and the deploy scripts (b62).
+    win_host = (os.getenv('WIN_HOST')
+                or os.getenv('HERMES_WIN_IP', '192.168.10.51'))
+    p = Protocol(endpoint=f'http://{win_host}:5985/wsman', transport='ntlm',
                  username=os.environ['WIN_USER'], password=os.environ['WIN_PASS'])
     sh = open_shell(p)
 
