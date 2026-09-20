@@ -4869,3 +4869,25 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   kept as a live-box mirror but carries a do-not-enable warning in ops/README.md. Test
   pins the RELATIONSHIP (ceiling < period, with headroom and an anti-vacuity floor) so
   changing the cadence forces the ceiling to be reconsidered in the same commit.
+
+- [x] b217 THE SUITE WENT RED EVERY WEEKEND (done 2026-09-20, tests/hermetic.py
+  force_market_open/release_market + tests/test_audit_fixes.py + tests/test_b140_signal_lane_regime.py
+  + scripts/b140_signal_lane_regime_census.main(write=False)):
+  6 tests failed Sat/Sun for reasons that had nothing to do with the code. engines.market_hours
+  .is_market_open() defaults to datetime.now(), and the market gate sits IN FRONT of the gates
+  those tests actually assert on, so on a weekend the lane skipped with market_closed and the
+  tests measured NOTHING — test_audit_fixes' spread gate never saw a spread, b140's arms never
+  sized a lot. A red weekend suite is worse than a slow one: it trains the operator to ignore
+  failures, which is how a real regression ships on a Monday. is_market_open(now) already
+  accepted an injected time, so NO production change was needed — what was missing was one
+  shared switch (hermetic.force_market_open, patching the module attribute on each importer per
+  the b41 binding lesson, not just engines.market_hours). test_audit_fixes ALSO resolved to the
+  production /home/ai tree (no HERMES_DATA_ROOT), which raised PermissionError -> the fail-closed
+  handler turned it into account_locked:policy_error -> spread gate again never reached; now uses
+  hermetic.use_temp_data_root(). SEPARATE BUG FOUND: b140's test called C.main(), and main()
+  unconditionally rewrote data/backtest/b140_signal_lane_regime_census.json — so merely RUNNING
+  the suite on a weekend replaced frozen market-open evidence with market_closed rows and a
+  self-check of "tight regimes no longer shrink the signal lane lot". A committed artifact was
+  being turned into a lie by the act of testing. main() takes write=False and the test uses it;
+  only an explicit run may republish the ledger. Suite: 12 -> 8 failures, and the b140 ledger is
+  now byte-stable across a full suite run.

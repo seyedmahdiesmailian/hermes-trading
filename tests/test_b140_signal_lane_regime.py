@@ -35,6 +35,9 @@ import b140_signal_lane_regime_census as C  # noqa: E402
 # proving the scorer's isolation.
 import hermes_runtime  # noqa: E402,F401
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import hermetic  # noqa: E402
+
 
 class EmitterDiscovery(unittest.TestCase):
     """The arms must cover the emitter's FULL output range (b109)."""
@@ -61,8 +64,19 @@ class LaneSeesRealRegime(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.rows = C.main()          # writes the ledger, same as __main__
+        # b217: the lane runs behind the market-hours gate, so on a weekend
+        # every arm skipped with market_closed and these assertions measured
+        # nothing — the suite simply went red Sat/Sun. The clock is an ambient
+        # input, not the behaviour under test.
+        hermetic.force_market_open(True)
+        # write=False: running the tests must not republish the committed
+        # ledger (it is evidence of a market-OPEN measurement).
+        cls.rows = C.main(write=False)
         cls.d = cls.rows["derived"]
+
+    @classmethod
+    def tearDownClass(cls):
+        hermetic.release_market()
 
     def _arm(self, label):
         return next(a for a in self.rows["arms"] if a["label"] == label)

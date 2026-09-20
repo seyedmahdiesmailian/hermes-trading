@@ -5,8 +5,13 @@
 2. The signal path must run through evaluate_proposal — sizing comes from
    our risk model, never from the channel's raw lot.
 """
+import sys
 import unittest
 from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # IMPORTANT: force the real module bindings BEFORE any monkeypatching.
 # hermes_runtime does `from engines.storage import load_current_plan` at import
@@ -16,6 +21,8 @@ from datetime import datetime, timezone
 # KeyError: 'zones'. Importing it up front makes the leak impossible.
 import hermes_runtime  # noqa: F401,E402
 import engines.storage  # noqa: F401,E402
+
+import hermetic  # noqa: E402
 
 
 class TestTradesToday(unittest.TestCase):
@@ -137,6 +144,29 @@ class TestPositionCapParity(unittest.TestCase):
 class TestSignalSpreadGate(unittest.TestCase):
     """The plan path refuses entries when ask-bid > MAX_ENTRY_SPREAD; the
     signal path must too (news/rollover spikes blow past 2.0$)."""
+
+    def setUp(self):
+        # b217: this test was red for TWO ambient reasons, both of which made
+        # it assert nothing about spreads.
+        #
+        # 1. The market-hours gate sits IN FRONT of the spread gate, so on a
+        #    weekend the lane skipped with market_closed and never reached the
+        #    thing under test.
+        # 2. The lane reads paths.plan_dir(), which resolves to the PRODUCTION
+        #    /home/ai tree unless HERMES_DATA_ROOT is set. On any other box
+        #    that raises PermissionError, the fail-closed handler turns it into
+        #    account_locked:policy_error, and again the spread gate is never
+        #    reached. (The failure text literally read
+        #    "[Errno 13] Permission denied: '/home/ai'".)
+        #
+        # Both are ambient inputs, not behaviour — pin them so the assertion
+        # below measures the spread gate and nothing else.
+        hermetic.use_temp_data_root()
+        hermetic.force_market_open(True)
+
+    def tearDown(self):
+        hermetic.release_market()
+        hermetic.release()
 
     def _run(self, ask, bid):
         import os
