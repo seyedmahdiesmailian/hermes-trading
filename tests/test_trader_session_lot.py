@@ -71,17 +71,29 @@ class SessionPrior(unittest.TestCase):
 
 
 class LotCeiling(unittest.TestCase):
-    def test_tight_stop_cannot_print_the_0_17_disaster(self):
-        # 6$ stop at 2% of 5k used to be 0.16 lots. Cap at MAX_LOT.
+    def test_tight_stop_is_skipped_on_the_5k_book(self):
+        # 6$ stop at 2% of 5k used to be 0.16 lots and the four -100$ hits.
+        # Noise floor now skips rather than sizing the scalp.
         r = _eval(sl=4456.0, tp=4435.0)  # 6$ stop, RR = 15/6 = 2.5
+        self.assertFalse(r.get("execute"), r)
+        self.assertEqual(r.get("reason"), "stop_too_tight")
+        self.assertEqual(AE.MAX_LOT, 0.10)
+        self.assertEqual(AE.MIN_STOP_DISTANCE, 8.0)
+
+    def test_eight_dollar_stop_still_prints(self):
+        r = _eval(sl=4458.0, tp=4435.0)  # 8$ stop, RR = 15/8 = 1.875
         self.assertTrue(r.get("execute"), r.get("reason"))
         self.assertLessEqual(r["command"]["lot"], AE.MAX_LOT)
-        self.assertEqual(AE.MAX_LOT, 0.10)
 
     def test_ten_dollar_stop_still_prints_zero_one(self):
         r = _eval()  # 10$ stop, 2% of 5k → 0.10
         self.assertTrue(r.get("execute"), r.get("reason"))
         self.assertAlmostEqual(r["command"]["lot"], 0.10, places=2)
+
+    def test_small_account_5pt_stop_is_not_the_noise_gate(self):
+        # b196 contract: $799 / 1% / 5pt still has to execute 0.01.
+        r = _eval(sl=4455.0, tp=4435.0, balance=799.0)
+        self.assertNotEqual(r.get("reason"), "stop_too_tight")
 
 
 if __name__ == "__main__":

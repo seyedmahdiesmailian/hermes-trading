@@ -85,6 +85,11 @@ def derive_trade_zones(value_low: float, value_high: float, atr: float) -> dict:
 # plan-TP1/SL RR median of 0.24 — 91% of live plans failed MIN_RR=1.5 and
 # were then reanchored into a 1.5R scalp whose winners the manager cut.
 H1_ZONE_BARS = 24
+H1_ZONE_BARS_WIDE = 72  # 3 days when the last 24h is a coil
+# Live current_plan 2026-09-10: H1 24-bar range ~$7, value zone $3 — that is
+# a scalp envelope, not discount/premium. Gold needs a real swing before
+# the 30/30 split is meaningful. Widen lookback first; only then envelope.
+MIN_STRUCTURE_RANGE = 15.0
 DISCOUNT_FRACTION = 0.30
 PREMIUM_FRACTION = 0.30
 INVALIDATION_ATR_BUFFER = 0.35
@@ -99,6 +104,15 @@ def compute_htf_structure_zones(h1_rows: list[dict], atr: float) -> dict:
     swing_high = max(r["high"] for r in lookback)
     rng = swing_high - swing_low
     atr = float(atr or 0) or 5.0
+    source = "h1_swing"
+    if rng < max(atr * 2.0, MIN_STRUCTURE_RANGE) and len(h1_rows) > len(lookback):
+        wide = h1_rows[-H1_ZONE_BARS_WIDE:] if len(h1_rows) >= H1_ZONE_BARS else h1_rows
+        w_low = min(r["low"] for r in wide)
+        w_high = max(r["high"] for r in wide)
+        w_rng = w_high - w_low
+        if w_rng > rng:
+            lookback, swing_low, swing_high, rng = wide, w_low, w_high, w_rng
+            source = "h1_swing_wide"
     if rng < max(atr * 0.8, 1.0):
         mid = (swing_low + swing_high) / 2.0
         half = max(atr * 1.0, 2.0)
@@ -116,7 +130,7 @@ def compute_htf_structure_zones(h1_rows: list[dict], atr: float) -> dict:
         "short_entry_high": round(swing_high, 2),
         "swing_low": round(swing_low, 2),
         "swing_high": round(swing_high, 2),
-        "zone_source": "h1_swing",
+        "zone_source": source,
     }
 
 

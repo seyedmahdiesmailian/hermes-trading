@@ -220,8 +220,13 @@ class AdjustmentsRegressionTest(unittest.TestCase):
             self.assertEqual(out.get('reason'), 'insufficient_sample_10')
             self.assertEqual(out['changes'], {})
 
-    def test_high_winrate_negative_avg_tightens_rr_and_risk(self):
-        """Live journal shape: WR ~0.65, avg negative — old trigger never fired."""
+    def test_high_winrate_negative_avg_cuts_size_not_rr(self):
+        """Live journal shape: WR ~0.65, avg negative — old trigger never fired.
+
+        min_rr must NOT rise: reanchor manufactures 1.55R (b84), so +0.25
+        to 1.75 is a halt, not a filter. Size is the lever that actually
+        shrinks the fat left tail.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             env = os.environ.get('HERMES_DATA_ROOT')
             os.environ['HERMES_DATA_ROOT'] = tmp
@@ -241,13 +246,12 @@ class AdjustmentsRegressionTest(unittest.TestCase):
                 else:
                     os.environ['HERMES_DATA_ROOT'] = env
             self.assertGreaterEqual(out.get('win_rate', 0), 0.50)
-            self.assertIn('min_rr', out['changes'])
+            self.assertNotIn('min_rr', out['changes'])
             self.assertIn('risk_mult', out['changes'])
             self.assertNotIn('min_grade', out['changes'])
-            self.assertGreater(out['changes']['min_rr'], 1.5)
             self.assertLess(out['changes']['risk_mult'], 1.0)
 
-    def test_mid_winrate_negative_avg_also_tightens(self):
+    def test_mid_winrate_negative_avg_also_cuts_size_not_rr(self):
         """WR 0.40–0.49 used to fall between both arms and change nothing."""
         with tempfile.TemporaryDirectory() as tmp:
             env = os.environ.get('HERMES_DATA_ROOT')
@@ -269,7 +273,7 @@ class AdjustmentsRegressionTest(unittest.TestCase):
                     os.environ['HERMES_DATA_ROOT'] = env
             self.assertGreater(out.get('win_rate', 0), 0.39)
             self.assertLess(out.get('win_rate', 1), 0.50)
-            self.assertIn('min_rr', out['changes'])
+            self.assertNotIn('min_rr', out['changes'])
             self.assertIn('risk_mult', out['changes'])
             self.assertNotIn('min_grade', out['changes'])
 

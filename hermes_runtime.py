@@ -965,6 +965,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             'daily_loss_limit': 'سقف ضرر روزانه پر شده',
             'daily_trade_limit': 'سقف تعداد ترید روزانه پر شده',
             'position_limit': 'سقف پوزیشن باز پر شده',
+            'stop_too_tight': 'استاپ داخل نویز طلا — ورود ممنوع',
         }
         _sr = str(proposal.get('skip_reason'))
         _base = _sr.split('_')[0] + ('_' + _sr.split('_')[1] if _sr.startswith('poor_rr') or _sr.startswith('sizing') else '')

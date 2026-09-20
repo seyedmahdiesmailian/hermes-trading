@@ -57,6 +57,13 @@ SESSION_RISK_MULT = {
 # stop + 2% of ~5k → huge leverage on noise. 0.10 is still 2% of 5k at a
 # 10$ stop; anything tighter now risks LESS dollars, never more.
 MAX_LOT = 0.10
+# Gold noise floor. Joined execution_log→journal: every stop < $8 on the
+# 5k book netted −$327 (the four −100$ disasters were 5.84–6.54). Skip
+# those entries rather than size them. Below MIN_STOP_BALANCE the b196
+# 5pt/1% path must still print 0.01 lot — a small account has no other
+# way to clear min_meaningful_lot.
+MIN_STOP_DISTANCE = 8.0
+MIN_STOP_BALANCE = 1500.0
 STOP_TRADING_REGIMES = {"locked"}   # regimes that block new trades
 # b136: "recovery" was MISSING here. engines/risk.assess_account_policy emits
 # four regimes and hands back a risk_multiplier, but the entry path never reads
@@ -216,6 +223,16 @@ def evaluate_proposal(
                 "command": None,
                 "reasons": reasons,
             }
+
+    # ── Check 5.65: gold noise floor (see MIN_STOP_DISTANCE) ──
+    if _sl_dist < MIN_STOP_DISTANCE and balance >= MIN_STOP_BALANCE:
+        reasons.append(f"stop_too_tight_{_sl_dist:.2f}")
+        return {
+            "execute": False,
+            "reason": "stop_too_tight",
+            "command": None,
+            "reasons": reasons,
+        }
 
     # ── Check 6: Setup grade ──
     # The signal path supplies its own quality verdict (the 8-check scorer in

@@ -483,13 +483,11 @@ def adjustments() -> dict:
             changes['min_grade'] = GRADES[cur_grade_idx + 1]
         changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
     elif avg < 0:
-        # Any negative expectancy (including the live 65% WR / fat-left-tail
-        # book AND the 0.40–0.49 hole the previous `wr >= 0.50` branch left
-        # silent). Raise the RR floor so winners must be larger; cut size.
-        # Do NOT raise min_grade — that would starve the winners instead of
-        # fixing payoff. Grade only tightens on the WR<0.40 arm above.
-        if cur_rr < RR_FLOOR_CEILING:
-            changes['min_rr'] = _clamp(cur_rr + 0.25, RR_FLOOR_FLOOR, RR_FLOOR_CEILING)
+        # Fat left tail with a still-healthy hit-rate (live 65% WR / avg −$3).
+        # SIZE only. Raising min_rr here is a kill switch, not a filter:
+        # _reanchor_blueprint manufactures every entry at 1.55R (b84: 99.7%
+        # of the funnel sits in 1.55±0.06, and the first +0.25 step to 1.75
+        # drops 98.9–100% of trades). Grade stays put — same reason as before.
         changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
     # NOTE: sell_rr_extra was removed — it was produced here but never consumed
     # by any consumer (dead config).

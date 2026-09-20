@@ -63,6 +63,21 @@ class HtfZonesAndBias(unittest.TestCase):
         # structural stop is beyond the H1 swing, not a 12-bar M5 nick
         self.assertLess(ctx["invalidation"], z["swing_low"])
 
+    def test_tight_24h_coil_widens_lookback_to_3_days(self):
+        from engines.context import compute_htf_structure_zones
+        # 72h of a real $40 swing, last 24h coiled in $4 — the 24-bar window
+        # used to emit a $3 value zone (live plan 2026-09-10).
+        rows = []
+        for i in range(72):
+            if i < 48:
+                px = 4300 + i * 0.8  # ~$38 drift
+                rows.append(_bar(i, px, high=px + 2, low=px - 2))
+            else:
+                rows.append(_bar(i, 4340, high=4342, low=4338))
+        z = compute_htf_structure_zones(rows, atr=5.0)
+        self.assertEqual(z.get("zone_source"), "h1_swing_wide")
+        self.assertGreater(z["swing_high"] - z["swing_low"], 15)
+
 
 class MergeAndVeto(unittest.TestCase):
     def test_aligned_continuation_keeps_full_classic_confidence(self):
