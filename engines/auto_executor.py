@@ -43,6 +43,27 @@ STYLE_RISK_MULT = {
     "aggressive_discount_entry": 0.5,
     "aggressive_value_entry": 0.5,
 }
+# Session prior (learning.py promised "session-aware later" and never
+# wired it). 16/29 live entries fired 00-07 UTC; 5 of 8 fat losses
+# (#103649120 -106, #104292973 -104, #104905967 -100, #105127383 -89,
+# #105443817 -45) opened in that window. Half size, never a skip —
+# Sep 3 Asia still printed +70/+71 winners. Missing/unknown session = 1.0.
+SESSION_RISK_MULT = {
+    "asia": 0.5,
+    "london": 1.0,
+    "newyork": 1.0,
+}
+# Hard lot ceiling. The same four disasters sized 0.15-0.17 because a ~6$
+# stop + 2% of ~5k → huge leverage on noise. 0.10 is still 2% of 5k at a
+# 10$ stop; anything tighter now risks LESS dollars, never more.
+MAX_LOT = 0.10
+# Gold noise floor. Joined execution_log→journal: every stop < $8 on the
+# 5k book netted −$327 (the four −100$ disasters were 5.84–6.54). Skip
+# those entries rather than size them. Below MIN_STOP_BALANCE the b196
+# 5pt/1% path must still print 0.01 lot — a small account has no other
+# way to clear min_meaningful_lot.
+MIN_STOP_DISTANCE = 8.0
+MIN_STOP_BALANCE = 1500.0
 STOP_TRADING_REGIMES = {"locked"}   # regimes that block new trades
 # b136: "recovery" was MISSING here. engines/risk.assess_account_policy emits
 # four regimes and hands back a risk_multiplier, but the entry path never reads
@@ -145,6 +166,18 @@ def evaluate_proposal(
             "reasons": reasons,
         }
 
+    # ── Check 2.5: closed-trade history must be readable ──
+    # Missing key = legacy/test callers (unchanged). Explicit False is the
+    # 401/MT5-error shape: an empty window used to look like a clean day.
+    if account_policy.get("history_ok") is False:
+        reasons.append("history_unavailable")
+        return {
+            "execute": False,
+            "reason": "history_unavailable",
+            "command": None,
+            "reasons": reasons,
+        }
+
     # ── Check 3: Daily loss limit ──
     daily_pnl = float(performance_state.get("daily_pnl", 0) or 0)
     balance = float(account_policy.get("balance", 0) or 0)
@@ -202,6 +235,16 @@ def evaluate_proposal(
                 "command": None,
                 "reasons": reasons,
             }
+
+    # ── Check 5.65: gold noise floor (see MIN_STOP_DISTANCE) ──
+    if _sl_dist < MIN_STOP_DISTANCE and balance >= MIN_STOP_BALANCE:
+        reasons.append(f"stop_too_tight_{_sl_dist:.2f}")
+        return {
+            "execute": False,
+            "reason": "stop_too_tight",
+            "command": None,
+            "reasons": reasons,
+        }
 
     # ── Check 6: Setup grade ──
     # The signal path supplies its own quality verdict (the 8-check scorer in
@@ -320,6 +363,9 @@ def evaluate_proposal(
     # from the monitor decision via _build_proposal; missing tag = full risk.
     _style_mult = STYLE_RISK_MULT.get(str(proposal.get("execution_style") or ""), 1.0)
     risk_pct *= _style_mult
+    _session = str((plan or {}).get("session") or "")
+    _sess_mult = SESSION_RISK_MULT.get(_session, 1.0)
+    risk_pct *= _sess_mult
     # DEFCON YELLOW → half risk (legacy rule); RED never reaches here
     _risk_override = (_defcon_insights or {}).get("risk_override")
     if _risk_override is not None:
@@ -327,7 +373,7 @@ def evaluate_proposal(
     _regime_mult = 0.5 if regime in TIGHT_REGIMES else 1.0
     if _regime_mult != 1.0:
         risk_pct *= _regime_mult  # reduce size in defensive mode
-    # b139: the four dampers that just multiplied into this lot, captured AT
+    # b139: the dampers that just multiplied into this lot, captured AT
     # THE SOURCE. execution_log.csv cannot carry them (its header is frozen at
     # 12 columns and engines/storage._append_csv_row only writes a header when
     # the file is new — b142's no-op trap), so the stack rides out on the
@@ -347,6 +393,8 @@ def evaluate_proposal(
                             else float(_risk_override)),
         "regime": regime,
         "regime_mult": _regime_mult,
+        "session": _session,
+        "session_mult": _sess_mult,
     }
 
     stop_distance = abs(entry - sl)
@@ -363,7 +411,7 @@ def evaluate_proposal(
         point_value_per_lot=point_value_per_lot,
         volume_min=0.01,
         volume_step=0.01,
-        volume_max=1.0,
+        volume_max=MAX_LOT,
         min_meaningful_lot=0.01,
     )
 

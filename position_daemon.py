@@ -220,6 +220,7 @@ BROKER_OFFSET_WINDOW = 120          # ~10 min of 5s ticks
 BROKER_OFFSET_MAX_GAP_SEC = 60
 _guard_cache = {"cal": None, "cal_at": 0.0, "last_eval": {}, "applied": {},
                 "offsets": [], "prev_tick": (0.0, 0.0)}
+_no_plan = {"active": False, "at": 0.0}
 
 
 def broker_utc_offset_sec(tick: dict, now: datetime) -> float:
@@ -403,9 +404,25 @@ def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
     """
     now = now or datetime.now(timezone.utc)
     tkt_s = str(tkt)
-    trade = build_trade(p, plan, tracked[tkt_s])
-    mgmt = evaluate_trade_management(trade, price, now)
-    mgmt_core = mgmt
+    if plan:
+        trade = build_trade(p, plan, tracked[tkt_s])
+        mgmt = evaluate_trade_management(trade, price, now)
+        mgmt_core = mgmt
+    else:
+        # C1: missing plan must NOT guess ladder/BE/trail. Guards still run
+        # (news_lock / time_exit need no plan fields — ATR falls back).
+        pobj = _pos_obj(p)
+        side = pobj.type if pobj.type in ('BUY', 'SELL') else (
+            'BUY' if pobj.type == 0 else 'SELL')
+        trade = {
+            'side': side,
+            'entry_price': pobj.price_open,
+            'sl': pobj.sl or pobj.price_open,
+            'time': getattr(pobj, 'time', None),
+            'volume': pobj.volume,
+        }
+        mgmt_core = {'action': 'hold', 'priority': 3}
+        mgmt = mgmt_core
     mgmt = apply_legacy_guards(mgmt, trade, tracked[tkt_s], price, int(tkt),
                               now, broker_offset)
     is_guard = mgmt is not mgmt_core
@@ -606,10 +623,26 @@ def main():
                 # manage_position() so it is unit-testable against a fake
                 # bridge. The live loop used to inline it, which is why an
                 # exit-path change could only ever be verified in production.
-                if not DRY_RUN and plan:
+                if not DRY_RUN:
                     manage_position(int(tkt), p, plan, tracked, bridge,
                                     bid if side == 'SELL' else ask,
                                     datetime.now(timezone.utc), broker_offset)
+
+            if live and not plan:
+                _now_ts = datetime.now(timezone.utc).timestamp()
+                if not _no_plan['active']:
+                    _no_plan['active'] = True
+                    _no_plan['at'] = _now_ts
+                    send_ops('⚠️ پلن جاری نیست — مدیریت فقط گاردهای ایمنی '
+                             '(news_lock/time_exit). نردبان/BE خاموش است.')
+                    log('C1: no current plan — guards-only management')
+                elif _now_ts - _no_plan['at'] >= 3600:
+                    _no_plan['at'] = _now_ts
+                    send_ops('⚠️ هنوز پلن نیست — گاردها فعال‌اند، نردبان خاموش')
+            elif plan and _no_plan['active']:
+                _no_plan['active'] = False
+                send_ops('✅ پلن برگشت — مدیریت کامل دوباره فعال')
+                log('C1: plan restored — full management')
 
             # Guard memory must not grow forever on a daemon that runs weeks.
             prune_guard_state(set(live.keys()))

@@ -7,7 +7,9 @@ performance". This module closes the loop:
                     history) into data/xau_plan/trade_journal.csv
 2. analyze()      — computes stats per setup-grade / session / side, plus a
                     session × regime breakdown (asia/london/newyork ×
-                    trend/range) so risk_mult can become session-aware later
+                    trend/range). Session size is a STATIC prior on the
+                    executor (SESSION_RISK_MULT: asia 0.5) — this module
+                    still only tightens the GLOBAL risk_mult.
 3. adjustments()  — proposes parameter deltas (risk budget, min grade,
                     RR floor) from the stats, with hard safety clamps
 4. apply()        — writes the deltas into data/xau_plan/learning_state.json
@@ -474,11 +476,18 @@ def adjustments() -> dict:
     # but may never be raised here — relaxation is done by the operator, not by
     # a small-sample win streak (legacy bug: it relaxed at WR>=0.55 which let a
     # lucky cluster re-inflate risk right before a losing streak).
-    if wr < 0.40 and avg < 0:
+    if avg < 0 and wr < 0.40:
         if cur_rr < RR_FLOOR_CEILING:
             changes['min_rr'] = _clamp(cur_rr + 0.25, RR_FLOOR_FLOOR, RR_FLOOR_CEILING)
         if cur_grade_idx < GRADES.index(GRADE_CEILING):
             changes['min_grade'] = GRADES[cur_grade_idx + 1]
+        changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
+    elif avg < 0:
+        # Fat left tail with a still-healthy hit-rate (live 65% WR / avg −$3).
+        # SIZE only. Raising min_rr here is a kill switch, not a filter:
+        # _reanchor_blueprint manufactures every entry at 1.55R (b84: 99.7%
+        # of the funnel sits in 1.55±0.06, and the first +0.25 step to 1.75
+        # drops 98.9–100% of trades). Grade stays put — same reason as before.
         changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
     # NOTE: sell_rr_extra was removed — it was produced here but never consumed
     # by any consumer (dead config).

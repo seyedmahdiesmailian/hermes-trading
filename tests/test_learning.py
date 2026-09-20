@@ -220,6 +220,63 @@ class AdjustmentsRegressionTest(unittest.TestCase):
             self.assertEqual(out.get('reason'), 'insufficient_sample_10')
             self.assertEqual(out['changes'], {})
 
+    def test_high_winrate_negative_avg_cuts_size_not_rr(self):
+        """Live journal shape: WR ~0.65, avg negative — old trigger never fired.
+
+        min_rr must NOT rise: reanchor manufactures 1.55R (b84), so +0.25
+        to 1.75 is a halt, not a filter. Size is the lever that actually
+        shrinks the fat left tail.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            env = os.environ.get('HERMES_DATA_ROOT')
+            os.environ['HERMES_DATA_ROOT'] = tmp
+            try:
+                plan_dir = Path(tmp) / 'data' / 'xau_plan'
+                plan_dir.mkdir(parents=True, exist_ok=True)
+                # 10 small wins + 5 fat losses → WR 0.667, net negative
+                rows = [jrow(str(9000 + i), '2026-08-29T09:00:00+00:00',
+                             'BUY', '10') for i in range(10)]
+                rows += [jrow(str(9100 + i), '2026-08-29T10:00:00+00:00',
+                              'SELL', '-30') for i in range(5)]
+                write_csv(plan_dir / 'trade_journal.csv', JH, rows)
+                out = learning.adjustments()
+            finally:
+                if env is None:
+                    os.environ.pop('HERMES_DATA_ROOT', None)
+                else:
+                    os.environ['HERMES_DATA_ROOT'] = env
+            self.assertGreaterEqual(out.get('win_rate', 0), 0.50)
+            self.assertNotIn('min_rr', out['changes'])
+            self.assertIn('risk_mult', out['changes'])
+            self.assertNotIn('min_grade', out['changes'])
+            self.assertLess(out['changes']['risk_mult'], 1.0)
+
+    def test_mid_winrate_negative_avg_also_cuts_size_not_rr(self):
+        """WR 0.40–0.49 used to fall between both arms and change nothing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            env = os.environ.get('HERMES_DATA_ROOT')
+            os.environ['HERMES_DATA_ROOT'] = tmp
+            try:
+                plan_dir = Path(tmp) / 'data' / 'xau_plan'
+                plan_dir.mkdir(parents=True, exist_ok=True)
+                # 7 small wins + 8 fat losses → WR 0.467, net negative
+                rows = [jrow(str(9000 + i), '2026-08-29T09:00:00+00:00',
+                             'BUY', '10') for i in range(7)]
+                rows += [jrow(str(9100 + i), '2026-08-29T10:00:00+00:00',
+                              'SELL', '-20') for i in range(8)]
+                write_csv(plan_dir / 'trade_journal.csv', JH, rows)
+                out = learning.adjustments()
+            finally:
+                if env is None:
+                    os.environ.pop('HERMES_DATA_ROOT', None)
+                else:
+                    os.environ['HERMES_DATA_ROOT'] = env
+            self.assertGreater(out.get('win_rate', 0), 0.39)
+            self.assertLess(out.get('win_rate', 1), 0.50)
+            self.assertNotIn('min_rr', out['changes'])
+            self.assertIn('risk_mult', out['changes'])
+            self.assertNotIn('min_grade', out['changes'])
+
 
 if __name__ == '__main__':
     unittest.main()

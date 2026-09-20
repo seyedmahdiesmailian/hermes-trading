@@ -98,3 +98,26 @@ def positions_readable(resp) -> bool:
     if data is None:
         data = resp.get('positions')
     return isinstance(data, list)
+def entry_open_count(resp, slot_full: int = 1) -> int:
+    """Open-position count for the MAX_OPEN *entry* gate.
+
+    Fail-closed: an unreadable reply (`ok: false`, non-dict envelope, `data`
+    not a list) returns `slot_full` so a second ticket cannot stack. That is
+    the b45 double-entry hole wearing a 401 hat — `position_count()` of the
+    same payload is 0, which is what the daemon needs (empty live-map must
+    NOT mark every tracked ticket CLOSED). Two readers, two jobs; do not
+    merge them.
+    """
+    slot = int(slot_full)
+    if isinstance(resp, list):
+        return len([p for p in resp if isinstance(p, dict)])
+    if not isinstance(resp, dict):
+        return slot
+    if resp.get('ok') is False:
+        return slot
+    data = resp.get('data')
+    if data is None:
+        data = resp.get('positions')
+    if not isinstance(data, list):
+        return slot
+    return len([p for p in data if isinstance(p, dict)])

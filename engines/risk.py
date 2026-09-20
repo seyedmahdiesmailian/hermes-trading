@@ -66,12 +66,25 @@ def compute_performance_state(current: dict, today: str, balance: float, closed_
     running_daily_pnl = float(state.get("daily_pnl", 0.0) or 0.0)
     loss_streak = int(state.get("loss_streak", 0) or 0)
 
+    def _n(trade, k):
+        try:
+            return float(trade.get(k) or 0.0)
+        except (TypeError, ValueError):
+            return 0.0
+
     for trade in new_trades:
-        profit = float(trade.get("profit", 0.0) or 0.0)
-        running_daily_pnl = round(running_daily_pnl + profit, 2)
-        if profit < 0:
+        # Net, not gross: MT5 `profit` excludes commission/swap, so the
+        # kill-switch / daily-loss gates that read daily_pnl were a round of
+        # fees too optimistic. Tightening only. Opening deals (entry=0) still
+        # contribute their fees to daily_pnl but MUST NOT touch loss_streak
+        # (b89: profit 0.0 on opens is why the streak arm stays exact).
+        net = _n(trade, "profit") + _n(trade, "commission") + _n(trade, "swap")
+        running_daily_pnl = round(running_daily_pnl + net, 2)
+        if str(trade.get("entry", "1")) in ("0", "IN"):
+            continue
+        if net < 0:
             loss_streak += 1
-        elif profit > 0:
+        elif net > 0:
             loss_streak = 0
 
     return {

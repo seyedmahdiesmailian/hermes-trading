@@ -145,7 +145,8 @@ class BaseRiskWiring(unittest.TestCase):
         st = res["risk_stack"]
         self.assertAlmostEqual(st["base_risk_pct"], 0.015, places=9)
         product = (st["base_risk_pct"] * st["learning_risk_mult"]
-                   * st["style_mult"] * st["regime_mult"])
+                   * st["style_mult"] * st["regime_mult"]
+                   * st.get("session_mult", 1.0))
         self.assertAlmostEqual(product, res["risk_pct"], places=10)
 
     def test_tiered_base_composes_with_every_damper(self):

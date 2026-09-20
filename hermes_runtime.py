@@ -17,8 +17,11 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
+####
 from engines.context import build_plan_context
 from engines.bridge_payload import positions_list, positions_readable
+from engines.context import build_plan_context, apply_bias_geometry
+from engines.bridge_payload import positions_list, entry_open_count
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
 from engines.trade_management import (evaluate_trade_management, ladder_fields,
@@ -30,8 +33,13 @@ from engines.report import render_plan_brief, render_reassess_brief, render_moni
 from engines.macro_filter import apply_macro_guard
 from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
                                    is_news_lock)
+####
 from engines.auto_executor import (MAX_OPEN_POSITIONS, evaluate_management_action,
                                     evaluate_proposal, execute_trade)
+from engines.auto_executor import (
+    evaluate_proposal, execute_trade, evaluate_management_action,
+    MAX_OPEN_POSITIONS,
+)
 from engines.kill_switch import check_kill_switch
 
 from engines import paths as _paths  # state paths resolved at CALL time (b39)
@@ -53,6 +61,31 @@ TIMEFRAME = 'M5'
 # news/rollover spikes can blow past 2.0. Backtests charge a flat 0.20 cost,
 # so live must not enter when the real cost is multiples of that.
 MAX_ENTRY_SPREAD = float(os.getenv('HERMES_MAX_SPREAD', '0.60'))
+
+
+def _entry_spread_veto(tick) -> object | None:
+    """monitor['spread_blocked'] value, or None if the quote is usable.
+
+    Fail-closed: missing / unreadable / inverted quotes all veto. A wide
+    spread returns the dollar width (existing observability). The old
+    `except (TypeError, ValueError): pass` left the proposal unguarded —
+    the b30 class on the plan path.
+    """
+    try:
+        _tk = tick if isinstance(tick, dict) else {}
+        _td = _tk.get('data', _tk)
+        if not isinstance(_td, dict):
+            _td = _tk if isinstance(_tk, dict) else {}
+        _ask = float(_td.get('ask') or 0)
+        _bid = float(_td.get('bid') or 0)
+        if _ask <= 0 or _bid <= 0:
+            return 'unreadable'
+        _spr = _ask - _bid
+        if _spr > MAX_ENTRY_SPREAD or _spr <= 0:
+            return round(_spr, 2)
+        return None
+    except (TypeError, ValueError):
+        return 'unreadable'
 
 
 def _now() -> datetime:
@@ -219,7 +252,7 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     # identical to the old inline code, including the display-only smc_* stamps
     # (passed via smc_result — the backtest omits them by passing nothing).
     apply_smc_merge(ctx, merged, entry_close=_entry_close(m5),
-                    smc_result=smc_result)
+                    smc_result=smc_result, rebuild=apply_bias_geometry)
     plan = build_plan_from_context(ctx, now=now)
     return plan, None
 
@@ -412,12 +445,25 @@ def evaluate_legacy_guards(management: dict, plan: dict, trade: dict,
         return management, status
 
 
-def _load_closed_trades(bridge, days=7) -> list[dict]:
-    r = bridge.get_history_deals(SYMBOL, days)
-    if isinstance(r, dict) and r.get('ok'):
-        data = r.get('data', r.get('deals', []))
-        return data if isinstance(data, list) else []
-    return []
+def _load_closed_trades(bridge, days=7) -> tuple[list[dict], bool]:
+    """Closed deals for the daily-loss / DEFCON / kill-switch window.
+
+    Returns (deals, readable). `readable=False` means the book is unknown —
+    callers must NOT treat [] as "no losses today" (that is the b45 class
+    on the PnL gates: a 401 history reply used to look like a clean day).
+    `ok` missing with a real list is still readable (same leniency as
+    positions_list). `ok: false` / non-list / exception = unreadable.
+    """
+    try:
+        r = bridge.get_history_deals(SYMBOL, days)
+    except Exception:
+        return [], False
+    if not isinstance(r, dict) or r.get('ok') is False:
+        return [], False
+    data = r.get('data', r.get('deals', []))
+    if not isinstance(data, list):
+        return [], False
+    return [d for d in data if isinstance(d, dict)], True
 
 
 def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
@@ -438,7 +484,7 @@ def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
     # (position_daemon has its own bridge-failure guard).
     _positions_unreadable = False
     try:
-        _pr = bridge.get_positions(SYMBOL) or {}
+        _pr = bridge.get_positions(SYMBOL) if bridge else {}
         _pr = _pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}
         if positions_readable(_pr):
             _open_ct = len(_positions_list(_pr))
@@ -450,15 +496,24 @@ def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
         _open_ct = max(int(account.positions or 0), MAX_OPEN_POSITIONS)
     account.positions = max(int(account.positions or 0), _open_ct)
     today = now.date().isoformat()
-    closed = _load_closed_trades(bridge, 7)
-    perf = compute_performance_state(load_performance_state(_plan_dir()), today, account.balance, closed)
-    save_performance_state(_plan_dir(), perf)
+    closed, history_ok = _load_closed_trades(bridge, 7)
+    if history_ok:
+        perf = compute_performance_state(
+            load_performance_state(_plan_dir()), today, account.balance, closed)
+        save_performance_state(_plan_dir(), perf)
+    else:
+        # Keep last persisted numbers — do not recompute from an empty
+        # window that would look like a clean book (kill switch / daily
+        # cap / DEFCON going blind). evaluate_proposal refuses the entry.
+        perf = load_performance_state(_plan_dir()) or {}
     policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
+####
     # b214: make the blind-block visible. Without this the operator sees a
     # generic max_positions_1 and cannot tell "a position is really open"
     # from "the bridge went dark", which are very different incidents.
     if _positions_unreadable:
         policy['positions_unreadable'] = True
+    policy['history_ok'] = history_ok
     return {'performance_state': perf, 'account_policy': policy}
 
 
@@ -826,15 +881,10 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # Cost is linear in trades; entering into a wide spread hands the edge to
     # the broker. Read-only tick check — blocks the PROPOSAL, never management.
     if proposal is not None:
-        try:
-            _tk = tick if isinstance(tick, dict) else {}
-            _td = _tk.get('data', _tk)
-            _spr = float(_td.get('ask') or 0) - float(_td.get('bid') or 0)
-            if _spr > MAX_ENTRY_SPREAD:
-                proposal = None
-                monitor['spread_blocked'] = round(_spr, 2)
-        except (TypeError, ValueError):
-            pass
+        _blk = _entry_spread_veto(tick)
+        if _blk is not None:
+            proposal = None
+            monitor['spread_blocked'] = _blk
 
     if proposal is not None:
         # News blackout on the entry path. hermes_master never passed
@@ -987,6 +1037,8 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             'daily_loss_limit': 'سقف ضرر روزانه پر شده',
             'daily_trade_limit': 'سقف تعداد ترید روزانه پر شده',
             'position_limit': 'سقف پوزیشن باز پر شده',
+            'stop_too_tight': 'استاپ داخل نویز طلا — ورود ممنوع',
+            'history_unavailable': 'تاریخچه معاملات خوانده نشد — ورود ممنوع',
         }
         _sr = str(proposal.get('skip_reason'))
         _base = _sr.split('_')[0] + ('_' + _sr.split('_')[1] if _sr.startswith('poor_rr') or _sr.startswith('sizing') else '')

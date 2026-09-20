@@ -3,6 +3,6 @@
   "halt_reason": null,
   "halted_at": null,
   "resumes_at": null,
-  "consecutive_losses": 0,
-  "last_check": "2026-09-10T12:21:22.770018+00:00"
+  "consecutive_losses": 1,
+  "last_check": "2026-09-20T15:25:02.443882+00:00"
 }

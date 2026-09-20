@@ -189,6 +189,17 @@ def evaluate_signal(signal: dict, hermes_analysis: dict, account_policy: dict, m
         verdict = "skip"
         reasons.append("no_sl_critical")
 
+    # MAX_OPEN=1: Check 6 used to only subtract 0.5, so a high-confidence
+    # aligned signal (score 7+) still verdict='execute' with a ticket already
+    # on the book. evaluate_proposal Check 5 is the order-path hard gate;
+    # this keeps the SCORER from lying "execute" then skipping at the
+    # executor (alert hygiene + b45 defense in depth). No new return path
+    # (b165 pins 5 returns).
+    if verdict == "execute" and int(account_policy.get("open_positions", 0) or 0) > 0:
+        verdict = "skip"
+        if "already_in_position" not in reasons:
+            reasons.append("already_in_position")
+
     return {
         "verdict": verdict,
         "reasons": reasons,

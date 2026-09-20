@@ -94,6 +94,20 @@ class TestSignalDecision(unittest.TestCase):
         )
         self.assertEqual(result["verdict"], "skip")
 
+    def test_already_in_position_hard_skips(self):
+        """A 7+ score used to verdict=execute with a ticket already open
+        (Check 6 was only -0.5). MAX_OPEN=1: the scorer must skip."""
+        from engines.signal_decision import evaluate_signal
+        result = evaluate_signal(
+            {"symbol": "XAUUSD", "side": "BUY", "entry": 2595, "sl": 2590,
+             "tp": 2610, "confidence": 0.9, "rr_ratio": 3.0, "warnings": []},
+            {"bias": "bullish"},
+            {"trade_allowed": True, "regime": "normal", "open_positions": 1},
+        )
+        self.assertEqual(result["verdict"], "skip")
+        self.assertFalse(result["trade_allowed"])
+        self.assertIn("already_in_position", result["reasons"])
+
     def test_no_sl_blocks_execute(self):
         from engines.signal_decision import evaluate_signal
         result = evaluate_signal(

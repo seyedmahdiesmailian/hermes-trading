@@ -13,32 +13,32 @@ from engines.paths import read_json_safe, write_json_atomic
 DEFAULT_BASE_DIR = None  # None → paths.plan_dir() (production default)
 
 
-def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
+def _plan_paths(base_dir: str | Path | None = None, *, create: bool = False) -> dict:
     root = Path(base_dir) if base_dir else paths.plan_dir()
     plan_history_dir = root / "plan_history"
-    current_plan_path = root / "current_plan.json"
-    runtime_state_path = root / "runtime_state.json"
-    performance_state_path = root / "performance_state.json"
-    execution_log_path = root / "execution_log.csv"
-    reassessment_log_path = root / "reassessment_log.csv"
-    risk_ledger_path = root / "risk_ledger.csv"
-    pending_orders_path = root / "pending_orders.json"
-    plan_history_dir.mkdir(parents=True, exist_ok=True)
+    if create:
+        plan_history_dir.mkdir(parents=True, exist_ok=True)
     return {
         "base_dir": root,
         "plan_history_dir": plan_history_dir,
-        "current_plan_path": current_plan_path,
-        "runtime_state_path": runtime_state_path,
-        "performance_state_path": performance_state_path,
-        "execution_log_path": execution_log_path,
-        "reassessment_log_path": reassessment_log_path,
-        "risk_ledger_path": risk_ledger_path,
-        "pending_orders_path": pending_orders_path,
+        "current_plan_path": root / "current_plan.json",
+        "runtime_state_path": root / "runtime_state.json",
+        "performance_state_path": root / "performance_state.json",
+        "execution_log_path": root / "execution_log.csv",
+        "reassessment_log_path": root / "reassessment_log.csv",
+        "risk_ledger_path": root / "risk_ledger.csv",
+        "pending_orders_path": root / "pending_orders.json",
     }
 
 
+def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
+    return _plan_paths(base_dir, create=True)
+
+
 def load_current_plan(base_dir: str | Path | None = None):
-    paths = ensure_xau_plan_dirs(base_dir)
+    # Read path must not mkdir — a missing tree is a missing plan, not a
+    # reason to create production directories as a side effect of a load.
+    paths = _plan_paths(base_dir, create=False)
     return read_json_safe(paths["current_plan_path"], None, label="current_plan")
 
 
@@ -182,7 +182,7 @@ def append_risk_ledger(base_dir: str | Path | None, row: dict):
 
 
 def load_runtime_state(base_dir: str | Path | None = None) -> dict:
-    paths = ensure_xau_plan_dirs(base_dir)
+    paths = _plan_paths(base_dir, create=False)
     return read_json_safe(paths["runtime_state_path"], {}, label="runtime_state")
 
 
@@ -192,7 +192,7 @@ def save_runtime_state(base_dir: str | Path | None, state: dict) -> Path:
 
 
 def load_performance_state(base_dir: str | Path | None = None) -> dict:
-    paths = ensure_xau_plan_dirs(base_dir)
+    paths = _plan_paths(base_dir, create=False)
     return read_json_safe(paths["performance_state_path"], {}, label="performance_state")
 
 

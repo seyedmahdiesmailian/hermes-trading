@@ -5,7 +5,7 @@ import bisect
 import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from engines.context import build_plan_context
+from engines.context import build_plan_context, apply_bias_geometry
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.trade_management import ladder_fields
 from engines.plan import apply_smc_merge
@@ -155,7 +155,8 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         # ctx['quality']['stale_at_birth'], which build_plan_from_context copies
         # onto the plan exactly as the live path does.
         apply_smc_merge(ctx, merged, entry_close=float(row.get("close", 0) or 0),
-                        range_kill_conf=range_kill_conf)
+                        range_kill_conf=range_kill_conf,
+                        rebuild=apply_bias_geometry)
 
         plan = build_plan_from_context(ctx, now=now)
         decision = evaluate_monitor_cycle(plan, price=float(row.get("close", 0)),
