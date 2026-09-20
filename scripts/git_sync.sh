@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# b34: auto-sync local master to GitHub (private repo). Safe to run anytime:
-# pushes only when local is ahead; never force, never touches remote history.
+# b34: auto-sync the checked-out branch to GitHub (private repo). Safe to run
+# anytime: pushes only when local is ahead; never force, never touches remote
+# history. The protected branch is never inferred or hardcoded here.
 #
 # b45: NEVER push an UNVERIFIED HEAD. 43c5f52 and 920ed0d shipped commits
 # that a clean checkout could not run (untracked module / tests staged
@@ -38,7 +39,24 @@ if [ -f .env ]; then
 fi
 
 # Nothing to push? Stay silent (the gate must not spam on idle ticks).
-AHEAD=$(git rev-list --count origin/master..HEAD 2>/dev/null || echo "?")
+# Resolve the branch from THIS checkout. Never compare or push against
+# origin/master: an Arena/deployment checkout may intentionally be on a
+# feature branch, and silently redirecting it to master is unsafe.
+BRANCH=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) || {
+  echo "$(date -u +%FT%TZ) detached HEAD — refusing branch sync" >> logs/git_sync.log
+  exit 1
+}
+[ -n "$BRANCH" ] || {
+  echo "$(date -u +%FT%TZ) empty branch name — refusing branch sync" >> logs/git_sync.log
+  exit 1
+}
+REMOTE_REF="origin/$BRANCH"
+if git show-ref --verify --quiet "refs/remotes/$REMOTE_REF"; then
+  AHEAD=$(git rev-list --count "$REMOTE_REF..HEAD" 2>/dev/null || echo "?")
+else
+  # A new branch has no remote-tracking ref yet; it is not an idle tick.
+  AHEAD="?"
+fi
 if [ "$AHEAD" = "0" ]; then
   exit 0
 fi
@@ -60,7 +78,7 @@ esac
 
 TOK=$(cat "${GIT_TOKEN_FILE:-.git_token}" 2>/dev/null) || { echo "$(date -u +%FT%TZ) no token"; exit 1; }
 git -c credential.helper='!f() { echo "username=x-access-token"; echo "password='"$TOK"'"; }; f' \
-    push origin master >> logs/git_sync.log 2>&1
+    push origin "$BRANCH" >> logs/git_sync.log 2>&1
 rc=$?
-echo "$(date -u +%FT%TZ) push rc=$rc $(git rev-parse --short HEAD) ahead=$AHEAD gate=\"$GATE\"" >> logs/git_sync.log
+echo "$(date -u +%FT%TZ) push rc=$rc branch=$BRANCH $(git rev-parse --short HEAD) ahead=$AHEAD gate=\"$GATE\"" >> logs/git_sync.log
 exit $rc

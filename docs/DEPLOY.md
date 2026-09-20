@@ -39,7 +39,7 @@
 | `scripts/hermes_cron.sh` | ورودی کرون master (flock + timeout) |
 | `scripts/bridge_health_monitor.py` | هر ۵ دقیقه: بریج + سلامت دایمون‌ها → تلگرام |
 | `scripts/offsite_backup.py` | بکاپ روزانه کامل به ویندوز |
-| `scripts/git_sync.sh` | سینک خودکار master به گیت‌هاب |
+| `scripts/git_sync.sh` | سینک خودکار شاخهٔ جاری به گیت‌هاب (هرگز master را حدس نمی‌زند) |
 | `scripts/autopilot.sh` | بهبود شبانهٔ خودکار (read-only، بدون ترید) |
 | `ops/systemd/` | فایل‌های سرویس (نسخهٔ مرجع) |
 | `ops/cron/crontab.backup.txt` | کرون‌تب کامل فعلی (نسخهٔ مرجع) |

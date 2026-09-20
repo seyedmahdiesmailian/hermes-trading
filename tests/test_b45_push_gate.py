@@ -217,7 +217,7 @@ class GitSyncScriptIsWired(unittest.TestCase):
         # the block branch must exit before the push command (the push is a
         # multi-line continuation: match the 'push origin' line itself)
         push_at = next(k for k, l in enumerate(lines)
-                       if 'push origin master' in l)
+                       if 'push origin "$BRANCH"' in l)
         self.assertLess(i, push_at,
                         'the blocked branch falls through to the push')
         self.assertIn('exit 0', ' '.join(lines[i:i + 3]),
@@ -315,10 +315,17 @@ class GitSyncGateEndToEnd(unittest.TestCase):
         return sha
 
     def _ahead(self, root):
+        branch = subprocess.run(
+            ['git', 'symbolic-ref', '--quiet', '--short', 'HEAD'],
+            cwd=str(root), capture_output=True, text=True,
+            check=True).stdout.strip()
+        remote_ref = f'origin/{branch}'
         out = subprocess.run(['git', 'rev-list', '--count',
-                              'origin/master..HEAD'], cwd=str(root),
-                             capture_output=True, text=True).stdout.strip()
-        return int(out)
+                              f'{remote_ref}..HEAD'], cwd=str(root),
+                             capture_output=True, text=True)
+        if out.returncode != 0:
+            return None
+        return int(out.stdout.strip())
 
     def test_broken_stamp_blocks_and_ok_stamp_pushes(self):
         import tempfile
@@ -360,6 +367,41 @@ class GitSyncGateEndToEnd(unittest.TestCase):
             self.assertEqual(self._ahead(root), 0,
                              'stale stamp froze the push — fail-open broken: '
                              + log)
+
+    def test_non_master_branch_pushes_itself(self):
+        """A new feature branch has no origin/<branch> ref yet; sync must
+        create that branch and must not redirect its commit to origin/master."""
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix='hermes_b45_') as tmp:
+            root, _ = self._mk_repo(tmp)
+            master_before = subprocess.run(
+                ['git', 'rev-parse', 'refs/remotes/origin/master'],
+                cwd=str(root), capture_output=True, text=True,
+                check=True).stdout.strip()
+            branch = 'arena/branch-safe-test'
+            subprocess.run(['git', 'checkout', '-qb', branch], cwd=str(root),
+                           check=True, capture_output=True)
+            (root / 'a.txt').write_text('feature')
+            env = dict(os.environ, GIT_AUTHOR_NAME='t', GIT_AUTHOR_EMAIL='t@t',
+                       GIT_COMMITTER_NAME='t', GIT_COMMITTER_EMAIL='t@t')
+            subprocess.run(['git', 'commit', '-qam', 'feature branch'],
+                           cwd=str(root), env=env, check=True,
+                           capture_output=True)
+            data_root = Path(tmp) / 'state'
+            self._stamp(root, data_root, 'OK')
+            rc, log = self._run_sync(root, data_root)
+            self.assertEqual(rc, 0, log)
+            remote_branch = subprocess.run(
+                ['git', 'ls-remote', '--heads', 'origin', branch],
+                cwd=str(root), capture_output=True, text=True,
+                check=True).stdout.strip()
+            self.assertTrue(remote_branch, 'feature branch was not pushed')
+            master_after = subprocess.run(
+                ['git', 'rev-parse', 'refs/remotes/origin/master'],
+                cwd=str(root), capture_output=True, text=True,
+                check=True).stdout.strip()
+            self.assertEqual(master_after, master_before,
+                             'branch-safe sync changed origin/master')
 
 
 if __name__ == '__main__':

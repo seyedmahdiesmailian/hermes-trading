@@ -354,13 +354,36 @@ def push_decision(repo: Path | str | None = None) -> dict:
 # re-verifies HEAD immediately, so a crashed run heals its own verification
 # on the next tick and the push gate closes again.
 
-def unpushed_count(repo: Path | str | None = None) -> int | None:
-    """Commits on HEAD not present in origin/master, or None when the
-    comparison is impossible (no origin ref, offline fetch state, not a
-    repo). None is NOT zero: callers must not read 'unknown' as 'pushed'."""
+def current_branch(repo: Path | str | None = None) -> str | None:
+    """Return the caller checkout's branch, never the code repo's branch."""
     try:
-        r = _git('rev-list', '--count', 'origin/master..HEAD',
+        r = _git('symbolic-ref', '--quiet', '--short', 'HEAD',
                  cwd=repo or Path.cwd())
+        branch = (r.stdout or '').strip()
+        return branch if r.returncode == 0 and branch else None
+    except Exception as exc:
+        selfcheck.fail('head_verify current_branch', exc)
+        return None
+
+
+def unpushed_count(repo: Path | str | None = None) -> int | None:
+    """Commits on HEAD not present in ``origin/<current-branch>``.
+
+    None means the comparison is impossible (detached HEAD, no remote ref,
+    offline state, or not a repo). None is NOT zero: callers must not read
+    "unknown" as "pushed". This deliberately follows the caller checkout's
+    branch; the old origin/master comparison could certify the wrong branch.
+    """
+    try:
+        root = repo or Path.cwd()
+        branch = current_branch(root)
+        if not branch:
+            return None
+        remote_ref = f"refs/remotes/origin/{branch}"
+        exists = _git('show-ref', '--verify', '--quiet', remote_ref, cwd=root)
+        if exists.returncode != 0:
+            return None
+        r = _git('rev-list', '--count', f'origin/{branch}..HEAD', cwd=root)
         out = (r.stdout or '').strip()
         return int(out) if r.returncode == 0 and out.isdigit() else None
     except Exception as exc:
