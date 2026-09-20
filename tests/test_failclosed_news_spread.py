@@ -157,6 +157,12 @@ class SignalNewsHardBlockTests(unittest.TestCase):
 class SignalTickFailClosedTests(unittest.TestCase):
     """A dead tick read must SKIP the signal — never trade unchecked."""
 
+    def setUp(self):
+        self.root = hermetic.use_temp_data_root()
+
+    def tearDown(self):
+        hermetic.release()
+
     def _run(self, tick_mode):
         from engines import signal_listener as sl
         import engines.storage as st

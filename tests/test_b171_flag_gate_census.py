@@ -162,7 +162,8 @@ class TestVetoIsObservabilityOnly(unittest.TestCase):
         src = open(RT_SRC, encoding="utf-8").read()
         # the veto WRITERS (proposal = None + monitor[key] = ...) stay intact
         self.assertIn("proposal = None", src)
-        self.assertIn("monitor['spread_blocked'] = round(_spr, 2)", src)
+        self.assertIn("monitor['spread_blocked'] = _blk", src)
+        self.assertIn("def _entry_spread_veto", src)
         self.assertIn("monitor['calendar_unavailable'] = True", src)
         self.assertIn("monitor['macro_blocked'] = _mr", src)
         # and hermes_runtime never gained a report-side import beyond briefs

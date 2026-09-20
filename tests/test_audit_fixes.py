@@ -138,6 +138,17 @@ class TestSignalSpreadGate(unittest.TestCase):
     """The plan path refuses entries when ask-bid > MAX_ENTRY_SPREAD; the
     signal path must too (news/rollover spikes blow past 2.0$)."""
 
+    def setUp(self):
+        # check_signals → kill_switch writes state; without a data root the
+        # default /home/ai path PermissionError-s into policy_error and the
+        # spread gate never runs.
+        from tests import hermetic
+        self.root = hermetic.use_temp_data_root()
+
+    def tearDown(self):
+        from tests import hermetic
+        hermetic.release()
+
     def _run(self, ask, bid):
         import os
         from datetime import datetime, timezone

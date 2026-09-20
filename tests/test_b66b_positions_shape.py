@@ -39,7 +39,9 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from engines.bridge_payload import positions_list, position_count  # noqa: E402
+from engines.bridge_payload import (  # noqa: E402
+    positions_list, position_count, entry_open_count,
+)
 from tests import fixtures_bridge as fb  # noqa: E402
 
 # The EXACT payload that crashed trade_home in the clean worktree:
@@ -81,6 +83,24 @@ class TestPositionsReader(unittest.TestCase):
     def test_garbage_inputs(self):
         for bad in (None, 'x', 42, [], {}, {'data': None}, {'positions': 'x'}):
             self.assertEqual(positions_list(bad), [])
+
+    def test_entry_open_count_fail_closed_on_auth_shapes(self):
+        """ENTRY gate: 401/MT5 error = slot full. Daemon reader stays 0."""
+        self.assertEqual(entry_open_count(CRASH_401, slot_full=1), 1)
+        self.assertEqual(entry_open_count(CRASH_MT5, slot_full=1), 1)
+        self.assertEqual(position_count(CRASH_401), 0)
+
+    def test_entry_open_count_fail_closed_on_unreadable(self):
+        self.assertEqual(entry_open_count(None, slot_full=1), 1)
+        self.assertEqual(entry_open_count({'ok': True, 'data': {'a': 1}},
+                                          slot_full=1), 1)
+        self.assertEqual(entry_open_count({}, slot_full=1), 1)
+
+    def test_entry_open_count_honest_zero_and_one(self):
+        self.assertEqual(entry_open_count({'ok': True, 'data': []}), 0)
+        self.assertEqual(entry_open_count(
+            {'ok': True, 'data': [{'ticket': 1}]}), 1)
+        self.assertEqual(entry_open_count({'data': [{'ticket': 7}]}), 1)
 
 
 class TestPanelsSurviveAuthFailure(unittest.TestCase):
@@ -138,8 +158,10 @@ class TestOneReader(unittest.TestCase):
     def test_consumers_use_the_shared_reader(self):
         for rel in self.CONSUMERS:
             src = (ROOT / rel).read_text(encoding='utf-8')
-            self.assertTrue('positions_list' in src or 'position_count' in src,
-                            f'{rel} reads a positions reply again?')
+            self.assertTrue(
+                'positions_list' in src or 'position_count' in src
+                or 'entry_open_count' in src,
+                f'{rel} reads a positions reply again?')
 
     def test_no_direct_data_iteration_on_positions_replies(self):
         """AST: in the four consumer files, no subscript/iteration of the

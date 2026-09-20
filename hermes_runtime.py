@@ -18,7 +18,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from engines.context import build_plan_context, apply_bias_geometry
-from engines.bridge_payload import positions_list
+from engines.bridge_payload import positions_list, entry_open_count
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
 from engines.trade_management import (evaluate_trade_management, ladder_fields,
@@ -30,7 +30,10 @@ from engines.report import render_plan_brief, render_reassess_brief, render_moni
 from engines.macro_filter import apply_macro_guard
 from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
                                    is_news_lock)
-from engines.auto_executor import evaluate_proposal, execute_trade, evaluate_management_action
+from engines.auto_executor import (
+    evaluate_proposal, execute_trade, evaluate_management_action,
+    MAX_OPEN_POSITIONS,
+)
 from engines.kill_switch import check_kill_switch
 
 from engines import paths as _paths  # state paths resolved at CALL time (b39)
@@ -52,6 +55,31 @@ TIMEFRAME = 'M5'
 # news/rollover spikes can blow past 2.0. Backtests charge a flat 0.20 cost,
 # so live must not enter when the real cost is multiples of that.
 MAX_ENTRY_SPREAD = float(os.getenv('HERMES_MAX_SPREAD', '0.60'))
+
+
+def _entry_spread_veto(tick) -> object | None:
+    """monitor['spread_blocked'] value, or None if the quote is usable.
+
+    Fail-closed: missing / unreadable / inverted quotes all veto. A wide
+    spread returns the dollar width (existing observability). The old
+    `except (TypeError, ValueError): pass` left the proposal unguarded —
+    the b30 class on the plan path.
+    """
+    try:
+        _tk = tick if isinstance(tick, dict) else {}
+        _td = _tk.get('data', _tk)
+        if not isinstance(_td, dict):
+            _td = _tk if isinstance(_tk, dict) else {}
+        _ask = float(_td.get('ask') or 0)
+        _bid = float(_td.get('bid') or 0)
+        if _ask <= 0 or _bid <= 0:
+            return 'unreadable'
+        _spr = _ask - _bid
+        if _spr > MAX_ENTRY_SPREAD or _spr <= 0:
+            return round(_spr, 2)
+        return None
+    except (TypeError, ValueError):
+        return 'unreadable'
 
 
 def _now() -> datetime:
@@ -427,10 +455,14 @@ def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
     # (14:15 + 14:30 UTC sells, net -56.7$). Count real positions from the
     # positions endpoint; fall back to the account field only if it exists.
     try:
-        _pr = bridge.get_positions(SYMBOL) or {}
-        _open_ct = len(_positions_list(_pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}))
+        _pr = bridge.get_positions(SYMBOL)
+        # b45 follow-up: positions_list() of a 401/MT5 error is [] — that
+        # used to read as "nothing open" and let a second ticket stack.
+        # entry_open_count fail-closes the ENTRY gate only (daemon still
+        # uses positions_list so it does not mark every ticket CLOSED).
+        _open_ct = entry_open_count(_pr, slot_full=MAX_OPEN_POSITIONS)
     except Exception:
-        _open_ct = account.positions
+        _open_ct = MAX_OPEN_POSITIONS
     account.positions = max(int(account.positions or 0), _open_ct)
     today = now.date().isoformat()
     closed = _load_closed_trades(bridge, 7)
@@ -804,15 +836,10 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # Cost is linear in trades; entering into a wide spread hands the edge to
     # the broker. Read-only tick check — blocks the PROPOSAL, never management.
     if proposal is not None:
-        try:
-            _tk = tick if isinstance(tick, dict) else {}
-            _td = _tk.get('data', _tk)
-            _spr = float(_td.get('ask') or 0) - float(_td.get('bid') or 0)
-            if _spr > MAX_ENTRY_SPREAD:
-                proposal = None
-                monitor['spread_blocked'] = round(_spr, 2)
-        except (TypeError, ValueError):
-            pass
+        _blk = _entry_spread_veto(tick)
+        if _blk is not None:
+            proposal = None
+            monitor['spread_blocked'] = _blk
 
     if proposal is not None:
         # News blackout on the entry path. hermes_master never passed

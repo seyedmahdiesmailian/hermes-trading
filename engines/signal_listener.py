@@ -341,15 +341,20 @@ def check_signals(bridge=None) -> list[dict]:
             # blind to existing exposure (already_in_position check never fired)
             _open_ct = 0
             try:
-                from engines.bridge_payload import position_count
-                _pr = bridge.get_positions("XAUUSD") or {} if bridge is not None else {}
-                # b66-follow-up: shape-safe reader — a 401/MT5-error reply
-                # carries data as a DICT; len() of it used to count envelope
-                # KEYS as positions (and a non-list would raise → caught →
-                # _open_ct=0 → the already_in_position gate goes blind).
-                _open_ct = position_count(_pr)
+                from engines.bridge_payload import entry_open_count
+                from engines.auto_executor import MAX_OPEN_POSITIONS as _MAX_OPEN
+                # Scoring-only (no bridge) keeps 0. Live unknown count must
+                # NOT become 0 — that is the b45 double-entry hole wearing
+                # a 401 hat. entry_open_count fail-closes; position_count
+                # stays 0 on the same payload for the daemon's live-map.
+                if bridge is None:
+                    _open_ct = 0
+                else:
+                    _open_ct = entry_open_count(
+                        bridge.get_positions("XAUUSD"), slot_full=_MAX_OPEN)
             except Exception:
-                pass
+                from engines.auto_executor import MAX_OPEN_POSITIONS as _MAX_OPEN
+                _open_ct = _MAX_OPEN
             account_policy = {
                 "trade_allowed": not _kill.get("halted", False),
                 "regime": "halted" if _kill.get("halted") else "normal",
@@ -543,7 +548,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 })
                 continue
             _spr = _ask - _bid
-            if _spr > MAX_ENTRY_SPREAD:
+            if _spr > MAX_ENTRY_SPREAD or _spr <= 0:
                 executions.append({
                     "signal": parsed, "verdict": "skip",
                     "reasons": [f"spread_too_wide_{_spr:.2f}>{MAX_ENTRY_SPREAD:.2f}"],
