@@ -68,3 +68,33 @@ def positions_list(resp) -> list:
 def position_count(resp) -> int:
     """How many positions the bridge actually shows (never a guess)."""
     return len(positions_list(resp))
+
+
+def positions_readable(resp) -> bool:
+    """True only when the reply is a TRUSTWORTHY view of the open positions.
+
+    positions_list() deliberately answers "[]" for a broken reply, because
+    every READER wants "nothing visible". But a WRITER — the entry gate —
+    must not treat "I could not see" as "there is nothing there": that is
+    the fail-OPEN shape that already cost -56.7$ when account.positions was
+    always 0 and MAX_OPEN_POSITIONS never fired (hermes_runtime, b45).
+
+    The distinction, and the reason it needs its own predicate:
+
+        {"ok": False, "error": "HTTP_401"}  -> list [] , readable False
+        {"ok": True,  "data": []}           -> list [] , readable True
+
+    Both are empty; only the second one MEANS empty. Callers that are about
+    to open risk must gate on this, not on the count alone.
+
+    Lenient in exactly the same one place positions_list is: a reply with no
+    `ok` key but a real list under `data`/`positions` is the shape the
+    position daemon has always accepted, and calling it unreadable would
+    freeze entries on a healthy bridge.
+    """
+    if not isinstance(resp, dict) or resp.get('ok') is False:
+        return False
+    data = resp.get('data')
+    if data is None:
+        data = resp.get('positions')
+    return isinstance(data, list)

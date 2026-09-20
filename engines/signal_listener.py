@@ -339,15 +339,27 @@ def check_signals(bridge=None) -> list[dict]:
             )
             # REAL open-position count — hardcoded 0 made the decision engine
             # blind to existing exposure (already_in_position check never fired)
-            _open_ct = 0
+            # b214 FAIL-CLOSED: the shape-safe reader below still answers 0
+            # for an UNREADABLE reply (401 / timeout envelope / MT5
+            # not_connected), which the gate then reads as "no exposure, safe
+            # to trade" — the blind spot this comment block already warned
+            # about, one layer deeper. An unreadable reply now reports the cap
+            # so the signal lane blocks instead of stacking a second position
+            # on top of one it cannot see. Tightening only.
+            from engines.auto_executor import MAX_OPEN_POSITIONS
+            _open_ct = MAX_OPEN_POSITIONS
+            _pos_unreadable = True
             try:
-                from engines.bridge_payload import position_count
+                from engines.bridge_payload import (position_count,
+                                                    positions_readable)
                 _pr = bridge.get_positions("XAUUSD") or {} if bridge is not None else {}
                 # b66-follow-up: shape-safe reader — a 401/MT5-error reply
                 # carries data as a DICT; len() of it used to count envelope
                 # KEYS as positions (and a non-list would raise → caught →
                 # _open_ct=0 → the already_in_position gate goes blind).
-                _open_ct = position_count(_pr)
+                if positions_readable(_pr):
+                    _open_ct = position_count(_pr)
+                    _pos_unreadable = False
             except Exception:
                 pass
             account_policy = {
@@ -356,6 +368,10 @@ def check_signals(bridge=None) -> list[dict]:
                 "open_positions": _open_ct,
                 "balance": float(acct.get("balance", 0) or 0),
             }
+            if _pos_unreadable:
+                # b214: observable, so a dark bridge is not misread as a
+                # legitimately occupied slot.
+                account_policy["positions_unreadable"] = True
             # b140 TIGHTENING: the regime used to be hardcoded "normal" here,
             # so the SCORER never saw drawdown states (locked/defensive/
             # recovery) even though the sizing lane (run_signal_check ->

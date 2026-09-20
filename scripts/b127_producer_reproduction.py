@@ -82,6 +82,7 @@ LEDGER_161 = os.path.join(BT, "b161_reanchor_symmetry_verdict.json")
 LEDGER_161_W = os.path.join(BT, "b161_w1_divergence.json")
 LEDGER_163 = os.path.join(BT, "b163_plan_age_census.json")
 LEDGER_136 = os.path.join(BT, "b136_regime_wiring_census.json")
+LEDGER_213 = os.path.join(BT, "b213_source_channel_census.json")
 
 
 def _load(path: str) -> dict:
@@ -920,7 +921,31 @@ def check_b198_derived_blocks() -> str:
             f"episode reversals, 1 direct flip)")
 
 
+def check_b213_source_channel_blocks() -> str:
+    """b213's per-channel stats, sign-flip list and out-of-sample deltas are
+    pure functions of the committed data/radin replay CSVs, so the producer
+    must rebuild the frozen ledger byte-for-byte. The claim that matters is
+    NEGATIVE — selecting channels on a noisy half-sample loses out-of-sample,
+    which is why no source term is wired into evaluate_signal — and a
+    negative claim decays silently, so it gets the same reproduction pin as
+    a positive one."""
+    from scripts import b213_source_channel_census as b213
+    led = _load(LEDGER_213)
+    got = b213.build(b213.load_channels())
+    for block in ("per_channel", "quartiles", "halves", "sign_flips",
+                  "out_of_sample"):
+        assert got[block] == led[block], \
+            f"b213 {block} no longer reproduces from the radin replay"
+    assert led["out_of_sample"]["naive_positive_half_rule"]["delta"] < 0, \
+        "b213 naive selection stopped losing out-of-sample — the " \
+        "'source term stays unwired' verdict must be re-derived"
+    return (f"b213 source census re-derived from "
+            f"{len(led['per_channel'])} channels "
+            f"(naive OOS delta {led['out_of_sample']['naive_positive_half_rule']['delta']})")
+
+
 CHECKS = (
+    check_b213_source_channel_blocks,
     check_b81_verdict,
     check_b81_delta_cells,
     check_b118_attribution,

@@ -1,13 +1,45 @@
 #!/usr/bin/env python3
-"""Restart bridge.py on Windows VM via WinRM."""
-import winrm, urllib3
+"""Restart bridge.py on the Windows VM over WinRM.
+
+Credentials and the host come from .env, never from literals in this file:
+
+- The password was previously hardcoded here in plaintext and reached a
+  pushed commit. Secrets belong in .env, which is gitignored. NOTE: removing
+  it from HEAD does not remove it from git history — the old password must
+  be treated as compromised and rotated on the Windows box.
+- The host was a hardcoded RFC1918 literal, which breaks the b64 rule that
+  every address of our own infrastructure resolves from the environment (a
+  rebuild or relocation must not silently keep talking to the old box).
+
+Precedence matches scripts/offsite_backup.py and the deploy scripts (b62):
+explicit WIN_HOST override > documented HERMES_WIN_IP > last-known default.
+"""
+import os
+import sys
+from pathlib import Path
+
+import urllib3
+import winrm
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from env_loader import load_dotenv  # noqa: E402
+
+load_dotenv(ROOT / '.env')
+
 urllib3.disable_warnings()
 
-VM = 'https://192.168.10.51:5985'
-USER = 'Administrator'
-PASS = 'Seyed1107@'
+WIN_HOST = os.getenv('WIN_HOST') or os.getenv('HERMES_WIN_IP', '192.168.10.51')
+USER = os.getenv('WIN_USER', 'Administrator')
+PASS = os.getenv('WIN_PASS', '')
+if not PASS:
+    sys.exit("WIN_PASS is not set — restore it from .env (see docs/DEPLOY.md).")
 
-s = winrm.Session(VM, auth=(USER, PASS), transport='ntlm', server_cert_validation='ignore')
+VM = f"https://{WIN_HOST}:5985"
+
+s = winrm.Session(VM, auth=(USER, PASS), transport='ntlm',
+                  server_cert_validation='ignore')
 
 # Kill any stale python processes holding the port
 ps_kill = r'''

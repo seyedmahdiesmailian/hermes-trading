@@ -436,12 +436,24 @@ def self_check(d: dict) -> list[str]:
     return problems
 
 
-def main() -> dict:
+def main(write: bool = True) -> dict:
+    """Run the census. `write=False` returns the rows WITHOUT touching the
+    committed ledger.
+
+    b217: the test suite imports this producer and called main() directly, so
+    merely RUNNING the tests rewrote data/backtest/b140_signal_lane_regime_census.json
+    in place. On a weekend that replaced the frozen market-open evidence with
+    market_closed rows and a self-check of "tight regimes no longer shrink the
+    signal lane lot" — a committed artifact silently turned into a lie by the
+    act of testing. The ledger is EVIDENCE; only an explicit run may republish
+    it.
+    """
     rows = collect()
     rows["derived"] = derive(rows)
     rows["_self_check_problems"] = self_check(rows)
-    LEDGER.parent.mkdir(parents=True, exist_ok=True)
-    LEDGER.write_text(json.dumps(rows, indent=2, sort_keys=True), encoding="utf-8")
+    if write:
+        LEDGER.parent.mkdir(parents=True, exist_ok=True)
+        LEDGER.write_text(json.dumps(rows, indent=2, sort_keys=True), encoding="utf-8")
     return rows
 
 

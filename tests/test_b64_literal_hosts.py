@@ -124,6 +124,14 @@ LITERAL_HOST_ALLOWLIST: dict[str, dict[str, str]] = {
             "to build the URL the Windows VM pulls the tarball from "
             "(offsite_backup); not a remote host identity",
     },
+    "scripts/b79e_win_bridge_repair.py": {
+        "192.168.10.51":
+            "b214: same b62 chain tail as offsite_backup — win_host = "
+            "getenv('WIN_HOST') or getenv('HERMES_WIN_IP', <this>). The "
+            "literal was the ONLY address before (no env read at all), which "
+            "is what turned this tripwire red; it is now the last-resort tail "
+            "of the documented chain for a manual one-off WinRM repair tool",
+    },
     "scripts/_deploy_pending_bridge.py": {
         "192.168.10.51":
             "b71 one-off deploy helper, same chain shape as offsite_backup: "
