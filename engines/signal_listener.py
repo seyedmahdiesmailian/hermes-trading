@@ -27,6 +27,7 @@ __all__ = ["check_signals", "run_signal_check"]
 
 from engines import paths  # resolved at CALL time so tests can redirect the tree
 from engines import signal_pending
+from engines.process_lock import exclusive as _state_lock
 
 
 def _get_env():
@@ -177,8 +178,8 @@ def _serve_trade_callback(cb: dict):
                                               "text": "خطا در نمایش پنل", "show_alert": True})
 
 
-def fetch_new_messages() -> list[dict]:
-    """Fetch new messages since last update."""
+def _fetch_new_messages_unlocked() -> list[dict]:
+    """Fetch new messages since last update; caller owns the poll lock."""
     state = _load_state()
     # b38fix: this bot token is shared with the Hermes gateway, which set
     # allowed_updates=[message, channel_post] server-side — Telegram then
@@ -236,6 +237,23 @@ def fetch_new_messages() -> list[dict]:
     state["last_check"] = datetime.now(timezone.utc).isoformat()
     _save_state(state)
     return messages
+
+
+def fetch_new_messages() -> list[dict]:
+    """Fetch updates while owning the shared Telegram offset.
+
+    ``signal_daemon`` is the normal owner, but ``signal_monitor.py`` remains
+    available for manual checks. A short process lock prevents two pollers
+    from reading the same offset and racing their listener_state writes.
+    """
+    try:
+        with _state_lock("telegram_updates", timeout=2.0):
+            return _fetch_new_messages_unlocked()
+    except TimeoutError:
+        # Do not poll without ownership of the offset. The next healthy poll
+        # will retry from the persisted state, so no signal is acknowledged by
+        # an uncoordinated process.
+        return []
 
 
 def is_likely_signal(text: str) -> bool:
