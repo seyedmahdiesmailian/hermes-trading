@@ -480,12 +480,12 @@ def adjustments() -> dict:
         if cur_grade_idx < GRADES.index(GRADE_CEILING):
             changes['min_grade'] = GRADES[cur_grade_idx + 1]
         changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
-    elif avg < 0 and wr >= 0.50:
-        # Live journal shape: WR 0.65, avg win $30, avg loss $63. The old
-        # trigger (wr<0.40 AND avg<0) never fired, so learning was blind to
-        # the exact failure mode. Raise the RR floor so winners must be
-        # larger; cut size. Do NOT raise min_grade — that would starve the
-        # 65% winners instead of fixing payoff.
+    elif avg < 0:
+        # Any negative expectancy (including the live 65% WR / fat-left-tail
+        # book AND the 0.40–0.49 hole the previous `wr >= 0.50` branch left
+        # silent). Raise the RR floor so winners must be larger; cut size.
+        # Do NOT raise min_grade — that would starve the winners instead of
+        # fixing payoff. Grade only tightens on the WR<0.40 arm above.
         if cur_rr < RR_FLOOR_CEILING:
             changes['min_rr'] = _clamp(cur_rr + 0.25, RR_FLOOR_FLOOR, RR_FLOOR_CEILING)
         changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)

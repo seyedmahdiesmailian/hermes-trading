@@ -116,6 +116,36 @@ class MergeAndVeto(unittest.TestCase):
         self.assertGreater(ctx["invalidation"], 3950.0)
 
 
+class SweepScoresIntoBias(unittest.TestCase):
+    def test_derive_reads_direction_not_the_bool(self):
+        from engines.smc import _derive_smc_bias
+        eq = {"zone": "equilibrium", "quality": 0}
+        # A lone bearish hunt must be enough to pick a side (score 1.5, threshold 1.0).
+        bias, _ = _derive_smc_bias([], [], [], [], "bearish", "range", eq, 1.0)
+        self.assertEqual(bias, "bearish")
+        bias, _ = _derive_smc_bias([], [], [], [], "bullish", "range", eq, 1.0)
+        self.assertEqual(bias, "bullish")
+        # The pre-fix call site passed the bool `swept`. True/False never
+        # equal "bullish"/"bearish", so the hunt was a no-op.
+        bias, conf = _derive_smc_bias([], [], [], [], True, "range", eq, 1.0)
+        self.assertEqual(bias, "neutral")
+        self.assertEqual(conf, 0.0)
+
+    def test_smc_analyse_passes_sweep_side_not_the_bool(self):
+        import ast
+        import inspect
+        import engines.smc as smc
+        src = inspect.getsource(smc.smc_analyse)
+        tree = ast.parse(src)
+        call = next(n for n in ast.walk(tree)
+                    if isinstance(n, ast.Call)
+                    and getattr(n.func, "id", "") == "_derive_smc_bias")
+        fifth = call.args[4]
+        names = {n.id for n in ast.walk(fifth) if isinstance(n, ast.Name)}
+        self.assertIn("sweep_side", names)
+        self.assertNotIn("swept", names)
+
+
 class PullbackKeepsStructure(unittest.TestCase):
     def test_in_zone_pullback_is_not_reanchored(self):
         from engines.plan import decide_execution_action

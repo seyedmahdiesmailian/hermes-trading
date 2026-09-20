@@ -501,10 +501,13 @@ def smc_analyse(rows: list[dict], now: Optional[datetime] = None, h1_rows: Optio
                                 n_rows=len(rows), n_h1=len(_h1 or []))
 
     # ── 7. Bias from SMC signals (now includes H1 OBs/FVGs) ──
+    # Pass the DIRECTION, not the bool. `_derive_smc_bias` scores
+    # sweep_side == "bullish"/"bearish"; the bool `swept` never matched
+    # either string, so liquidity hunts were computed and then discarded.
     smc_bias, smc_confidence = _derive_smc_bias(
         obs + h1_obs, unmitigated_obs + h1_unmitigated,
         fvgs + h1_fvgs, unfilled_fvgs + h1_unfilled,
-        swept, structure_phase, pd_zone, killzone_weight,
+        sweep_side, structure_phase, pd_zone, killzone_weight,
     )
 
     # ── 8. Signal ──
