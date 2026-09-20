@@ -4852,3 +4852,20 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   safety, never UP into risk. TIGHTENING ONLY — production lots are byte-identical
   (pinned: stop $10/$25/$50 -> 0.05/0.02/0.01, all exactly $50 realised risk), and a
   1000+ case grid asserts realised risk never exceeds the budget for any caller shape.
+
+- [x] b216 CYCLE CEILING OUTLIVED ITS OWN PERIOD (done 2026-09-20,
+  scripts/hermes_cron.sh + docs/DEPLOY.md + ops/README.md,
+  tests/test_b216_cron_period_vs_timeout.py 8 green):
+  hermes_cron.sh capped the master cycle at 840s, commented "hard ceiling below the
+  15-min period" — but the live crontab (ops/cron/crontab.root.txt, pulled off the
+  running box in b79e) fires it every 5 MINUTES. 840s is nearly three periods, so one
+  wedged cycle could hold the flock across two further ticks; flock keeps that SAFE
+  (no double-run) but SILENT, and every skipped tick is a plan refresh and an entry
+  opportunity that never happened. Ceiling now 280s (20s headroom inside the 300s
+  period) and the TIMEOUT log line matches. Also resolved WHICH scheduler owns the
+  cycle: crontab */5 is authoritative (pulled from the live box; setup.sh installs the
+  crontab and never copies ops/systemd/hermes-trading.timer, which claims 15min and runs
+  the SAME script). DEPLOY.md said "15-minute cycle" and is corrected to 5; the timer is
+  kept as a live-box mirror but carries a do-not-enable warning in ops/README.md. Test
+  pins the RELATIONSHIP (ceiling < period, with headroom and an anti-vacuity floor) so
+  changing the cadence forces the ceiling to be reconsidered in the same commit.

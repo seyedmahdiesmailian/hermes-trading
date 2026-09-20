@@ -36,7 +36,16 @@ echo "[$NOW] Cron triggered" >> logs/cron.log
 
 # b31: flock — if a previous master cycle is still hung (bridge stall,
 # calendar fetch), SKIP this tick instead of running two masters racing on
-# cooldown/plan state. timeout 840s = hard ceiling below the 15-min period.
+# cooldown/plan state.
+#
+# b216: the ceiling was 840s, chosen as "just under the 15-min period". The
+# live crontab (ops/cron/crontab.root.txt, pulled off the running box) fires
+# this script every 5 MINUTES, so 840s was nearly 3 periods long: one stuck
+# cycle could hold the lock across two further ticks, and every skipped tick
+# is a plan refresh and an entry opportunity that silently never happened.
+# flock keeps that safe (no double-run) but silent — the ceiling must be
+# under the period so a wedged cycle is killed before the next one is due.
+# 280s leaves 20s of headroom inside the 300s period.
 exec 9>/tmp/hermes_master.lock
 if ! flock -n 9; then
   echo "[$NOW] Phase 1 SKIPPED (previous cycle still running)" >> logs/cron.log
@@ -44,12 +53,12 @@ if ! flock -n 9; then
 fi
 
 # Phase 1: Autonomous trading
-timeout 840 python3 "$REPO_ROOT/hermes_master.py" >> logs/master_cron.log 2>&1
+timeout 280 python3 "$REPO_ROOT/hermes_master.py" >> logs/master_cron.log 2>&1
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
   echo "[$NOW] Phase 1 OK" >> logs/cron.log
 elif [ $RESULT -eq 124 ]; then
-  echo "[$NOW] Phase 1 TIMEOUT (killed at 840s)" >> logs/cron.log
+  echo "[$NOW] Phase 1 TIMEOUT (killed at 280s)" >> logs/cron.log
 else
   echo "[$NOW] Phase 1 FAILED (exit $RESULT)" >> logs/cron.log
 fi

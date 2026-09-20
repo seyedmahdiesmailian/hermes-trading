@@ -30,7 +30,7 @@
 
 | مسیر | نقش |
 |---|---|
-| `hermes_master.py` | چرخهٔ ۱۵ دقیقه‌ای: اسکن → پلن → ستاپ → ورود خودکار |
+| `hermes_master.py` | چرخهٔ **۵ دقیقه‌ای**: اسکن → پلن → ستاپ → ورود خودکار (کرون واقعی: `ops/cron/crontab.root.txt`) |
 | `hermes_runtime.py` | هستهٔ مشترک master (تحلیل، پلن‌سازی، گیت‌ها) |
 | `position_daemon.py` | هر ۵ ثانیه: مدیریت پوزیشن‌های باز (SL/BE/trail/TP) |
 | `signal_daemon.py` | پروژهٔ ۲: listener سیگنال تلگرام |
