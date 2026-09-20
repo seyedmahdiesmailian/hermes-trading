@@ -4802,3 +4802,34 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
 - [x] b193 AGGRESSIVE LANE GATE (done 2026-09-09): plan.py x4 trigger_ok=True bypassed b187; backtest aggressive-no-confirm 25% win -0.67R/trade (n=20/45 legs), live -95/-45/-24$ vs +19$ confirmed. All four lanes now need m5_ok (same 3 monotone settled closes, fail-closed). scripts/b193_aggressive_lane_audit.py + data/backtest/b193_aggressive_lane.json + tests/test_b193_aggressive_gate.py. 161 targeted tests OK.
 
 - [x] b193b HARDENING (done 2026-09-09): (1) b193 gate was fail-OPEN when m5_rows=None (dashboards/probes) - now always fail-closed. (2) Four phantom actions (place_buy_limit/place_sell_limit/place_buy_stop/place_sell_stop) were never placed by the runtime (runtime only proposes on market_order/market_entry_now; 53 log lines claimed a pending order that did not exist) - replaced with honest wait_for_pullback/wait_for_trigger + target_entry. tests/test_b193_aggressive_gate.py pins None/[] fail-closed.
+
+- [x] b213 SOURCE-CHANNEL EDGE CENSUS (done 2026-09-19, scripts/b213_source_channel_census.py,
+  data/backtest/b213_source_channel_census.json, tests/test_b213_source_channel_census.py 16 green):
+  the forwarder tags every message "[از {channel}]" but signal_parser drops it and
+  evaluate_signal has NO source term — all 7 channels are scored as equally trustworthy.
+  Measured on the 7665-row data/radin replay: win rate is a TRAP (gtmofx wins 73.7% and
+  loses -135.0, payoff 0.16; olivex wins 14.0% and is flat, payoff 6.29). Only goldfree
+  (t=3.46, positive in all 4 quartiles) and gtmofx (t=-2.19) separate from zero.
+  NOT WIRED, deliberately: the naive "trade channels profitable in the first half" rule
+  FAILS out-of-sample (-426.9 vs trading everything) because 3 of 7 channels flip sign
+  between halves (radin -286->+478, olivex -44->+46, goldsystem +28->-3). The stricter
+  tightening-only veto (n>=60 AND t<=-2) convicts nobody on a half-sample, so it is an
+  honest no-op rather than a fake win. PRE-REGISTERED CLOSE CONDITION: wire a per-source
+  term only when both halves agree in sign AND full-sample |t|>=2 AND n>=100, and then
+  TIGHTENING ONLY (veto/shrink proven losers; never enlarge a lot on a good-looking
+  channel). Re-run the census as live signals accumulate.
+
+- [x] b214 UNREADABLE POSITIONS ARE NOT AN EMPTY ACCOUNT (done 2026-09-19,
+  engines/bridge_payload.positions_readable + hermes_runtime._performance_and_policy +
+  engines/signal_listener, tests/test_b214_positions_readable_failclosed.py 14 green):
+  positions_list() answers [] both for a genuinely flat account AND for an unreadable
+  reply (401 / timeout envelope / MT5 not_connected / non-dict). Readers want that
+  leniency; the ENTRY GATE must not have it — "I could not see" was collapsing into
+  "safe to open". Same shape that already cost -56.7$ (b45: two stacked sells 14:15+14:30
+  UTC when account.positions was always 0); b45 fixed the case where the bridge ANSWERS,
+  b214 closes the case where it does not — account.positions is 0 there too, so max()
+  could not rescue it. Both entry lanes now report MAX_OPEN_POSITIONS on an unreadable
+  reply and surface account_policy['positions_unreadable'] so a dark bridge is
+  distinguishable from a legitimately occupied slot. TIGHTENING ONLY (pinned by a test
+  asserting no reply shape yields a smaller count than before); protective management
+  untouched (position_daemon keeps its own bridge-failure guard, b207 unaffected).
