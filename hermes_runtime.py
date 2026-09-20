@@ -32,6 +32,7 @@ from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
                                    is_news_lock)
 from engines.auto_executor import evaluate_proposal, execute_trade, evaluate_management_action
 from engines.kill_switch import check_kill_switch
+from engines.process_lock import exclusive as _state_lock
 
 from engines import paths as _paths  # state paths resolved at CALL time (b39)
 
@@ -420,24 +421,28 @@ def _load_closed_trades(bridge, days=7) -> list[dict]:
 
 
 def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
-    account = _account_obj(account_resp)
-    # b45 FIX 2026-08-31: the bridge /api/account payload has NO `positions`
-    # field, so account.positions was ALWAYS 0 — the MAX_OPEN_POSITIONS=1 gate
-    # never fired and a second position was opened on top of the first
-    # (14:15 + 14:30 UTC sells, net -56.7$). Count real positions from the
-    # positions endpoint; fall back to the account field only if it exists.
-    try:
-        _pr = bridge.get_positions(SYMBOL) or {}
-        _open_ct = len(_positions_list(_pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}))
-    except Exception:
-        _open_ct = account.positions
-    account.positions = max(int(account.positions or 0), _open_ct)
-    today = now.date().isoformat()
-    closed = _load_closed_trades(bridge, 7)
-    perf = compute_performance_state(load_performance_state(_plan_dir()), today, account.balance, closed)
-    save_performance_state(_plan_dir(), perf)
-    policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
-    return {'performance_state': perf, 'account_policy': policy}
+    # Both hermes_master and signal_listener call this function. Serialize the
+    # bridge snapshot plus performance-state write so a slower, older
+    # read-modify-write cannot overwrite a newer risk ledger.
+    with _state_lock('performance_state', timeout=10.0):
+        account = _account_obj(account_resp)
+        # b45 FIX 2026-08-31: the bridge /api/account payload has NO `positions`
+        # field, so account.positions was ALWAYS 0 — the MAX_OPEN_POSITIONS=1 gate
+        # never fired and a second position was opened on top of the first
+        # (14:15 + 14:30 UTC sells, net -56.7$). Count real positions from the
+        # positions endpoint; fall back to the account field only if it exists.
+        try:
+            _pr = bridge.get_positions(SYMBOL) or {}
+            _open_ct = len(_positions_list(_pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}))
+        except Exception:
+            _open_ct = account.positions
+        account.positions = max(int(account.positions or 0), _open_ct)
+        today = now.date().isoformat()
+        closed = _load_closed_trades(bridge, 7)
+        perf = compute_performance_state(load_performance_state(_plan_dir()), today, account.balance, closed)
+        save_performance_state(_plan_dir(), perf)
+        policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
+        return {'performance_state': perf, 'account_policy': policy}
 
 
 def _build_proposal(plan: dict, monitor: dict, policy: dict, tick_price: float) -> dict | None:
