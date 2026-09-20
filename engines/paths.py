@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import time
 from pathlib import Path
 
@@ -146,12 +147,26 @@ def write_json_atomic(path, payload, *, indent: int | None = None, **dumps_kw) -
     tmp = path.with_name(path.name + ".tmp")
     dumps_kw.setdefault("default", str)      # datetimes/Paths → str, never crash
     text = json.dumps(payload, ensure_ascii=False, indent=indent, **dumps_kw)
-    with tmp.open("w", encoding="utf-8") as f:
-        f.write(text)
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(tmp, path)          # atomic rename, same directory
-    return path
+    # A fixed `<name>.tmp` is not safe with two daemons: writer A can replace
+    # the temp file while writer B still has it open, causing B's replace to
+    # fail or publish the wrong payload. A unique temp in the same directory
+    # preserves same-filesystem atomic rename without pretending to serialize
+    # read-modify-write state updates.
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            fd = None
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)          # atomic rename, same directory
+        return path
+    finally:
+        if fd is not None:
+            os.close(fd)
+        tmp.unlink(missing_ok=True)
 
 
 def read_json_safe(path, default=None, *, label: str | None = None):
