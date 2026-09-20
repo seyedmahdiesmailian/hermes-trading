@@ -4833,3 +4833,22 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
   distinguishable from a legitimately occupied slot. TIGHTENING ONLY (pinned by a test
   asserting no reply shape yields a smaller count than before); protective management
   untouched (position_daemon keeps its own bridge-failure guard, b207 unaffected).
+
+- [x] b215 THE SIZING FLOOR COULD INFLATE RISK (done 2026-09-20,
+  engines/orchestrator.compute_xau_position_size,
+  tests/test_b215_sizing_floor_never_inflates.py 10 green):
+  `lot = max(volume_min, min(volume_max, round(stepped,2)))` — the min() is a cap and
+  only reduces risk, but the max() is a FLOOR, and a floor on position size is a floor
+  on RISK. When the budget only buys 0.001 lots, rounding up to the broker minimum
+  multiplies the agreed loss: on the production shape (point=0.01, $1/point/lot,
+  volume_min=0.01) a $500 account risking 1% behind an $80 stop wants $5 and would have
+  been handed 0.01 lots = $80. 16x. It never bit because every caller passes
+  min_meaningful_lot >= volume_min (auto_executor passes exactly 0.01, EQUAL to
+  volume_min), so the earlier guard rejected those cases first — a coincidence of two
+  constants that was undocumented and untested, one edit away from a silent risk
+  multiplier with nothing going red. The floor now REFUSES (reason
+  `below_min_meaningful_lot`, reused deliberately because auto_executor/b196/b143 already
+  branch on that string) instead of inflating: a sizing function may round DOWN into
+  safety, never UP into risk. TIGHTENING ONLY — production lots are byte-identical
+  (pinned: stop $10/$25/$50 -> 0.05/0.02/0.01, all exactly $50 realised risk), and a
+  1000+ case grid asserts realised risk never exceeds the budget for any caller shape.

@@ -83,7 +83,25 @@ def compute_xau_position_size(
     if raw_lot < min_meaningful_lot:
         return {"lot": 0.0, "risk_usd": risk_usd, "meaningful": False, "reason": "below_min_meaningful_lot", "capped": False}
     stepped = floor(raw_lot / volume_step) * volume_step
-    lot = max(volume_min, min(volume_max, round(stepped, 2)))
+    # b215: the max(volume_min, ...) floor is the ONE place this function can
+    # hand back a lot LARGER than the risk budget asked for. It is safe today
+    # only because every caller passes min_meaningful_lot >= volume_min, so
+    # raw_lot < volume_min is already rejected above — an invariant that was
+    # undocumented, untested, and one parameter edit away from becoming a
+    # silent risk multiplier (at volume_min=0.01 with a $80 stop on a $500
+    # account the floor is 16x the intended risk).
+    #
+    # Rounding UP into risk is never acceptable in a sizing function, so the
+    # floor now REFUSES instead of inflating. Tightening only: the callers
+    # that already reject this case keep the same behaviour, and the only
+    # change for anyone else is a skip where there used to be an oversized
+    # lot. `below_min_meaningful_lot` is reused deliberately — it is the same
+    # fact ("the risk budget does not buy a tradeable lot") and the executor,
+    # the b196 test and the risk ledger all already branch on that string.
+    if stepped < volume_min:
+        return {"lot": 0.0, "risk_usd": risk_usd, "meaningful": False,
+                "reason": "below_min_meaningful_lot", "capped": False}
+    lot = min(volume_max, round(stepped, 2))
     capped = lot < raw_lot or lot == volume_max
     return {"lot": lot, "risk_usd": risk_usd, "meaningful": True, "reason": None, "capped": capped}
 
