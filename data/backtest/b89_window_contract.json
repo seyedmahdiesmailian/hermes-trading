@@ -1,7 +1,7 @@
 {
- "_risk_code_sha": "8ff8a62b0017",
+ "_risk_code_sha": "378dc1c58966",
  "_defcon_code_sha": "9b857f7bd9d0",
- "_built_at": "2026-09-05T18:58:08.467583+00:00",
+ "_built_at": "2026-09-20T02:25:25.406826+00:00",
  "_note": "b89 option (b): DEFCON's window is 10 DEALS (opening deals included), so every count in engines/defcon.py is a DEAL count and sl_ratio's denominator includes opens. This ledger is the reachability table that statement rests on, produced by the live classifier. Zero behaviour change; option (a) \u2014 slicing closing deals only \u2014 stays a human decision, priced in b88.",
  "_contract": {
   "window_deals_literal": 10,
@@ -151,19 +151,19 @@
  },
  "live_window": {
   "present": true,
-  "day": "2026-09-05",
+  "day": "2026-09-10",
   "window_deals": 10,
   "window_opens": 5,
   "window_exits": 5,
   "exit_type_mix": {
    "unknown": 5,
-   "managed": 4,
-   "sl": 1
+   "sl": 3,
+   "managed": 2
   },
   "total_as_defcon_sees_it": 10,
-  "sl_ratio": 0.1,
+  "sl_ratio": 0.3,
   "defcon_level_now": "GREEN",
-  "sl_still_needed_for_RED": 4
+  "sl_still_needed_for_RED": 2
  },
  "shape_rows": 285,
  "level_tally": {
