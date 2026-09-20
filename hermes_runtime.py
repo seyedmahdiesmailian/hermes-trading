@@ -18,7 +18,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from engines.context import build_plan_context
-from engines.bridge_payload import positions_list
+from engines.bridge_payload import positions_list, positions_readable
 from engines.smc import smc_analyse, merge_smc_with_classic
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
 from engines.trade_management import (evaluate_trade_management, ladder_fields,
@@ -30,7 +30,8 @@ from engines.report import render_plan_brief, render_reassess_brief, render_moni
 from engines.macro_filter import apply_macro_guard
 from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
                                    is_news_lock)
-from engines.auto_executor import evaluate_proposal, execute_trade, evaluate_management_action
+from engines.auto_executor import (MAX_OPEN_POSITIONS, evaluate_management_action,
+                                    evaluate_proposal, execute_trade)
 from engines.kill_switch import check_kill_switch
 
 from engines import paths as _paths  # state paths resolved at CALL time (b39)
@@ -426,17 +427,38 @@ def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
     # never fired and a second position was opened on top of the first
     # (14:15 + 14:30 UTC sells, net -56.7$). Count real positions from the
     # positions endpoint; fall back to the account field only if it exists.
+    # b214 FAIL-CLOSED: the b45 fix above counts positions correctly when the
+    # bridge ANSWERS, but an unreadable reply (401, timeout envelope, MT5
+    # not_connected) still collapsed to 0 — and account.positions is 0 there
+    # too, so max() could not rescue it. "I could not see" was being read as
+    # "nothing is open", the same fail-OPEN shape that let the -56.7$ double
+    # -sell through. An unreadable reply now reports the cap, so the entry
+    # gate blocks instead of opening blind. Tightening only: it can add a
+    # block, never remove one, and protective management is unaffected
+    # (position_daemon has its own bridge-failure guard).
+    _positions_unreadable = False
     try:
         _pr = bridge.get_positions(SYMBOL) or {}
-        _open_ct = len(_positions_list(_pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}))
+        _pr = _pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}
+        if positions_readable(_pr):
+            _open_ct = len(_positions_list(_pr))
+        else:
+            _positions_unreadable = True
+            _open_ct = MAX_OPEN_POSITIONS
     except Exception:
-        _open_ct = account.positions
+        _positions_unreadable = True
+        _open_ct = max(int(account.positions or 0), MAX_OPEN_POSITIONS)
     account.positions = max(int(account.positions or 0), _open_ct)
     today = now.date().isoformat()
     closed = _load_closed_trades(bridge, 7)
     perf = compute_performance_state(load_performance_state(_plan_dir()), today, account.balance, closed)
     save_performance_state(_plan_dir(), perf)
     policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
+    # b214: make the blind-block visible. Without this the operator sees a
+    # generic max_positions_1 and cannot tell "a position is really open"
+    # from "the bridge went dark", which are very different incidents.
+    if _positions_unreadable:
+        policy['positions_unreadable'] = True
     return {'performance_state': perf, 'account_policy': policy}
 
 
