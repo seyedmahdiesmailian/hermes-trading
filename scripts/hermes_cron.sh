@@ -43,8 +43,18 @@ if ! flock -n 9; then
   exit 0
 fi
 
-# Phase 1: Autonomous trading
-timeout 840 python3 "$REPO_ROOT/hermes_master.py" >> logs/master_cron.log 2>&1
+# Phase 1: Autonomous trading. Never silently fall back to the system
+# interpreter: systemd's PATH commonly excludes the project virtualenv.
+# HERMES_PYTHON is an explicit deployment override for a non-standard install.
+PYTHON_BIN="${HERMES_PYTHON:-$REPO_ROOT/.venv/bin/python}"
+if [[ "$PYTHON_BIN" != */* ]]; then
+  PYTHON_BIN="$(command -v "$PYTHON_BIN" 2>/dev/null || true)"
+fi
+if [ ! -x "$PYTHON_BIN" ]; then
+  echo "[$NOW] Phase 1 FAILED: Python interpreter is not executable: $PYTHON_BIN" >> logs/cron.log
+  exit 1
+fi
+timeout 840 "$PYTHON_BIN" "$REPO_ROOT/hermes_master.py" >> logs/master_cron.log 2>&1
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
   echo "[$NOW] Phase 1 OK" >> logs/cron.log
