@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/home/ai/hermes-trading/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 */15 * * * * cd /home/ai/hermes-trading && bash scripts/hermes_cron.sh >> /home/ai/hermes-trading/logs/cron.log 2>&1
 

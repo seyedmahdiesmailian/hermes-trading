@@ -61,9 +61,15 @@ cd /home/ai/hermes-trading
 `C:\HermesBackups` است — `git clone hermes_repo_*.bundle /home/ai/hermes-trading`)
 
 ### ۲. وابستگی‌ها
+وابستگی‌ها داخل محیط مجازی نصب می‌شوند تا با PEP 668 و پکیج‌های سیستم تداخل نکنند:
 ```bash
-sudo apt install -y python3-pip
-pip3 install requests python-dotenv pywinrm requests_ntlm pandas numpy python-telegram-bot
+sudo apt install -y python3-venv
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+برای خود Bridge روی ویندوز:
+```powershell
+py -m pip install -r requirements-windows.txt
 ```
 
 ### ۳. رازها (فقط از بکاپ — در گیت‌هاب نیستند!)

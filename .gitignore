@@ -8,3 +8,5 @@ data/xau_plan/watchdog_state.json
 data/signals/listener_state.json
 .git_token
 backups/
+.venv/
+requirements.lock.txt

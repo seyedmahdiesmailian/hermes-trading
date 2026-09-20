@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/home/ai/hermes-trading
-ExecStart=/usr/bin/python3 /home/ai/hermes-trading/scripts/dashboard_bot.py
+ExecStart=/home/ai/hermes-trading/.venv/bin/python /home/ai/hermes-trading/scripts/dashboard_bot.py
 Restart=always
 RestartSec=10
 Nice=10

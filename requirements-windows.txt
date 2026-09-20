@@ -1,0 +1,4 @@
+# Hermes MT5 Bridge — install on the Windows trading machine only.
+MetaTrader5>=5.0
+flask>=3.0
+waitress>=3.0
