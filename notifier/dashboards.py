@@ -172,21 +172,37 @@ def _market_state():
         return False, '', (None, None)
 
 
+# The 9 units that actually run on the Linux box (ops/systemd: 8 services
+# + hermes-trading.timer). The old list of 4 made "همه‌چیز روال است"
+# while forwarder/webui/omniroute were down.
+_SVC_NAMES = [
+    'hermes-signal', 'hermes-position', 'hermes-dashboard',
+    'hermes-gateway', 'hermes-forwarder', 'hermes-trading',
+    'hermes-trading.timer', 'hermes-webui', 'omniroute',
+]
+
+
 def _services() -> dict:
     try:
-        r = subprocess.run(['systemctl', '--user', 'is-active',
-                            'hermes-signal', 'hermes-position', 'hermes-gateway',
-                            'hermes-dashboard'],
+        r = subprocess.run(['systemctl', '--user', 'is-active', *_SVC_NAMES],
                            capture_output=True, text=True, timeout=10)
         vals = r.stdout.split()
     except Exception:
         vals = []
-    names = ['hermes-signal', 'hermes-position', 'hermes-gateway', 'hermes-dashboard']
-    return dict(zip(names, vals + ['?'] * max(0, len(names) - len(vals))))
+    return dict(zip(_SVC_NAMES, vals + ['?'] * max(0, len(_SVC_NAMES) - len(vals))))
 
 
-_SVC_LABEL = {'hermes-signal': '📡 سیگنال', 'hermes-position': '📌 پوزیشن',
-              'hermes-gateway': '🖥 گیت‌وی', 'hermes-dashboard': '🛰 داشبورد'}
+_SVC_LABEL = {
+    'hermes-signal': '📡 سیگنال',
+    'hermes-position': '📌 پوزیشن',
+    'hermes-dashboard': '🛰 داشبورد',
+    'hermes-gateway': '🖥 گیت‌وی',
+    'hermes-forwarder': '📨 فورواردر',
+    'hermes-trading': '⏱ کرون ترید',
+    'hermes-trading.timer': '⏲ تایمر ترید',
+    'hermes-webui': '🌐 وب',
+    'omniroute': '🔀 omniroute',
+}
 
 
 def _svc_uptime(name: str) -> str:

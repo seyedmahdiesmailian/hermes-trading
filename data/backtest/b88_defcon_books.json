@@ -1,5 +1,5 @@
 {
- "_risk_code_sha": "8ff8a62b0017",
+ "_risk_code_sha": "33d0dcba5f2f",
  "_note": "b88 (b68 round 20): DEFCON measured as a FEEDBACK-LOOP book \u2014 the funnel's own trade sequence replayed through the live engines.defcon classifier per entry, kept/dropped books under the b71 harness, the b87 redundancy row against the kill switch, and the two window-shape probes (deals-vs-trades dilution, day-rollover blind cycle). Read-only; no gate weakened; the corrected-window row is a PROPOSAL for a human.",
  "_live_gates": {
   "MIN_RISK_REWARD": 1.5,
