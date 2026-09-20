@@ -372,7 +372,7 @@ def unpushed_count(repo: Path | str | None = None) -> int | None:
     None means the comparison is impossible (detached HEAD, no remote ref,
     offline state, or not a repo). None is NOT zero: callers must not read
     "unknown" as "pushed". This deliberately follows the caller checkout's
-    branch; the old origin/master comparison could certify the wrong branch.
+    branch; the old fixed-branch comparison could certify the wrong branch.
     """
     try:
         root = repo or Path.cwd()

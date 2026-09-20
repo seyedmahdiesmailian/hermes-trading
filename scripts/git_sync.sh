@@ -40,8 +40,8 @@ fi
 
 # Nothing to push? Stay silent (the gate must not spam on idle ticks).
 # Resolve the branch from THIS checkout. Never compare or push against
-# origin/master: an Arena/deployment checkout may intentionally be on a
-# feature branch, and silently redirecting it to master is unsafe.
+# a fixed protected branch: an Arena/deployment checkout may intentionally
+# be on a feature branch, and silently redirecting it is unsafe.
 BRANCH=$(git symbolic-ref --quiet --short HEAD 2>/dev/null) || {
   echo "$(date -u +%FT%TZ) detached HEAD — refusing branch sync" >> logs/git_sync.log
   exit 1
