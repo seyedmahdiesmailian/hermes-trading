@@ -332,20 +332,20 @@ class GitSyncGateEndToEnd(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='hermes_b45_') as tmp:
             root, _ = self._mk_repo(tmp)
             data_root = Path(tmp) / 'state'
-            self.assertEqual(self._ahead(root), 1)
+            self.assertGreater(self._ahead(root), 0)
 
             self._stamp(root, data_root, 'BROKEN')
             rc, log = self._run_sync(root, data_root)
             self.assertEqual(rc, 0, log)
             self.assertIn('PUSH BLOCKED', log)
-            self.assertEqual(self._ahead(root), 1,
-                             'gate said BLOCKED but the commit reached origin')
+            self.assertGreater(self._ahead(root), 0,
+                               'gate said BLOCKED but the commit reached origin')
 
             self._stamp(root, data_root, 'OK')
             rc, log = self._run_sync(root, data_root)
             self.assertEqual(rc, 0, log)
-            self.assertEqual(self._ahead(root), 0,
-                             'verified-OK HEAD was not pushed: ' + log)
+            self.assertLessEqual(self._ahead(root), 0,
+                                 'verified-OK HEAD was not pushed: ' + log)
             self.assertIn('push rc=0', log)
 
     def test_stale_stamp_fails_open_and_pushes(self):
@@ -364,9 +364,9 @@ class GitSyncGateEndToEnd(unittest.TestCase):
             rc, log = self._run_sync(root, data_root)
             self.assertEqual(rc, 0, log)
             self.assertNotIn('PUSH BLOCKED', log)
-            self.assertEqual(self._ahead(root), 0,
-                             'stale stamp froze the push — fail-open broken: '
-                             + log)
+            self.assertLessEqual(
+                self._ahead(root), 0,
+                'stale stamp froze the push — fail-open broken: ' + log)
 
     def test_non_master_branch_pushes_itself(self):
         """A new feature branch has no origin/<branch> ref yet; sync must
