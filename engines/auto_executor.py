@@ -166,6 +166,18 @@ def evaluate_proposal(
             "reasons": reasons,
         }
 
+    # ── Check 2.5: closed-trade history must be readable ──
+    # Missing key = legacy/test callers (unchanged). Explicit False is the
+    # 401/MT5-error shape: an empty window used to look like a clean day.
+    if account_policy.get("history_ok") is False:
+        reasons.append("history_unavailable")
+        return {
+            "execute": False,
+            "reason": "history_unavailable",
+            "command": None,
+            "reasons": reasons,
+        }
+
     # ── Check 3: Daily loss limit ──
     daily_pnl = float(performance_state.get("daily_pnl", 0) or 0)
     balance = float(account_policy.get("balance", 0) or 0)

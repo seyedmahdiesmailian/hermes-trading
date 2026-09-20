@@ -50,7 +50,19 @@ Signal path also refuses `_spr <= 0` (parity).
 * post-close cooldown
 * `MIN_STOP_DISTANCE` 8 → 9
 * spread check inside `evaluate_proposal` when `bridge is None`
-* hard-skip `already_in_position` in the scorer (still −0.5; the executor
-  gate is the hard block)
+* kill-switch corrupt file → halt (pinned `test_durable_state`: false halt
+  that never clears is worse; atomic writes make half-writes ~impossible)
 
 Bridge / auth / `windows_bridge/` untouched. `master` untouched.
+
+## Follow-up (same day)
+
+3. `evaluate_signal` Check 6 was only −0.5 for `already_in_position`. A
+   7+ score still verdict='execute' with a ticket on the book (executor
+   Check 5 caught it; the scorer lied). Now a hard skip at verdict —
+   no new return path (b165 still 5 returns).
+4. `_load_closed_trades` of a 401/MT5 error was `[]` = "no losses today".
+   Kill switch / daily cap / DEFCON went blind. Now returns
+   `(deals, readable)`; unreadable → `policy.history_ok=False` →
+   `evaluate_proposal` reason `history_unavailable`. Missing key on
+   legacy/test policy dicts is unchanged.

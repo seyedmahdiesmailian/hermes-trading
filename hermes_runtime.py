@@ -439,12 +439,25 @@ def evaluate_legacy_guards(management: dict, plan: dict, trade: dict,
         return management, status
 
 
-def _load_closed_trades(bridge, days=7) -> list[dict]:
-    r = bridge.get_history_deals(SYMBOL, days)
-    if isinstance(r, dict) and r.get('ok'):
-        data = r.get('data', r.get('deals', []))
-        return data if isinstance(data, list) else []
-    return []
+def _load_closed_trades(bridge, days=7) -> tuple[list[dict], bool]:
+    """Closed deals for the daily-loss / DEFCON / kill-switch window.
+
+    Returns (deals, readable). `readable=False` means the book is unknown —
+    callers must NOT treat [] as "no losses today" (that is the b45 class
+    on the PnL gates: a 401 history reply used to look like a clean day).
+    `ok` missing with a real list is still readable (same leniency as
+    positions_list). `ok: false` / non-list / exception = unreadable.
+    """
+    try:
+        r = bridge.get_history_deals(SYMBOL, days)
+    except Exception:
+        return [], False
+    if not isinstance(r, dict) or r.get('ok') is False:
+        return [], False
+    data = r.get('data', r.get('deals', []))
+    if not isinstance(data, list):
+        return [], False
+    return [d for d in data if isinstance(d, dict)], True
 
 
 def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
@@ -465,10 +478,18 @@ def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
         _open_ct = MAX_OPEN_POSITIONS
     account.positions = max(int(account.positions or 0), _open_ct)
     today = now.date().isoformat()
-    closed = _load_closed_trades(bridge, 7)
-    perf = compute_performance_state(load_performance_state(_plan_dir()), today, account.balance, closed)
-    save_performance_state(_plan_dir(), perf)
+    closed, history_ok = _load_closed_trades(bridge, 7)
+    if history_ok:
+        perf = compute_performance_state(
+            load_performance_state(_plan_dir()), today, account.balance, closed)
+        save_performance_state(_plan_dir(), perf)
+    else:
+        # Keep last persisted numbers — do not recompute from an empty
+        # window that would look like a clean book (kill switch / daily
+        # cap / DEFCON going blind). evaluate_proposal refuses the entry.
+        perf = load_performance_state(_plan_dir()) or {}
     policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
+    policy['history_ok'] = history_ok
     return {'performance_state': perf, 'account_policy': policy}
 
 
@@ -993,6 +1014,7 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             'daily_trade_limit': 'سقف تعداد ترید روزانه پر شده',
             'position_limit': 'سقف پوزیشن باز پر شده',
             'stop_too_tight': 'استاپ داخل نویز طلا — ورود ممنوع',
+            'history_unavailable': 'تاریخچه معاملات خوانده نشد — ورود ممنوع',
         }
         _sr = str(proposal.get('skip_reason'))
         _base = _sr.split('_')[0] + ('_' + _sr.split('_')[1] if _sr.startswith('poor_rr') or _sr.startswith('sizing') else '')

@@ -118,6 +118,90 @@ class TestPositionCount(unittest.TestCase):
         pp = hermes_runtime._performance_and_policy(
             fake, self._acct(), datetime.now(timezone.utc))
         self.assertEqual(pp["account_policy"]["open_positions"], 0)
+        self.assertTrue(pp["account_policy"].get("history_ok", True))
+
+
+class _HistoryBridge(_FakeBridge):
+    def __init__(self, *, history=None, raise_history=False):
+        super().__init__([])
+        self._history = history
+        self._raise_history = raise_history
+
+    def get_history_deals(self, symbol="XAUUSD", days=7):
+        if self._raise_history:
+            raise ConnectionError("history down")
+        return self._history
+
+
+class TestHistoryFailClosed(unittest.TestCase):
+    """Unreadable closed-trade history must not look like a clean day."""
+
+    def setUp(self):
+        from tests import hermetic
+        self.root = hermetic.use_temp_data_root()
+
+    def tearDown(self):
+        from tests import hermetic
+        hermetic.release()
+
+    def _acct(self):
+        return {"ok": True, "balance": 5000.0, "equity": 5000.0,
+                "margin_free": 5000.0, "margin": 0.0}
+
+    def test_401_history_marks_unreadable(self):
+        import hermes_runtime
+        fake = _HistoryBridge(history={
+            "ok": False, "error": "HTTP_401",
+            "data": {"raw": "<html>401</html>"},
+        })
+        pp = hermes_runtime._performance_and_policy(
+            fake, self._acct(), datetime.now(timezone.utc))
+        self.assertIs(pp["account_policy"]["history_ok"], False)
+
+    def test_history_exception_marks_unreadable(self):
+        import hermes_runtime
+        fake = _HistoryBridge(raise_history=True)
+        pp = hermes_runtime._performance_and_policy(
+            fake, self._acct(), datetime.now(timezone.utc))
+        self.assertIs(pp["account_policy"]["history_ok"], False)
+
+    def test_executor_blocks_when_history_unreadable(self):
+        from engines.auto_executor import evaluate_proposal
+        from engines.risk import compute_performance_state
+        now = datetime.now(timezone.utc)
+        pol = {"trade_allowed": True, "regime": "normal",
+               "open_positions": 0, "balance": 5000.0, "history_ok": False}
+        perf = compute_performance_state({}, now.date().isoformat(), 5000.0, [])
+        prop = {"blueprint": {"side": "SELL", "entry_price": 4450,
+                              "sl": 4460, "tp": 4435, "symbol": "XAUUSD"},
+                "grade": "B"}
+        r = evaluate_proposal(prop, pol, perf, {}, None)
+        self.assertFalse(r["execute"])
+        self.assertEqual(r["reason"], "history_unavailable")
+
+    def test_missing_history_ok_key_still_allows(self):
+        """Control: legacy/test policy dicts without the key are unchanged."""
+        import engines.auto_executor as ae
+        import engines.cooldown as cd
+        real, real_cd = ae.is_market_open, cd.check_entry_cooldown
+        ae.is_market_open = lambda *a, **k: True
+        cd.check_entry_cooldown = lambda now=None: {"allowed": True}
+        try:
+            from engines.auto_executor import evaluate_proposal
+            from engines.risk import compute_performance_state
+            now = datetime.now(timezone.utc)
+            pol = {"trade_allowed": True, "regime": "normal",
+                   "open_positions": 0, "balance": 5000.0}
+            perf = compute_performance_state({}, now.date().isoformat(), 5000.0, [])
+            prop = {"blueprint": {"side": "SELL", "entry_price": 4450,
+                                  "sl": 4460, "tp": 4435, "symbol": "XAUUSD"},
+                    "grade": "B"}
+            r = evaluate_proposal(prop, pol, perf, {}, None)
+            if not r.get("execute"):
+                self.fail(f"expected execute without history_ok key, got {r}")
+        finally:
+            ae.is_market_open = real
+            cd.check_entry_cooldown = real_cd
 
 
 class TestSpreadFailClosed(unittest.TestCase):
