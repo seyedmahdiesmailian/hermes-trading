@@ -21,10 +21,10 @@ except ImportError:
     from env_loader import load_dotenv  # python-dotenv missing → local fallback
 load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
-from bridge_client import BridgeClient, BRIDGE_URL  # noqa: E402
+from bridge_client import BridgeClient  # noqa: E402
 
 c = BridgeClient()  # token from HERMES_BRIDGE_TOKEN in the loaded env
-print("bridge:", BRIDGE_URL)
+print("bridge:", c.url)
 h = c.health()
 print("health:", "OK" if h.get("ok") else f"BAD {json.dumps(h, ensure_ascii=False)[:200]}")
 acc = c.get_account()

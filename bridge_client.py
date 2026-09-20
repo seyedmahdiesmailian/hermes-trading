@@ -5,13 +5,39 @@ import os
 import urllib.parse
 import requests
 
-WIN_IP = os.getenv("HERMES_WIN_IP", "192.168.10.51")
-BRIDGE_URL = os.getenv("HERMES_BRIDGE_URL", f"http://{WIN_IP}:5050")
+DEFAULT_WIN_IP = "192.168.10.51"
+
+
+def bridge_url() -> str:
+    """Resolve the Bridge URL at call time, not when this module is imported.
+
+    Import-time configuration made a long-lived daemon retain an old endpoint
+    when its environment was loaded or changed after another module imported
+    bridge_client. Explicit URL wins; otherwise derive from the documented
+    Windows host knob.
+    """
+    explicit = os.getenv("HERMES_BRIDGE_URL")
+    if explicit:
+        return explicit.rstrip("/")
+    return f"http://{os.getenv('HERMES_WIN_IP', DEFAULT_WIN_IP)}:5050"
+
+
+def bridge_token() -> str | None:
+    """Resolve the Bridge token at client construction time."""
+    return os.getenv("HERMES_BRIDGE_TOKEN") or None
+
+
+# Backward-compatible snapshots for scripts that display/import these names.
+# New network clients must use BridgeClient() or bridge_url(), both of which
+# resolve at call time.
+WIN_IP = os.getenv("HERMES_WIN_IP", DEFAULT_WIN_IP)
+BRIDGE_URL = bridge_url()
+
 
 class BridgeClient:
-    def __init__(self, url: str = BRIDGE_URL, token: str | None = None):
-        self.url = url.rstrip("/")
-        self.token = token or os.getenv("HERMES_BRIDGE_TOKEN")
+    def __init__(self, url: str | None = None, token: str | None = None):
+        self.url = (url if url is not None else bridge_url()).rstrip("/")
+        self.token = bridge_token() if token is None else token
         self.connected = False
 
     def _headers(self):
