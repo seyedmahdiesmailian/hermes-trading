@@ -13,34 +13,28 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
 ####
-from engines.context import build_plan_context
-from engines.bridge_payload import positions_list, positions_readable
 from engines.context import build_plan_context, apply_bias_geometry
-from engines.bridge_payload import positions_list, entry_open_count
+from engines.bridge_payload import positions_list, positions_readable
 from engines.smc import smc_analyse, merge_smc_with_classic
-from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
-from engines.trade_management import (evaluate_trade_management, ladder_fields,
-                                      build_tp_ladder)
+from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle
+from engines.trade_management import evaluate_trade_management, ladder_fields, build_tp_ladder
 from engines.risk import assess_account_policy, compute_performance_state
-from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log, append_risk_ledger
+from engines.storage import (load_current_plan, save_current_plan, load_runtime_state, save_runtime_state,
+                             load_performance_state, save_performance_state, append_execution_log,
+                             append_reassessment_log, append_risk_ledger)
 from engines.plan import setup_grade, apply_smc_merge, _entry_close, stale_at_birth
-from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
+from engines.report import (render_plan_brief, render_reassess_brief, render_monitor_brief,
+                            render_management_brief, render_execution_brief)
 from engines.macro_filter import apply_macro_guard
-from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
-                                   is_news_lock)
-####
-from engines.auto_executor import (MAX_OPEN_POSITIONS, evaluate_management_action,
-                                    evaluate_proposal, execute_trade)
-from engines.auto_executor import (
-    evaluate_proposal, execute_trade, evaluate_management_action,
-    MAX_OPEN_POSITIONS,
-)
+from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock, is_news_lock
+from engines.auto_executor import evaluate_management_action, evaluate_proposal, execute_trade, MAX_OPEN_POSITIONS
 from engines.kill_switch import check_kill_switch
+####
 
 from engines import paths as _paths  # state paths resolved at CALL time (b39)
 
@@ -335,9 +329,9 @@ def _guard_brief_line(status: dict | None, ticket) -> str:
     if state == 'error':
         return (f"\n\n🛑 گاردهای ایمنی (news_lock/time_exit) اجرا نشدند"
                 f"{tag}: {detail} — مدیریت فقط بر زنجیره اصلی")
-    if state == 'calendar_unavailable':
-        return (f"\n\n⚠️ تقویم اخبار در دسترس نیست — news_lock این چرخه "
-                f"نمی‌تواند قفل کند (time_exit فعال است)")
+    elif state == 'calendar_unavailable':
+            return ("\n\n⚠️ تقویم اخبار دسترس نیست news_lock این چرخه "
+                    "نمی‌تواند قفل کند (time_exit فعال است)")
     return ''
 
 
