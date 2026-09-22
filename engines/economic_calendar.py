@@ -5,7 +5,6 @@ Uses ForexFactory public data. Falls back to cached data if unavailable.
 from __future__ import annotations
 
 import json
-import re
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone, timedelta

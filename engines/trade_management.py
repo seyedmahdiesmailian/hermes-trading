@@ -239,7 +239,6 @@ def evaluate_trade_management(trade: dict, market_price: float, now: datetime) -
     side_buy = _is_buy(trade)
     entry = float(trade["entry_price"])
     sl = float(trade["sl"])
-    tp_levels = [float(x) for x in trade.get("tp_levels", [])]
     filled = [float(x) for x in trade.get("filled_tp_levels", [])]
 
     if not bool(trade.get("thesis_valid", True)) and not filled:

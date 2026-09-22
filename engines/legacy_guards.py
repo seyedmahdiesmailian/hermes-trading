@@ -16,7 +16,7 @@ with this priority order (news_lock > time_exit > legacy chain).
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 MAX_POSITION_AGE_HOURS = 36        # XAUUSD swing context; stale = exit
 NEWS_LOCK_MINUTES_BEFORE = 30      # tighten SL 30 min before high-impact news
@@ -135,7 +135,6 @@ def evaluate_news_lock(
             if 0 < delta_min <= NEWS_LOCK_MINUTES_BEFORE:
                 atr = float(trade.get("atr", 0) or 0) or 5.0
                 new_sl_dist = NEWS_TIGHTEN_ATR_MULT * atr
-                entry = float(trade.get("entry_price") or trade.get("price_open") or market_price)
                 new_sl = market_price + new_sl_dist if not side_buy else market_price - new_sl_dist
                 old_sl = float(trade.get("sl") or 0)
                 # only tighten in the protective direction, never loosen

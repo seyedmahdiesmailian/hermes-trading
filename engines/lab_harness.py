@@ -50,8 +50,7 @@ MIN_RR = 0.0                  # lab arms measure raw expectancy; live gate 6
 # whose own defaults are min_grade="B", min_rr=1.5 — the lab harness had
 # drifted from it. These are IMPORTED from the live modules, never restated,
 # so a live gate change moves the lab bar automatically.
-from engines.auto_executor import MIN_RISK_REWARD as LIVE_MIN_RR, \
-    MIN_SETUP_GRADE as LIVE_MIN_GRADE
+from engines.auto_executor import MIN_SETUP_GRADE as LIVE_MIN_GRADE
 # ── b118: the runner trail is DERIVED from live, never restated ────────────
 # Until b117 this file carried `trail_after_partial=0.5` as a literal while live
 # trailed the runner lane at 0.30 x risk with a $3.00 absolute floor

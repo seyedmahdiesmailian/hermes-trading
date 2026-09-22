@@ -42,7 +42,6 @@ def detect_order_blocks(rows: list[dict], lookback: int = 20) -> list[dict]:
     for i in range(len(rows) - 2, 0, -1):
         prev = rows[i - 1]
         curr = rows[i]
-        next_c = rows[i + 1]
 
         # Bullish OB: prev is bearish, curr breaks above with strong body
         if prev["close"] < prev["open"]:
@@ -146,7 +145,6 @@ def detect_fair_value_gaps(rows: list[dict]) -> list[dict]:
             })
 
     # Check fill: subsequent candles' wicks touching the gap
-    last_price = rows[-1]["close"]
     for fvg in fvgs:
         # Check candles after the FVG
         for j in range(fvg["c3_index"] + 1, len(rows)):

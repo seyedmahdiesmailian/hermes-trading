@@ -28,6 +28,7 @@ __all__ = ["check_signals", "run_signal_check"]
 from engines import paths  # resolved at CALL time so tests can redirect the tree
 from engines import signal_pending
 
+from engines.storage import append_execution_log
 
 def _get_env():
     token = os.getenv('TELEGRAM_BOT_TOKEN', '')
@@ -674,7 +675,6 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 "pending_ticket": pres.get("ticket"),
                 "lot": command["lot"],
             })
-            from engines.storage import append_execution_log
             append_execution_log(PLAN_DIR, {
                 "at": datetime.now(timezone.utc).isoformat(),
                 "source": "signal_listener", "plan_id": "signal",
@@ -711,7 +711,6 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
         })
 
         # Log execution
-        from engines.storage import append_execution_log
         append_execution_log(PLAN_DIR, {
             "at": datetime.now(timezone.utc).isoformat(),
             "source": "signal_listener",

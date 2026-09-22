@@ -28,7 +28,6 @@ def route_runtime_step(plan: dict | None, now: datetime | None = None) -> str:
 
 def build_plan_from_context(ctx: dict, now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
-    session = ctx.get("session", "asia")
     # M5 scalping: reassess every 5 minutes (fresh zones, fresh SMC)
     next_reassessment = now + timedelta(minutes=5)
     return {

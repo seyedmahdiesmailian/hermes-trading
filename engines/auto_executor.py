@@ -101,7 +101,6 @@ def evaluate_proposal(
     """
     now = _now()
     reasons = []
-    skip = False
 
     # ── Adaptive learning parameters (Phase 6) ──
     # learning_state.json holds params auto-adjusted from the trade journal.

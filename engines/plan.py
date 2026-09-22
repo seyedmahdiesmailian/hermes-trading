@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 # b54: strategy knobs as patchable module constants (swept by
 # scripts/ab_b54_sweep.py on the live-parity M5 funnel; values = live as-is).

@@ -16,7 +16,6 @@ Broker symbols that don't exist are skipped gracefully (available: false).
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Optional
 
 DXY_COMPONENTS = ["EURUSD", "USDJPY", "GBPUSD", "USDCAD", "USDCHF", "AUDUSD"]
 HTF_TIMEFRAMES = ["H4", "D1", "W1"]
