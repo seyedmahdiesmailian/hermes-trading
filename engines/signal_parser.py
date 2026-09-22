@@ -292,14 +292,6 @@ def _extract_tp_ladder(text: str) -> list:
     return rungs if len(rungs) > 1 else []
 
 
-def _price_candidates(value: float, anchor: float) -> list:
-    """All plausible full prices for an abbreviated value near `anchor`."""
-    if value < 100:
-        base = int(anchor // 100) * 100
-        return [base - 100 + value, base + value, base + 100 + value]
-    base = int(anchor // 1000) * 1000
-    return [base - 1000 + value, base + value, base + 1000 + value]
-
 
 def expand_abbreviated_price(value: float, anchor: float,
                             prefer_below: bool = False, prefer_above: bool = False,
