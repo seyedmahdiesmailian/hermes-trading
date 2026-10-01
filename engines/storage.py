@@ -58,6 +58,63 @@ def _prune_plan_history(history_dir: Path):
         pass
 
 
+def collect_plan_history_stamps(base_dir: str | Path | None = None) -> set[str]:
+    """All DISTINCT created_at stamps in plan_history, on disk AND in git history.
+
+    Pruning (_prune_plan_history) deletes the oldest cycles under the ledger,
+    which turns a full-week record into a mid-week-only window where a
+    wall-clock gate cannot have fired at all (b104 class). Callers that
+    measure a gate's real fire rate over the record must recover the pruned
+    prefix from git, not read the directory alone.
+    """
+    import json as _json
+    import subprocess
+
+    plan_paths = _plan_paths(base_dir, create=False)
+    history_dir: Path = plan_paths["plan_history_dir"]
+    stamps: set[str] = set()
+    for fn in sorted(history_dir.glob("*.json")):
+        try:
+            at = _json.loads(fn.read_text(encoding="utf-8")).get("created_at")
+            if at:
+                stamps.add(at)
+        except Exception:
+            continue
+
+    root = plan_paths["base_dir"]
+    # base_dir is the xau_plan dir; git runs from the REPO root that owns it.
+    repo = next((p for p in (root, *root.parents) if (p / ".git").exists()), None)
+    rel = "data/xau_plan/plan_history"
+    if repo is None:
+        return stamps
+    try:
+        # only meaningful when the tree sits inside the git repo
+        ls = subprocess.run(
+            ["git", "log", "--diff-filter=D", "--name-only", "--pretty=format:",
+             "--", rel],
+            cwd=str(repo), capture_output=True, text=True, check=True).stdout
+        for fn in (l.strip() for l in ls.splitlines() if l.strip()):
+            try:
+                add = subprocess.run(
+                    ["git", "log", "--all", "--diff-filter=A", "--format=%H",
+                     "--", fn],
+                    cwd=str(repo), capture_output=True, text=True
+                ).stdout.strip().splitlines()
+                if not add:
+                    continue
+                content = subprocess.run(
+                    ["git", "show", f"{add[-1]}:{fn}"],
+                    cwd=str(repo), capture_output=True, text=True).stdout
+                at = _json.loads(content).get("created_at")
+                if at:
+                    stamps.add(at)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return stamps
+
+
 def save_current_plan(base_dir: str | Path | None, plan: dict) -> Path:
     paths = ensure_xau_plan_dirs(base_dir)
     current_path = paths["current_plan_path"]

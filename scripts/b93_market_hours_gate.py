@@ -84,6 +84,7 @@ os.chdir(_ROOT)
 from engines.market_hours import is_market_open                            # noqa: E402
 from engines import cooldown as cd                                         # noqa: E402
 from engines.broker_clock import load_offset                               # noqa: E402
+from engines import storage                                                # noqa: E402
 
 OUT = "data/backtest/b93_market_hours_gate.json"
 PLAN_HIST_DIR = "data/xau_plan/plan_history"
@@ -210,17 +211,7 @@ def live_record() -> dict:
     created_at (observed: 20260906_060002_xau-f2e037be and
     20260906_061502_xau-f2e037be, same created_at) — counting files would
     double-count that cycle. A cycle is one created_at."""
-    stamps = set()
-    for fn in sorted(os.listdir(PLAN_HIST_DIR)):
-        if not fn.endswith(".json"):
-            continue
-        try:
-            with open(os.path.join(PLAN_HIST_DIR, fn), encoding="utf-8") as f:
-                at = json.load(f).get("created_at")
-            if at:
-                stamps.add(at)
-        except Exception:
-            continue
+    stamps = storage.collect_plan_history_stamps()
     stamps = sorted(dt.datetime.fromisoformat(s) for s in stamps)
     blocked = [t for t in stamps if not is_market_open(t)]
     return {

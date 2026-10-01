@@ -47,6 +47,7 @@ sys.path.insert(0, str(REPO))
 
 from engines import cooldown as cd                     # noqa: E402  (live module)
 from engines.market_hours import is_market_open        # noqa: E402  (live gate)
+from engines import storage                            # noqa: E402  (history collector)
 
 LEGS = ("cached", "W1", "W2", "W3", "W4")
 
@@ -172,14 +173,11 @@ class TestLiveRecord(unittest.TestCase):
         lr = _led()["live_record"]
         cutoff = dt.datetime.fromisoformat(lr["last"])
         first = dt.datetime.fromisoformat(lr["first"])
-        stamps = set()
-        for fn in (REPO / "data/xau_plan/plan_history").glob("*.json"):
-            try:
-                at = json.loads(fn.read_text(encoding="utf-8")).get("created_at")
-                if at and dt.datetime.fromisoformat(at) <= cutoff:
-                    stamps.add(at)
-            except Exception:
-                continue
+        # Same collector the ledger used: disk + the pruned prefix recovered
+        # from git. Reading the directory alone would re-introduce the b104
+        # location-dependence (a pruned window cannot match a full one).
+        stamps = {s for s in storage.collect_plan_history_stamps(REPO / "data" / "xau_plan")
+                  if dt.datetime.fromisoformat(s) <= cutoff}
         self.assertTrue(stamps, "no plan_history survives at all — the "
                                 "recomputation is vacuous, not passing")
         blocked = sum(1 for s in stamps
