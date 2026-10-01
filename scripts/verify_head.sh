@@ -55,7 +55,11 @@ HEAD=$(git rev-parse --short HEAD)
 # tests/test_b44_clean_checkout.py::test_verify_head_script_captures_real_rc.)
 
 # ── 1. import integrity (fast, specific shape on ModuleNotFoundError) ──
-timeout 300 python3 -m unittest \
+# 0a96bc5: deps live in .venv — the system python3 does not have them, and a
+# bare 'python3' here reports a false BROKEN on a healthy tree.
+PYTHON="${PYTHON:-$REPO_ROOT/.venv/bin/python}"
+[ -x "$PYTHON" ] || PYTHON=python3
+timeout 300 "$PYTHON" -m unittest \
   tests.test_b42_tracked_imports \
   tests.test_b44_clean_checkout >> "$LOG" 2>&1
 RC=$?
@@ -65,7 +69,7 @@ if [ "$RC" -ne 0 ]; then
 else
   echo "$(date -u +%FT%TZ) HEAD=$HEAD import-checks OK, running full suite on clean checkout" >> "$LOG"
   # ── 2. the FULL suite inside HEAD itself (b50), stamping the verdict ──
-  HERMES_STAMP=1 timeout 900 python3 engines/head_verify.py HEAD > /tmp/hermes_head_verify.json 2>> "$LOG"
+  HERMES_STAMP=1 timeout 900 "$PYTHON" engines/head_verify.py HEAD > /tmp/hermes_head_verify.json 2>> "$LOG"
   RC=$?
   if [ "$RC" -eq 0 ]; then
     echo "$(date -u +%FT%TZ) HEAD=$HEAD VERDICT=OK rc=0 $(tail -c 200 /tmp/hermes_head_verify.json | tr -d '\n')" >> "$LOG"
@@ -80,7 +84,7 @@ fi
 
 # Loud: the whole point of b44/b50 is that a broken HEAD must not wait for
 # the next cron tick to be noticed.
-python3 - "$HEAD" <<'PY' >> "$LOG" 2>&1 || true
+"$PYTHON" - "$HEAD" <<'PY' >> "$LOG" 2>&1 || true
 import os, sys
 _root = os.environ['HERMES_VERIFY_REPO_ROOT']
 sys.path.insert(0, _root)
