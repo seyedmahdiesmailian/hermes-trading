@@ -407,7 +407,8 @@ class TestB66RepoPathLiterals(unittest.TestCase):
         seam and the script exports it; no literal survives in code."""
         src = (REPO / "scripts" / "verify_head.sh").read_text(encoding="utf-8")
         self.assertIn('export HERMES_VERIFY_REPO_ROOT="$REPO_ROOT"', src)
-        alert = src[src.index('python3 - "$HEAD" <<\'PY\''):]
+        # 0a96bc5: the alert heredoc runs on $PYTHON (the venv), not bare python3
+        alert = src[src.index('"$PYTHON" - "$HEAD" <<\'PY\''):]
         self.assertIn("os.environ['HERMES_VERIFY_REPO_ROOT']", alert)
         for b in repo_path_hits_sh(src, "scripts/verify_head.sh"):
             self.fail(f"verify_head.sh still resolves a literal: {b}")
