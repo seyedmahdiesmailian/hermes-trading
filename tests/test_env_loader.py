@@ -78,7 +78,10 @@ class TestEnvLoader(unittest.TestCase):
         root = REPO
         checked = 0
         for py in sorted(root.rglob("*.py")):
-            if "__pycache__" in py.parts or ".git" in py.parts:
+            if ("__pycache__" in py.parts or ".git" in py.parts
+                    or ".venv" in py.parts or "venv" in py.parts):
+                # 0a96bc5 isolates runtime deps in .venv — its site-packages
+                # legitimately re-exports bare `from dotenv import load_dotenv`
                 continue
             if py.parent == root / "tests":  # this file quotes the banned patterns
                 continue
