@@ -11,7 +11,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests'))
+
+import hermetic  # noqa: E402  (shared temp-root switch)
 
 # IMPORTANT: force the real module bindings BEFORE any monkeypatching.
 # hermes_runtime does `from engines.storage import load_current_plan` at import
@@ -174,6 +177,7 @@ class TestSignalSpreadGate(unittest.TestCase):
 
     def tearDown(self):
         from tests import hermetic
+
         hermetic.release()
 
     def _run(self, ask, bid):

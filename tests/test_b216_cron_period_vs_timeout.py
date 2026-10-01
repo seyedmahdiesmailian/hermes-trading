@@ -51,9 +51,8 @@ def cron_period_seconds() -> int:
 
 
 def script_timeout_seconds() -> int:
-    m = re.search(r"^timeout\s+(\d+)\s+python3",
-                  CRON_SH.read_text(encoding="utf-8"), re.M)
-    assert m, "no `timeout N python3` line in hermes_cron.sh"
+    m = re.search(r"^timeout\s+(\d+)\s+", CRON_SH.read_text(encoding="utf-8"), re.M)
+    assert m, "no `timeout N ...` line in hermes_cron.sh"
     return int(m.group(1))
 
 

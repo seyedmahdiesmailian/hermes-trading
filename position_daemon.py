@@ -34,6 +34,11 @@ load_dotenv(BASE / '.env')
 
 from bridge_client import BridgeClient
 from engines import paths
+from engines.config import dry_run as _dry_run  # WP2: canonical DRY_RUN parse
+from engines.config import ops_bot_token as _ops_token  # WP2: canonical tokens
+from engines.config import ops_chat_id as _ops_chat  # WP2: canonical chat ids
+from engines.config import telegram_bot_token as _tg_token
+from engines.config import telegram_chat_id as _tg_chat
 from engines.bridge_payload import positions_list
 from engines.trade_management import evaluate_trade_management, ladder_fields, build_tp_ladder
 from engines.plan import setup_grade   # b111: ONE grade rule for all producers
@@ -44,7 +49,7 @@ from engines.legacy_guards import (evaluate_news_lock, evaluate_time_exit,
 # b39: LOG_FILE removed — it was a dead import-time binding of
 # paths.logs_dir() (log() below already resolves per call). Keeping it alive
 # was a trap: any new caller would write to production logs under a test root.
-DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
+DRY_RUN = _dry_run()  # WP2: canonical parse (same values)
 POLL_SEC = 5
 
 
@@ -63,17 +68,16 @@ def log(msg: str):
 
 
 def send_telegram(text: str):
-    _tg(text, os.getenv('TELEGRAM_BOT_TOKEN', ''))
+    _tg(text, _tg_token())
 
 
 def send_ops(text: str):
     """b37: system-status alerts -> 3rd ops bot."""
-    _tg(text, os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', ''),
-        chat=os.getenv('AUTOPILOT_REPORT_CHAT_ID', '194015957'))
+    _tg(text, _ops_token(), chat=_ops_chat())
 
 
 def _tg(text: str, token: str, chat: str | None = None):
-    chat = chat or os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    chat = chat or _tg_chat()
     if not token:
         return
     try:
@@ -424,6 +428,7 @@ def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
         mgmt_core = {'action': 'hold', 'priority': 3}
         mgmt = mgmt_core
     mgmt = apply_legacy_guards(mgmt, trade, tracked[tkt_s], price, int(tkt),
+
                               now, broker_offset)
     is_guard = mgmt is not mgmt_core
     if mgmt.get('action') in (None, 'hold'):
@@ -471,13 +476,13 @@ def manage_position(tkt: int, p: dict, plan: dict, tracked: dict, bridge,
                           f'اتصال/SL اصلی هنوز فعال — تلاش مجدد خودکار')
 
 
-def realized_pnl_usd(bridge, ticket: int):
-    """b44: sum of broker-confirmed OUT deals for one position ticket.
+def _ticket_deals(bridge, ticket: int) -> list | None:
+    """All broker history deals belonging to one position ticket.
 
-    The close report used `last_profit` — the FLOATING pnl of the volume
-    remaining at the final poll. After partial closes that number is not the
-    trade result (#103326893: report said +1.83$, broker deals summed to
-    -0.27$). Returns None when the bridge cannot answer (caller falls back).
+    None means the history is NOT usable (bridge error, or no OUT deal yet —
+    an IN-only history cannot describe a closed trade). Shared by the b44
+    realized-pnl sum and the D3 exit-fill lookup so both read the SAME
+    grouping rules instead of drifting apart.
     """
     try:
         res = bridge.get_history_deals(days=1) or {}
@@ -487,11 +492,47 @@ def realized_pnl_usd(bridge, ticket: int):
         # require at least one OUT deal — otherwise history is not complete
         if not mine or not any(int(d.get('entry', 0)) != 0 for d in mine):
             return None
-        # all deals incl. the IN one: its commission belongs to the trade too
-        return round(sum(float(d.get('profit', 0)) + float(d.get('commission', 0))
-                         + float(d.get('swap', 0)) for d in mine), 2)
+        return mine
     except Exception:
         return None
+
+
+def realized_pnl_usd(bridge, ticket: int):
+    """b44: sum of broker-confirmed OUT deals for one position ticket.
+
+    The close report used `last_profit` — the FLOATING pnl of the volume
+    remaining at the final poll. After partial closes that number is not the
+    trade result (#103326893: report said +1.83$, broker deals summed to
+    -0.27$). Returns None when the bridge cannot answer (caller falls back).
+    """
+    mine = _ticket_deals(bridge, ticket)
+    if mine is None:
+        return None
+    # all deals incl. the IN one: its commission belongs to the trade too
+    return round(sum(float(d.get('profit', 0)) + float(d.get('commission', 0))
+                     + float(d.get('swap', 0)) for d in mine), 2)
+
+
+def exit_fill_price(bridge, ticket: int) -> float | None:
+    """D3: the exact broker fill price of the position's FINAL out-deal.
+
+    The close report used to label every exit by comparing the POLLING-time
+    ask against the tracked SL/TP — a price the trade never traded at, up to
+    a full poll cycle after the real fill, and always the ask side even for
+    SELL exits. Modified stops (BE/trail) and gaps therefore got mislabeled
+    ("TP hit" vs "SL hit"). The OUT deal's own price is the fill that
+    actually happened. None → caller falls back to the polling price,
+    exactly as before (reporting-only change; no gate reads this).
+    """
+    mine = _ticket_deals(bridge, ticket)
+    if mine is None:
+        return None
+    outs = [d for d in mine if int(d.get('entry', 0)) != 0]
+    try:
+        price = float(outs[-1].get('price') or 0)
+    except (TypeError, ValueError):
+        return None
+    return price or None
 
 
 def close_reason(final_sl: float, final_tp: float, exit_price: float, side: str) -> str:
@@ -508,6 +549,8 @@ def main():
     state = load_state()
     tracked = state.setdefault('positions', {})
     errors = 0
+    # C1: bookkeeping for the no-plan alert state (deduped, hourly reminder)
+    _no_plan = {'active': False, 'at': 0.0, 'first': 0.0}
 
     while True:
         try:
@@ -541,6 +584,33 @@ def main():
                 if 'open_price' not in p and 'price_open' in p:
                     p['open_price'] = p['price_open']
 
+            # ── C1 (2026-09-17): the no-plan state must be LOUD ──
+            # One alert when it starts, an hourly reminder while it lasts,
+            # one recovery note when the plan comes back (b37 dedupe: the
+            # 5s loop must not page every cycle).
+            if live and not plan:
+                _now_ts = datetime.now(timezone.utc).timestamp()
+                if not _no_plan['active']:
+                    _no_plan['active'] = True
+                    _no_plan['first'] = _now_ts
+                    _no_plan['at'] = _now_ts
+                    log('C1: current_plan.json missing/unreadable — core '
+                        'management (TP/BE/trail) disabled; news_lock/'
+                        'time_exit guards still active')
+                    send_ops('⚠️ واتچ‌داگ: پلن جاری (current_plan.json) در '
+                             'دسترس نیست — مدیریت اصلی (TP/BE/تریل) متوقف '
+                             'شد؛ news_lock و time_exit همچنان فعال‌اند. '
+                             'فایل پلن را بررسی کنید.')
+                elif _now_ts - _no_plan['at'] >= 3600:
+                    _no_plan['at'] = _now_ts
+                    _hours = int((_now_ts - _no_plan['first']) / 3600)
+                    send_ops(f'⚠️ واتچ‌داگ: هنوز بدون پلن ({_hours}h) — مدیریت '
+                             'اصلی خاموش، فقط گاردها فعال')
+            elif plan and _no_plan['active']:
+                _no_plan['active'] = False
+                log('C1: plan recovered — full management resumed')
+                send_ops('✅ واتچ‌داگ: پلن بازیابی شد — مدیریت کامل از سر گرفته شد')
+
             # ── Detect CLOSED positions → report ──
             for tkt in list(tracked.keys()):
                 if int(tkt) not in live:
@@ -550,6 +620,14 @@ def main():
                     entry = w.get('entry', 0)
                     dur_min = (datetime.now(timezone.utc) - datetime.fromisoformat(w['opened_at'])).total_seconds() / 60
                     mfe = w.get('mfe', 0.0); mae = w.get('mae', 0.0)
+                    # D3 (2026-09-17): label the exit from the broker's own
+                    # OUT-deal fill, not the polling-time ask — the latter is
+                    # up to a full cycle late and the wrong side for SELL,
+                    # so modified/gapped exits were mislabeled. Fall back to
+                    # the polling price when history cannot answer (as before).
+                    fill = exit_fill_price(bridge, int(tkt))
+                    if fill:
+                        exit_price = fill
                     reason = close_reason(w.get('sl', 0), w.get('tp', 0), exit_price, side)
                     pnl_pts = (entry - exit_price) if side == 'SELL' else (exit_price - entry)
                     # b44: 'last_profit' is the FLOATING pnl of whatever volume
@@ -623,6 +701,7 @@ def main():
                 # manage_position() so it is unit-testable against a fake
                 # bridge. The live loop used to inline it, which is why an
                 # exit-path change could only ever be verified in production.
+
                 if not DRY_RUN:
                     manage_position(int(tkt), p, plan, tracked, bridge,
                                     bid if side == 'SELL' else ask,

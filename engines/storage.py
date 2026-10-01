@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -8,18 +9,26 @@ from engines import paths  # resolved at CALL time so tests can redirect the tre
 # NOTE: functions below bind a LOCAL variable named `paths` (the dir dict), so
 # the durable-JSON helpers are imported by name, not via the module.
 from engines.paths import read_json_safe, write_json_atomic
+from engines import store  # WP4: SQLite mirror (fail-open; CSV stays source of truth)
 
 DEFAULT_BASE_DIR = None  # None → paths.plan_dir() (production default)
 
 
-def _plan_paths(base_dir: str | Path | None = None, *, create: bool = False) -> dict:
+def xau_plan_paths(base_dir: str | Path | None = None) -> dict:
+    """Pure path computation for the plan tree — NO mkdir, ever.
+
+    review-fix A1 (2026-09-17): every READ used to go through
+    ensure_xau_plan_dirs, so its mkdir ran on the read path — and on any
+    box where the production root (/home/ai/hermes-trading) is absent (DR
+    checkout, CI, a moved install) read_json_safe never got a chance to
+    honestly return None: the mkdir raised PermissionError first and every
+    signal was rejected with policy_error. Reads must never need to create
+    anything; writers keep the mkdir via ensure_xau_plan_dirs below.
+    """
     root = Path(base_dir) if base_dir else paths.plan_dir()
-    plan_history_dir = root / "plan_history"
-    if create:
-        plan_history_dir.mkdir(parents=True, exist_ok=True)
     return {
         "base_dir": root,
-        "plan_history_dir": plan_history_dir,
+        "plan_history_dir": root / "plan_history",
         "current_plan_path": root / "current_plan.json",
         "runtime_state_path": root / "runtime_state.json",
         "performance_state_path": root / "performance_state.json",
@@ -31,31 +40,15 @@ def _plan_paths(base_dir: str | Path | None = None, *, create: bool = False) -> 
 
 
 def ensure_xau_plan_dirs(base_dir: str | Path | None = None) -> dict:
-    return _plan_paths(base_dir, create=True)
+    """Compute the plan-tree paths AND create plan_history/ (writers only)."""
+    dirs = xau_plan_paths(base_dir)
+    dirs["plan_history_dir"].mkdir(parents=True, exist_ok=True)
+    return dirs
 
 
 def load_current_plan(base_dir: str | Path | None = None):
-    # Read path must not mkdir — a missing tree is a missing plan, not a
-    # reason to create production directories as a side effect of a load.
-    paths = _plan_paths(base_dir, create=False)
+    paths = xau_plan_paths(base_dir)  # A1: read-only, never mkdir
     return read_json_safe(paths["current_plan_path"], None, label="current_plan")
-
-
-PLAN_HISTORY_KEEP = 1500   # ≈ 3 weeks at ~7 archives/day; learning only joins 48h back
-
-
-def _prune_plan_history(history_dir: Path):
-    """Keep plan_history bounded — it grows every save (~7/day) and learning
-    only needs the last 48h of plans. Delete oldest beyond PLAN_HISTORY_KEEP,
-    but only when comfortably over the cap (amortized, no per-save scan)."""
-    try:
-        files = sorted(history_dir.glob("*.json"))
-        if len(files) <= PLAN_HISTORY_KEEP * 1.1:
-            return
-        for f in files[:len(files) - PLAN_HISTORY_KEEP]:
-            f.unlink(missing_ok=True)
-    except OSError:
-        pass
 
 
 def collect_plan_history_stamps(base_dir: str | Path | None = None) -> set[str]:
@@ -70,7 +63,7 @@ def collect_plan_history_stamps(base_dir: str | Path | None = None) -> set[str]:
     import json as _json
     import subprocess
 
-    plan_paths = _plan_paths(base_dir, create=False)
+    plan_paths = xau_plan_paths(base_dir)  # A1: read-only, never mkdir
     history_dir: Path = plan_paths["plan_history_dir"]
     stamps: set[str] = set()
     for fn in sorted(history_dir.glob("*.json")):
@@ -115,6 +108,25 @@ def collect_plan_history_stamps(base_dir: str | Path | None = None) -> set[str]:
     return stamps
 
 
+
+
+PLAN_HISTORY_KEEP = 1500   # ≈ 3 weeks at ~7 archives/day; learning only joins 48h back
+
+
+def _prune_plan_history(history_dir: Path):
+    """Keep plan_history bounded — it grows every save (~7/day) and learning
+    only needs the last 48h of plans. Delete oldest beyond PLAN_HISTORY_KEEP,
+    but only when comfortably over the cap (amortized, no per-save scan)."""
+    try:
+        files = sorted(history_dir.glob("*.json"))
+        if len(files) <= PLAN_HISTORY_KEEP * 1.1:
+            return
+        for f in files[:len(files) - PLAN_HISTORY_KEEP]:
+            f.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 def save_current_plan(base_dir: str | Path | None, plan: dict) -> Path:
     paths = ensure_xau_plan_dirs(base_dir)
     current_path = paths["current_plan_path"]
@@ -142,6 +154,14 @@ def _append_csv_row(path: Path, row: dict):
 def append_execution_log(base_dir: str | Path | None, row: dict):
     paths = ensure_xau_plan_dirs(base_dir)
     _append_csv_row(paths["execution_log_path"], row)
+    # WP4 (2026-09-18): SQLite mirror AFTER the CSV write succeeds. Fail-open
+    # by contract — the CSV above is the source of truth and a mirror failure
+    # must never break the trading path (belt-and-braces: _mirror() already
+    # swallows internally, this guards the call itself).
+    try:
+        store.mirror_execution(base_dir, row)
+    except Exception:
+        pass
 
 
 def append_reassessment_log(base_dir: str | Path | None, row: dict):
@@ -235,10 +255,16 @@ def append_risk_ledger(base_dir: str | Path | None, row: dict):
         if not path.exists() or path.stat().st_size == 0:
             writer.writeheader()
         writer.writerow({k: row.get(k, "") for k in RISK_LEDGER_FIELDS})
+    # WP4 (2026-09-18): SQLite mirror AFTER the CSV write succeeds (fail-open,
+    # CSV is the source of truth — see append_execution_log).
+    try:
+        store.mirror_risk_ledger(base_dir, row)
+    except Exception:
+        pass
 
 
 def load_runtime_state(base_dir: str | Path | None = None) -> dict:
-    paths = _plan_paths(base_dir, create=False)
+    paths = xau_plan_paths(base_dir)  # A1: read-only
     return read_json_safe(paths["runtime_state_path"], {}, label="runtime_state")
 
 
@@ -248,7 +274,7 @@ def save_runtime_state(base_dir: str | Path | None, state: dict) -> Path:
 
 
 def load_performance_state(base_dir: str | Path | None = None) -> dict:
-    paths = _plan_paths(base_dir, create=False)
+    paths = xau_plan_paths(base_dir)  # A1: read-only
     return read_json_safe(paths["performance_state_path"], {}, label="performance_state")
 
 

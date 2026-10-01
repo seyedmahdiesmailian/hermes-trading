@@ -1,6 +1,6 @@
 {
- "_risk_code_sha": "33d0dcba5f2f",
- "_note": "b88 (b68 round 20): DEFCON measured as a FEEDBACK-LOOP book \u2014 the funnel's own trade sequence replayed through the live engines.defcon classifier per entry, kept/dropped books under the b71 harness, the b87 redundancy row against the kill switch, and the two window-shape probes (deals-vs-trades dilution, day-rollover blind cycle). Read-only; no gate weakened; the corrected-window row is a PROPOSAL for a human.",
+ "_risk_code_sha": "49eecd866a31",
+ "_note": "b88 (b68 round 20): DEFCON measured as a FEEDBACK-LOOP book — the funnel's own trade sequence replayed through the live engines.defcon classifier per entry, kept/dropped books under the b71 harness, the b87 redundancy row against the kill switch, and the two window-shape probes (deals-vs-trades dilution, day-rollover blind cycle). Read-only; no gate weakened; the corrected-window row is a PROPOSAL for a human.",
  "_live_gates": {
   "MIN_RISK_REWARD": 1.5,
   "MIN_SETUP_GRADE": "B",
@@ -16590,7 +16590,7 @@
    "learning_changes_keys": [],
    "learning_can_move_defcon": false,
    "thresholds_are_literals_in": "engines/defcon.py compute_insights (loss_streak>=2, closed>=5, sl_ratio>=0.5)",
-   "note": "DEFCON has no knob at all: its triggers are hardcoded and no adaptive path touches them. Unlike range-kill (b86) it is not shadowed by another gate's population \u2014 it is shadowed by the kill switch only when it fires."
+   "note": "DEFCON has no knob at all: its triggers are hardcoded and no adaptive path touches them. Unlike range-kill (b86) it is not shadowed by another gate's population — it is shadowed by the kill switch only when it fires."
   },
   "mix": {
    "cached": {

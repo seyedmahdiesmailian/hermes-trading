@@ -27,6 +27,8 @@ load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 # b49: leaf seam (os/sys only) imported OUTSIDE the guard blocks below, so
 # `selfcheck.fail` is always resolvable inside an except handler.
 from engines import selfcheck
+from engines.config import ops_bot_token as _ops_token  # WP2: canonical
+from engines.config import ops_chat_id as _ops_chat
 
 _SELFCHECK = selfcheck.enabled()
 
@@ -138,8 +140,8 @@ except Exception as e:
     selfcheck.fail('systemctl health section', e)
 
 text = '\n'.join(lines)
-token = os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', '')
-chat = os.getenv('AUTOPILOT_REPORT_CHAT_ID', os.getenv('TELEGRAM_CHAT_ID', '194015957'))
+token = _ops_token()
+chat = _ops_chat()
 # b49: a self-check run must NEVER page Telegram — it prints the digest
 # instead, so probing the machinery can't spam the ops chat.
 if token and not _SELFCHECK:

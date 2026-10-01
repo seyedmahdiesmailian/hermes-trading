@@ -39,12 +39,12 @@
 | `scripts/hermes_cron.sh` | ورودی کرون master (flock + timeout) |
 | `scripts/bridge_health_monitor.py` | هر ۵ دقیقه: بریج + سلامت دایمون‌ها → تلگرام |
 | `scripts/offsite_backup.py` | بکاپ روزانه کامل به ویندوز |
-| `scripts/git_sync.sh` | سینک خودکار master به گیت‌هاب |
+| `scripts/git_sync.sh` | سینک خودکار شاخهٔ جاری به گیت‌هاب (هرگز master را حدس نمی‌زند) |
 | `scripts/autopilot.sh` | بهبود شبانهٔ خودکار (read-only، بدون ترید) |
 | `ops/systemd/` | فایل‌های سرویس (نسخهٔ مرجع) |
 | `ops/cron/crontab.backup.txt` | کرون‌تب کامل فعلی (نسخهٔ مرجع) |
 | `tests/` | ۱۲۰+ تست hermetic (`python3 -m unittest discover -s tests`) |
-| `data/` | state زنده: پلن، ژورنال، یادگیری — **در بکاپ، نه در گیت** |
+| `data/` | state زنده در بکاپ است نه گیت؛ شواهد پژوهشی (`backtest/`، `radin/`، آرشیو تقویم) ترک می‌شوند — سیاست کامل: `data/README.md` |
 
 ## ریکاوری روی سرور تازه — مرحله‌به‌مرحله
 
@@ -61,9 +61,15 @@ cd /home/ai/hermes-trading
 `C:\HermesBackups` است — `git clone hermes_repo_*.bundle /home/ai/hermes-trading`)
 
 ### ۲. وابستگی‌ها
+وابستگی‌ها داخل محیط مجازی نصب می‌شوند تا با PEP 668 و پکیج‌های سیستم تداخل نکنند:
 ```bash
-sudo apt install -y python3-pip
-pip3 install requests python-dotenv pywinrm requests_ntlm pandas numpy python-telegram-bot
+sudo apt install -y python3-venv
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+برای خود Bridge روی ویندوز:
+```powershell
+py -m pip install -r requirements-windows.txt
 ```
 
 ### ۳. رازها (فقط از بکاپ — در گیت‌هاب نیستند!)
@@ -94,11 +100,19 @@ loginctl enable-linger $USER   # سرویس‌ها بدون لاگین هم زن
 ```
 
 ### ۵. بریج ویندوز (اگر VM ویندوز هم رفته)
-روی ویندوز: MT5 را نصب و لاگین کن (اکانت دمو/ریل بروکر)، بعد:
+روی ویندوز: MT5 را نصب و لاگین کن (اکانت دمو/ریل بروکر) و `HERMES_BRIDGE_TOKEN`
+را به‌عنوان متغیر محیطی **System** ست کن (هم‌مقدار با `.env` لینوکس — بدون آن
+بریج اصلاً بالا نمی‌آید). بعد از لینوکس:
 ```bash
-python3 scripts/_deploy_bridge.py   # از لینوکس، با WIN_USER/WIN_PASS در .env
+python3 scripts/_deploy_bridge.py   # با WIN_USER/WIN_PASS در .env
 ```
-بریج روی `:5050` با Bearer token بالا می‌آید. تست: `python3 scripts/_check_bridge.py`
+اسکریپت سورس canonical را از گیت (`scripts/mt5_http_server_v2.py`) می‌گیرد،
+compile-check می‌کند، از فایل زندهٔ فعلی بکاپ می‌گیرد، آن را به
+`C:\Temp\bridge.py` push می‌کند و لیسنر ۵۰۵۰ را ری‌استارت می‌کند
+(فیکس ۲۰۲۶-۰۹-۱۷: قبلاً مرحلهٔ اول «دانلود بریج زنده» بود که روی VM تازه
+fail می‌شد و نسخهٔ بدون auth داخل ریپو تنها گزینه بود). بریج روی `:5050`
+با waitress سرو می‌شود؛ همهٔ endpoint ها جز `/health` توکن Bearer می‌خواهند.
+تست: `python3 scripts/_check_bridge.py`
 
 ### ۶. آزمون سلامت
 ```bash

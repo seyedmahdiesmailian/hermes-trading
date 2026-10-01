@@ -1,14 +1,15 @@
 """Bridge smoke test — read-only (docs/DEPLOY.md step 5).
 
 b64: was a hand-rolled urllib call with the bridge host hardcoded as
-'http://192.168.10.51:5050' and NO env read at all. That is the exact shape
+a literal URL and NO env read at all. That is the exact shape
 the b63 audit found in the health watchdog: this file is the command an
 operator runs to verify a FRESH server, so a hardcoded host means the smoke
 test keeps poking the OLD box after a relocation and reports a healthy
 bridge that the trading path is not even talking to. Now it resolves through
-bridge_client — the ONE canonical resolver (HERMES_BRIDGE_URL > derived from
-HERMES_WIN_IP > last-known default) — so it can never disagree with the
-trading path. Read-only endpoints only (account/tick/positions/deals).
+bridge_client → engines.config — the ONE canonical resolver
+(HERMES_BRIDGE_URL > derived from HERMES_WIN_IP > last-known default) — so
+it can never disagree with the trading path.
+Read-only endpoints only (account/tick/positions/deals).
 """
 import json
 import sys
@@ -21,10 +22,10 @@ except ImportError:
     from env_loader import load_dotenv  # python-dotenv missing → local fallback
 load_dotenv(Path(__file__).resolve().parent.parent / '.env')
 
-from bridge_client import BridgeClient, BRIDGE_URL  # noqa: E402
+from bridge_client import BridgeClient  # noqa: E402
 
 c = BridgeClient()  # token from HERMES_BRIDGE_TOKEN in the loaded env
-print("bridge:", BRIDGE_URL)
+print("bridge:", c.url)
 h = c.health()
 print("health:", "OK" if h.get("ok") else f"BAD {json.dumps(h, ensure_ascii=False)[:200]}")
 acc = c.get_account()

@@ -38,6 +38,11 @@ LOCK=/tmp/hermes_verify_head.lock
 exec 9>"$LOCK"
 flock -n 9 || { echo "$(date -u +%FT%TZ) verify already running, skip"; exit 0; }
 
+# review-fix (2026-09-17, report row 2): logs/ is gitignored, so a FRESH
+# clone (or a DR restore) has no logs/ directory and the very first append
+# below killed the whole verification with "No such file or directory" —
+# the chain then never stamped anything. Same class as autopilot.sh's LOG.
+mkdir -p logs
 LOG=logs/verify_head.log
 HEAD=$(git rev-parse --short HEAD)
 

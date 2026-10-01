@@ -37,7 +37,8 @@ from engines import paths as _paths
 # the throttle (b34/b41 lesson: two modules, one fact, no shared seam).
 # GUARD_ALERT_COOLDOWN_SEC is re-exported here for existing callers/tests.
 from engines.guard_status import GUARD_ALERT_COOLDOWN_SEC, state_path as _guard_state_path
-DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
+from engines.config import dry_run as _dry_run
+DRY_RUN = _dry_run()  # WP2: the 5x-repeated parse, one definition (same values)
 
 
 def _log_file():

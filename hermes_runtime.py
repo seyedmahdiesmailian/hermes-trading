@@ -13,28 +13,28 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
-####
-from engines.context import build_plan_context, apply_bias_geometry
-from engines.bridge_payload import positions_list, positions_readable
+from engines.context import build_plan_context
+from engines.bridge_payload import positions_list
 from engines.smc import smc_analyse, merge_smc_with_classic
-from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle
-from engines.trade_management import evaluate_trade_management, ladder_fields, build_tp_ladder
+from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
+from engines.trade_management import (evaluate_trade_management, ladder_fields,
+                                      build_tp_ladder)
 from engines.risk import assess_account_policy, compute_performance_state
-from engines.storage import (load_current_plan, save_current_plan, load_runtime_state, save_runtime_state,
-                             load_performance_state, save_performance_state, append_execution_log,
-                             append_reassessment_log, append_risk_ledger)
+from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log, append_risk_ledger
 from engines.plan import setup_grade, apply_smc_merge, _entry_close, stale_at_birth
-from engines.report import (render_plan_brief, render_reassess_brief, render_monitor_brief,
-                            render_management_brief, render_execution_brief)
+from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
 from engines.macro_filter import apply_macro_guard
-from engines.legacy_guards import evaluate_time_exit, evaluate_news_lock, is_news_lock
-from engines.auto_executor import evaluate_management_action, evaluate_proposal, execute_trade, MAX_OPEN_POSITIONS
+from engines.legacy_guards import (evaluate_time_exit, evaluate_news_lock,
+                                   is_news_lock)
+from engines.auto_executor import (evaluate_proposal, execute_trade,
+                                  evaluate_management_action, MAX_OPEN_POSITIONS)
+from engines.bridge_payload import positions_list, positions_readable
 from engines.kill_switch import check_kill_switch
-####
+from engines.process_lock import exclusive as _state_lock
 
 from engines import paths as _paths  # state paths resolved at CALL time (b39)
 
@@ -246,7 +246,7 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     # identical to the old inline code, including the display-only smc_* stamps
     # (passed via smc_result — the backtest omits them by passing nothing).
     apply_smc_merge(ctx, merged, entry_close=_entry_close(m5),
-                    smc_result=smc_result, rebuild=apply_bias_geometry)
+                    smc_result=smc_result)
     plan = build_plan_from_context(ctx, now=now)
     return plan, None
 
@@ -329,9 +329,9 @@ def _guard_brief_line(status: dict | None, ticket) -> str:
     if state == 'error':
         return (f"\n\n🛑 گاردهای ایمنی (news_lock/time_exit) اجرا نشدند"
                 f"{tag}: {detail} — مدیریت فقط بر زنجیره اصلی")
-    elif state == 'calendar_unavailable':
-            return ("\n\n⚠️ تقویم اخبار دسترس نیست news_lock این چرخه "
-                    "نمی‌تواند قفل کند (time_exit فعال است)")
+    if state == 'calendar_unavailable':
+        return (f"\n\n⚠️ تقویم اخبار در دسترس نیست — news_lock این چرخه "
+                f"نمی‌تواند قفل کند (time_exit فعال است)")
     return ''
 
 
@@ -461,54 +461,58 @@ def _load_closed_trades(bridge, days=7) -> tuple[list[dict], bool]:
 
 
 def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
-    account = _account_obj(account_resp)
-    # b45 FIX 2026-08-31: the bridge /api/account payload has NO `positions`
-    # field, so account.positions was ALWAYS 0 — the MAX_OPEN_POSITIONS=1 gate
-    # never fired and a second position was opened on top of the first
-    # (14:15 + 14:30 UTC sells, net -56.7$). Count real positions from the
-    # positions endpoint; fall back to the account field only if it exists.
-    # b214 FAIL-CLOSED: the b45 fix above counts positions correctly when the
-    # bridge ANSWERS, but an unreadable reply (401, timeout envelope, MT5
-    # not_connected) still collapsed to 0 — and account.positions is 0 there
-    # too, so max() could not rescue it. "I could not see" was being read as
-    # "nothing is open", the same fail-OPEN shape that let the -56.7$ double
-    # -sell through. An unreadable reply now reports the cap, so the entry
-    # gate blocks instead of opening blind. Tightening only: it can add a
-    # block, never remove one, and protective management is unaffected
-    # (position_daemon has its own bridge-failure guard).
-    _positions_unreadable = False
-    try:
-        _pr = bridge.get_positions(SYMBOL) if bridge else {}
-        _pr = _pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}
-        if positions_readable(_pr):
-            _open_ct = len(_positions_list(_pr))
-        else:
+    # Both hermes_master and signal_listener call this function. Serialize the
+    # bridge snapshot plus performance-state write so a slower, older
+    # read-modify-write cannot overwrite a newer risk ledger.
+    with _state_lock('performance_state', timeout=10.0):
+        account = _account_obj(account_resp)
+        # b45 FIX 2026-08-31: the bridge /api/account payload has NO `positions`
+        # field, so account.positions was ALWAYS 0 — the MAX_OPEN_POSITIONS=1 gate
+        # never fired and a second position was opened on top of the first
+        # (14:15 + 14:30 UTC sells, net -56.7$). Count real positions from the
+        # positions endpoint; fall back to the account field only if it exists.
+        # b214 FAIL-CLOSED: the b45 fix above counts positions correctly when the
+        # bridge ANSWERS, but an unreadable reply (401, timeout envelope, MT5
+        # not_connected) still collapsed to 0 — and account.positions is 0 there
+        # too, so max() could not rescue it. "I could not see" was being read as
+        # "nothing is open", the same fail-OPEN shape that let the -56.7$ double
+        # -sell through. An unreadable reply now reports the cap, so the entry
+        # gate blocks instead of opening blind. Tightening only: it can add a
+        # block, never remove one, and protective management is unaffected
+        # (position_daemon has its own bridge-failure guard).
+        _positions_unreadable = False
+        try:
+            _pr = bridge.get_positions(SYMBOL) if bridge else {}
+            _pr = _pr if isinstance(_pr, dict) else {'ok': True, 'data': _pr}
+            if positions_readable(_pr):
+                _open_ct = len(_positions_list(_pr))
+            else:
+                _positions_unreadable = True
+                _open_ct = MAX_OPEN_POSITIONS
+        except Exception:
             _positions_unreadable = True
-            _open_ct = MAX_OPEN_POSITIONS
-    except Exception:
-        _positions_unreadable = True
-        _open_ct = max(int(account.positions or 0), MAX_OPEN_POSITIONS)
-    account.positions = max(int(account.positions or 0), _open_ct)
-    today = now.date().isoformat()
-    closed, history_ok = _load_closed_trades(bridge, 7)
-    if history_ok:
-        perf = compute_performance_state(
-            load_performance_state(_plan_dir()), today, account.balance, closed)
-        save_performance_state(_plan_dir(), perf)
-    else:
-        # Keep last persisted numbers — do not recompute from an empty
-        # window that would look like a clean book (kill switch / daily
-        # cap / DEFCON going blind). evaluate_proposal refuses the entry.
-        perf = load_performance_state(_plan_dir()) or {}
-    policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
-####
-    # b214: make the blind-block visible. Without this the operator sees a
-    # generic max_positions_1 and cannot tell "a position is really open"
-    # from "the bridge went dark", which are very different incidents.
-    if _positions_unreadable:
-        policy['positions_unreadable'] = True
-    policy['history_ok'] = history_ok
-    return {'performance_state': perf, 'account_policy': policy}
+            _open_ct = max(int(account.positions or 0), MAX_OPEN_POSITIONS)
+        account.positions = max(int(account.positions or 0), _open_ct)
+        today = now.date().isoformat()
+        closed, history_ok = _load_closed_trades(bridge, 7)
+        if history_ok:
+            perf = compute_performance_state(
+                load_performance_state(_plan_dir()), today, account.balance, closed)
+            save_performance_state(_plan_dir(), perf)
+        else:
+            # Keep last persisted numbers — do not recompute from an empty
+            # window that would look like a clean book (kill switch / daily
+            # cap / DEFCON going blind). evaluate_proposal refuses the entry.
+            perf = load_performance_state(_plan_dir()) or {}
+        policy = assess_account_policy(account.balance, account.equity, account.margin_free, account.margin, float(perf.get('daily_pnl', 0) or 0), int(perf.get('loss_streak', 0) or 0), account.positions)
+        ####
+        # b214: make the blind-block visible. Without this the operator sees a
+        # generic max_positions_1 and cannot tell "a position is really open"
+        # from "the bridge went dark", which are very different incidents.
+        if _positions_unreadable:
+            policy['positions_unreadable'] = True
+        policy['history_ok'] = history_ok
+        return {'performance_state': perf, 'account_policy': policy}
 
 
 def _build_proposal(plan: dict, monitor: dict, policy: dict, tick_price: float) -> dict | None:
@@ -875,6 +879,10 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
     # Cost is linear in trades; entering into a wide spread hands the edge to
     # the broker. Read-only tick check — blocks the PROPOSAL, never management.
     if proposal is not None:
+        # b45/6872d1d: the call form is what the b171 census pins on, and it is
+        # also the fail-closed contract — inline'd here by a merge, this was
+        # back to `except: pass` = "unreadable quote lets the entry through"
+        # (the b30 plan-path class). Restored verbatim from master.
         _blk = _entry_spread_veto(tick)
         if _blk is not None:
             proposal = None
@@ -1031,8 +1039,6 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
             'daily_loss_limit': 'سقف ضرر روزانه پر شده',
             'daily_trade_limit': 'سقف تعداد ترید روزانه پر شده',
             'position_limit': 'سقف پوزیشن باز پر شده',
-            'stop_too_tight': 'استاپ داخل نویز طلا — ورود ممنوع',
-            'history_unavailable': 'تاریخچه معاملات خوانده نشد — ورود ممنوع',
         }
         _sr = str(proposal.get('skip_reason'))
         _base = _sr.split('_')[0] + ('_' + _sr.split('_')[1] if _sr.startswith('poor_rr') or _sr.startswith('sizing') else '')
@@ -1091,7 +1097,8 @@ def main():
     except ImportError:
         from env_loader import load_dotenv  # python-dotenv missing → local fallback
     load_dotenv(Path(__file__).resolve().parent / '.env')
-    dry_run = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
+    from engines.config import dry_run as _dry_run  # WP2: canonical parse
+    dry_run = _dry_run()
     from bridge_client import BridgeClient
     bridge = BridgeClient()
     bridge.health()

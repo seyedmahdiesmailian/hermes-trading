@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Off-box backup of Hermes trading state (b31, daily 03:15 Tehran).
 
-Without this, a disk loss on 192.168.10.18 destroys .env (tokens), the trade
+Without this, a disk loss on this Linux box destroys .env (tokens), the trade
 journal/learning state, and the git repo history — everything. Pushes a
-tar.gz of {data/, .env, git bundle of repo} to the Windows VM (192.168.10.51)
+tar.gz of {data/, .env, git bundle of repo} to the Windows VM (see WIN_HOST)
 over WinRM, keeps the last 14 copies there.
 
 Restore: pull D:\\HermesBackups\\hermes_backup_<ts>.tar.gz, tar xzf,
@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import base64
 import os
+import secrets
 import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 BASE = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 sys.path.insert(0, str(BASE))
@@ -34,10 +36,15 @@ load_dotenv(BASE / '.env')
 # trading path but the daily backup silently kept pushing to the OLD IP (the
 # default won, no error anywhere). Precedence now: explicit WIN_HOST override
 # > documented HERMES_WIN_IP > last-known default.
-WIN_HOST = os.getenv('WIN_HOST') or os.getenv('HERMES_WIN_IP', '192.168.10.51')
-WIN_USER = os.getenv('WIN_USER', 'Administrator')
-WIN_PASS = os.getenv('WIN_PASS', '')
-REMOTE_DIR = os.getenv('WIN_BACKUP_DIR', 'C:\\HermesBackups')  # D: is FULL (0 bytes free, b31)
+from engines.config import win_host as _win_host  # WP2: canonical (noqa: E402)
+from engines.config import win_user as _win_user  # noqa: E402
+from engines.config import win_pass as _win_pass  # noqa: E402
+from engines.config import win_backup_dir as _win_backup_dir  # noqa: E402
+from engines.config import lan_ip as _lan_ip  # noqa: E402
+WIN_HOST = _win_host()
+WIN_USER = _win_user()
+WIN_PASS = _win_pass()
+REMOTE_DIR = _win_backup_dir()  # D: is FULL (0 bytes free, b31)
 KEEP = 14
 
 
@@ -65,25 +72,60 @@ def build_archive():
     return out, bundle
 
 
+def _authed_handler(token: str):
+    """B1 (2026-09-17, review row 4): a one-shot request handler that
+    refuses every request without the per-pull random token.
+
+    The archive this server exposes contains .env (EVERY bot token), the
+    Windows VM password and .git_token. The old handler was a bare
+    SimpleHTTPRequestHandler on 0.0.0.0 with NO authentication — any LAN
+    port scanner that found the ephemeral port during the pull window
+    owned the whole secret set. 404 (not 403) on a bad token: no
+    existence oracle for a scanner.
+    """
+    from http.server import SimpleHTTPRequestHandler
+
+    class _TokenHandler(SimpleHTTPRequestHandler):
+        def do_GET(self):
+            parsed = urlparse(self.path)
+            supplied = (parse_qs(parsed.query).get('token') or [None])[0] \
+                or self.headers.get('X-Backup-Token')
+            if not supplied or not secrets.compare_digest(supplied, token):
+                self.send_error(404)
+                return
+            self.path = parsed.path  # strip the token before path math
+            super().do_GET()
+
+        def log_message(self, *args):  # keep the cron log quiet
+            pass
+
+    return _TokenHandler
+
+
 def push(remote_path: str, data: bytes, port: int = 0) -> str:
     """b31: Windows PULLS the file over LAN HTTP from a throwaway server here.
     WinRM push is unusable for MB-sized files: envelope limit (413) and the
-    32KB PowerShell command-line limit (both hit in testing)."""
+    32KB PowerShell command-line limit (both hit in testing).
+
+    B1 (2026-09-17): the pull is token-authenticated — a fresh random
+    token per push, carried in the URL Windows fetches over the
+    already-encrypted WinRM channel, checked constant-time server-side."""
     import winrm
     import threading
-    from http.server import SimpleHTTPRequestHandler, HTTPServer
+    from http.server import HTTPServer
     import functools
 
     fname = remote_path.rsplit('\\', 1)[-1]
     serve_dir = tempfile.mkdtemp(prefix='hermes_bk_')
     (Path(serve_dir) / fname).write_bytes(data)
 
-    handler = functools.partial(SimpleHTTPRequestHandler, directory=serve_dir)
+    token = secrets.token_urlsafe(32)
+    handler = functools.partial(_authed_handler(token), directory=serve_dir)
     srv = HTTPServer(('0.0.0.0', 0), handler)  # ephemeral port
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
     port = srv.server_address[1]
-    local_ip = os.getenv('HERMES_LAN_IP', '192.168.10.18')
+    local_ip = _lan_ip()
 
     s = winrm.Session(WIN_HOST, auth=(WIN_USER, WIN_PASS), transport='ntlm',
                       server_cert_validation='ignore', read_timeout_sec=180)
@@ -99,7 +141,7 @@ def push(remote_path: str, data: bytes, port: int = 0) -> str:
     try:
         run_ps(f"New-Item -ItemType Directory -Force -Path '{REMOTE_DIR}' | Out-Null; 'ok'")
         out = run_ps(
-            f"Invoke-WebRequest -UseBasicParsing -Uri 'http://{local_ip}:{port}/{fname}' "
+            f"Invoke-WebRequest -UseBasicParsing -Uri 'http://{local_ip}:{port}/{fname}?token={token}' "
             f"-OutFile '{remote_path}' -TimeoutSec 120; "
             f"'written ' + (Get-Item '{remote_path}').Length + ' bytes'")
         if 'written' not in out:

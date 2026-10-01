@@ -27,8 +27,13 @@ load_dotenv(BASE / '.env')
 from bridge_client import BridgeClient
 from engines.signal_listener import run_signal_check
 from engines import paths as _paths   # b39: log path resolved at CALL time
+from engines.config import dry_run as _dry_run  # WP2: canonical parses
+from engines.config import ops_bot_token as _ops_token
+from engines.config import ops_chat_id as _ops_chat
+from engines.config import telegram_bot_token as _tg_token
+from engines.config import telegram_chat_id as _tg_chat
 
-DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
+DRY_RUN = _dry_run()
 
 
 def _log_file() -> Path:
@@ -51,17 +56,16 @@ def log(msg: str):
 
 
 def send_telegram(text: str):
-    _tg(text, os.getenv('TELEGRAM_BOT_TOKEN', ''))
+    _tg(text, _tg_token())
 
 
 def send_ops(text: str):
     """b37: system-status alerts -> 3rd ops bot."""
-    _tg(text, os.getenv('AUTOPILOT_REPORT_BOT_TOKEN', '') or os.getenv('TELEGRAM_BOT_TOKEN', ''),
-        chat=os.getenv('AUTOPILOT_REPORT_CHAT_ID', '194015957'))
+    _tg(text, _ops_token(), chat=_ops_chat())
 
 
 def _tg(text: str, token: str, chat=None):
-    chat = chat or os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    chat = chat or _tg_chat()
     if not token:
         return
     import json, urllib.request, urllib.parse

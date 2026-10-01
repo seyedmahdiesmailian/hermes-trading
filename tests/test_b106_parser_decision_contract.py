@@ -230,8 +230,14 @@ class TestB106WarningCoverage(unittest.TestCase):
 
     @staticmethod
     def _journal():
-        with open(os.path.join(ROOT, "data", "signals",
-                               "signals_log.json")) as fh:
+        # WP1: the live signals journal is no longer tracked in git (live
+        # state restores from the offsite backup, not the repo). Same guard
+        # as the sibling census test above — a checkout without a journal
+        # skips instead of erroring.
+        _p = os.path.join(ROOT, "data", "signals", "signals_log.json")
+        if not os.path.exists(_p):
+            raise unittest.SkipTest("no signals journal on this checkout")
+        with open(_p) as fh:
             return json.load(fh)
 
 

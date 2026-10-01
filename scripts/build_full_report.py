@@ -218,7 +218,7 @@ make_table(doc, ['مرحله', 'وضعیت', 'جزئیات'], [
     ['Parser → Gate', 'ACTIVE', 'گیت ۸-مرحله‌ای، آستانه ۶/۱۰'],
     ['Gate → Execution', 'BLOCKED', '۰ عبور از گیت — صفر اجرا'],
     ['Position watchdog', 'READY', 'بدون پوزیشن برای مدیریت'],
-    ['Git sync', 'VERIFIED', 'HEAD = origin/master — stamp معتبر'],
+    ['Git sync', 'VERIFIED', 'HEAD = origin/<current-branch> — stamp معتبر'],
 ], widths=[36, 24, 98], rag_col=1, center_cols=(1,))
 page_break(doc)
 

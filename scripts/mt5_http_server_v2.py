@@ -1,14 +1,70 @@
 """
-MT5 HTTP Bridge Server (Windows) — v2
-Exposes MetaTrader5 via HTTP REST API.
-Hermes Brain (Linux) connects via HTTP to control MT5.
+MT5 HTTP Bridge Server (Windows) — CANONICAL SOURCE (review-fix 2026-09-17).
+
+This file is the single source of truth for the bridge that exposes
+MetaTrader5 via HTTP REST to the Hermes brain (Linux). It used to be a
+"reference copy" while the LIVE process ran an out-of-git C:\\Temp\\bridge.py
+fork maintained by download→patch→upload scripts — which meant (a) the repo
+copy shipped WITHOUT authentication, so anyone cloning and deploying it put
+an open trading API on the LAN, and (b) after a Windows VM loss the deploy
+script's first step (download the live file) failed and the only repo source
+was the unprotected one. Now:
+
+  * AUTH: every endpoint except /health requires
+    `Authorization: Bearer $HERMES_BRIDGE_TOKEN` (env, system-level on the
+    Windows box). No token configured -> the server refuses to start.
+    /health stays open: it leaks no account data and is the liveness probe
+    the deploy scripts use from the box itself.
+  * PENDING orders: /api/pending (POST place, GET list) and /api/cancel
+    (POST) — ported from the b70 patch that used to live only in the live
+    fork (scripts/_deploy_pending_bridge.py).
+  * SERVE: waitress (production WSGI), not the Flask dev server.
+  * DR: scripts/_deploy_bridge.py pushes THIS file from git; there is no
+    download-the-live-copy step anymore.
+
+Wire shapes of the pre-existing endpoints are unchanged (pinned
+field-for-field by tests/test_b36_bridge_fixtures.py and
+tests/test_b44_management_incident.py).
 """
+import hmac
+import os
+
 from flask import Flask, request, jsonify
 import MetaTrader5 as mt5
 import logging
 from datetime import datetime
 
 app = Flask(__name__)
+
+
+# ─── Auth (review-fix 2026-09-17: the repo bridge used to be UNAUTHENTICATED) ──
+
+def _expected_token() -> str | None:
+    """Read at request time so a rotated system env needs no code change."""
+    return os.getenv('HERMES_BRIDGE_TOKEN')
+
+
+@app.before_request
+def _check_token():
+    """Every route except /health requires the Bearer token.
+
+    Fail-closed in BOTH directions: a missing env token rejects requests
+    just like a wrong header does — an unconfigured bridge must never
+    silently serve open. (The startup block below refuses to even boot
+    without a token; this hook is the second net.)
+    """
+    if request.path == '/health':
+        return None
+    expected = _expected_token()
+    supplied = request.headers.get('Authorization', '')
+    ok = bool(expected) and hmac.compare_digest(supplied, f'Bearer {expected}')
+    if not ok:
+        log.warning('REJECTED %s %s from %s (%s)',
+                    request.method, request.path, request.remote_addr,
+                    'no token configured' if not expected
+                    else 'missing header' if not supplied else 'bad token')
+        return jsonify({"ok": False, "error": "unauthorized"}), 401
+    return None
 
 # Logging
 log_file = 'C:/Hermes_MT5_Bridge/mt5_http_server.log'
@@ -300,16 +356,113 @@ def close_position():
         return jsonify({"ok": False, "error": f"close_failed_{result.retcode if result else 'none'}"}), 400
     return jsonify({"ok": True, "ticket": ticket, "price": float(result.price)})
 
+# ─── Pending (limit) orders — b70, ported from the live fork (2026-09-17) ─────
+
+PENDING_TYPES = {2: mt5.ORDER_TYPE_BUY_LIMIT, 3: mt5.ORDER_TYPE_SELL_LIMIT,
+                 4: mt5.ORDER_TYPE_BUY_STOP, 5: mt5.ORDER_TYPE_SELL_STOP}
+
+
+@app.route("/api/pending", methods=["POST"])
+def place_pending():
+    """Place a pending/limit order. Client maps the returned 'order' to
+    'ticket' (bridge_client.send_pending)."""
+    import time as _time
+    req = request.json or {}
+    try:
+        otype = PENDING_TYPES.get(int(req.get("type", 2)))
+        if otype is None:
+            return jsonify({"ok": False,
+                            "error": "type must be 2=BUY_LIMIT 3=SELL_LIMIT"}), 400
+        symbol = req.get("symbol", "XAUUSD")
+        volume = float(req.get("volume", 0.01))
+        price = float(req["price"])
+        sl = float(req.get("sl", 0) or 0)
+        tp = float(req.get("tp", 0) or 0)
+        comment = str(req.get("comment", "hermes-sig"))[:27]
+        if not mt5.symbol_select(symbol, True):
+            return jsonify({"ok": False,
+                            "error": "symbol select failed: " + symbol}), 400
+        request_dict = {"action": mt5.TRADE_ACTION_PENDING, "symbol": symbol,
+                        "volume": volume, "type": otype, "price": price,
+                        "sl": sl, "tp": tp, "deviation": 20,
+                        "comment": comment,
+                        "magic": int(req.get("magic", 778899)),
+                        "type_filling": mt5.ORDER_FILLING_IOC}
+        exp = float(req.get("expires_in_hours", 0) or 0)
+        if exp > 0:
+            request_dict["expiration"] = mt5.ORDER_TIME_SPECIFIED
+            request_dict["time_expiration"] = int(_time.time() + exp * 3600)
+        result = mt5.order_send(request_dict)
+        if result is None:
+            return jsonify({"ok": False, "error": "order_send None"}), 500
+        if result.retcode != mt5.TRADE_RETCODE_DONE:
+            return jsonify({"ok": False,
+                            "error": f"retcode_{result.retcode} {result.comment}"}), 400
+        return jsonify({"ok": True, "order": int(result.order),
+                        "price": float(price)})
+    except (KeyError, TypeError, ValueError) as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+
+
+@app.route("/api/pending")
+def list_pending():
+    """Active pending orders. Client maps 'orders' to 'data'."""
+    try:
+        out = []
+        for o in (mt5.orders_get() or []):
+            out.append({"ticket": int(o.ticket), "type": int(o.type),
+                        "symbol": o.symbol,
+                        "volume": float(o.volume_current),
+                        "price_open": float(o.price_open),
+                        "sl": float(o.sl or 0), "tp": float(o.tp or 0),
+                        "comment": str(o.comment or ""),
+                        "magic": int(o.magic or 0)})
+        return jsonify({"ok": True, "orders": out})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/cancel", methods=["POST"])
+def cancel_pending():
+    req = request.json or {}
+    try:
+        ticket = int(req["ticket"])
+        if not mt5.orders_get(ticket=ticket):
+            # already filled/expired/cancelled at the broker — success, not 404
+            return jsonify({"ok": True, "cancelled": False, "gone": True})
+        result = mt5.order_send({"action": mt5.TRADE_ACTION_REMOVE,
+                                 "order": ticket})
+        if result is None or result.retcode != mt5.TRADE_RETCODE_DONE:
+            return jsonify({"ok": False,
+                            "error": f"retcode_{getattr(result, 'retcode', '?')}"}), 400
+        return jsonify({"ok": True, "cancelled": True})
+    except (KeyError, TypeError, ValueError) as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+
+
 # ─── Run ──────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
-    log.info("MT5 Bridge v2 starting on port 5050...")
+    if not _expected_token():
+        # review-fix 2026-09-17: refuse to boot an open trading API. The old
+        # repo copy had no auth at all; a tokenless start must be a HARD
+        # error the operator sees, not a silent open bridge on the LAN.
+        log.error("HERMES_BRIDGE_TOKEN is not set — refusing to start. "
+                  "Set it as a SYSTEM environment variable on this box "
+                  "(same value as the Linux side's .env).")
+        exit(1)
+    log.info("MT5 Bridge (canonical) starting on port 5050...")
     if not mt5.initialize():
         log.error("MT5 init failed: %s", mt5.last_error())
         exit(1)
     log.info("MT5 ready. Balance: %s", mt5.account_info().balance)
     try:
-        app.run(host='0.0.0.0', port=5050, threaded=True)
+        # waitress: production WSGI server. The threaded Flask dev server
+        # is single-process debug tooling — the live fork already served
+        # via waitress, and the repo copy silently downgraded every deploy
+        # to the dev server.
+        from waitress import serve
+        serve(app, host='0.0.0.0', port=5050, threads=8)
     finally:
         mt5.shutdown()
         log.info("MT5 Bridge shut down.")

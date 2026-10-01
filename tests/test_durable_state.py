@@ -10,6 +10,7 @@ Two failure modes these guard against, both of which were live risks:
 import json
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -49,6 +50,32 @@ class AtomicWriteTest(TempRootCase):
         paths.write_json_atomic(f, {"big": "x" * 10000})
         paths.write_json_atomic(f, {"small": 1})
         self.assertEqual(json.loads(f.read_text()), {"small": 1})
+
+    def test_concurrent_writers_do_not_share_a_temp_file(self):
+        """Master/signal/watchdog state writes may overlap on a live box.
+
+        Last-writer-wins is acceptable for this integrity primitive; an
+        exception, truncated JSON, or leaked temporary file is not.
+        """
+        f = paths.plan_dir() / "atomic_concurrent.json"
+        barrier = threading.Barrier(12)
+        errors = []
+
+        def write(i):
+            try:
+                barrier.wait(timeout=5)
+                paths.write_json_atomic(f, {"writer": i, "payload": "x" * 1000})
+            except Exception as exc:  # captured so the test reports the race
+                errors.append(exc)
+
+        threads = [threading.Thread(target=write, args=(i,)) for i in range(12)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=10)
+        self.assertEqual(errors, [])
+        self.assertEqual(json.loads(f.read_text())["payload"], "x" * 1000)
+        self.assertEqual(list(paths.plan_dir().glob(".atomic_concurrent.json.*.tmp")), [])
 
 
 class CorruptReadTest(TempRootCase):

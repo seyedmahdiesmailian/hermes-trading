@@ -1,0 +1,20 @@
+{
+ "at": "2026-09-18T11:36:05.064981+00:00",
+ "corpus": "data/xau_plan/plan_history/*.json",
+ "snapshots": 1594,
+ "regime_distribution": {
+  "range": 1229,
+  "breakout_continuation": 250,
+  "pullback_continuation": 115
+ },
+ "stats": {
+  "unaffected_range": 1229,
+  "affected_non_range": 365
+ },
+ "delta_mean_non_range": 0.212,
+ "delta_min": 0.0,
+ "delta_max": 0.28,
+ "boundary_crossings": [],
+ "action_flips": [],
+ "note": "replayed with a neutral SMC input so the only variable is the regime key; RANGE_KILL_CONF = 0.35 is apply_smc_merge's veto threshold"
+}

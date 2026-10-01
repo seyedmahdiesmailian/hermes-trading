@@ -19,8 +19,9 @@ load_dotenv(Path(__file__).parent / '.env')
 from bridge_client import BridgeClient
 from notifier.telegram import send_telegram
 from engines import paths as _paths   # b39: log path resolved at CALL time
+from engines.config import dry_run as _dry_run  # WP2: canonical parse
 
-DRY_RUN = os.getenv('HERMES_DRY_RUN', 'true').lower() not in {'0', 'false', 'no'}
+DRY_RUN = _dry_run()
 
 
 def _log_file() -> Path:

@@ -27,12 +27,15 @@ __all__ = ["check_signals", "run_signal_check"]
 
 from engines import paths  # resolved at CALL time so tests can redirect the tree
 from engines import signal_pending
+from engines.process_lock import exclusive as _state_lock
+from engines.config import signal_group as _signal_group  # WP2: canonical
+from engines.config import telegram_bot_token as _tg_token
+from engines.config import telegram_chat_id as _tg_chat
 
-from engines.storage import append_execution_log
 
 def _get_env():
-    token = os.getenv('TELEGRAM_BOT_TOKEN', '')
-    chat_id = os.getenv('TELEGRAM_CHAT_ID', '194015957')
+    token = _tg_token()
+    chat_id = _tg_chat()
     return token, chat_id
 
 
@@ -148,7 +151,7 @@ def _serve_trade_callback(cb: dict):
     qid = cb.get("id", "")
     data = ((cb.get("data") or "") + "")
     chat = str(((cb.get("message") or {}).get("chat") or {}).get("id", ""))
-    owner = str(os.getenv('TELEGRAM_CHAT_ID', '194015957'))
+    owner = str(_tg_chat())
     if chat != owner:
         _telegram_api("answerCallbackQuery", {"callback_query_id": qid,
                                               "text": "دسترسی نیست", "show_alert": True})
@@ -179,6 +182,23 @@ def _serve_trade_callback(cb: dict):
 
 
 def fetch_new_messages() -> list[dict]:
+    """Fetch updates while owning the shared Telegram offset.
+
+    ``signal_daemon`` is the normal owner, but ``signal_monitor.py`` remains
+    available for manual checks. A short process lock prevents two pollers
+    from reading the same offset and racing their listener_state writes.
+    """
+    try:
+        with _state_lock("telegram_updates", timeout=2.0):
+            return _fetch_new_messages_unlocked()
+    except TimeoutError:
+        # Do not poll without ownership of the offset. The next healthy poll
+        # will retry from the persisted state, so no signal is acknowledged by
+        # an uncoordinated process.
+        return []
+
+
+def _fetch_new_messages_unlocked() -> list[dict]:
     """Fetch new messages since last update."""
     state = _load_state()
     # b38fix: this bot token is shared with the Hermes gateway, which set
@@ -215,7 +235,7 @@ def fetch_new_messages() -> list[dict]:
         # signals: getUpdates replays a 24h buffer after a restart.
         _txt = ((msg.get("text") or "") or "").strip()
         _cid = str(((msg.get("chat") or {}).get("id", "")))
-        if _txt.startswith('/') and _cid == str(os.getenv('TELEGRAM_CHAT_ID', '194015957')):
+        if _txt.startswith('/') and _cid == str(_tg_chat()):
             if datetime.now(timezone.utc).timestamp() - float(msg.get("date") or 0) <= 600:
                 _serve_trade_command(_cid, _txt)
             continue
@@ -237,8 +257,6 @@ def fetch_new_messages() -> list[dict]:
     state["last_check"] = datetime.now(timezone.utc).isoformat()
     _save_state(state)
     return messages
-
-
 def is_likely_signal(text: str) -> bool:
     """Quick heuristic: does this message look like a trading signal?"""
     from engines.signal_parser import normalize_digits
@@ -267,7 +285,7 @@ def check_signals(bridge=None) -> list[dict]:
 
     messages = fetch_new_messages()
     signals_found = []
-    allowed_chats = {c.strip() for c in (os.getenv('TELEGRAM_SIGNAL_GROUP', '') or '').split(',') if c.strip()}
+    allowed_chats = {c.strip() for c in (_signal_group() or '').split(',') if c.strip()}
 
     for msg in messages:
         # Only accept signals from the configured signal group(s)
@@ -340,39 +358,33 @@ def check_signals(bridge=None) -> list[dict]:
             )
             # REAL open-position count — hardcoded 0 made the decision engine
             # blind to existing exposure (already_in_position check never fired)
-            # b214 FAIL-CLOSED: the shape-safe reader below still answers 0
-            # for an UNREADABLE reply (401 / timeout envelope / MT5
-            # not_connected), which the gate then reads as "no exposure, safe
-            # to trade" — the blind spot this comment block already warned
-            # about, one layer deeper. An unreadable reply now reports the cap
-            # so the signal lane blocks instead of stacking a second position
-            # on top of one it cannot see. Tightening only.
+            # b214 FAIL-CLOSED: the shape-safe reader above answers 0 for a
+            # broken reply AND a truly empty one — and account.positions is 0
+            # too, so the guard cannot rescue it. "I could not see" must read
+            # as "the cap is reached", so the already_in_position gate blocks
+            # instead of opening blind (same incident class as the b45
+            # double-sell). Tightening only: it can add a block, never one.
             from engines.auto_executor import MAX_OPEN_POSITIONS
-            _open_ct = MAX_OPEN_POSITIONS
-            _pos_unreadable = True
+            from engines.bridge_payload import positions_readable
+            _pos_unreadable = False
+            _open_ct = 0
             try:
-                from engines.bridge_payload import (position_count,
-                                                    positions_readable)
+                from engines.bridge_payload import position_count
                 _pr = bridge.get_positions("XAUUSD") or {} if bridge is not None else {}
-                # b66-follow-up: shape-safe reader — a 401/MT5-error reply
-                # carries data as a DICT; len() of it used to count envelope
-                # KEYS as positions (and a non-list would raise → caught →
-                # _open_ct=0 → the already_in_position gate goes blind).
                 if positions_readable(_pr):
                     _open_ct = position_count(_pr)
-                    _pos_unreadable = False
+                else:
+                    _pos_unreadable = True
+                    _open_ct = MAX_OPEN_POSITIONS
             except Exception:
-                pass
+                _pos_unreadable = True
+                _open_ct = MAX_OPEN_POSITIONS
             account_policy = {
                 "trade_allowed": not _kill.get("halted", False),
                 "regime": "halted" if _kill.get("halted") else "normal",
                 "open_positions": _open_ct,
                 "balance": float(acct.get("balance", 0) or 0),
             }
-            if _pos_unreadable:
-                # b214: observable, so a dark bridge is not misread as a
-                # legitimately occupied slot.
-                account_policy["positions_unreadable"] = True
             # b140 TIGHTENING: the regime used to be hardcoded "normal" here,
             # so the SCORER never saw drawdown states (locked/defensive/
             # recovery) even though the sizing lane (run_signal_check ->
@@ -675,6 +687,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 "pending_ticket": pres.get("ticket"),
                 "lot": command["lot"],
             })
+            from engines.storage import append_execution_log
             append_execution_log(PLAN_DIR, {
                 "at": datetime.now(timezone.utc).isoformat(),
                 "source": "signal_listener", "plan_id": "signal",
@@ -711,6 +724,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
         })
 
         # Log execution
+        from engines.storage import append_execution_log
         append_execution_log(PLAN_DIR, {
             "at": datetime.now(timezone.utc).isoformat(),
             "source": "signal_listener",
