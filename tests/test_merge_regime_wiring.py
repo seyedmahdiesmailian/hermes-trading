@@ -93,14 +93,18 @@ class RealPlanReplay(unittest.TestCase):
 
     def test_committed_plan_merges_at_full_classic_confidence(self):
         from engines.smc import merge_smc_with_classic
-        plan_path = REPO / 'data' / 'xau_plan' / 'current_plan.json'
-        if not plan_path.exists():
-            self.skipTest('no committed current_plan.json in this tree')
-        plan = json.loads(plan_path.read_text(encoding='utf-8'))
-        regime = (plan.get('quality') or {}).get('regime')
-        if not regime or regime == 'range':
-            self.skipTest(f'committed plan regime is {regime!r} — replay '
-                          f'needs a non-range snapshot')
+        # The live current_plan.json is mutated by the running daemons mid-run
+        # (regime flips to range whenever the market flattens), which made this
+        # assertion flaky — it only exercises the fixed bug when the regime is
+        # non-range. data/xau_plan/ is gitignored, so the plan is embedded
+        # here instead: merge_smc_with_classic only reads bias/quality/regime,
+        # and this is the exact shape of a real non-range history snapshot
+        # (20260929_061502_xau-1392a5a1, pullback_continuation/aligned).
+        plan = {
+            "bias": "bearish",
+            "quality": {"alignment": "aligned",
+                        "regime": "pullback_continuation"},
+        }
         self.assertIsNone(plan.get('regime'),
                           'the producer started writing a top-level regime '
                           '— this test (and the bug analysis) is stale')
