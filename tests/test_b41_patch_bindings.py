@@ -117,6 +117,15 @@ ALLOWED = {
         'stub is reached. hermes_runtime is never called by this test (it is '
         'not even imported), so its module-level binding is irrelevant here, '
         'not silently wrong.',
+    ('test_b221_lane_contract.py', 'engines.market_hours.is_market_open',
+     'engines.auto_executor'):
+        'the AE half of the b221 ambient-gate stub: this patch IS a no-op on '
+        'the AE path — deliberately. The test ALSO patches AE.is_market_open '
+        'directly (the bare name AE captured at import), which is the binding '
+        'that actually fires. This module-attribute copy exists so that the '
+        'LAZY importers of the same symbol (signal_listener line 697, which '
+        'patches-reach through engines.market_hours at call time) see the '
+        'stub too. Both are restored in finally.',
 }
 
 
