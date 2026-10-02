@@ -30,10 +30,12 @@ sys.path.insert(0, ROOT)
 from engines.context import classify_bias
 
 
-def _bar(c: float) -> dict:
+def _bar(c: float, o: float | None = None) -> dict:
     """Bar with a 20-unit body. classify_bias reads only high/low/close, and
-    only close participates in the direction count."""
-    return {"open": 0, "high": c + 10, "low": c - 10, "close": c, "tick_volume": 1}
+    only close participates in the direction count. Pass `o` to give the bar
+    an explicit open (the b218b reversal path reads the bar body)."""
+    return {"open": c if o is None else o, "high": c + 10, "low": c - 10,
+            "close": c, "tick_volume": 1}
 
 
 class TestB218ChoppyTrend(unittest.TestCase):
@@ -86,6 +88,60 @@ class TestB218ChoppyTrend(unittest.TestCase):
 
     def test_short_window_still_neutral(self):
         self.assertEqual(classify_bias([_bar(4000), _bar(4010)]), "neutral")
+
+
+class TestB218DominantBarReversal(unittest.TestCase):
+    """b218b: a single dominant closing bar that breaks the window is a
+    directional signal the close-to-close net cannot see. Live H4
+    2026-10-02 16:00 UTC: 4217.29 -> 4132.94 (body -84) inside a window
+    whose close-to-close net was only -17.77 — graded NEUTRAL before b218b.
+    """
+
+    def test_live_h4_dominant_down_bar_is_bearish(self):
+        # closes 4153.82,4184.9,4184.33,4217.3,4136.05; the last bar's body
+        # breaks below the window low and is bigger than its avg range.
+        rows = [
+            _bar(4153.82, o=4176.38),
+            _bar(4184.90, o=4153.61),
+            _bar(4184.33, o=4184.90),
+            _bar(4217.30, o=4184.55),
+            _bar(4136.05, o=4217.29),
+        ]
+        self.assertEqual(classify_bias(rows), "bearish")
+
+    def test_dominant_up_bar_breaking_high_is_bullish(self):
+        rows = [
+            _bar(4200, o=4190),
+            _bar(4190, o=4200),
+            _bar(4195, o=4190),
+            _bar(4205, o=4195),
+            _bar(4290, o=4200),  # body +90, closes above the window high
+        ]
+        self.assertEqual(classify_bias(rows), "bullish")
+
+    def test_big_bar_inside_the_range_is_still_neutral(self):
+        """A large body that closes INSIDE the prior window is noise, not a
+        directional break — the guard is the breakout, not the body size."""
+        rows = [
+            _bar(4200, o=4190),
+            _bar(4190, o=4200),
+            _bar(4195, o=4190),
+            _bar(4205, o=4195),
+            # huge body, but it closes at 4200, well inside 4180..4215
+            _bar(4200, o=4100),
+        ]
+        self.assertEqual(classify_bias(rows), "neutral")
+
+    def test_small_body_does_not_fire(self):
+        """An ordinary bar must not reach the reversal branch."""
+        rows = [
+            _bar(4200, o=4198),
+            _bar(4190, o=4200),
+            _bar(4195, o=4192),
+            _bar(4205, o=4195),
+            _bar(4198, o=4200),
+        ]
+        self.assertEqual(classify_bias(rows), "neutral")
 
 
 if __name__ == "__main__":

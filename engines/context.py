@@ -56,6 +56,24 @@ def classify_bias(rows: list[dict], min_move: float | None = None, min_agreement
         return "bullish"
     if net_move <= -min_move and down_count >= need:
         return "bearish"
+    # b218b: a single DOMINANT closing bar is a reversal the close-to-close
+    # net cannot see. Live H4 2026-10-02 16:00 UTC printed
+    # 4217.29 -> 4132.94 (body -84.35) while the 5-bar close window was
+    # 4153.82 -> 4136.05: net -17.77 against a 26.06 threshold, so the bar
+    # the market actually traded through graded NEUTRAL. The last bar body
+    # is the cleanest reversal signal on an HTF bar; a body larger than the
+    # AVERAGE of the last five, breaking the window's own high or low,
+    # is a real directional close and not close-to-close noise.
+    last = rows[-1]
+    body = last["close"] - last["open"]
+    avg_range = mean([r["high"] - r["low"] for r in rows[-5:]]) or 0.5
+    if abs(body) >= avg_range:
+        broke_high = last["close"] >= max(r["high"] for r in rows[-5:-1])
+        broke_low = last["close"] <= min(r["low"] for r in rows[-5:-1])
+        if body < 0 and broke_low:
+            return "bearish"
+        if body > 0 and broke_high:
+            return "bullish"
     return "neutral"
 
 
