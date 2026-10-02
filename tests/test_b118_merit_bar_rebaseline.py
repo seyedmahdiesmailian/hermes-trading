@@ -288,11 +288,20 @@ class TestB118BarIsWhatTheHarnessActuallyRuns(unittest.TestCase):
         # re-work admits fewer trades, so the live bar moved 0.219/57 ->
         # 0.259/45. Cross-checked against b117's same-source recompute
         # (79 gate-passed, 21 runner legs), which moved the same way.
-        self.assertEqual(row["exp_R"], 0.259,
+        # RE-PRICED (b218 bias gate, 2026-10-02): the strong-move relaxation
+        # admits 2/2-split windows that clear 1.5x the volatility threshold,
+        # so the funnel emits more entries on the same bars: 0.259/45 ->
+        # 0.223/59. Total R rises 11.66 -> 13.16 (per-trade expectancy drops
+        # 14% but the population grows 31%). Recomputed from the same source
+        # this test uses — not turned until green; cross-checked against
+        # b117's same-source recompute (105 gate-passed, 31 runner legs),
+        # which moved the same way. The FROZEN row stays 0.278/109 so
+        # history cannot rot.
+        self.assertEqual(row["exp_R"], 0.223,
                          "the harness default no longer measures the re-quoted "
-                         "post-b187 bar — re-derive, do not restore the old "
+                         "post-b218 bar — re-derive, do not restore the old "
                          "literal")
-        self.assertEqual(row["trades"], 45)
+        self.assertEqual(row["trades"], 59)
         self.assertEqual((want["exp_R"], want["trades"]), (0.278, 109),
                          "frozen pre-b187 parity row must not be edited — it "
                          "is the history the re-quote is measured against")

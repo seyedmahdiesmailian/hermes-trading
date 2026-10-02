@@ -303,12 +303,19 @@ class TestB117RunnerPopulation(unittest.TestCase):
         # entry geometry, so the live trigger admits fewer signals: 96 -> 79,
         # with 21 runner legs. The FROZEN ledger row stays certified as
         # history; only this live recompute moves.
-        self.assertEqual(rc["gate_passed_signals"], 79,
-                         "the M5-parity runner census moved off 79 — re-derive "
+        # RE-PRICED (b218 bias gate, 2026-10-02): the strong-move relaxation
+        # lets a 2/2-split window take a side when the net move clears 1.5x
+        # the volatility threshold, so the live trigger admits MORE signals:
+        # 79 -> 105 gate-passed, 21 -> 31 runner legs. Recomputed from the
+        # same source this test uses (b81.m5_source_rows), not turned until
+        # green. The FROZEN pre-b187 ledger row stays certified as history
+        # (b102: pin and finding move together; history must not rot).
+        self.assertEqual(rc["gate_passed_signals"], 105,
+                         "the M5-parity runner census moved off 105 — re-derive "
                          "with b81.m5_source_rows() AND re-check the b189/b194 "
                          "parity todo before quoting any census")
-        self.assertEqual(rc["signals_with_runner_leg"], 21,
-                         "the A-lane runner population moved off 21 under the "
+        self.assertEqual(rc["signals_with_runner_leg"], 31,
+                         "the A-lane runner population moved off 31 under the "
                          "live trigger — anything else means "
                          "_partial_close_fraction or the grade gate changed shape")
         self.assertLessEqual(rc["signals_with_runner_leg"],
