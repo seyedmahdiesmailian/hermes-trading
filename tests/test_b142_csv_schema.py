@@ -60,22 +60,27 @@ class TestLiveLedgerShape(unittest.TestCase):
     def test_execution_log_exists_with_a_twelve_column_header(self):
         # WP1 (2026-09-18, edited not deleted per b102): the ledger is
         # untracked live state — absent BY DESIGN on a bare checkout (the
-        # writer recreates it on next append), so absence skips; where the
-        # file exists the 12-wide premise is still pinned exactly.
+        # writer recreates it on next append), so absence skips.
+        # EDITED 2026-10-03: b144 (commit 1fc110b) shipped the ticket column
+        # on execution_log.csv — the join key to risk_ledger's sidecar. The
+        # premise moved 12 -> 13; the header-width pin still fires, it just
+        # pins the NEW width. Both trap tests below still hold: _append_csv_row
+        # itself CANNOT migrate a header, only a fresh file gets one.
         if not LIVE_LOG.exists():
             self.skipTest("no live execution_log on this checkout")
-        self.assertEqual(len(_live_header()), 12, _live_header())
+        self.assertEqual(len(_live_header()), 13, _live_header())
 
     def test_every_live_row_has_exactly_the_header_width(self):
-        """No row already carries a 13th field — so the trap below is live,
-        not hypothetical: the next appended row is the first to differ."""
+        """Every row is the header width — b144's trap below stays live
+        (the writer still cannot migrate a header, only seed a new one)."""
         # WP1: live-state guard, see _live_header() above.
+        # EDITED 2026-10-03: width is 13 now (b144's ticket column).
         if not LIVE_LOG.exists():
             self.skipTest("no live execution_log on this checkout")
         rows = list(csv.reader(io.StringIO(
             LIVE_LOG.read_text(encoding="utf-8-sig"))))
         widths = {len(r) for r in rows[1:]}
-        self.assertEqual(widths, {12}, f"row widths {widths}")
+        self.assertEqual(widths, {13}, f"row widths {widths}")
 
 
 class TestAppendCsvRowCannotMigrateTheHeader(unittest.TestCase):
@@ -148,10 +153,15 @@ class TestB139StillNeedsADecision(unittest.TestCase):
         # the shipped shape: sidecar exists, main ledger untouched
         self.assertTrue((REPO / "engines" / "storage.py").read_text(
             encoding="utf-8").find("append_risk_ledger") > 0)
-        self.assertEqual(len(_live_header()), 12,
-                         "execution_log.csv gained a column — option (a) "
-                         "shipped; the trap test above must be EDITED with a "
-                         "dated note (b102), never deleted")
+        # EDITED 2026-10-03: b144 (1fc110b) shipped b139's option-(b) sidecar
+        # AND its ticket join key as the last column of execution_log.csv —
+        # 12 -> 13. b139 is still closed via the sidecar (the option-(a)
+        # trap above is still green), so the width is pinned at the new 13.
+        self.assertEqual(len(_live_header()), 13,
+                         "execution_log.csv moved off 13 columns — the b144 "
+                         "ticket join key is gone or a 14th key arrived; the "
+                         "trap test above must be EDITED with a dated note "
+                         "(b102), never deleted")
 
 
 if __name__ == "__main__":

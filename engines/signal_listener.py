@@ -389,6 +389,17 @@ def check_signals(bridge=None) -> list[dict]:
                 "regime": "halted" if _kill.get("halted") else "normal",
                 "open_positions": _open_ct,
                 "balance": float(acct.get("balance", 0) or 0),
+                # b221 LANE CONTRACT (stated once, pinned by
+                # tests/test_b221_lane_contract.py): an unreadable bridge is
+                # refused at the ENTRY GATE, never by the policy itself. The
+                # plan lane keeps trade_allowed green and lets the executor's
+                # position cap refuse; THIS lane cannot — the position read
+                # happens right here, with no gate downstream to defer to, so
+                # the fail-closed count must flip the policy itself. This is
+                # the ONLY lane where the b219 executor reason is reachable
+                # (cap + trade_allowed=False together); the plan lane reports
+                # the same dark bridge only through this flag. Neither lane is
+                # wrong; both refuse the same entry.
                 "positions_unreadable": _pos_unreadable,
             }
             # b140 TIGHTENING: the regime used to be hardcoded "normal" here,

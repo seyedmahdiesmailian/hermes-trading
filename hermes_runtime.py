@@ -510,6 +510,20 @@ def _performance_and_policy(bridge, account_resp: dict, now: datetime) -> dict:
         # generic max_positions_1 and cannot tell "a position is really open"
         # from "the bridge went dark", which are very different incidents.
         if _positions_unreadable:
+            # b221 LANE CONTRACT (stated once, pinned by
+            # tests/test_b221_lane_contract.py): an unreadable bridge is
+            # refused at the ENTRY GATE, never by the policy itself. This lane
+            # keeps trade_allowed green BY DESIGN — b214's fail-closed *is*
+            # the position cap below, so the single max_positions gate in
+            # auto_executor refuses any dark bridge in ONE place. The flag is
+            # the ONLY way this lane reports the cause: the executor's cap
+            # fires before its account-policy branch can append the b219
+            # reason, so a dark bridge here reads max_positions_N with this
+            # flag set, never bridge_dark_positions_unreadable. The signal
+            # lane flips trade_allowed directly instead — its position read
+            # happens inside check_signals, with no gate downstream to defer
+            # to — and that is the ONLY lane where the b219 reason is
+            # reachable. Neither lane is wrong; both refuse the same entry.
             policy['positions_unreadable'] = True
         policy['history_ok'] = history_ok
         return {'performance_state': perf, 'account_policy': policy}
