@@ -398,19 +398,34 @@ class TestB119FrameNotOnlyEngine(unittest.TestCase):
         # b194 re-quote moved this probe's floor: with M5-parity the leg emits
         # 57 trades and NO hold exceeds 39 bars, so a 24-bar exit clips a single
         # trade and leaves exp_R unchanged (it still adds a trade: 57 -> 58).
-        # Non-vacuity needs an exit that BINDS, so probe at 12 bars, where
-        # max_hold 13 > 12 and exp_R actually moves.
-        tight = dict(kw, time_stop_bars=12)
+        # Non-vacuity needs an exit that BINDS: the tightest N where at least
+        # one hold still outlives it. Derived, not pinned to a literal — the
+        # exact floor drifts with the data (12 worked at a5a94c2, but the same
+        # data now maxes at exactly 12).
+        probe_n = 0
+        for n in range(4, 30):
+            tight = dict(kw, time_stop_bars=n)
+            s = lh.r_stats(backtest_ohlc(c["M15"], funnel, min_rr=lh.MIN_RR,
+                                         spread=lh.SPREAD,
+                                         min_grade=lh.LIVE_MIN_GRADE, **tight),
+                           time_stop_bars=n)
+            if s["max_hold_bars"] > n and s["exp_R"] != base["exp_R"]:
+                probe_n = n
+                break
+        self.assertGreater(probe_n, 0,
+                           "no binding time_stop found in 4..29 bars — the knob "
+                           "is dead and ts_cost==0 is vacuous")
+        tight = dict(kw, time_stop_bars=probe_n)
         short = lh.r_stats(backtest_ohlc(c["M15"], funnel, min_rr=lh.MIN_RR,
                                          spread=lh.SPREAD,
                                          min_grade=lh.LIVE_MIN_GRADE, **tight),
-                           time_stop_bars=12)
+                           time_stop_bars=probe_n)
         self.assertNotEqual(base["exp_R"], short["exp_R"],
-                            "a 12-bar time exit changed nothing — the knob is "
-                            "dead and ts_cost==0 is vacuous")
-        self.assertGreater(short["max_hold_bars"], 12,
-                           "the 12-bar probe never held past its own exit, so "
-                           "it proves nothing about binding")
+                            f"a {probe_n}-bar time exit changed nothing — the knob "
+                            "is dead and ts_cost==0 is vacuous")
+        self.assertGreater(short["max_hold_bars"], probe_n,
+                           f"the {probe_n}-bar probe never held past its own "
+                           "exit, so it proves nothing about binding")
         # A SHORTER time exit frees the single position slot earlier, so it can
         # only trade the same number or more — never fewer.
         self.assertGreaterEqual(short["trades"], base["trades"],
