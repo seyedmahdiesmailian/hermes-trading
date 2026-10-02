@@ -278,7 +278,9 @@ class TestReadOnlyIsolation(unittest.TestCase):
             # contract this pins is that the LIVE path never touches them.
             if os.path.basename(p).startswith("lab_"):
                 continue
-            for node in ast.walk(ast.parse(open(p).read(), filename=p)):
+            with open(p) as fh:
+                src = fh.read()
+            for node in ast.walk(ast.parse(src, filename=p)):
                 if isinstance(node, ast.Import) and any(
                         "lab_decay" in a.name for a in node.names):
                     offenders.append(p)

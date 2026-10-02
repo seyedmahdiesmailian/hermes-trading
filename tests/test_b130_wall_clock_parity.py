@@ -274,7 +274,9 @@ class TestB130NothingIsWired(unittest.TestCase):
                   "position_daemon.py", "signal_daemon.py"):
             p = os.path.join(ROOT, f)
             if os.path.exists(p):
-                self.assertNotIn("b130_wall_clock", open(p).read(),
+                with open(p) as fh:
+                    src = fh.read()
+                self.assertNotIn("b130_wall_clock", src,
                                  f"{f} imports the b130 lab round")
 
 

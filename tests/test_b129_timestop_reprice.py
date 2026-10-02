@@ -236,7 +236,9 @@ class TestB129NothingIsWired(unittest.TestCase):
             p = os.path.join(ROOT, f)
             if not os.path.exists(p):
                 continue
-            self.assertNotIn("b129_timestop", open(p).read(),
+            with open(p) as fh:
+                src = fh.read()
+            self.assertNotIn("b129_timestop", src,
                              f"{f} imports the b129 lab round")
 
 

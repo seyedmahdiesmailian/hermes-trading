@@ -194,7 +194,9 @@ class TestHarnessIsNotLivePath(unittest.TestCase):
         for p in targets:
             if os.path.basename(p) == "lab_harness.py":
                 continue
-            tree = ast.parse(open(p).read(), filename=p)
+            with open(p) as fh:
+                src = fh.read()
+            tree = ast.parse(src, filename=p)
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import) and any(
                         a.name.split(".")[0] == "engines" and

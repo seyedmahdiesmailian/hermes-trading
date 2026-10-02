@@ -281,7 +281,9 @@ class TestScriptContract(unittest.TestCase):
                      "position_daemon.py"):
             p = os.path.join(ROOT, live)
             if os.path.exists(p):
-                self.assertNotIn("b81_lane_rescore", open(p).read())
+                with open(p) as fh:
+                    src = fh.read()
+                self.assertNotIn("b81_lane_rescore", src)
 
 
 if __name__ == "__main__":
