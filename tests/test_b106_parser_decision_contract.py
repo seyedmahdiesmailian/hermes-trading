@@ -179,7 +179,13 @@ class TestB106WarningCoverage(unittest.TestCase):
                       "the warning penalty changed shape — re-read b112")
         census = {}
         for e in self._journal():
-            for w in parse_signal(e.get("raw_text") or "").warnings:
+            # b113 (frame rule): the live listener ALWAYS passes
+            # current_price>0, which switches the parser's _gold_abbrev
+            # branch — the offline frame (no price) reports those same
+            # signals as no_symbol_found and never sees the gate's view.
+            # Measuring in the offline frame is the artifact b113 filed.
+            for w in parse_signal(e.get("raw_text") or "",
+                                  current_price=4500.0).warnings:
                 census[w] = census.get(w, 0) + 1
         self.assertEqual(census.get("sl_above_entry_for_buy", 0), 0)
         self.assertEqual(census.get("sl_below_entry_for_sell", 0), 0)

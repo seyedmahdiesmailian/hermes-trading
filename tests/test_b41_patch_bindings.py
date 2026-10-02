@@ -108,6 +108,15 @@ ALLOWED = {
         'hermes_runtime stays real because BOTH this test file and the census '
         'module import hermes_runtime up front, so the patch can never poison '
         'it even when this file runs alone.',
+    ('test_b221_lane_contract.py', 'engines.auto_executor.execute_trade',
+     'hermes_runtime'):
+        'patch is AE.execute_trade (the module attribute itself, set and '
+        'restored in finally); the path under test — '
+        'signal_listener.run_signal_check — imports execute_trade LAZILY at '
+        'line 623, so it resolves the patched attribute at call time and the '
+        'stub is reached. hermes_runtime is never called by this test (it is '
+        'not even imported), so its module-level binding is irrelevant here, '
+        'not silently wrong.',
 }
 
 
