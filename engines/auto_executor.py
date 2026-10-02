@@ -157,6 +157,16 @@ def evaluate_proposal(
     trade_allowed = account_policy.get("trade_allowed", True)
 
     if not trade_allowed or regime in STOP_TRADING_REGIMES:
+        # b219: "bridge_dark" is the THIRD distinct incident that lands in this
+        # one branch, and before now all three rendered the same reason:
+        #   * a position is really open  → max_positions_1
+        #   * the bridge went dark        → max_positions_1 (fail-closed)
+        #   * the book is in drawdown     → account_locked
+        # The first two are indistinguishable in the report, and only one of
+        # them is a trading incident. Splitting the reason changes no verdict;
+        # it makes the operator's first look at a skipped cycle diagnostic.
+        if account_policy.get("positions_unreadable"):
+            reasons.append("bridge_dark_positions_unreadable")
         reasons.append(f"account_{regime}")
         return {
             "execute": False,

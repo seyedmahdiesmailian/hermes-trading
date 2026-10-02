@@ -379,11 +379,17 @@ def check_signals(bridge=None) -> list[dict]:
             except Exception:
                 _pos_unreadable = True
                 _open_ct = MAX_OPEN_POSITIONS
+            # b219: the block is already correct (fail-closed to the cap),
+            # but it was INDISTINGUISHABLE from a real open position. Both
+            # rendered "max_positions_1", so the operator could not tell "a
+            # trade is really open" from "the bridge went dark" — two very
+            # different incidents. Surface the cause; the verdict is unchanged.
             account_policy = {
                 "trade_allowed": not _kill.get("halted", False),
                 "regime": "halted" if _kill.get("halted") else "normal",
                 "open_positions": _open_ct,
                 "balance": float(acct.get("balance", 0) or 0),
+                "positions_unreadable": _pos_unreadable,
             }
             # b140 TIGHTENING: the regime used to be hardcoded "normal" here,
             # so the SCORER never saw drawdown states (locked/defensive/
@@ -413,6 +419,9 @@ def check_signals(bridge=None) -> list[dict]:
                 account_policy = {
                     "trade_allowed": False, "regime": "policy_error",
                     "open_positions": 0, "balance": 0,
+                    # b219: keep the cause. Dropping it here made a dark bridge
+                    # + a broken kill-switch read as one generic policy_error.
+                    "positions_unreadable": _pos_unreadable,
                     "policy_error": f"regime:{str(_ae)[:180]}"}
         except Exception as e:
             # b29 FAIL-CLOSED: if the kill-switch/account check itself errors,
@@ -420,6 +429,11 @@ def check_signals(bridge=None) -> list[dict]:
             # safety gate must block, never green-light.
             account_policy = {"trade_allowed": False, "regime": "policy_error",
                               "open_positions": 0, "balance": 0,
+                              # b219: this branch fires when the POSITION READ
+                              # itself threw; _pos_unreadable was never set.
+                              # Call it what it is — the bridge is dark, not
+                              # the policy engine.
+                              "positions_unreadable": True,
                               "policy_error": str(e)[:200]}
 
         # News blackout for the signal path too — evaluate_signal has the
