@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import math
 import os
 import sys
 
@@ -102,6 +103,24 @@ def _load_probe_by_name(fname: str):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+def _assert_almost_eq(got, want, path="", tol=1.5e-3) -> bool:
+    """Deep dict compare with a float tolerance.
+
+    Three vetoed_R arms differ in the 3rd decimal between CPython 3.11 (this
+    venv) and 3.12 (which produced the ledger): 3.41/3.411, 5.382/5.383,
+    3.512/3.513. Same rows, same round(x,3) — only the sum's last bits
+    differ. Counts and strings stay exact.
+    """
+    if isinstance(got, dict) and isinstance(want, dict):
+        if set(got) != set(want):
+            return False
+        return all(_assert_almost_eq(got[k], want[k], f"{path}.{k}", tol)
+                   for k in got)
+    if isinstance(got, (int, float)) and isinstance(want, (int, float)):
+        return got == want or math.isclose(got, want, abs_tol=tol)
+    return got == want
 
 
 # ── the checks ─────────────────────────────────────────────────────────────
@@ -464,7 +483,11 @@ def check_b132_derived_blocks() -> str:
                     (b132.verdict, "_verdict"),
                     (b132.lever_test, "_lever")):
         got = fn(led)
-        assert got == led[key], f"b132 producer {key} no longer reproduces"
+        if key == "_census":
+            assert _assert_almost_eq(got, led[key]), \
+                f"b132 producer {key} no longer reproduces"
+        else:
+            assert got == led[key], f"b132 producer {key} no longer reproduces"
     assert all(not v["is_lever"] for v in led["_lever"].values()), \
         "a b132 veto arm now reads as a lever — re-open the human-gate call"
     return (f"b132 integrity + coverage(7 legs) + census + 5 derived blocks "
@@ -503,7 +526,11 @@ def check_b131_derived_blocks() -> str:
                     (b131.neutrality, "_neutrality"),
                     (b131.verdict, "_verdict")):
         got = fn(led)
-        assert got == led[key], f"b131 producer {key} no longer reproduces"
+        if key == "_census":
+            assert _assert_almost_eq(got, led[key]), \
+                f"b131 producer {key} no longer reproduces"
+        else:
+            assert got == led[key], f"b131 producer {key} no longer reproduces"
     return (f"b131 integrity + census(7 legs) + 6 derived blocks "
             f"({len(led['_neutrality'])} arms)")
 
@@ -674,7 +701,7 @@ def uncovered_writers(root: str = _ROOT) -> list[str]:
 
 
 BASELINE_UNCOVERED: tuple[str, ...] = (
-    "b61", "b62", "b63", "b63b", "b64", "b65", "b65b", "b66", "b66b", "b68",
+    "b62", "b63", "b65", "b65b", "b66", "b66b", "b68",
     "b68b", "b68c", "b68d", "b68e", "b68f", "b68g", "b68h", "b68i", "b68j",
     "b68k", "b68l", "b68m", "b68n", "b68o", "b68p", "b68q", "b68r", "b70",
     "b71", "b77", "b79", "b80", "b89", "b92", "b93", "b109", "b111", "b112",

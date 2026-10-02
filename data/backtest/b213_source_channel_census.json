@@ -1,0 +1,470 @@
+{
+ "per_channel": {
+  "radin": {
+   "n": 716,
+   "total": 192.5,
+   "avg": 0.269,
+   "win_pct": 49.7,
+   "t_stat": 0.54,
+   "avg_win": 10.09,
+   "avg_loss": -9.44,
+   "payoff": 1.07
+  },
+  "goldfree": {
+   "n": 366,
+   "total": 431.5,
+   "avg": 1.179,
+   "win_pct": 77.9,
+   "t_stat": 3.46,
+   "avg_win": 3.51,
+   "avg_loss": -7.03,
+   "payoff": 0.5
+  },
+  "goldsystem": {
+   "n": 38,
+   "total": 25.5,
+   "avg": 0.671,
+   "win_pct": 55.3,
+   "t_stat": 0.64,
+   "avg_win": 4.79,
+   "avg_loss": -4.41,
+   "payoff": 1.08
+  },
+  "gtmo": {
+   "n": 63,
+   "total": 94.3,
+   "avg": 1.497,
+   "win_pct": 68.3,
+   "t_stat": 2.14,
+   "avg_win": 4.52,
+   "avg_loss": -5.0,
+   "payoff": 0.9
+  },
+  "gtmofx": {
+   "n": 118,
+   "total": -135.0,
+   "avg": -1.144,
+   "win_pct": 73.7,
+   "t_stat": -2.19,
+   "avg_win": 1.23,
+   "avg_loss": -7.81,
+   "payoff": 0.16
+  },
+  "olivex": {
+   "n": 50,
+   "total": 2.0,
+   "avg": 0.04,
+   "win_pct": 14.0,
+   "t_stat": 0.04,
+   "avg_win": 11.86,
+   "avg_loss": -1.88,
+   "payoff": 6.29
+  },
+  "otsfx": {
+   "n": 7,
+   "total": -22.9,
+   "avg": -3.271,
+   "win_pct": 28.6,
+   "t_stat": -0.44,
+   "avg_win": 20.75,
+   "avg_loss": -12.88,
+   "payoff": 1.61
+  }
+ },
+ "quartiles": {
+  "radin": [
+   {
+    "from": "2026-06-08",
+    "to": "2026-07-01",
+    "n": 179,
+    "total": -571.0,
+    "win_pct": 42.5
+   },
+   {
+    "from": "2026-07-01",
+    "to": "2026-07-22",
+    "n": 179,
+    "total": 285.0,
+    "win_pct": 52.0
+   },
+   {
+    "from": "2026-07-22",
+    "to": "2026-08-13",
+    "n": 179,
+    "total": 378.5,
+    "win_pct": 54.2
+   },
+   {
+    "from": "2026-08-13",
+    "to": "2026-09-04",
+    "n": 179,
+    "total": 100.0,
+    "win_pct": 50.3
+   }
+  ],
+  "goldfree": [
+   {
+    "from": "2026-06-08",
+    "to": "2026-07-01",
+    "n": 91,
+    "total": 165.5,
+    "win_pct": 79.1
+   },
+   {
+    "from": "2026-07-01",
+    "to": "2026-07-21",
+    "n": 92,
+    "total": 69.5,
+    "win_pct": 76.1
+   },
+   {
+    "from": "2026-07-21",
+    "to": "2026-08-14",
+    "n": 91,
+    "total": 158.0,
+    "win_pct": 83.5
+   },
+   {
+    "from": "2026-08-17",
+    "to": "2026-09-04",
+    "n": 92,
+    "total": 38.5,
+    "win_pct": 72.8
+   }
+  ],
+  "goldsystem": [
+   {
+    "from": "2026-06-16",
+    "to": "2026-07-02",
+    "n": 9,
+    "total": 32.0,
+    "win_pct": 55.6
+   },
+   {
+    "from": "2026-07-06",
+    "to": "2026-07-15",
+    "n": 10,
+    "total": -3.5,
+    "win_pct": 30.0
+   },
+   {
+    "from": "2026-07-22",
+    "to": "2026-08-14",
+    "n": 9,
+    "total": 6.0,
+    "win_pct": 77.8
+   },
+   {
+    "from": "2026-08-17",
+    "to": "2026-09-02",
+    "n": 10,
+    "total": -9.0,
+    "win_pct": 60.0
+   }
+  ],
+  "gtmo": [
+   {
+    "from": "2026-06-11",
+    "to": "2026-07-06",
+    "n": 15,
+    "total": 4.5,
+    "win_pct": 53.3
+   },
+   {
+    "from": "2026-07-08",
+    "to": "2026-07-23",
+    "n": 16,
+    "total": 16.3,
+    "win_pct": 68.8
+   },
+   {
+    "from": "2026-07-24",
+    "to": "2026-08-12",
+    "n": 16,
+    "total": 55.0,
+    "win_pct": 81.2
+   },
+   {
+    "from": "2026-08-13",
+    "to": "2026-09-03",
+    "n": 16,
+    "total": 18.5,
+    "win_pct": 68.8
+   }
+  ],
+  "gtmofx": [
+   {
+    "from": "2026-06-08",
+    "to": "2026-07-02",
+    "n": 29,
+    "total": -51.55,
+    "win_pct": 62.1
+   },
+   {
+    "from": "2026-07-06",
+    "to": "2026-07-28",
+    "n": 30,
+    "total": -3.2,
+    "win_pct": 83.3
+   },
+   {
+    "from": "2026-07-28",
+    "to": "2026-08-17",
+    "n": 29,
+    "total": -27.85,
+    "win_pct": 69.0
+   },
+   {
+    "from": "2026-08-17",
+    "to": "2026-09-04",
+    "n": 30,
+    "total": -52.4,
+    "win_pct": 80.0
+   }
+  ],
+  "olivex": [
+   {
+    "from": "2026-07-08",
+    "to": "2026-07-15",
+    "n": 12,
+    "total": -18.0,
+    "win_pct": 8.3
+   },
+   {
+    "from": "2026-07-16",
+    "to": "2026-07-28",
+    "n": 13,
+    "total": -26.5,
+    "win_pct": 7.7
+   },
+   {
+    "from": "2026-07-28",
+    "to": "2026-08-04",
+    "n": 12,
+    "total": 15.0,
+    "win_pct": 25.0
+   },
+   {
+    "from": "2026-08-04",
+    "to": "2026-08-12",
+    "n": 13,
+    "total": 31.5,
+    "win_pct": 15.4
+   }
+  ],
+  "otsfx": [
+   {
+    "from": "2026-06-29",
+    "to": "2026-06-29",
+    "n": 1,
+    "total": -28.0,
+    "win_pct": 0.0
+   },
+   {
+    "from": "2026-07-14",
+    "to": "2026-07-22",
+    "n": 2,
+    "total": 23.0,
+    "win_pct": 50.0
+   },
+   {
+    "from": "2026-07-28",
+    "to": "2026-07-30",
+    "n": 2,
+    "total": 6.5,
+    "win_pct": 50.0
+   },
+   {
+    "from": "2026-08-20",
+    "to": "2026-08-28",
+    "n": 2,
+    "total": -24.4,
+    "win_pct": 0.0
+   }
+  ]
+ },
+ "halves": {
+  "radin": {
+   "first": {
+    "n": 358,
+    "total": -286.0,
+    "avg": -0.799,
+    "win_pct": 47.2,
+    "t_stat": -1.19,
+    "avg_win": 9.11,
+    "avg_loss": -9.66,
+    "payoff": 0.94
+   },
+   "second": {
+    "n": 358,
+    "total": 478.5,
+    "avg": 1.337,
+    "win_pct": 52.2,
+    "t_stat": 1.82,
+    "avg_win": 10.98,
+    "avg_loss": -9.2,
+    "payoff": 1.19
+   }
+  },
+  "goldfree": {
+   "first": {
+    "n": 183,
+    "total": 235.0,
+    "avg": 1.284,
+    "win_pct": 77.6,
+    "t_stat": 2.23,
+    "avg_win": 3.98,
+    "avg_loss": -8.04,
+    "payoff": 0.49
+   },
+   "second": {
+    "n": 183,
+    "total": 196.5,
+    "avg": 1.074,
+    "win_pct": 78.1,
+    "t_stat": 2.92,
+    "avg_win": 3.05,
+    "avg_loss": -6.0,
+    "payoff": 0.51
+   }
+  },
+  "goldsystem": {
+   "first": {
+    "n": 19,
+    "total": 28.5,
+    "avg": 1.5,
+    "win_pct": 42.1,
+    "t_stat": 0.8,
+    "avg_win": 8.31,
+    "avg_loss": -3.45,
+    "payoff": 2.41
+   },
+   "second": {
+    "n": 19,
+    "total": -3.0,
+    "avg": -0.158,
+    "win_pct": 68.4,
+    "t_stat": -0.16,
+    "avg_win": 2.62,
+    "avg_loss": -6.17,
+    "payoff": 0.42
+   }
+  },
+  "gtmo": {
+   "first": {
+    "n": 31,
+    "total": 20.8,
+    "avg": 0.671,
+    "win_pct": 61.3,
+    "t_stat": 0.68,
+    "avg_win": 4.25,
+    "avg_loss": -5.0,
+    "payoff": 0.85
+   },
+   "second": {
+    "n": 32,
+    "total": 73.5,
+    "avg": 2.297,
+    "win_pct": 75.0,
+    "t_stat": 2.34,
+    "avg_win": 4.73,
+    "avg_loss": -5.0,
+    "payoff": 0.95
+   }
+  },
+  "gtmofx": {
+   "first": {
+    "n": 59,
+    "total": -54.75,
+    "avg": -0.928,
+    "win_pct": 72.9,
+    "t_stat": -1.89,
+    "avg_win": 1.32,
+    "avg_loss": -6.98,
+    "payoff": 0.19
+   },
+   "second": {
+    "n": 59,
+    "total": -80.25,
+    "avg": -1.36,
+    "win_pct": 74.6,
+    "t_stat": -1.47,
+    "avg_win": 1.14,
+    "avg_loss": -8.69,
+    "payoff": 0.13
+   }
+  },
+  "olivex": {
+   "first": {
+    "n": 25,
+    "total": -44.5,
+    "avg": -1.78,
+    "win_pct": 8.0,
+    "t_stat": -1.59,
+    "avg_win": 8.75,
+    "avg_loss": -2.7,
+    "payoff": 3.25
+   },
+   "second": {
+    "n": 25,
+    "total": 46.5,
+    "avg": 1.86,
+    "win_pct": 20.0,
+    "t_stat": 1.17,
+    "avg_win": 13.1,
+    "avg_loss": -0.95,
+    "payoff": 13.79
+   }
+  },
+  "otsfx": {
+   "first": {
+    "n": 3,
+    "total": -5.0,
+    "avg": -1.667,
+    "win_pct": 33.3,
+    "t_stat": -0.11,
+    "avg_win": 23.0,
+    "avg_loss": -14.0,
+    "payoff": 1.64
+   },
+   "second": {
+    "n": 4,
+    "total": -17.9,
+    "avg": -4.475,
+    "win_pct": 25.0,
+    "t_stat": -0.49,
+    "avg_win": 18.5,
+    "avg_loss": -12.13,
+    "payoff": 1.52
+   }
+  }
+ },
+ "sign_flips": [
+  "radin",
+  "goldsystem",
+  "olivex"
+ ],
+ "out_of_sample": {
+  "naive_positive_half_rule": {
+   "chosen_on_first_half": [
+    "goldfree",
+    "goldsystem",
+    "gtmo"
+   ],
+   "second_half_all": 693.85,
+   "second_half_chosen": 267.0,
+   "delta": -426.85
+  },
+  "tightening_only_loser_veto": {
+   "vetoed_on_first_half": [],
+   "second_half_all": 693.85,
+   "second_half_kept": 693.85,
+   "delta": 0.0
+  }
+ },
+ "params": {
+  "MIN_N_FOR_VETO": 60,
+  "T_VETO": -2.0
+ },
+ "_self_check_problems": []
+}
