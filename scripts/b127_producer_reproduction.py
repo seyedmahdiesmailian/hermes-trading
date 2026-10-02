@@ -345,7 +345,15 @@ _BUILTINS = set(dir(__import__("builtins")))
 def check_b114_drift_is_arithmetic() -> str:
     """The drift ledger's two derived fields — the import closure and the
     changed-since-boot set — re-computed from the ledger's OWN recorded boot
-    commit and head. If either stops matching, the drift claim is prose."""
+    commit and head. If either stops matching, the drift claim is prose.
+
+    The ledger is a runtime artifact (gitignored — data/ops/ is generated
+    state, not evidence shipped with the tree), so a clean checkout has no
+    copy. That is not a reproduction failure: skip, the same way the suite
+    skips any pinned artifact that is absent.
+    """
+    if not os.path.exists(LEDGER_114):
+        return "b114 skipped: no daemon_code_drift.json in this tree"
     probe = _load_probe()
     led = _load(LEDGER_114)
     n = 0
