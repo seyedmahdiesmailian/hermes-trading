@@ -191,11 +191,26 @@ def setup_grade(plan: dict) -> str:
     alignment = q.get("alignment")
     trend = float(q.get("trend_strength", 0) or 0)
     regime = q.get("regime")
+    votes = q.get("bias_votes") or {}
     if (alignment == "aligned" and trend >= 3.0
             and regime in {"breakout_continuation", "pullback_continuation"}):
         return "A"
     if alignment == "aligned" and trend >= 1.2:
         return "B"
+    # b218: a genuine PULLBACK entry is a mixed-alignment setup by
+    # construction — _detect_regime only emits pullback_continuation when
+    # H1 and H4 agree (higher_tf_aligned) while M5 reacts against them,
+    # which is exactly the entry the plan is waiting for. The old rule
+    # could only reach B through `alignment == "aligned"`, so EVERY
+    # pullback_continuation plan graded C and MIN_SETUP_GRADE=B killed it.
+    # The result was an engine that can recognise its own highest-probability
+    # setup but is forbidden from trading it — 88% of 1543 live plans died
+    # at this line. The HTF pair is the signal here; a disagreement on the
+    # ENTRY timeframe is the trigger, not a reason to stand down.
+    if regime == "pullback_continuation" and trend >= 1.2:
+        htf = (votes.get("h1"), votes.get("h4"))
+        if htf[0] == htf[1] and htf[0] in {"bullish", "bearish"}:
+            return "B"
     return "C"
 
 

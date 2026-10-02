@@ -43,9 +43,18 @@ def classify_bias(rows: list[dict], min_move: float | None = None, min_agreement
     up_count = sum(1 for d in diffs if d > 0)
     down_count = sum(1 for d in diffs if d < 0)
     net_move = closes[-1] - closes[0]
-    if net_move >= min_move and up_count >= min_agreement:
+    # b218: a STRONG move earns a lower bar-count requirement. The old
+    # flat `min_agreement` (default 3 of 4 diffs) rejected every 2-up/2-down
+    # window outright — live H4 on 2026-10-02 closed 4154->4190 with
+    # net = 36.8 = 1.75x the volatility threshold and still graded NEUTRAL
+    # because the bar colours split 2/2. A choppy path to a real trend is
+    # the normal shape of a gold move, and the gate's own purpose is to
+    # separate TREND from RANGE, not to require monotonic bars.
+    strong = min_move > 0 and abs(net_move) >= min_move * 1.5
+    need = 2 if strong else min_agreement
+    if net_move >= min_move and up_count >= need:
         return "bullish"
-    if net_move <= -min_move and down_count >= min_agreement:
+    if net_move <= -min_move and down_count >= need:
         return "bearish"
     return "neutral"
 
