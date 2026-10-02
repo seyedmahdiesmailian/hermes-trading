@@ -181,6 +181,20 @@ def _signal_executions(dark: bool) -> list[dict]:
     _orig_fetch = SL.fetch_new_messages
     _orig_execute = AE.execute_trade
     _orig_group = SL.os.environ.get("TELEGRAM_SIGNAL_GROUP")
+    # b221 fix: run_signal_check calls evaluate_proposal through the SIGNAL
+    # lane's OWN imports, so the ambient gates have to be stubbed there too —
+    # the same _evaluate() discipline. auto_executor already imported
+    # is_market_open by bare name at module level, so patching AE.is_market_open
+    # is a no-op; the real binding lives on engines.market_hours.
+    from engines import market_hours as MH
+    from engines import cooldown as CD
+    _orig_open = MH.is_market_open
+    _orig_cd = CD.check_entry_cooldown
+    # auto_executor captured is_market_open by bare name at import time, so
+    # patching MH.is_market_open alone is a no-op on the AE path — patch BOTH
+    # bindings (the b41 binding discipline this repo enforces in audit).
+    # check_entry_cooldown stays on CD only: AE imports it lazily at line 316.
+    _orig_ae_open = AE.is_market_open
     SL.os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100contract"
     SL.fetch_new_messages = lambda: [{
         "update_id": 1,
@@ -200,11 +214,17 @@ def _signal_executions(dark: bool) -> list[dict]:
         raise AssertionError("b221 contract test must never send an order")
 
     AE.execute_trade = _no_trade
+    MH.is_market_open = lambda *a, **k: True
+    AE.is_market_open = lambda *a, **k: True
+    CD.check_entry_cooldown = lambda now=None: {"allowed": True}
     try:
         return SL.run_signal_check(bridge, dry_run=True).get("executions", [])
     finally:
         SL.fetch_new_messages = _orig_fetch
         AE.execute_trade = _orig_execute
+        MH.is_market_open = _orig_open
+        AE.is_market_open = _orig_ae_open
+        CD.check_entry_cooldown = _orig_cd
         if _orig_group is None:
             SL.os.environ.pop("TELEGRAM_SIGNAL_GROUP", None)
         else:
