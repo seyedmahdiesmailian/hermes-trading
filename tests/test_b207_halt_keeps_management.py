@@ -55,7 +55,7 @@ def halt_now(now: datetime | None = None) -> datetime:
     if now is not None:
         return now
     now = datetime.now(timezone.utc)
-    if 22 <= now.hour:                      # inside/close to the b93 window
+    if 21 <= now.hour:                      # inside/close to the b93 window
         now = now + timedelta(hours=24 - now.hour + 1)   # -> next day 00/01h
     return now
 

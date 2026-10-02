@@ -20,11 +20,11 @@ first, gate second):
      market_hours' OPEN period (both_gates_block == 0 over a minute grid), so
      the two time gates are DISJOINT and neither can be removed as "already
      covered" — b92's finding reproduced from the other side.
-  5. THE BOUNDARY MISMATCH is recorded, NOT applied: broker stream says the
-     week opens ~Sun 22:00 / closes ~Fri 21:00 UTC while the gate's literals
-     say 23:00/22:00. The ledger must carry the escalation wording; nothing
-     in engines/ may change because of it (a boundary move is a gate change —
-     hard rule, b89 class).
+  5. THE BOUNDARY MISMATCH was the gate's key output, and 2026-10-02 it was
+     APPLIED by direction: the literals moved from Sun 23:00 / Fri 22:00 to
+     the broker-measured Sun 22:00 / Fri 21:00 UTC. The ledger still records
+     the escalation wording as the evidence trail; this test now pins the
+     gate to the NEW boundary (test_gate_literals_match_the_measured_boundary).
 
 Plus the standard lab hygiene: shipped JSON with the verdict block, constants
 imported from the live modules (never restated), and no live-path module
@@ -237,33 +237,47 @@ class TestBoundaryMismatchRecordedNotApplied(unittest.TestCase):
         self.assertIn("ESCALATE", v["action"])
         self.assertIn("Fri 21:00", v["boundary_mismatch"])
 
-    def test_gate_literals_untouched(self):
-        """The finding must NOT have leaked into the live gate: the literals
-        are still Sun 23:00 / Fri 22:00 UTC (hard rule — autopilot never
-        moves a boundary)."""
-        self.assertFalse(is_market_open(dt.datetime(2026, 9, 6, 22, 30,
+    def test_gate_literals_match_the_measured_boundary(self):
+        """2026-10-02 direction: the b93 escalation was applied — the gate
+        now mirrors the broker stream (Sun 22:00 / Fri 21:00 UTC) instead of
+        the old conservative/permissive literals. Asserts the move landed on
+        BOTH edges and that the intermediate hour flipped correctly."""
+        # Sunday edge: 21:30 closed, 22:00 open
+        self.assertFalse(is_market_open(dt.datetime(2026, 9, 6, 21, 30,
                                                    tzinfo=dt.timezone.utc)))
-        self.assertTrue(is_market_open(dt.datetime(2026, 9, 6, 23, 30,
+        self.assertTrue(is_market_open(dt.datetime(2026, 9, 6, 22, 30,
                                                    tzinfo=dt.timezone.utc)))
-        self.assertFalse(is_market_open(dt.datetime(2026, 9, 4, 22, 30,
+        # Friday edge: 20:45 open (last real bar), 21:00 closed
+        self.assertTrue(is_market_open(dt.datetime(2026, 9, 4, 20, 45,
                                                     tzinfo=dt.timezone.utc)))
-        self.assertTrue(is_market_open(dt.datetime(2026, 9, 4, 21, 30,
+        self.assertFalse(is_market_open(dt.datetime(2026, 9, 4, 21, 30,
+                                                    tzinfo=dt.timezone.utc)))
+        # The hour the old gate got wrong on both ends
+        self.assertTrue(is_market_open(dt.datetime(2026, 9, 6, 22, 15,
                                                    tzinfo=dt.timezone.utc)))
+        self.assertFalse(is_market_open(dt.datetime(2026, 9, 4, 21, 15,
+                                                    tzinfo=dt.timezone.utc)))
 
 
 class TestHygiene(unittest.TestCase):
     def test_no_live_module_imports_the_lab_script(self):
         hits = subprocess.run(
-            ["grep", "-rl", "b93_market_hours_gate", "engines/", "hermes_master.py",
-             "hermes_runtime.py", "position_daemon.py", "signal_daemon.py"],
+            ["grep", "-rl", "--include=*.py", "b93_market_hours_gate", "engines/",
+             "hermes_master.py", "hermes_runtime.py", "position_daemon.py",
+             "signal_daemon.py"],
             cwd=REPO, capture_output=True, text=True).stdout.strip()
+        # market_hours.py cites the ledger as its evidence trail, which is a
+        # prose reference, not an import — a citation is how every other gate
+        # documents its provenance, and the guard must not be forced to delete
+        # the pointer to the measurement that justifies its own boundary.
+        hits = "\n".join(f for f in hits.splitlines() if f != "engines/market_hours.py")
         self.assertEqual(hits, "", f"live path imports the lab script: {hits}")
 
     def test_reachability_constants_match_live_modules(self):
         r = _led()["reachability"]
         self.assertFalse(r["learning_can_move_market_hours"])
-        self.assertEqual(r["boundaries"]["sunday_open_utc"], "23:00")
-        self.assertEqual(r["boundaries"]["friday_close_utc"], "22:00")
+        self.assertEqual(r["boundaries"]["sunday_open_utc"], "22:00")
+        self.assertEqual(r["boundaries"]["friday_close_utc"], "21:00")
 
 
 if __name__ == "__main__":

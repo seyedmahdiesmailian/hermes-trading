@@ -4,7 +4,7 @@ Legacy behavior (Hermes_Full_Backup engine_state.json): after the engine
 starts (or the market opens), block NEW entries for a short window while
 spreads are wide and the first ticks are noisy.
 
-XAUUSD opens Sun 23:00 UTC (Tehran 02:30 Mon). Legacy used a post_open
+XAUUSD opens Sun 22:00 UTC (Tehran 01:30 Mon). Legacy used a post_open
 cooldown; we apply it automatically every week after the market open plus
 on daemon startup (restart mid-session keeps a shorter guard).
 """
@@ -34,13 +34,13 @@ def _save(state: dict):
 
 
 def _market_open_utc(now: datetime) -> datetime:
-    """Most recent XAUUSD weekly open (Sun 23:00 UTC) on or before `now`."""
+    """Most recent XAUUSD weekly open (Sun 22:00 UTC) on or before `now`."""
     # weekday(): Mon=0..Sun=6; find most recent Sunday
     days_since_sunday = (now.weekday() - 6) % 7
     sunday = (now - timedelta(days=days_since_sunday)).replace(
-        hour=23, minute=0, second=0, microsecond=0
+        hour=22, minute=0, second=0, microsecond=0
     )
-    if sunday > now:  # Sunday today before 23:00 → previous week's open
+    if sunday > now:  # Sunday today before 22:00 -> previous week's open
         sunday -= timedelta(days=7)
     return sunday
 

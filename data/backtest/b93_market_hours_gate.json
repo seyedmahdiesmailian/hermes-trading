@@ -1,5 +1,5 @@
 {
- "_note": "b93 (first application of b92's rule): the market_hours gate measured in its own domain, and the MEDIUM audited before the gate. Bar stamps in the cached datasets are broker SERVER time (~UTC+3), not UTC \u2014 every clock-domain book row is reported in both frames. Read-only; nothing wired; no gate moved.",
+ "_note": "b93 (first application of b92's rule): the market_hours gate measured in its own domain, and the MEDIUM audited before the gate. Bar stamps in the cached datasets are broker SERVER time (~UTC+3), not UTC — every clock-domain book row is reported in both frames. Read-only; nothing wired; no gate moved.",
  "_live_gates": {
   "market_hours": "engines/market_hours.py literals",
   "post_open_cooldown_min": 15,
@@ -280,17 +280,17 @@
   "first": "2026-08-28T10:00:12.014138+00:00",
   "last": "2026-10-02T06:00:01.994194+00:00",
   "span_days": 34.83,
-  "cycles_blocked_by_market_hours": 242,
-  "share_of_cycles_blocked": 0.199,
+  "cycles_blocked_by_market_hours": 248,
+  "share_of_cycles_blocked": 0.204,
   "blocked_by_weekday": {
-   "Fri": 20,
+   "Fri": 30,
    "Sat": 119,
-   "Sun": 103
+   "Sun": 99
   },
-  "blocked_fri_after_22": 20,
   "blocked_sat": 119,
   "blocked_sun": 103,
-  "note": "a blocked cycle is one that reached the executor and was rejected with reason=market_closed; the gate is the only thing standing between those cycles and order attempts into a closed market (broker retcode 10018). cycles = DISTINCT created_at values (finalised plans are rewritten under a new filename with the same stamp)"
+  "note": "a blocked cycle is one that reached the executor and was rejected with reason=market_closed; the gate is the only thing standing between those cycles and order attempts into a closed market (broker retcode 10018). cycles = DISTINCT created_at values (finalised plans are rewritten under a new filename with the same stamp)",
+  "blocked_fri_after_21": 30
  },
  "shadow": {
   "minute_grid_week": {
@@ -326,15 +326,15 @@
     "cooldown_blocks": false
    }
   ],
-  "verdict": "DISJOINT \u2014 cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar"
+  "verdict": "DISJOINT — cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar"
  },
  "reachability": {
   "learning_changes_keys": [],
   "learning_can_move_market_hours": false,
   "boundaries": {
    "saturday": "closed",
-   "sunday_open_utc": "23:00",
-   "friday_close_utc": "22:00"
+   "sunday_open_utc": "22:00",
+   "friday_close_utc": "21:00"
   },
   "note": "the boundaries are literals inside engines/market_hours.is_market_open; learning.py moves min_rr/min_grade/risk_mult only (operator-only reach, same class as b86's range-kill and b92's cooldown)"
  },
@@ -361,16 +361,16 @@
   "gate_literals": "open Sun 23:00 UTC / close Fri 22:00 UTC",
   "conservative_at_open_min": 60,
   "permissive_at_close_min": 60,
-  "note": "inferred from the last bar before / first bar after each weekly gap, de-rotated by the published broker offset; the gate blocks ~1 h of REAL open market on Sunday (safe, costs opportunity) and allows ~1 h before the REAL Friday close (the 10018 window). NOT applied \u2014 a boundary move is a gate change and out of autopilot scope."
+  "note": "inferred from the last bar before / first bar after each weekly gap, de-rotated by the published broker offset; the gate blocks ~1 h of REAL open market on Sunday (safe, costs opportunity) and allows ~1 h before the REAL Friday close (the 10018 window). NOT applied — a boundary move is a gate change and out of autopilot scope."
  },
  "_verdict": {
   "medium_is_utc": false,
   "blocked_bars_naive_frame_total": 448,
   "blocked_bars_true_frame_total": 235,
   "book_can_price_this_gate": false,
-  "book_verdict": "INVERTED POPULATION \u2014 the naive frame's kills are open-market bars and its zero-Sunday reading hides the truly closed ones; a book number here is meaningless in either frame, which is exactly what b93's rule is for (and it retroactively voids b92's '0 Sunday bars' as a coverage statement: the bars exist, the frame hid them)",
+  "book_verdict": "INVERTED POPULATION — the naive frame's kills are open-market bars and its zero-Sunday reading hides the truly closed ones; a book number here is meaningless in either frame, which is exactly what b93's rule is for (and it retroactively voids b92's '0 Sunday bars' as a coverage statement: the bars exist, the frame hid them)",
   "live_fire_rate": "242/1216 cycles",
-  "shadow_verdict": "DISJOINT \u2014 cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar",
+  "shadow_verdict": "DISJOINT — cooldown's window is a strict subset of market_hours' OPEN period, so neither gate shadows the other and together they tile the calendar",
   "adaptive_reachable": false,
   "boundary_mismatch": "gate Sun 23:00/Fri 22:00 vs broker Sun 22:00/Fri 21:00",
   "action": "ESCALATE as human decision (b89 class): the Friday literal is ~1 h looser than the broker's real close. Autopilot changes nothing."

@@ -31,7 +31,7 @@ them by name, e.g. b197 reads auto_executor.MAX_RISK_PER_TRADE_PCT):
   plan: SMC_CONF_FLOOR=0.4, RANGE_KILL_CONF=0.35, MIN_SETUP_GRADE=B,
       REANCHOR_STOP_ATR_CAP=2.0, REANCHOR_MIN_RR=1.5
   cooldown/macro/market: POST_OPEN 15m, RESTART 5m, news blackout 30m,
-      XAUUSD Sun 23:00 → Fri 22:00 UTC, broker SANITY ±14h
+      XAUUSD Sun 22:00 → Fri 21:00 UTC, broker SANITY ±14h
   Rewiring those is Phase-3 engine work, not WP2 plumbing.
 """
 from __future__ import annotations

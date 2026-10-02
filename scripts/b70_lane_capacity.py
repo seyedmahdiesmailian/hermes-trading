@@ -269,17 +269,17 @@ def live_occupancy():
     iv_first, iv_last = pair("first"), pair("last")
     intervals = iv_last
     span_start, span_end = entries[0], max(c for _, c in intervals) if intervals else entries[-1]
-    # market-open intervals per calendar day (UTC): Mon-Thu 00-24, Fri 00-22,
-    # Sat closed, Sun 23-24 (XAUUSD Sun 23:00 -> Fri 22:00, backlog rule)
+    # market-open intervals per calendar day (UTC): Mon-Thu 00-24, Fri 00-21,
+    # Sat closed, Sun 22-24 (XAUUSD Sun 22:00 -> Fri 21:00, backlog rule)
     def day_open(d):
         dow = d.weekday()                                   # Mon=0 .. Sun=6
         mid = datetime.datetime.combine(d, datetime.time(), datetime.timezone.utc)
         if dow in (0, 1, 2, 3):
             return mid, mid + datetime.timedelta(days=1)
         if dow == 4:
-            return mid, mid + datetime.timedelta(hours=22)
+            return mid, mid + datetime.timedelta(hours=21)
         if dow == 6:
-            return mid + datetime.timedelta(hours=23), mid + datetime.timedelta(days=1)
+            return mid + datetime.timedelta(hours=22), mid + datetime.timedelta(days=1)
         return None
     open_min = 0.0
     open_ticks = 0

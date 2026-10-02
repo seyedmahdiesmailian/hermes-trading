@@ -83,7 +83,7 @@ class TestPostOpenPredicate(unittest.TestCase):
     shape (b52 anti-vacuity: both directions)."""
 
     def test_boundaries(self):
-        sun = dt.datetime(2026, 8, 30, 23, 0, tzinfo=dt.timezone.utc)
+        sun = dt.datetime(2026, 8, 30, 22, 0, tzinfo=dt.timezone.utc)
         self.assertTrue(cd._market_open_utc(sun) == sun)
         for m in (0, 5, 14):
             t = sun + dt.timedelta(minutes=m)
@@ -99,7 +99,7 @@ class TestPostOpenPredicate(unittest.TestCase):
         """The shadow row: market_hours must NOT cover the window, or the
         cooldown gate becomes redundant (b87 flips to SHADOWED)."""
         from engines.market_hours import is_market_open
-        sun = dt.datetime(2026, 8, 30, 23, 0, tzinfo=dt.timezone.utc)
+        sun = dt.datetime(2026, 8, 30, 22, 0, tzinfo=dt.timezone.utc)
         for m in (0, 5, 10, 14):
             t = sun + dt.timedelta(minutes=m)
             self.assertTrue(is_market_open(t),
@@ -127,10 +127,10 @@ class TestClockDomain(unittest.TestCase):
         led = _led()
         r = led["reach"]
         self.assertEqual(r["window_min"], cd.POST_OPEN_COOLDOWN_MIN)
-        # Sun 23:00 -> Fri 22:00 = 117 h
-        self.assertEqual(r["session_min_per_week"], 117 * 60)
+        # Sun 22:00 -> Fri 21:00 = 119 h
+        self.assertEqual(r["session_min_per_week"], 119 * 60)
         self.assertAlmostEqual(r["share_of_trading_time"],
-                               cd.POST_OPEN_COOLDOWN_MIN / (117 * 60), places=5)
+                               cd.POST_OPEN_COOLDOWN_MIN / (119 * 60), places=5)
 
 
 class TestShadowVerdict(unittest.TestCase):

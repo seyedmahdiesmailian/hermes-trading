@@ -114,12 +114,12 @@
    }
   ],
   "blocked_cycles_per_arm": 1,
-  "note": "each arm blocks the cycle that armed it for 5 min; the next cron tick is at +15 min, outside the guard, so one arm costs at most one cycle \u2014 the b30 fix made the guard proportional"
+  "note": "each arm blocks the cycle that armed it for 5 min; the next cron tick is at +15 min, outside the guard, so one arm costs at most one cycle — the b30 fix made the guard proportional"
  },
  "reach": {
   "window_min": 15,
-  "session_min_per_week": 7020,
-  "share_of_trading_time": 0.00214,
+  "session_min_per_week": 7140,
+  "share_of_trading_time": 0.0021008403361344537,
   "windows_per_week": 1,
   "restart_window_min": 5,
   "restart_armed_by_gap_min": 30
@@ -159,7 +159,7 @@
   ],
   "shadowed_by_market_hours": 0,
   "covered_only_by_cooldown": 4,
-  "verdict": "NOT_SHADOWED \u2014 cooldown is the only gate on its window"
+  "verdict": "NOT_SHADOWED — cooldown is the only gate on its window"
  },
  "reachability": {
   "learning_changes_keys": [],
@@ -176,7 +176,7 @@
   "signals_in_window_total": 0,
   "book_can_price_this_gate": false,
   "restart_arms_in_live_record": 1,
-  "shadow_verdict": "NOT_SHADOWED \u2014 cooldown is the only gate on its window",
+  "shadow_verdict": "NOT_SHADOWED — cooldown is the only gate on its window",
   "adaptive_reachable": false
  }
 }

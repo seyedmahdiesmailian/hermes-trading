@@ -329,7 +329,7 @@ def evaluate_proposal(
         }
 
     # ── Check 7.5: Market session window (avoid broker MARKET_CLOSED spam) ──
-    # XAUUSD trades ~Sun 23:00 → Fri 22:00 UTC (shared guard, also used by the signal path)
+    # XAUUSD trades ~Sun 22:00 → Fri 21:00 UTC (shared guard, also used by the signal path)
     if not is_market_open():
         reasons.append("market_closed")
         return {
