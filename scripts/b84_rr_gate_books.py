@@ -258,9 +258,18 @@ def verdict(led):
 
     # the adaptive-gate hazard: can learning actually reach a killing floor, and
     # what does the live state say right now?
+    # b127 fix: the frozen ledger EMBEDS the learning_state snapshot it was
+    # built with. Reading the live file here made verdict() non-reproducible —
+    # on the live box it re-derived a fresh timestamp, on a clean checkout it
+    # fell back to defaults — so b127's reproduction pin failed either way.
+    # Prefer the embedded snapshot (that is the evidence the ledger carries);
+    # only fall back to the live file for a legacy ledger without one.
     from engines.learning import load_learning_state
+    embedded = (led.get("_verdict") or {}).get("adaptive_gate_reach", {}).get(
+        "learning_state")
+    learning_state = embedded if embedded is not None else load_learning_state()
     v["adaptive_gate_reach"] = {
-        "learning_state": load_learning_state(),
+        "learning_state": learning_state,
         "reachable_floors": list(LADDER_RR),
         "floor_that_silences_the_funnel": min(
             (float(t) for t in LADDER_RR
