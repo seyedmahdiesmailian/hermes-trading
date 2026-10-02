@@ -77,19 +77,53 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       reassess closed by b198, bias-momentum awaits the human 60-trade bar).
       Two cosmetic observations filed as b211 below. b210 NOT attempted again:
       same 50-min b88/b89 re-derivation wall vs 55-min run.
-- [ ] b211 TRADER OBSERVABILITY/ROBUSTNESS (found by the 2026-09-10 code
-      re-review, NOT shipped — each needs <30 min, neither is a gate):
-      (a) engines/legacy_guards.evaluate_news_lock: `cur = str(ev.get(
+- [~] b211 TRADER OBSERVABILITY/ROBUSTNESS (found by the 2026-09-10 code
+      re-review; (b) DONE 2026-10-02 as part of b219 — see below; (a) still
+      open and quick):
+      (a) STILL TODO engines/legacy_guards.evaluate_news_lock: `cur = str(ev.get(
       "currency", ev.get("country", ""))).upper()` — when the key EXISTS but is
       null, str(None)="NONE" and the event is silently skipped, so a real
       high-impact event with a null currency field never fires the lock.
       `ev.get("currency") or ev.get("country") or ""` is strictly MORE
       protective (only ever fires more locks, never fewer). Add the RED test
       first (probe with {'currency': None, 'impact': 'high', ...}).
-      (b) engines/signal_listener.run_signal_check calls bridge.get_account()
-      TWICE per signal (line ~475 for the open-positions overlay, and again
-      inside _performance_and_policy) — one extra bridge round-trip per
-      decision, harmless but the b207 "ONE read per cycle" lesson applies.
+      (b) DONE 2026-10-02 (b219, same root cause class — an observability hole
+      on a correct block): the signal lane's fail-closed position read already
+      blocked correctly, but it was indistinguishable from a real open
+      position in the report (both rendered max_positions_1). The cause is now
+      published as `positions_unreadable` and surfaces as the executor reason
+      `bridge_dark_positions_unreadable`, which fires ONLY on a dark bridge —
+      never on a real position or a drawdown lock. See the b219 entry below.
+      The duplicate-bridge-call half is still open:
+      (c) STILL TODO engines/signal_listener.run_signal_check calls
+      bridge.get_account() TWICE per signal (line ~475 for the open-positions
+      overlay, and again inside _performance_and_policy) — one extra bridge
+      round-trip per decision, harmless but the b207 "ONE read per cycle"
+      lesson applies.
+- [ ] b220 NEW (learned 2026-10-02, b219): before trusting ANY suite verdict
+      in this repo, run it with `.venv/bin/python`, not the ambient
+      `python3`. The ambient interpreter is Hermes' own 3.14 (no `requests`),
+      so `python3 -m unittest discover -s tests` reports a wall of
+      ModuleNotFoundError-driven failures/errors that look like a broken tree
+      but are purely an interpreter mismatch — and `python3 hermes_master.py`
+      fails at import the same way. Rule: if a suite run shows >20 failures,
+      first check `head -1 /tmp/*.log` for ModuleNotFoundError and re-run with
+      the venv before concluding the code is broken. scripts/verify_head.sh
+      already uses the right interpreter, so the push gate was never at risk —
+      only an autopilot eyeballing its own pre-commit result could be fooled.
+- [ ] b221 TRADER OBSERVABILITY (found while shipping b219, 2026-10-02): the
+      plan lane's position read (`_performance_and_policy` in hermes_runtime)
+      can still return `trade_allowed=True` WITH `positions_unreadable=True`
+      and open_positions=cap — by design, the block is deferred to the
+      executor's max_positions gate. But the SAME flag in the signal lane
+      flips trade_allowed directly, so the two entry lanes disagree about who
+      owns that decision, and any future caller that reads `trade_allowed`
+      alone (without the executor's 13 gates) inherits a green light on a dark
+      bridge. Neither lane is wrong; the contract should be stated once. Fix
+      is DOCUMENTATION-ONLY or a single assert/comment, no behaviour change:
+      name the invariant ("an unreadable bridge is refused at the entry gate,
+      never by the policy itself") and pin it with a test that both lanes
+      satisfy. Budget ~20 min.
 - [ ] b212 PROCEDURE (learned 2026-09-10, budget-boundary run): before opening
       ANY trader item, read autopilot_state.json's last_run_utc against
       `date -u` — the 55-min wall is measured from the KICKOFF, and a run whose
