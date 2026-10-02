@@ -299,12 +299,16 @@ class TestB117RunnerPopulation(unittest.TestCase):
         # runner legs. The FROZEN ledger row below stays certified as
         # pre-b187 history (b102: pin and finding move together; history must
         # not rot).
-        self.assertEqual(rc["gate_passed_signals"], 96,
-                         "the M5-parity runner census moved off 96 — re-derive "
+        # RE-PRICED (H1 geometry + HTF bias merge): those commits re-worked the
+        # entry geometry, so the live trigger admits fewer signals: 96 -> 79,
+        # with 21 runner legs. The FROZEN ledger row stays certified as
+        # history; only this live recompute moves.
+        self.assertEqual(rc["gate_passed_signals"], 79,
+                         "the M5-parity runner census moved off 79 — re-derive "
                          "with b81.m5_source_rows() AND re-check the b189/b194 "
                          "parity todo before quoting any census")
-        self.assertEqual(rc["signals_with_runner_leg"], 24,
-                         "the A-lane runner population moved off 24 under the "
+        self.assertEqual(rc["signals_with_runner_leg"], 21,
+                         "the A-lane runner population moved off 21 under the "
                          "live trigger — anything else means "
                          "_partial_close_fraction or the grade gate changed shape")
         self.assertLessEqual(rc["signals_with_runner_leg"],

@@ -284,11 +284,15 @@ class TestB118BarIsWhatTheHarnessActuallyRuns(unittest.TestCase):
         # (b189_trigger_parity), which is the cross-check that this is the
         # live-parity number, not a knob turned until a test passes. The
         # FROZEN row stays 0.278/109 so history cannot rot.
-        self.assertEqual(row["exp_R"], 0.219,
+        # RE-PRICED (H1 geometry + HTF bias merge): the entry-geometry
+        # re-work admits fewer trades, so the live bar moved 0.219/57 ->
+        # 0.259/45. Cross-checked against b117's same-source recompute
+        # (79 gate-passed, 21 runner legs), which moved the same way.
+        self.assertEqual(row["exp_R"], 0.259,
                          "the harness default no longer measures the re-quoted "
                          "post-b187 bar — re-derive, do not restore the old "
                          "literal")
-        self.assertEqual(row["trades"], 57)
+        self.assertEqual(row["trades"], 45)
         self.assertEqual((want["exp_R"], want["trades"]), (0.278, 109),
                          "frozen pre-b187 parity row must not be edited — it "
                          "is the history the re-quote is measured against")
