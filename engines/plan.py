@@ -60,15 +60,34 @@ def _plan_atr(plan: dict) -> float:
     return v if v > 0 else 5.0
 
 
-def _pd_veto(ctx: dict, smc_result: dict | None) -> str | None:
+def _pd_veto(ctx: dict, smc_result: dict | None, entry_close: float | None = None) -> str | None:
     """Don't buy premium / don't sell discount — the SMC signal already
     computed this but merge used bias, not signal. Live plan 2026-09-10
     was bearish with smc_signal=wait.
+
+    b230: 'discount' only means price sits in the lower half of the value
+    area. When price has already BROKEN BELOW value_low a bearish bias is
+    a breakdown continuation, not a bad short — vetoing it is exactly how
+    the live book went 495/500 neutral. The veto only applies while price
+    is INSIDE the value area (the caller passes the live entry close).
     """
     if not smc_result:
         return None
     zone = (smc_result.get("premium_discount") or {}).get("zone")
     bias = ctx.get("bias")
+    if bias not in {"bullish", "bearish"}:
+        return None
+    # b230: outside the value area the location veto must not fire.
+    zones = ctx.get("zones") or {}
+    try:
+        vlow = float(zones.get("value_low") or 0)
+        vhigh = float(zones.get("value_high") or 0)
+        close = float(entry_close) if entry_close else 0.0
+    except (TypeError, ValueError):
+        vlow = vhigh = close = 0.0
+    if vlow > 0 and vhigh > 0 and close > 0:
+        if close < vlow or close > vhigh:
+            return None
     if bias == "bullish" and zone == "premium":
         ctx["bias"] = "neutral"
         ctx.setdefault("quality", {})["pd_veto"] = "no_buy_premium"
@@ -101,10 +120,19 @@ def apply_smc_merge(ctx: dict, merged: dict, *, entry_close: float,
     plan is stale at birth. Returns True when the guard fired.
     """
     classic_regime = ctx.get('quality', {}).get('regime', '')
+    classic_bias = ctx.get('bias', 'neutral')
     smc_confidence = float(merged.get('confidence', 0) or 0)
     smc_bias = merged.get('bias', 'neutral')
-    # Only force neutral if SMC is NOT confident AND classic says range
-    if classic_regime == 'range' and smc_bias != 'neutral' and smc_confidence < range_kill_conf:
+    # b230: the range-kill used to fire on AGREEMENT. The condition was
+    # `regime == range and smc_bias != neutral and conf < RANGE_KILL_CONF`,
+    # which kills every directional SMC call in a range even when the CLASSIC
+    # bias already agrees with it. Measured on 500 live plans: 495/500 shipped
+    # neutral, 142 of those carried a directional SMC signal that this gate
+    # murdered — the system traded ~once a week. Agreement is not a conflict;
+    # the kill exists to break a fight between the two models, not to veto
+    # one. Only fire when they actually DISAGREE.
+    disagrees = classic_bias != 'neutral' and smc_bias != 'neutral' and classic_bias != smc_bias
+    if classic_regime == 'range' and disagrees and smc_confidence < range_kill_conf:
         ctx['bias'] = 'neutral'
         merged['bias'] = 'neutral'
         merged['confidence'] = min(smc_confidence, 0.3)
@@ -121,7 +149,7 @@ def apply_smc_merge(ctx: dict, merged: dict, *, entry_close: float,
             k: v for k, v in merged.items() if k != 'smc_result'}
     # Honour the PD veto that _compute_smc_signal already made (merge used
     # to take bias and ignore signal=wait).
-    _pd_veto(ctx, smc_result)
+    _pd_veto(ctx, smc_result, entry_close=entry_close)
     # A2: rebuild SL/TP for the NEW bias. The callable lives in
     # engines.context (plan.py stays a leaf — b111). Incomplete zones
     # make rebuild a no-op so lab fixtures keep the original veto.
