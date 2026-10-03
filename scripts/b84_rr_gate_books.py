@@ -112,8 +112,8 @@ def _d(x, y):
     return round(x - y, 3) if (x is not None and y is not None) else None
 
 
-def measure_leg(name, m15, h1, h4):
-    sigs = funnel_signals(m15, h1, h4)
+def measure_leg(name, m15, h1, h4, m5_stream=None):
+    sigs = funnel_signals(m15, h1, h4, m5_stream=m5_stream)
     idx_of = {int(r["time"]): i for i, r in enumerate(m15)}
     # the population the LIVE executor is allowed to see at all: grade gate first
     passing = {i: s for i, s in sigs.items()
@@ -294,12 +294,25 @@ def main():
                        "time exit) + b80 grade gate + b78 mix + b77 chrono read "
                        "+ b74 all-windows rule"}
     c = json.load(open("data/backtest/ab_aggressive_data.json"))
+    # b222: price the b187 M5 trigger on the legs the broker source covers.
+    from scripts.b81_lane_rescore import m5_source_rows
+    m5_all = m5_source_rows("data/backtest/b182_m5_bars.json")
+    m5_span = (int(m5_all[0]["time"]), int(m5_all[-1]["time"])) if m5_all else None
+
+    def m5_for(m15):
+        if not m5_span:
+            return None
+        span = (int(m15[0]["time"]), int(m15[-1]["time"]))
+        return m5_all if span[1] >= m5_span[0] and span[0] <= m5_span[1] else None
+
     print("##### cached (in-sample, informational) #####", flush=True)
-    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"])
+    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"],
+                                m5_stream=m5_for(c["M15"]))
     wins = json.load(open("data/backtest/b68l_independent_windows.json"))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                             m5_stream=m5_for(wins[w]["M15"]))
     led["_verdict"] = verdict(led)
 
     print("\n=== the RR floor ladder (gate_rr_<t> ladder_ts: exp_R / n) ===")

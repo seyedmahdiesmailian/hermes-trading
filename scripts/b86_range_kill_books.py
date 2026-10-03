@@ -103,11 +103,11 @@ def sig_fn(sigs, idx_of):
     return fn
 
 
-def measure_leg(name, m15, h1, h4):
+def measure_leg(name, m15, h1, h4, m5_stream=None):
     # ONE pass per threshold: the funnel re-runs because the kill happens
     # INSIDE strategy_signal (it is not a post-filter on a fixed population —
     # that is exactly what makes this gate different from min_rr).
-    pops = {t: _pass(m15, h1, h4, t) for t in LADDER_CONF}
+    pops = {t: _pass(m15, h1, h4, t, m5_stream=m5_stream) for t in LADDER_CONF}
     never = pops[0.0]
     live = pops[LIVE_CONF]
 
@@ -189,10 +189,19 @@ def measure_leg(name, m15, h1, h4):
     return out
 
 
-def _pass(m15, h1, h4, conf):
+def _pass(m15, h1, h4, conf, m5_stream=None):
     import bisect
     h1t = [r.get("time", 0) for r in h1]
     h4t = [r.get("time", 0) for r in h4]
+    # b222: price the b187 M5 trigger where the source covers the leg.
+    from scripts.b81_lane_rescore import m5_window_for
+    m5t = [int(r.get("time", 0)) for r in (m5_stream or [])]
+    gaps = sorted(int(m15[i + 1]["time"]) - int(m15[i]["time"])
+                  for i in range(len(m15) - 1)
+                  if isinstance(m15[i].get("time"), (int, float))
+                  and isinstance(m15[i + 1].get("time"), (int, float)))
+    gaps = [g for g in gaps if g > 0]
+    bar_spacing = gaps[len(gaps) // 2] if gaps else 300
     from engines.backtest_real import strategy_signal
     sigs = {}
     for i, row in enumerate(m15):
@@ -202,7 +211,9 @@ def _pass(m15, h1, h4, conf):
         s = strategy_signal(row, h1[max(0, j1 - 80):j1],
                             h4[max(0, j4 - 80):j4], i,
                             m15_window=m15[max(0, i - 120):i + 1],
-                            range_kill_conf=conf)
+                            range_kill_conf=conf,
+                            m5_rows=(m5_window_for(m5_stream, m5t, int(bt) + bar_spacing)
+                                     if m5_stream else None))
         if s:
             sigs[i] = s
     return sigs
@@ -355,12 +366,25 @@ def main():
                        "time exit) + b80 gates + b78 mix + b77 chrono read + "
                        "b74 all-windows rule + b83 reproduce-b80 check"}
     c = json.load(open("data/backtest/ab_aggressive_data.json"))
+    # b222: price the b187 M5 trigger on the legs the broker source covers.
+    from scripts.b81_lane_rescore import m5_source_rows
+    m5_all = m5_source_rows("data/backtest/b182_m5_bars.json")
+    m5_span = (int(m5_all[0]["time"]), int(m5_all[-1]["time"])) if m5_all else None
+
+    def m5_for(m15):
+        if not m5_span:
+            return None
+        span = (int(m15[0]["time"]), int(m15[-1]["time"]))
+        return m5_all if span[1] >= m5_span[0] and span[0] <= m5_span[1] else None
+
     print("##### cached (in-sample, informational) #####", flush=True)
-    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"])
+    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"],
+                                m5_stream=m5_for(c["M15"]))
     wins = json.load(open("data/backtest/b68l_independent_windows.json"))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                             m5_stream=m5_for(wins[w]["M15"]))
     led["_verdict"] = verdict(led)
 
     print("\n=== the threshold ladder (gate_conf_<t> ladder_ts: exp_R / n) ===")

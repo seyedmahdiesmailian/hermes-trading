@@ -97,7 +97,9 @@ from engines.defcon import classify_exits, compute_insights      # noqa: E402
 from engines.kill_switch import CONSECUTIVE_LOSSES_LIMIT         # noqa: E402
 from engines.risk import compute_performance_state               # noqa: E402
 from engines.backtest_real import strategy_signal                # noqa: E402
+from engines.backtest_real import M5_BAR_SECONDS, m5_window_for  # noqa: E402
 from scripts.b68r_grade_ladder_lab import side_mix               # noqa: E402
+from scripts.b81_lane_rescore import m5_source_rows              # noqa: E402
 
 OUT = "data/backtest/b88_defcon_books.json"
 PARITY = "data/backtest/b80_gate_parity.json"
@@ -121,19 +123,40 @@ def sig_fn(sigs, idx_of):
     return fn
 
 
-def funnel_signals(m15, h1, h4):
-    """The live funnel's own signal population at the live gate settings."""
+def funnel_signals(m15, h1, h4, m5_stream=None):
+    """The live funnel's own signal population at the live gate settings.
+
+    b222: `m5_stream` prices the b187 M5 3-close trigger. Without it an
+    M15-spaced entry stream cannot confirm (m5_confirmation sees no rows), so
+    ~67% of bars land in wait_for_trigger and the population is EMPTY — every
+    b88 rebuild after b189 was silently trigger-less. Sourced from the ONE
+    definition in scripts/b81_lane_rescore (m5_window_for, never restated);
+    None keeps the pre-b222 population byte-identical.
+    """
     h1t = [r.get("time", 0) for r in h1]
     h4t = [r.get("time", 0) for r in h4]
+    m5t = [int(r.get("time", 0)) for r in (m5_stream or [])]
+    # The decision moment is the entry bar's CLOSE, so the settled-M5 window is
+    # cut at time + bar_spacing — the b81/b189 rule, inferred from the entry
+    # stream's own spacing, never a hardcoded 900.
+    gaps = sorted(int(m15[i + 1]["time"]) - int(m15[i]["time"])
+                  for i in range(len(m15) - 1)
+                  if isinstance(m15[i].get("time"), (int, float))
+                  and isinstance(m15[i + 1].get("time"), (int, float)))
+    gaps = [g for g in gaps if g > 0]
+    bar_spacing = gaps[len(gaps) // 2] if gaps else M5_BAR_SECONDS
     sigs = {}
     for i, row in enumerate(m15):
         bt = row.get("time", 0)
         j1 = bisect.bisect_right(h1t, bt)
         j4 = bisect.bisect_right(h4t, bt)
+        m5_rows = (m5_window_for(m5_stream, m5t, int(bt) + bar_spacing)
+                   if m5_stream else None)
         s = strategy_signal(row, h1[max(0, j1 - 80):j1],
                             h4[max(0, j4 - 80):j4], i,
                             m15_window=m15[max(0, i - 120):i + 1],
-                            range_kill_conf=RANGE_KILL_CONF)
+                            range_kill_conf=RANGE_KILL_CONF,
+                            m5_rows=m5_rows)
         if s:
             sigs[i] = s
     return sigs
@@ -274,8 +297,11 @@ def replay_states(m15, trades, balance=5000.0):
     return out
 
 
-def measure_leg(name, m15, h1, h4):
-    sigs = funnel_signals(m15, h1, h4)
+M5_SOURCE = "data/backtest/b182_m5_bars.json"   # broker M5 (b182), reused (b222)
+
+
+def measure_leg(name, m15, h1, h4, m5_stream=None):
+    sigs = funnel_signals(m15, h1, h4, m5_stream=m5_stream)
     idx_of = {int(r["time"]): i for i, r in enumerate(m15)}
     base = sig_fn(sigs, idx_of)
     arm = lh.run_arm(m15, base, min_rr=MIN_RISK_REWARD, min_grade=MIN_SETUP_GRADE)
@@ -445,9 +471,12 @@ def main():
     import hashlib
     with open(os.path.join(_ROOT, "engines", "risk.py"), "rb") as f:
         risk_sha = hashlib.sha256(f.read()).hexdigest()[:12]
+    # b222: which legs priced the b187 M5 trigger (the rest stay pre-b222).
+    with open(os.path.join(_ROOT, "engines", "backtest_real.py"), "rb") as f:
+        bt_sha = hashlib.sha256(f.read()).hexdigest()[:12]
     led = {"_risk_code_sha": risk_sha,
+           "_b222_trigger_sha": bt_sha,
            "_note": "b88 (b68 round 20): DEFCON measured as a FEEDBACK-LOOP book "
-                    "— the funnel's own trade sequence replayed through the live "
                     "engines.defcon classifier per entry, kept/dropped books under "
                     "the b71 harness, the b87 redundancy row against the kill "
                     "switch, and the two window-shape probes (deals-vs-trades "
@@ -463,12 +492,29 @@ def main():
                        "time exit) + b80 gates + b78 mix + b77 chrono + b74 "
                        "all-windows + b83 reproduce-b80 + b87 redundancy"}
     c = json.load(open("data/backtest/ab_aggressive_data.json"))
+    # b222: the broker's M5 stream prices the b187 trigger. It only covers the
+    # newest ~45 days, so a leg whose span predates it keeps m5_stream=None and
+    # its stored pre-b222 population. Stamp which legs actually saw the trigger.
+    m5_all = m5_source_rows(M5_SOURCE)
+    m5_span = (int(m5_all[0]["time"]), int(m5_all[-1]["time"])) if m5_all else None
+
+    def m5_for(span):
+        if not m5_span:
+            return None
+        return [r for r in m5_all if m5_span[0] <= int(r["time"]) <= m5_span[1]] \
+            if span and span[1] >= m5_span[0] and span[0] <= m5_span[1] else None
+
     print("##### cached (in-sample, informational) #####", flush=True)
-    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"])
+    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"],
+                                m5_stream=m5_for((int(c["M15"][0]["time"]),
+                                                  int(c["M15"][-1]["time"]))))
     wins = json.load(open("data/backtest/b68l_independent_windows.json"))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        wm = wins[w]["M15"]
+        led[w] = measure_leg(w, wm, wins[w]["H1"], wins[w]["H4"],
+                             m5_stream=m5_for((int(wm[0]["time"]),
+                                               int(wm[-1]["time"]))))
     led["_verdict"] = verdict(led)
 
     print("\n=== DEFCON level at each entry (live classifier, live window shape) ===")
@@ -477,9 +523,15 @@ def main():
     for leg in LEGS:
         L = led[leg]
         mix = L["_defcon_level_mix"]
+        # b222: a leg the M5 source does not cover prices ZERO signals, so
+        # ladder_ts.exp_R is None (no trades to take an expectation over). The
+        # :.3f format would crash the whole build AFTER every leg was measured
+        # and BEFORE json.dump saved any of it — the print must tolerate a
+        # signal-less leg instead of discarding the run.
+        off = L["defcon_off"]["ladder_ts"]["exp_R"]
         print(f"{leg:8s} {L['_book_trades']:6d} {mix.get('GREEN', 0):7d} "
               f"{mix.get('YELLOW', 0):7d} {mix.get('RED', 0):5d} "
-              f"{L['defcon_off']['ladder_ts']['exp_R']:10.3f} "
+              f"{(off if off is not None else float('nan')):10.3f} "
               f"{L['kept_defcon']['ladder_ts']['exp_R'] or 0:11.3f} "
               f"{L['dropped_defcon']['ladder_ts']['exp_R'] or 0:11.3f}")
     print("\n=== window shape: deals in the live window vs closed trades ===")

@@ -87,7 +87,23 @@ def m5_source_rows(path: str = M5_SOURCE) -> list[dict]:
     return out
 
 
+def m5_span_for(m15):
+    """b222: the M5 rows covering this leg, or None where the source does not
+    reach it. W3/W4 are entirely outside b182's ~45-day span, so they price
+    no signals; the answer there is None, not an empty slice."""
+    allm5 = m5_source_rows()
+    if not allm5:
+        return None
+    span = (int(m15[0]["time"]), int(m15[-1]["time"]))
+    src = (int(allm5[0]["time"]), int(allm5[-1]["time"]))
+    if span[1] < src[0] or span[0] > src[1]:
+        return None
+    return allm5
+
+
 def funnel_fn(m15, h1, h4, m5_stream=None):
+    """b222: return the M5 rows spanning this leg, or None if the source does
+    not cover it (W3/W4 price no trigger and no signals)."""
     """The exact live-parity funnel, evaluated once per leg (b76: same bars).
 
     m5_stream=None -> no confirmation rows (pre-b194 behavior, byte-identical).
@@ -173,13 +189,14 @@ LANE_BUILDERS = lane_factories()
 
 def _row(res):
     r = res["ladder_ts"]
-    return {"trades": r["trades"], "exp_R": r["exp_R"], "net_R": r["net_R"],
-            "WR%": r["WR%"], "maxDD_R": r["maxDD_R"],
-            "mean_hold_bars": r["mean_hold_bars"]}
+    # b222: a leg outside the M5 source prices no signals; its empty book has
+    # no WR/maxDD. Keep the row shape, null the absent values.
+    return {k: r.get(k) for k in ("trades", "exp_R", "net_R", "WR%", "maxDD_R",
+                                  "mean_hold_bars")}
 
 
-def measure_leg(name, m15, h1, h4):
-    funnel = funnel_fn(m15, h1, h4)
+def measure_leg(name, m15, h1, h4, m5_stream=None):
+    funnel = funnel_fn(m15, h1, h4, m5_stream=m5_stream)
     out = {"_bars": len(m15), "_first": int(m15[0]["time"]),
            "_last": int(m15[-1]["time"])}
     # The funnel, both conventions. Measured BEFORE any lane binds a shared
@@ -212,11 +229,16 @@ def delta(lane, fun):
         "d_trades": dn,
         "d_dd_R": _r(lane["maxDD_R"], fun["maxDD_R"], "maxDD_R"),
         "marginal_R_per_extra_trade": (
-            round((lane["net_R"] - fun["net_R"]) / dn, 3) if dn else None),
+            round((lane["net_R"] - fun["net_R"]) / dn, 3)
+            if dn and lane["net_R"] is not None and fun["net_R"] is not None
+            else None),
         "beats_funnel_exp_R": (lane["exp_R"] is not None
                                and fun["exp_R"] is not None
                                and lane["exp_R"] > fun["exp_R"]),
-        "beats_funnel_net_R": lane["net_R"] > fun["net_R"],
+        # b222: an uncovered leg has no net_R to compare — None is not a beat.
+        "beats_funnel_net_R": (lane["net_R"] is not None
+                               and fun["net_R"] is not None
+                               and lane["net_R"] > fun["net_R"]),
     }
 
 
@@ -273,10 +295,13 @@ def main():
                "_last6000_overlap_with_cached"),
            "_provenance": {k: v[0] for k, v in PROVENANCE.items()}}
     print("##### cached (in-sample, informational) #####", flush=True)
-    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"])
+    # b222: price the b187 M5 trigger on the legs the broker source covers.
+    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"],
+                                m5_stream=m5_span_for(c["M15"]))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                             m5_stream=m5_span_for(wins[w]["M15"]))
     led["_verdict"] = verdict(led)
     print("=== VERDICT ===")
     print(json.dumps(led["_verdict"], indent=1))
