@@ -80,6 +80,18 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _clamp_risk_mult(v) -> float:
+    """b230: the learning risk multiplier is contractually 0.5..1.0 (learning.py
+    clamps on write). This is the executor's own defensive read — a hand-edited
+    or corrupt learning-state above 1.0 used to inflate risk past the policy
+    ceiling with nothing catching it. Fail-closed: invalid → 1.0, >1.0 → 1.0."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return 1.0
+    return min(max(f, 0.0), 1.0)
+
+
 def evaluate_proposal(
     proposal: dict,
     account_policy: dict,
@@ -367,7 +379,7 @@ def evaluate_proposal(
         _policy_base = 0.0
     base_pct = min(_policy_base, MAX_RISK_PER_TRADE_PCT) if _policy_base > 0 \
         else MAX_RISK_PER_TRADE_PCT
-    risk_pct = base_pct * float(_ls.get("risk_mult", 1.0))  # adaptive multiplier (≤1.0)
+    risk_pct = base_pct * _clamp_risk_mult(_ls.get("risk_mult", 1.0))  # b230: clamp the adaptive multiplier — learning.py writes 0.5..1.0 but the executor read the raw value with no ceiling, so a bad or hand-edited learning-state >1.0 would silently inflate risk past the policy ceiling
     # b53: per-entry-style risk (see STYLE_RISK_MULT). The style tag comes
     # from the monitor decision via _build_proposal; missing tag = full risk.
     _style_mult = STYLE_RISK_MULT.get(str(proposal.get("execution_style") or ""), 1.0)

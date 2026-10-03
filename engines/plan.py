@@ -517,7 +517,15 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
         smc_conf = plan.get("quality", {}).get("smc_confidence", 0) or 0
         atr_val = _plan_atr(plan)
         dist_below = zones["value_low"] - price
-        if dist_below > atr_val * 1.5:
+        # b230: the stale guard rejected any breach beyond 1.5 * M5-ATR, but a
+        # bearish bias with price already below value_low IS the breakout — the
+        # whole signal is the breach. Measured live: gold at 4139.35 vs
+        # value_low 4156.2 (17 USD, 5.8 ATR) with a confirmed bearish H4 was
+        # being thrown out as 'stale' every cycle. Scale the tolerance by the
+        # same ATR the invalidation is built on, and let a strong,
+        # in-agreement SMC confidence buy more room.
+        stale_cap = atr_val * (4.0 if smc_conf >= SMC_CONF_FLOOR else 1.5)
+        if dist_below > stale_cap:
             return {
                 "action": "no_trade",
                 "reason": "price_far_below_zone_plan_stale",
