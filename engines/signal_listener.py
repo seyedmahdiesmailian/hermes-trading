@@ -251,6 +251,17 @@ def _fetch_new_messages_unlocked() -> list[dict]:
             "from": sender.get("first_name", "") if isinstance(sender, dict) else str(sender),
             "text": text,
             "date": msg.get("date", 0),
+            # AUDIT-2026-10-04 (signal-flood fix): the message_id of the
+            # underlying channel post. An EDITED channel post arrives as a new
+            # update_id but keeps its message_id — and the signal channel
+            # re-posts/edits the same call many times, so one signal produced
+            # up to 8 log records and 8 independent re-evaluations. update_id
+            # cannot dedupe that; message_id can.
+            "message_id": int(msg.get("message_id") or 0),
+            # AUDIT-2026-10-04: true when the update was an edit of an earlier
+            # post. The channel editing a signal does not make it a new signal.
+            "edited": update.get("edited_message") is not None
+                      or update.get("edited_channel_post") is not None,
         })
 
     state["last_update_id"] = max_update_id
@@ -286,6 +297,44 @@ def check_signals(bridge=None) -> list[dict]:
     messages = fetch_new_messages()
     signals_found = []
     allowed_chats = {c.strip() for c in (_signal_group() or '').split(',') if c.strip()}
+
+    # AUDIT-2026-10-04 (signal-flood fix): the signal channel edits/re-posts
+    # the same call; each edit is a new update_id but the SAME message_id, so
+    # one signal was parsed, evaluated and logged up to 8 separate times
+    # (200 log records traced to a single "SELL XAUUSD 4450" post). Dedupe on
+    # (chat_id, message_id) across this batch AND against recent history, so
+    # a repeated post cannot re-enter the pipeline. Only the FIRST arrival of
+    # a message_id is processed; later ones are dropped before evaluation.
+    from engines.process_lock import exclusive as _state_lock
+    try:
+        with _state_lock("signal_dedup", timeout=2.0):
+            _st = _load_state()
+            _seen = _st.get("seen_message_ids", {})
+            if not isinstance(_seen, dict):
+                _seen = {}
+            _now_ts = datetime.now(timezone.utc).timestamp()
+            # expire entries older than the 600s freshness gate above: a
+            # message_id older than that is age-rejected anyway, and keeping
+            # the set bounded stops unbounded growth on an active channel.
+            _HORIZON = 900
+            _seen = {k: v for k, v in _seen.items()
+                     if _now_ts - float(v or 0) < _HORIZON}
+            _deduped = []
+            for msg in messages:
+                _mid = msg.get("message_id") or 0
+                if _mid:
+                    _k = f'{msg.get("chat_id", "")}:{_mid}'
+                    if _k in _seen:
+                        continue
+                    _seen[_k] = _now_ts
+                _deduped.append(msg)
+            _st["seen_message_ids"] = _seen
+            _save_state(_st)
+            messages = _deduped
+    except Exception:
+        # fail-OPEN on dedup bookkeeping: a lock timeout must not drop
+        # signals. The freshness + eval gates below still apply.
+        pass
 
     for msg in messages:
         # Only accept signals from the configured signal group(s)
@@ -327,6 +376,9 @@ def check_signals(bridge=None) -> list[dict]:
         hermes_analysis = {}
         _bias_plan = None  # b163: the plan object whose bias Check 4 scored
         account_policy = {"trade_allowed": True, "regime": "normal", "open_positions": 0}
+        # b211(c): the ONE account read for this message — threaded back out on
+        # the decision so run_signal_check does not read it a second time.
+        account = {}
         try:
             from engines.storage import load_current_plan
             plan = load_current_plan(paths.plan_dir())
@@ -468,6 +520,14 @@ def check_signals(bridge=None) -> list[dict]:
         # fresh; this makes a future cadence break loud in the log itself).
         decision["bias_plan_age_h"] = plan_age_hours(_bias_plan)
         decision["bias_plan_id"] = (_bias_plan or {}).get("plan_id")
+        # b211(c): thread the account snapshot this decision was actually taken
+        # on out to the caller. run_signal_check used to re-read the account
+        # after check_signals returned, but check_signals is strictly
+        # read-only (no order endpoint — verified), so nothing between the two
+        # reads can have changed it. Re-reading could only ever return a
+        # DIFFERENT snapshot from the one the gates just voted on. The
+        # snapshot is the payload exactly as get_account() returned it.
+        decision["_account_snapshot"] = account
 
         signal_record = {
             "from": msg["from"],
@@ -513,6 +573,32 @@ def _log_signal_risk_stack(eval_result: dict, command: dict,
         pass
 
 
+def _reused_account_snapshot(signals: list) -> dict | None:
+    """b211(c): the account snapshot check_signals already read, threaded out
+    on the LAST signal record's decision.
+
+    Returns None when no record carries one — the caller then does a real
+    read, so no caller is ever handed a missing account. Signals may carry
+    different snapshots only if they were evaluated across a read boundary,
+    so the LAST is the newest and the one the pending execution will use.
+    """
+    for sig in reversed(signals or []):
+        snap = (sig.get("decision") or {}).get("_account_snapshot")
+        if snap is not None:
+            return snap
+    return None
+
+
+def _account_snapshot_payload(result: dict) -> dict | None:
+    """b211(c): read the threaded snapshot back off a run_signal_check result
+    (the shape tests assert against). None when the run executed nothing."""
+    for ex in result.get("executions", []) or []:
+        snap = (ex.get("decision") or {}).get("_account_snapshot")
+        if snap is not None:
+            return snap
+    return None
+
+
 def run_signal_check(bridge, dry_run: bool = False) -> dict:
     """Main entry for integration with hermes_master.
 
@@ -525,8 +611,18 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
     if not signals:
         return {"ok": True, "signals_found": 0, "executions": []}
 
-    # Get real account state
-    account_resp = bridge.get_account()
+    # b211(c): ONE account read per signal. check_signals already read the
+    # account once per message — it is strictly read-only (only
+    # get_tick/get_price_band/get_account/get_positions; no order endpoint),
+    # so nothing between its return and this point can have changed the
+    # balance. Re-reading here used to add one bridge round-trip per decision
+    # AND could return a snapshot newer than the one the gates voted on.
+    # Reuse the exact snapshot each decision was taken on; fall back to a real
+    # read only when a caller hands us signals without one (a test, or a
+    # partial path that never reached the account block).
+    account_resp = _reused_account_snapshot(signals)
+    if account_resp is None:
+        account_resp = bridge.get_account()
     executions = []
 
     for sig_record in signals:
@@ -674,6 +770,9 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 "signal": parsed, "verdict": "skip",
                 "reasons": eval_result.get("reasons", []) + [eval_result.get("reason", "")],
                 "executed": False,
+                # b211(c): the account snapshot this verdict was reached on,
+                # threaded from the single read (observability + accounting).
+                "decision": decision,
             })
             continue
 
@@ -702,7 +801,8 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 })
                 continue
             pres = signal_pending.place_signal_limit(
-                bridge, command, symbol=parsed.get("symbol", "XAUUSD"))
+                bridge, command, symbol=parsed.get("symbol", "XAUUSD"),
+                dry_run=dry_run)
             executions.append({
                 "signal": parsed,
                 "verdict": "limit_pending" if pres.get("ok") else "skip",
@@ -710,6 +810,7 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                             else [f"pending_failed:{pres.get('error')}"]),
                 "executed": False,
                 "pending_ticket": pres.get("ticket"),
+                "dry_run": bool(pres.get("dry_run")),
                 "lot": command["lot"],
             })
             from engines.storage import append_execution_log
@@ -746,6 +847,9 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             "executed": result.get("executed", False),
             "result": result,
             "lot": command["lot"],
+            # b211(c): keep the snapshot the gates voted on beside its
+            # execution, so the accounting path sees the same account.
+            "decision": decision,
         })
 
         # Log execution
@@ -754,6 +858,11 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
             "at": datetime.now(timezone.utc).isoformat(),
             "source": "signal_listener",
             "plan_id": "signal",
+            # AUDIT-2026-10-04: `action` was missing here but present on the
+            # pending path — the two call sites had different schemas, so one
+            # silently dropped the other's column. Canonical set is now pinned
+            # in storage.EXECUTION_LOG_FIELDS and both sites send it.
+            "action": "market",
             "side": command["side"],
             "lot": command["lot"],
             "entry": command["entry"],

@@ -13,6 +13,17 @@ from engines import store  # WP4: SQLite mirror (fail-open; CSV stays source of 
 
 DEFAULT_BASE_DIR = None  # None → paths.plan_dir() (production default)
 
+# AUDIT-2026-10-04 (schema-drift fix): the canonical column set for
+# execution_log.csv. The header is derived from THIS list, never from the
+# keys of whichever row happens to be written first — so the pending path's
+# `action` column can no longer be silently dropped by the market path
+# having run first. Order is stable so the file stays diffable.
+EXECUTION_LOG_FIELDS = [
+    "at", "source", "plan_id", "action",
+    "side", "lot", "entry", "sl", "tp",
+    "grade", "risk_usd", "dry_run", "result_ok", "ticket",
+]
+
 
 def xau_plan_paths(base_dir: str | Path | None = None) -> dict:
     """Pure path computation for the plan tree — NO mkdir, ever.
@@ -153,13 +164,27 @@ def _append_csv_row(path: Path, row: dict):
 
 def append_execution_log(base_dir: str | Path | None, row: dict):
     paths = ensure_xau_plan_dirs(base_dir)
-    _append_csv_row(paths["execution_log_path"], row)
+    # AUDIT-2026-10-04: pin the canonical column set. Two call sites
+    # (signal_listener market + pending paths) previously sent different key
+    # sets, so the pending path's `action` column was silently dropped.
+    # Canonical columns are always written (missing → "") so the CSV cannot
+    # drift by call order, and any extra keys the row carries are preserved so
+    # the SQLite mirror can still spill them into extra_json.
+    out = {c: row.get(c, "") for c in EXECUTION_LOG_FIELDS}
+    for k, v in row.items():
+        if k not in EXECUTION_LOG_FIELDS:
+            out[k] = v
+    _append_csv_row(paths["execution_log_path"], out)
     # WP4 (2026-09-18): SQLite mirror AFTER the CSV write succeeds. Fail-open
     # by contract — the CSV above is the source of truth and a mirror failure
     # must never break the trading path (belt-and-braces: _mirror() already
     # swallows internally, this guards the call itself).
+    # AUDIT-2026-10-04: mirror the NORMALIZED row, not the caller's raw one —
+    # otherwise the mirror and the CSV diverge on every canonical column the
+    # caller omitted (e.g. `source`/`action` became "" in the CSV but stayed
+    # absent in SQLite).
     try:
-        store.mirror_execution(base_dir, row)
+        store.mirror_execution(base_dir, out)
     except Exception:
         pass
 

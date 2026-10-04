@@ -39,11 +39,16 @@ from engines import paths  # resolved at CALL time so tests can redirect the tre
 DB_FILENAME = "hermes_state.db"
 
 # Pinned by tests/test_store_parity.py against the producers:
-#   EXEC_COLS       == the 12-wide execution_log header (b142)
+#   EXEC_COLS       == the execution_log header (b142, AUDIT-2026-10-04)
 #   RISK_COLS       == storage.RISK_LEDGER_FIELDS (b139/b144)
 #   JOURNAL_COLS    == learning.JOURNAL_FIELDS (b152)
-EXEC_COLS = ("at", "plan_id", "side", "lot", "entry", "sl", "tp", "grade",
-             "risk_usd", "dry_run", "result_ok", "ticket")
+# AUDIT-2026-10-04: EXEC_COLS is now exactly storage.EXECUTION_LOG_FIELDS so
+# the CSV and the SQLite mirror cannot drift apart. The two new columns
+# (`source`, `action`) are added to pre-existing databases by
+# _migrate_columns() below, so an old install upgrades in place.
+EXEC_COLS = ("at", "source", "plan_id", "action", "side", "lot", "entry",
+             "sl", "tp", "grade", "risk_usd", "dry_run", "result_ok",
+             "ticket")
 RISK_COLS = ("at", "lane", "plan_id", "side", "lot", "entry", "sl", "tp",
              "grade", "base_risk_pct", "learning_risk_mult", "execution_style",
              "style_mult", "defcon_override", "regime", "regime_mult",
@@ -82,12 +87,34 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
             f"(_rowid INTEGER PRIMARY KEY AUTOINCREMENT, {col_defs}, "
             f'"extra_json" TEXT)'
         )
+        # AUDIT-2026-10-04: CREATE TABLE IF NOT EXISTS will NOT add columns to
+        # a database created before the schema grew. _migrate_columns alters
+        # the live table in place so an existing install sees the new columns
+        # instead of silently spilling them into extra_json forever.
+        _migrate_columns(conn, table, cols)
         for idx_col in ("ticket", "at", "close_time", "plan_id"):
             if idx_col in cols:
                 conn.execute(
                     f'CREATE INDEX IF NOT EXISTS "idx_{table}_{idx_col}" '
                     f'ON "{table}" ("{idx_col}")'
                 )
+
+
+def _migrate_columns(conn: sqlite3.Connection, table: str,
+                     want_cols: tuple) -> None:
+    """Add columns present in the pinned schema but absent from the table."""
+    try:
+        have = {r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')}
+    except sqlite3.Error:
+        return
+    for col in want_cols:
+        if col not in have:
+            try:
+                conn.execute(f'ALTER TABLE "{table}" ADD COLUMN "{col}" TEXT')
+            except sqlite3.Error:
+                # failure to add a column degrades to extra_json, which is
+                # still readable — never block the write path on a migration.
+                pass
 
 
 def _to_text(value) -> str:
@@ -98,11 +125,28 @@ def _to_text(value) -> str:
     return str(value)
 
 
-def _insert_rows(conn: sqlite3.Connection, table: str, rows: list[dict]) -> int:
-    """Insert dict rows; known columns → TEXT cols, unknown → extra_json."""
+def _insert_rows(conn: sqlite3.Connection, table: str, rows: list[dict],
+                 dedup_key: tuple | None = None) -> int:
+    """Insert dict rows; known columns → TEXT cols, unknown → extra_json.
+
+    AUDIT-2026-10-04: when `dedup_key` is given, existing rows matching the
+    key are deleted first so a re-import is idempotent. Without this the
+    journal mirror accumulated duplicates on every journal() re-run (the live
+    DB had 59 rows vs 54 in the CSV).
+    """
     if not rows:
         return 0
     cols = _TABLE_COLS[table]
+
+    if dedup_key:
+        kcols = [c for c in dedup_key if c in cols]
+        if kcols:
+            placeholders = " AND ".join(f'"{c}" = ?' for c in kcols)
+            conn.executemany(
+                f'DELETE FROM "{table}" WHERE {placeholders}',
+                [tuple(_to_text(r.get(c, "")) for c in kcols) for r in rows],
+            )
+
     placeholders = ", ".join(["?"] * (len(cols) + 1))
     col_names = ", ".join(f'"{c}"' for c in cols) + ', "extra_json"'
     payload = []
@@ -118,14 +162,15 @@ def _insert_rows(conn: sqlite3.Connection, table: str, rows: list[dict]) -> int:
     return len(rows)
 
 
-def _mirror(base_dir: str | Path | None, table: str, rows: list[dict]) -> bool:
+def _mirror(base_dir: str | Path | None, table: str, rows: list[dict],
+            dedup_key: tuple | None = None) -> bool:
     """Fail-open workhorse: False on ANY error, CSV caller must ignore it."""
     try:
         conn = _connect(db_path(base_dir))
         try:
             ensure_schema(conn)
             with conn:
-                _insert_rows(conn, table, rows)
+                _insert_rows(conn, table, rows, dedup_key=dedup_key)
         finally:
             conn.close()
         return True
@@ -146,8 +191,17 @@ def mirror_risk_ledger(base_dir: str | Path | None, row: dict) -> bool:
 def mirror_journal(rows: list[dict]) -> bool:
     """Mirror journal() rows. journal() uses the global paths root (no base_dir
     parameter), so this resolves the db from paths.plan_dir() — the same tree
-    that holds trade_journal.csv."""
-    return _mirror(None, "trade_journal", rows)
+    that holds trade_journal.csv.
+
+    AUDIT-2026-10-04 (duplicate-row fix): this was a plain append, so every
+    re-run of learning.journal() appended the same broker deal rows again.
+    The live DB held 59 trade_journal rows against 54 in the CSV — exactly 5
+    duplicated (ticket, close_time) pairs. journal() already dedupes against
+    the CSV before writing, but the mirror had no such key, so the CSV stayed
+    correct while the DB drifted. The mirror now upserts on the journal's
+    natural key, making a re-run idempotent.
+    """
+    return _mirror(None, "trade_journal", rows, dedup_key=("ticket", "close_time"))
 
 
 def row_counts(base_dir: str | Path | None = None) -> dict[str, int]:

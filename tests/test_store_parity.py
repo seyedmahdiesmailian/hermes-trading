@@ -51,11 +51,15 @@ def _csv_rows(path: Path) -> list[dict]:
 
 
 class TestSchemaPins(unittest.TestCase):
-    def test_exec_cols_match_b142_twelve_wide_header(self):
-        self.assertEqual(store.EXEC_COLS,
-                         ("at", "plan_id", "side", "lot", "entry", "sl", "tp",
-                          "grade", "risk_usd", "dry_run", "result_ok",
-                          "ticket"))
+    # AUDIT-2026-10-04: the pin used to hardcode a 12-wide literal. It now
+    # asserts the property that actually matters — the SQLite mirror's column
+    # set must BE the CSV producer's canonical set, by one name, so a column
+    # added to EXECUTION_LOG_FIELDS can never appear in one store and not the
+    # other. That single-name coupling is what makes the CSV/DB parity tests
+    # above meaningful.
+    def test_exec_cols_match_the_csv_producer(self):
+        self.assertEqual(tuple(store.EXEC_COLS),
+                         tuple(storage.EXECUTION_LOG_FIELDS))
 
     def test_risk_cols_match_producer(self):
         self.assertEqual(tuple(store.RISK_COLS),

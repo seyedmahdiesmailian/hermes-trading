@@ -72,11 +72,22 @@ def save_pending(items: list[dict]):
 
 
 def place_signal_limit(bridge, command: dict, symbol: str = "XAUUSD",
-                       alert=None) -> dict:
+                       alert=None, dry_run: bool = False) -> dict:
     """Place a BUY_LIMIT/SELL_LIMIT for a vetted signal command.
 
     Returns {'ok': bool, 'ticket': int|None, 'error': str|None}.
     Never raises — a failed placement must degrade to the old skip path.
+
+    AUDIT-2026-10-04: `dry_run` is a first-class parameter now. The caller in
+    signal_listener.run_signal_check gates `_use_pending` on `not dry_run`, but
+    that gate is one branch up — any OTHER caller (a dashboard callback, a
+    manual /trade command, a future path) would have placed a REAL limit order
+    while the bot believed it was dry-running. execute_trade() short-circuits
+    on dry_run; this function had no such guard at all, so the safety property
+    lived entirely in a caller's if-statement. The guard now lives HERE, next
+    to the only bridge.send_pending() call, so it cannot be bypassed by a new
+    call site. Default is False, matching execute_trade()'s contract — callers
+    pass dry_run explicitly down their own path.
     """
     def _say(msg: str):
         if alert:
@@ -90,6 +101,16 @@ def place_signal_limit(bridge, command: dict, symbol: str = "XAUUSD",
     sl = float(command.get("sl") or 0)
     tp = float(command.get("tp") or 0)
     lot = float(command.get("lot") or 0)
+
+    # AUDIT-2026-10-04: same short-circuit contract as auto_executor.
+    # No broker call may leave this function while dry_run is true.
+    if dry_run:
+        _say(f"🕒 LIMIT (dry-run، ثبت نشد)\n{side} {symbol} @ {entry}")
+        return {"ok": True, "ticket": None, "dry_run": True,
+                "would_place": {"side": side, "lot": lot, "symbol": symbol,
+                                "entry": entry, "sl": sl, "tp": tp},
+                "error": None}
+
     if side not in {"BUY", "SELL"} or entry <= 0 or sl <= 0 or tp <= 0 or lot <= 0:
         return {"ok": False, "ticket": None, "error": "invalid_command"}
 
