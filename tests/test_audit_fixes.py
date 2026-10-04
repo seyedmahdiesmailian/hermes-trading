@@ -66,7 +66,11 @@ class TestSignalGateParity(unittest.TestCase):
                 'open_positions': 0, 'balance': 5000.0}
 
     @staticmethod
-    def _prop(sl=4460, tp=4435):
+    def _prop(sl=4460, tp=4430):
+        # AUDIT-2026-10-04: tp widened from 4435 to 4430 because
+        # MIN_RISK_REWARD rose 1.5 -> 2.0 (b233); the old tp made RR=1.5 and
+        # the proposal now dies at the gate with poor_rr_1.50. 4450->4430 is
+        # a 20pt reward against a 10pt stop = RR 2.0.
         return {'blueprint': {'side': 'SELL', 'entry_price': 4450,
                               'sl': sl, 'tp': tp, 'symbol': 'XAUUSD'},
                 'grade': 'B'}

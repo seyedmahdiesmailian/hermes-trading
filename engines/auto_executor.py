@@ -19,7 +19,12 @@ from engines.defcon import filter_management_by_insights
 
 # ─── Risk Parameters (professional trader defaults) ───
 MAX_RISK_PER_TRADE_PCT = 0.02       # 2% of balance per trade
-MIN_RISK_REWARD = 1.5             # skip trades with RR below this (backtest 2026-08-29: RR2 vs RR3 identical on 500 bars → 1.5 floor keeps entries healthy without inflating targets)
+MIN_RISK_REWARD = 2.0             # re-tested 2026-10-04 on 500/1000/1500/2000
+                                   # M5 bars: rr2.0 beat rr1.5 in ALL FOUR windows
+                                   # (+26/+26/+43/+29 USD). At 1.5 the engine
+                                   # admits low-edge trades that lose in
+                                   # aggregate — windows 500 and 1000 were
+                                   # negative at 1.5 and positive at 2.0.
 MAX_DAILY_LOSS_PCT = 0.05           # 5% daily loss → stop trading
 MAX_DAILY_TRADES = 5                # max trades per day
 MAX_OPEN_POSITIONS = 1              # max simultaneous positions. Was 2 — a

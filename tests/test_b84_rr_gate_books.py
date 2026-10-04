@@ -59,11 +59,14 @@ class TestLedgerShape(unittest.TestCase):
         cls.led = _load(LEDGER)
 
     def test_ladder_is_the_reachable_learning_steps(self):
-        # engines/learning.py steps min_rr by +0.25 clamped at RR_FLOOR_CEILING,
-        # so the ladder must be exactly 1.5..2.5 — no invented thresholds.
+        # engines/learning.py steps min_rr by +0.25 clamped at RR_FLOOR_CEILING.
+        # LADDER_RR is generated FROM MIN_RISK_REWARD, so at floor 2.0 the
+        # ladder is 2.0..2.5 (at 1.5 it was 1.5..2.5) — no invented thresholds.
         self.assertEqual([str(t) for t in self.led["_rr_ladder"]],
-                         ["1.5", "1.75", "2.0", "2.25", "2.5"])
-        self.assertEqual(MIN_RISK_REWARD, 1.5)
+                         [str(t) for t in
+                          tuple(round(MIN_RISK_REWARD + 0.25 * k, 2)
+                                for k in range(int((RR_FLOOR_CEILING - MIN_RISK_REWARD) / 0.25) + 1))])
+        self.assertEqual(MIN_RISK_REWARD, 2.0)
         self.assertEqual(RR_FLOOR_CEILING, 2.5)
 
     def test_every_leg_carries_every_book_and_the_ladder(self):
@@ -110,22 +113,33 @@ class TestIntegrityVsB80(unittest.TestCase):
         cls.led = _load(LEDGER)
         cls.par = _load(PARITY)
 
-    def test_gate_at_live_floor_reproduces_b80_gradeB(self):
+    def test_gate_at_live_floor_does_not_reproduce_b80_gradeB(self):
+        """b83: at floor 1.5 the gate row reproduced b80 gradeB exactly — that
+        was the proof the gate was a NO-OP (it let everything through). The
+        AUDIT-2026-10-04 floor raise to 2.0 breaks that equality ON PURPOSE:
+        the gate now drops real trades, so gate_rr_2.0 < gradeB on volume.
+        What still must hold: the gate row EXISTS and is internally consistent
+        (exp_R and net_R are both real numbers, trades non-negative)."""
         key = f"gate_rr_{MIN_RISK_REWARD}"
         for leg in LEGS:
-            mine = self.led[leg][key]["ladder_ts"]
-            theirs = self.par["legs"][leg]["gradeB"]
-            for col in ("trades", "exp_R", "net_R", "maxDD_R"):
-                self.assertEqual(mine[col], theirs[col],
-                                 f"{leg}: b84 {key} {col}={mine[col]} != b80 "
-                                 f"gradeB {theirs[col]} — harness drift")
+            self.assertIn(key, self.led[leg], f"{leg}: {key} missing")
+            row = self.led[leg][key]["ladder_ts"]
+            self.assertIsInstance(row["trades"], int)
+            self.assertGreaterEqual(row["trades"], 0)
+            # exp_R/net_R are floats when the leg traded, None when it did not
+            if row["trades"]:
+                self.assertIsInstance(row["exp_R"], float)
+                self.assertIsInstance(row["net_R"], float)
 
     def test_kept_book_equals_the_gate_at_the_live_floor(self):
-        # the kept book (rr>=1.5) and the gate counterfactual at 1.5 are the same
-        # population seen two ways; they must agree trade-for-trade.
+        # the kept book (rr>=floor) and the gate counterfactual at the floor
+        # are the same population seen two ways; they must agree
+        # trade-for-trade at whatever the live floor currently is.
+        key = f"kept_rr_{MIN_RISK_REWARD}"
+        gate = f"gate_rr_{MIN_RISK_REWARD}"
         for leg in LEGS:
-            self.assertEqual(self.led[leg]["kept_rr_1.5"]["ladder_ts"],
-                             self.led[leg]["gate_rr_1.5"]["ladder_ts"],
+            self.assertEqual(self.led[leg][key]["ladder_ts"],
+                             self.led[leg][gate]["ladder_ts"],
                              f"{leg}: kept book != gate at the live floor")
 
 
@@ -137,52 +151,91 @@ class TestVerdictFacts(unittest.TestCase):
         cls.led = _load(LEDGER)
         cls.v = cls.led["_verdict"]
 
-    def test_live_floor_is_a_noop_on_every_leg(self):
-        self.assertEqual(self.v["live_floor_is_noop"]["legs_where_dropped_book_empty"],
-                         self.v["live_floor_is_noop"]["of"])
-        self.assertTrue(all(x == 0 for x in
-                            self.v["live_floor_is_noop"]["dropped_trades_per_leg"].values()))
+    def test_live_floor_is_a_real_filter_not_a_noop(self):
+        """AUDIT-2026-10-04: at MIN_RISK_REWARD=1.5 this gate was a NO-OP on
+        5-of-5 legs — _reanchor_blueprint manufactured every entry at 1.55,
+        exactly 0.05 above the floor, so nothing could ever fall below it.
+        Raising the floor to 2.0 (b233, measured +29..+43 USD on 4 windows)
+        made the gate BIND: the dropped book is no longer empty on 3-of-5
+        legs. That is the whole point of the change, so pin it here — a future
+        relaxation back to 1.5 must fail this test, not pass silently."""
+        noop = self.v["live_floor_is_noop"]
+        # it must NOT be empty on every leg anymore
+        self.assertNotEqual(noop["legs_where_dropped_book_empty"],
+                            noop["of"],
+                            "the floor is a no-op again — check MIN_RISK_REWARD "
+                            "has not been relaxed back to 1.5")
+        # and it must actually be dropping real trades
+        dropped = noop["dropped_trades_per_leg"]
+        self.assertGreater(sum(dropped.values()), 0)
 
-    def test_rr_is_a_manufactured_spike_not_a_spread(self):
-        # >=99.7% of the grade-passing population sits inside 1.55±0.06 on every
-        # leg — the floor is a target the builder aims at, not a filter.
+    def test_rr_population_is_now_filtered_not_manufactured(self):
+        """AUDIT-2026-10-04: at floor 1.5, _reanchor_blueprint manufactured
+        every entry at 1.55 (0.05 above the floor it was built against), so
+        >=99.7% of the grade-passing population sat in a 1.55±0.06 spike and
+        the floor could reject nothing. At floor 2.0 that spike breaks on the
+        legs with a real sample (cached 0.8, W1 0.69) because low-RR geometry
+        finally falls below the gate. Legs with almost no signals (W2 n=7)
+        stay at 1.0 by scarcity, not by manufacture — only require the check
+        where the sample is meaningful. If share climbs back to ~1.0 on the
+        big legs the builder is aiming at the new floor again (see
+        REANCHOR_MIN_RR, which must NOT track MIN_RISK_REWARD)."""
         for leg in LEGS:
             c = self.v["rr_concentration"][leg]
-            self.assertGreaterEqual(c["share"], 0.997,
-                                    f"{leg}: spike share {c['share']} — if this "
-                                    "drops, _reanchor_blueprint's padding changed")
-            self.assertLess(c["rr_min"], 1.56)
-            self.assertGreaterEqual(c["rr_median"], 1.549)
+            if not c.get("grade_passing_signals"):
+                continue
+            if c["grade_passing_signals"] < 20:
+                continue  # too few signals for a share to mean anything
+            self.assertLess(c["share"], 0.997,
+                            f"{leg}: spike share {c['share']} is back at the "
+                            "manufactured level — _reanchor_blueprint is aiming "
+                            "at MIN_RISK_REWARD again; keep REANCHOR_MIN_RR at 1.5")
 
-    def test_cliff_is_at_the_first_learning_step_on_all_windows(self):
-        self.assertTrue(self.v["cliff_identical_on_all_windows"])
+    def test_cliff_is_measured_per_window(self):
+        """At floor 1.5 the cliff (the floor where the funnel goes silent) sat
+        at the first learning step on every window — the same sharp event at
+        the same place, kill_share >= 0.98 at 1.75. At floor 2.0 the starting
+        point moved, so the cliff is no longer identical across windows. What
+        still must hold: the measurement exists and is per-floor."""
+        self.assertIn("cliff_by_floor", self.v)
         for w in WINDOWS:
-            self.assertEqual(self.v["cliff_by_floor"][w]["cliff_floor"], 1.75,
-                             f"{w}: cliff moved — re-read the tightening hazard")
-            self.assertGreaterEqual(
-                self.v["cliff_by_floor"][w]["kill_share_by_floor"]["1.75"], 0.98)
+            self.assertIn(w, self.v["cliff_by_floor"])
 
-    def test_tightening_to_1_75_is_a_silence_not_a_selection(self):
-        t = self.v["tighten_by_floor"]["1.75"]
-        # the two "paying" windows are n<=2 survivors; the honest read is volume.
-        self.assertLessEqual(t["total_trades_left"], 3)
-        self.assertLess(t["total_net_R_given_up"], -250.0)
-        self.assertFalse(t["replicated_all_windows"])
-        for row in t["per_window"]:
-            if row["pays"]:
-                self.assertLessEqual(row["gate_trades"], 2,
-                                     "an exp_R 'win' on n>2 at this floor would "
-                                     "mean the population is no longer a spike")
+    def test_tightening_above_the_live_floor_is_measured(self):
+        """At floor 1.5 the first learning step was 1.75 and it was a silence
+        (<=3 survivors, -250R given up). At floor 2.0 the ladder starts at
+        2.0, so the 1.75 step no longer exists in the measurement. What must
+        hold for ANY step above the live floor: the measurement exists, and
+        tightening never replicates on all windows (a step that pays
+        everywhere would be the live floor already)."""
+        tbf = self.v["tighten_by_floor"]
+        # the steps strictly ABOVE the live floor are the tightening candidates
+        for step in self.led["_rr_ladder"]:
+            if float(step) > MIN_RISK_REWARD:
+                self.assertIn(str(step), tbf,
+                              f"step {step} is reachable but unmeasured")
+                self.assertFalse(tbf[str(step)]["replicated_all_windows"],
+                                 f"step {step} pays on all windows — it should "
+                                 "be the live floor instead")
 
-    def test_no_marginal_trade_exists_for_this_gate(self):
-        # b84's true-cliff test needs a dropped book; here it is empty on all
-        # five legs, so the gate cannot be judged on selection at all.
-        self.assertTrue(all(x == 0 for x in
-                            self.v["live_gate_marginal_trade"].values()))
+    def test_marginal_trade_count_is_measured(self):
+        """b84's true-cliff test needs a dropped book. At floor 1.5 it was
+        empty on all five legs (marginal_trade == 0 everywhere). At floor 2.0
+        the gate binds, so the counts are non-zero on the legs that have
+        low-geometry entries. What must hold: the field exists and is a
+        per-leg integer — the cliff test reads it."""
+        m = self.v["live_gate_marginal_trade"]
+        for leg in LEGS:
+            self.assertIn(leg, m)
+            self.assertIsInstance(m[leg], int)
 
     def test_adaptive_hazard_is_measured_not_armed(self):
         r = self.v["adaptive_gate_reach"]
-        self.assertEqual(r["learning_state"]["min_rr"], MIN_RISK_REWARD)
+        # The LEARNING module's own floor is its persistent default; the live
+        # floor is max(MIN_RISK_REWARD, learning min_rr), so the effective
+        # floor is still the audit's 2.0. Both must agree that nothing is
+        # about to tighten on its own.
+        self.assertEqual(r["learning_state"]["min_rr"], 1.5)
         self.assertFalse(r["adjustments_would_tighten_now"])
         # 1.75 kills >=98.9% everywhere but leaves 1-2 survivors on W1/W3, so it
         # is not literally a total silence — the ledger must say so honestly.

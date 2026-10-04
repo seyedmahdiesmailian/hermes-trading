@@ -175,6 +175,13 @@ def apply_smc_merge(ctx: dict, merged: dict, *, entry_close: float,
 REANCHOR_STOP_ATR_CAP = 2.0
 # ...and keep at least this reward:risk after re-anchoring.
 REANCHOR_MIN_RR = 1.5
+# AUDIT-2026-10-04: DO NOT raise this to match MIN_RISK_REWARD. The b84 round
+# proved this builder manufactures entry geometry at REANCHOR_MIN_RR + 0.05, so
+# if it tracks the executor floor the gate becomes a tautology that nothing
+# can fail. The measured +29..+43 USD win for the floor raise (b233) came from
+# the GATE filtering low-geometry entries out — the geometry stayed at 1.55.
+# Setting this to 2.0 would rebuild every rejected entry at 2.05 and the
+# filtering would silently stop happening.
 # b79d: THE grade threshold lives here, next to THE grade rule, so the
 # monitor gate (orchestrator) and the entry gate (auto_executor Check 6)
 # cannot carry two literals that drift. auto_executor re-exports it.
