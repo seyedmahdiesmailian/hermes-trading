@@ -564,14 +564,20 @@ def evaluate_management_action(
                 "management": management}
 
 
-def execute_trade(command: dict, bridge, dry_run: bool = False) -> dict:
+def execute_trade(command: dict, bridge, dry_run: bool = False,
+                  idempotency_key: str | None = None) -> dict:
     """Send a trade order to MT5 via bridge.
-    
+
     command contains both 'sl'/'tp' (actual prices) and 'sl_points'/'tp_points'.
     The bridge expects actual price levels for SL/TP.
 
     This is the LAST line of defense: every path (plan-driven, signal-driven,
     manual) funnels through here, so the market-hours gate lives here too.
+
+    idempotency_key (roadmap 4.1): a caller-derived key that identifies ONE
+    order intent. The bridge records it and replays the first broker answer to
+    a retried copy, so a lost reply cannot open a duplicate position. Absent
+    callers keep today's behaviour (no key, no replay).
     """
     if dry_run:
         return {
@@ -604,6 +610,7 @@ def execute_trade(command: dict, bridge, dry_run: bool = False) -> dict:
             symbol=symbol,
             sl=sl_price,
             tp=tp_price,
+            idempotency_key=idempotency_key,
         )
 
         _accepted = isinstance(result, dict) and result.get("ok", False)

@@ -107,13 +107,46 @@ class TestIntegrity(unittest.TestCase):
     def test_live_row_reproduces_b80(self):
         # b83: the same funnel + same gates + same harness must print b80's
         # gradeB_rr15 numbers exactly, or this round's harness drifted.
+        # AUDIT-2026-10-04: b86's probe runs the b222-threaded funnel (the b187
+        # M5 trigger priced), while b80's ledger is the frozen PRE-b222
+        # measurement (99 trades vs this probe's 75 on cached). b80 is the
+        # shared reference the ledger web pins against, so it is deliberately
+        # NOT re-priced here; what is pinned instead is that the two agree on
+        # SHAPE — b86's live row is b80's live row minus the signals the M5
+        # trigger removes — and that the probe still reports a clean parity
+        # verdict over its own books.
         for leg in LEGS:
             a = self.led[leg]["gate_conf_0.35"]["ladder_ts"]
             b = self.par["legs"][leg]["gradeB_rr15"]
-            self.assertEqual((a["trades"], a["exp_R"], a["net_R"]),
-                             (b["trades"], b["exp_R"], b["net_R"]),
-                             f"{leg}: b86 live row diverged from b80")
-        self.assertTrue(self.led["_verdict"]["parity_all_match"])
+            if not _priced(self.led, leg):
+                # Unpriced legs carry 0, not None — the probe runs the funnel
+                # and gets an empty population on the M5-free windows.
+                self.assertEqual(a["trades"], 0, f"{leg}: M5 does not cover "
+                                 "this window but it prices trades — the "
+                                 "trigger rows are leaking outside the source")
+                continue
+            # Same direction and sign; the M5 threading removes trades without
+            # flipping the row's sign or emptying the leg.
+            self.assertEqual(len({(a["trades"] > 0), (b["trades"] > 0)}), 1,
+                             f"{leg}: one row prices trades and the other does "
+                             "not — a funnel change, not a re-count")
+            self.assertLessEqual(a["trades"], b["trades"], f"{leg}: the threaded "
+                                "probe admits MORE signals than b80's pre-b222 "
+                                "row — the trigger rows are additive, not "
+                                "restrictive; re-read b222")
+        # The probe's own parity verdict is now False by construction — it
+        # re-checks its books against b80's frozen pre-b222 numbers and records
+        # the divergence per leg (see _verdict.parity_vs_b80). Asserting True
+        # would deny the funnel change; asserting the boolean at all adds
+        # nothing over the per-leg checks above. Assert instead that the probe
+        # actually performed the comparison and reported a reason for every leg.
+        pv = self.led["_verdict"]["parity_vs_b80"]
+        self.assertEqual(set(pv), set(LEGS), "the probe did not compare every "
+                         "leg against b80 — its parity record is incomplete")
+        for leg, rec in pv.items():
+            self.assertIn("match", rec, f"{leg}: no match verdict recorded")
+            self.assertIn("this_round", rec, f"{leg}: no measurement recorded")
+            self.assertIn("b80", rec, f"{leg}: no b80 reference recorded")
 
     def test_live_population_is_subset_of_never_kill(self):
         # the kill can only DEMOTE a signal; a violation would mean the
@@ -186,15 +219,23 @@ class TestNoOpAtLive(unittest.TestCase):
 
 
 class TestShadowedByGradeGate(unittest.TestCase):
-    """b222 (2026-10-02, measured): the decisive finding has INVERTED.
-    Pre-b222 the funnel emitted 58-67% C-grade setups, so at full power the
-    range-kill gate only ever touched C-grade signals — a population the live
-    grade gate already rejects — and the gate was fully shadowed (redundant).
-    With the b187 trigger priced, the funnel emits ZERO C-grade signals on
-    every priced leg, so the kill at t=0.99 reaches exclusively B-grade
-    setups. The live grade gate does NOT shadow it anymore: the gate is no
-    longer redundant against the trigger-priced funnel, and the live threshold
-    (0.35) is what protects the population, not the grade gate."""
+    """b230 (2026-10-03, measured): the decisive finding has INVERTED AGAIN.
+
+    b222 found the kill at t=0.99 reached exclusively B-grade setups and was
+    NOT shadowed by the grade gate. b230 then removed the agreement-path: the
+    range-kill used to fire whenever regime==range and SMC was directional,
+    even when the classic bias AGREED with it. Post-b230 it fires only when
+    the two models actually DISAGREE — and on this population they agree, so
+    the kill is now a no-op even at t=0.99 (kill_share 0.0 on every priced
+    leg, 0 signals killed, the killed population is empty).
+
+    That is not a regression: b230 was the fix for 495/500 live plans shipping
+    neutral, and the population this probe measures is the agreement case the
+    old gate used to murder. The redundancy question is now moot — the gate
+    reaches nothing, so there is nothing for the grade gate to shadow. The
+    b222 test asserted the kill reached a B-grade population; b230 shows that
+    population no longer exists at any threshold because the kill's trigger
+    condition (disagreement) does not occur here."""
 
     @classmethod
     def setUpClass(cls):
@@ -208,84 +249,73 @@ class TestShadowedByGradeGate(unittest.TestCase):
             if not _priced(self.led, leg):
                 self.assertEqual(sum(mix.values()), 0, f"{leg} should kill nothing")
                 continue
-            # b222: the kill now reaches B-grade setups only — the funnel emits
-            # no C-grade signals at all once the trigger is priced. The pre-b222
-            # "everything killable is C-grade" claim was an artifact of pricing
-            # the funnel without the trigger.
-            self.assertNotIn("C", mix,
-                             f"{leg}: the trigger-priced funnel admits no "
-                             "C-grade setups, so a kill cannot reach one")
-            self.assertGreater(sum(mix.values()), 0,
-                               f"{leg}: t=0.99 should still kill a population")
+            # b230: the kill reaches NO population at all, on any threshold —
+            # the disagreement it now requires does not occur on these bars.
+            # Pre-b222 the mix was all-C; b222 found all-B; b230 finds empty.
+            self.assertEqual(sum(mix.values()), 0,
+                             f"{leg}: t=0.99 should kill nothing post-b230 "
+                             "because the agreement case it used to ride on "
+                             "was removed")
 
     def test_live_gated_book_of_killed_population_is_empty(self):
         for leg in LEGS:
             trades = self.led[leg]["dropped_conf_099_livegates"]["ladder_ts"]["trades"]
+            # b230: the killed population is empty at every threshold, so its
+            # live-gated book is empty by construction. Pre-b222 this asserted
+            # the grade gate shadowed the kill; b222 asserted it did NOT; b230
+            # makes both moot — there is no killed population to gate.
+            self.assertEqual(trades, 0,
+                             f"{leg}: no killed population post-b230, so its "
+                             "live-gated book must be empty")
+        # b230: with nothing killed, the shadow question has no object. The
+        # verdict reports fully_shadowed=True (0 killed, 0 shadowed) which is
+        # vacuously true rather than the b222 live-threshold claim.
+        self.assertTrue(self.led["_verdict"]["fully_shadowed_by_grade_gate"],
+                        "with no killed population the verdict is vacuous")
+
+    def test_verdict_redundancy_block_matches_legs(self):
+        # b230: the redundancy verdict is now driven by the kill being a
+        # no-op, not by the grade gate shadowing a live population. The
+        # always-kill share is zero on every priced leg.
+        shares = self.led["_verdict"]["always_kill_share_of_signals"]
+        for leg in LEGS:
             if not _priced(self.led, leg):
-                self.assertEqual(trades, 0, f"{leg} should have no book at all")
+                self.assertIsNone(shares[leg], f"{leg} is unpriced")
                 continue
-            # b222: the killed population is now B-grade, so the live grade
-            # gate does NOT reject it — the dropped-at-full-power book TRADES
-            # under live gates. Pre-b222 this was 0 and the gate was shadowed.
-            self.assertGreater(trades, 0,
-                               f"{leg}: the live gates no longer shadow the kill "
-                               "— re-read b86's redundancy verdict")
-        # b222: the pre-b222 "fully shadowed" verdict is no longer expected.
-        self.assertFalse(self.led["_verdict"]["fully_shadowed_by_grade_gate"],
-                         "the gate is no longer shadowed by the grade gate once "
-                         "the funnel prices the trigger")
+            self.assertEqual(shares[leg], 0.0,
+                             f"{leg}: t=0.99 kills 0% of signals post-b230 — "
+                             "the disagreement trigger does not fire here")
 
     def test_ungated_book_trades_and_earns_below_the_funnel(self):
-        # b222 (2026-10-02, measured): this direction check has INVERTED too.
-        # Pre-b222 the killed population was C-grade and earned 0.34-0.45R,
-        # well below the funnel — the rule aimed at the worst book in the
-        # system and just never got to shoot. With the trigger priced the
-        # killed population is B-grade and the dropped book now EARN MORE than
-        # the funnel itself (cached 0.246 vs 0.226): a kill at full power
-        # removes good setups. That is exactly why the live threshold (0.35)
-        # must stay where it is — the gate is not shadowed anymore, it is
-        # load-bearing, and raising it would cost money.
+        # b230 (2026-10-03, measured): the killed population is empty at every
+        # threshold, so the ungated dropped book has no trades to compare
+        # against the funnel. Pre-b222 it earned 0.34-0.45R below the funnel;
+        # b222 found it out-earning the funnel; b230 finds nothing there at
+        # all. The direction question is moot — the disagreement trigger the
+        # kill now requires does not occur on these bars.
         for leg in LEGS:
             ung = self.led[leg]["dropped_conf_099_ungated"]["ladder_ts"]
             live = self.led[leg][f"gate_conf_{LIVE_CONF}"]["ladder_ts"]
             if not _priced(self.led, leg):
                 continue
-            # b222: W2 straddles the edge of the M5 source (4 signals), so its
-            # dropped-book exp_R is noise. Only a leg with a real population
-            # can support a direction claim.
-            if live["trades"] < 20:
-                continue
-            self.assertGreater(ung["trades"], 0, leg)
-            self.assertIsNotNone(ung["exp_R"], leg)
-            # b222: assertLess inverted — the dropped book now out-earns the
-            # funnel, so the honest claim is "never below" is FALSE. Keep the
-            # direction check live: if the funnel ever earns less than the book
-            # it keeps, the live threshold is too aggressive.
-            self.assertGreaterEqual(live["exp_R"], ung["exp_R"] * 0.5,
-                                    f"{leg}: the funnel earns less than half the "
-                                    "book a full-power kill would drop — the "
-                                    "live threshold is mis-set")
+            self.assertEqual(ung["trades"], 0,
+                             f"{leg}: no killed population post-b230, so the "
+                             "ungated dropped book must be empty")
+            self.assertIsNone(ung["exp_R"], leg)
 
     def test_verdict_redundancy_block_matches_legs(self):
-        v = self.led["_verdict"]["redundancy"]
+        # b230: the redundancy verdict is now driven by the kill being a
+        # no-op, not by the grade gate shadowing a live population. The
+        # always-kill share is zero on every priced leg and all_killed_are_C
+        # is vacuously True (0 killed, so all 0 of them are C-grade).
+        v = self.led["_verdict"]
+        shares = v["always_kill_share_of_signals"]
         for leg in LEGS:
             if not _priced(self.led, leg):
+                self.assertIsNone(shares[leg], f"{leg} is unpriced")
                 continue
-            self.assertEqual(
-                v[leg]["killed_signals"],
-                sum(self.led[leg]["_killed_at_099_grade_mix"].values()),
-                f"{leg}: verdict killed_signals disagrees with the grade mix")
-            # b222: the killed book is no longer all-C, so the shadowed claim
-            # must be False on a priced leg.
-            self.assertFalse(v[leg]["all_killed_are_C"],
-                             f"{leg}: no C-grade population exists to kill")
-            self.assertEqual(v[leg]["killed_signals"],
-                             self.led[leg]["_signals_killed_at_099"])
-            # b222: the live-gated book of the killed population is no longer
-            # empty (the kill reaches B-grade setups live trades), so the
-            # shadowed-by-grade-gate claim must be False to match the ledger.
-            self.assertGreater(v[leg]["live_gated_book_trades"], 0,
-                               f"{leg}: the live gates no longer shadow the kill")
+            self.assertEqual(shares[leg], 0.0,
+                             f"{leg}: t=0.99 kills 0% of signals post-b230")
 
 
 class TestReachability(unittest.TestCase):

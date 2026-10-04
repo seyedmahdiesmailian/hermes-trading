@@ -6,9 +6,14 @@ Legacy source: Hermes_Full_Backup_20260813 skills/trading/autonomous-trading-age
 Pipeline:
     snapshot_closed_deals(days) → classify_exits(deals) → analyze_exits(...)
         → compute_insights(performance, classified) → DEFCON level
-        → filter_entry_by_insights()  (entry gates mirrored in auto_executor.evaluate_proposal)
         → filter_management_by_insights()  (optional hook: auto_executor.evaluate_management_action
             accepts insights=..., but NO caller passes it live — see next note)
+
+AUDIT-2026-10-04: filter_entry_by_insights() was removed. Its entry gate is
+mirrored by auto_executor.evaluate_proposal directly, so the wrapper had no
+live caller and only duplicated the decision (dead code whose divergence from
+the real gate was invisible). filter_management_by_insights stays because it
+is deliberately NOT WIRED and is tracked.
 
 NOT WIRED (deliberate, 2026-08-30): filter_management_by_insights turns a
 `trail_stop` into `close_runner` (a FULL market close) whenever the runner is
@@ -163,21 +168,6 @@ def compute_insights(
         insights["runner_blocked_reason"] = "managed_exits_losing"
 
     return insights
-
-
-def filter_entry_by_insights(allowed: bool, reason: Optional[str], insights: Optional[dict]) -> dict:
-    """Legacy entry filter: block RED, apply risk_override from YELLOW."""
-    if insights is None:
-        return {"allowed": allowed, "risk_pct_override": None, "reason": reason}
-    if not allowed:
-        return {"allowed": False, "risk_pct_override": None, "reason": reason}
-    if not insights.get("trade_allowed", True):
-        return {
-            "allowed": False,
-            "risk_pct_override": None,
-            "reason": f"defcon_{insights.get('defcon', 'red').lower()}:entry_blocked",
-        }
-    return {"allowed": True, "risk_pct_override": insights.get("risk_override"), "reason": None}
 
 
 def filter_management_by_insights(management: dict, insights: Optional[dict]) -> dict:

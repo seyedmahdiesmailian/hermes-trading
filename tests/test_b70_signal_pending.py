@@ -18,8 +18,10 @@ class FakeBridge:
         self.live_ids = set()
         self.deals = []
 
-    def send_pending(self, side, lot, symbol="XAUUSD", price=None, sl=None, tp=None):
-        self.placed.append({"side": side, "price": price, "sl": sl, "tp": tp, "lot": lot})
+    def send_pending(self, side, lot, symbol="XAUUSD", price=None, sl=None, tp=None,
+                     idempotency_key=None):
+        self.placed.append({"side": side, "price": price, "sl": sl, "tp": tp,
+                            "lot": lot, "comment": idempotency_key})
         self.live_ids.add(9001)
         return {"ok": True, "ticket": 9001}
 

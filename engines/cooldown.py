@@ -45,14 +45,6 @@ def _market_open_utc(now: datetime) -> datetime:
     return sunday
 
 
-def set_cooldown(reason: str, minutes: int, now: datetime | None = None) -> dict:
-    now = now or datetime.now(timezone.utc)
-    state = _load()
-    state[reason] = {"until": (now + timedelta(minutes=minutes)).isoformat()}
-    _save(state)
-    return state
-
-
 def ensure_startup_cooldown(now: datetime | None = None) -> dict:
     """Called by master on startup: arm the restart guard ONLY on a REAL restart.
 

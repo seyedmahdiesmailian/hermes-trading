@@ -175,11 +175,18 @@ def main():
     print("=== FUNNEL new vs old ===")
     for leg in LEGS:
         cmp_ = led[leg]["_compare"]["funnel_graded"]
+        # AUDIT-2026-10-04: M5 threading leaves d_exp_R/net_R None on the legs
+        # the b182 source does not cover (W3/W4 price nothing); the format
+        # strings must tolerate that instead of crashing the whole rescore
+        # before the ledger is saved.
+        d = cmp_["d_exp_R"]
+        d_s = f"({d:+})" if d is not None else "(none)"
+        n_old = cmp_["old"]["net_R"]
+        n_new = cmp_["new"]["net_R"]
         print(f"{leg:7s} exp_R {cmp_['old']['exp_R']} -> {cmp_['new']['exp_R']} "
-              f"({cmp_['d_exp_R']:+}) | net_R {cmp_['old']['net_R']} -> "
-              f"{cmp_['new']['net_R']} | trades {cmp_['old']['trades']} -> "
-              f"{cmp_['new']['trades']} | dd {cmp_['old']['maxDD_R']} -> "
-              f"{cmp_['new']['maxDD_R']}")
+              f"{d_s} | net_R {n_old} -> {n_new} | trades "
+              f"{cmp_['old']['trades']} -> {cmp_['new']['trades']} | dd "
+              f"{cmp_['old']['maxDD_R']} -> {cmp_['new']['maxDD_R']}")
     json.dump(led, open(OUT, "w"), indent=1)
     print("saved:", os.path.abspath(OUT))
 

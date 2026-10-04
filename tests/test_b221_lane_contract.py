@@ -205,7 +205,7 @@ def _signal_executions(dark: bool) -> list[dict]:
         "date": int(_NOW.timestamp()) - 30,
     }]
 
-    def _no_trade(command, br=None, dry_run=False):
+    def _no_trade(command, br=None, dry_run=False, idempotency_key=None):
         # dry_run returns early with executed=False and no bridge call; any
         # other path means a gate let a live order through — fail loudly.
         if dry_run:

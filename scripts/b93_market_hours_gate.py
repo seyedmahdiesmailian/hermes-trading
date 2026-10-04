@@ -276,13 +276,26 @@ def shadow_grid() -> dict:
 
 def reachability() -> dict:
     from engines.learning import adjustments
+    # AUDIT-2026-10-04: the boundaries used to be hardcoded here and DRIFTED
+    # from engines/market_hours.py when the b93 escalation moved the literals
+    # to the broker-measured Sun 22:00 / Fri 21:00 — the test then failed on
+    # a truthful ledger because this probe still quoted the pre-escalation
+    # values. Read them from the module the test actually pins, so a future
+    # change cannot desync this row from the live gate.
+    from engines.market_hours import WEEKLY_OPEN, WEEKLY_CLOSE
+    _wd = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    sun_open = f"{_wd[WEEKLY_OPEN[0]]} {WEEKLY_OPEN[1]:02d}:{WEEKLY_OPEN[2]:02d}"
+    fri_close = f"{_wd[WEEKLY_CLOSE[0]]} {WEEKLY_CLOSE[1]:02d}:{WEEKLY_CLOSE[2]:02d}"
     adj = adjustments()
     return {"learning_changes_keys": sorted((adj.get("changes") or {}).keys()),
             "learning_can_move_market_hours": False,
-            "boundaries": {"saturday": "closed", "sunday_open_utc": "23:00",
-                           "friday_close_utc": "22:00"},
-            "note": ("the boundaries are literals inside "
-                     "engines/market_hours.is_market_open; learning.py moves "
+            "boundaries": {"saturday": "closed",
+                           "sunday_open_utc": sun_open.split()[1],
+                           "friday_close_utc": fri_close.split()[1]},
+            "note": (f"the boundaries are literals inside "
+                     "engines/market_hours.is_market_open (Sun {sun_open} / "
+                     f"Fri {fri_close} UTC, read from the module, not "
+                     "restated); learning.py moves "
                      "min_rr/min_grade/risk_mult only (operator-only reach, "
                      "same class as b86's range-kill and b92's cooldown)")}
 

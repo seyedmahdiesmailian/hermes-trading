@@ -67,7 +67,10 @@ os.chdir(_ROOT)
 from engines import lab_harness as lh                      # noqa: E402
 from engines.trade_management import LADDER_FIELDS          # noqa: E402
 from scripts import b81_lane_rescore as b81                 # noqa: E402
+from scripts.b81_lane_rescore import m5_source_rows         # noqa: E402
 from scripts import b68l_windows as wl                      # noqa: E402
+
+M5_SOURCE = "data/backtest/b182_m5_bars.json"
 
 OUT = "data/backtest/b109_ladder_parity_rescore.json"
 LEGS = b81.LEGS
@@ -77,19 +80,20 @@ WINDOWS = b81.WINDOWS
 def _row(res: dict) -> dict:
     r = res["ladder_ts"]
     return {"trades": r["trades"], "exp_R": r["exp_R"], "net_R": r["net_R"],
-            "WR%": r["WR%"], "maxDD_R": r["maxDD_R"],
+            "WR%": r.get("WR%"), "maxDD_R": r["maxDD_R"],
             "mean_hold_bars": r["mean_hold_bars"]}
 
 
-def lane_census(m15, h1, h4) -> dict:
+def lane_census(m15, h1, h4, m5_stream=None) -> dict:
     """Which lane does the live function pick for each funnel signal?
 
     Direct call on the emitted signal — the same dict shape the engine hands
     `partial_share_fn` — so this is the lane split the measurement above is
-    built from, not a restatement of it.
+    built from, not a restatement of it. b222: needs the M5 stream to match
+    the funnel the measurement runs.
     """
     from engines.trade_management import _partial_close_fraction
-    funnel = b81.funnel_fn(m15, h1, h4)
+    funnel = b81.funnel_fn(m15, h1, h4, m5_stream=m5_stream)
     counts = collections.Counter()
     grades = collections.Counter()
     for row in m15:
@@ -105,10 +109,16 @@ def lane_census(m15, h1, h4) -> dict:
                                                           key=lambda x: str(x[0]))}}
 
 
-def measure_leg(name: str, m15, h1, h4) -> dict:
+def measure_leg(name: str, m15, h1, h4, m5_stream=None) -> dict:
     """Both ladder shapes on the SAME bars — the only difference is whether
-    the signal carries the live ladder fields."""
-    funnel = b81.funnel_fn(m15, h1, h4)
+    the signal carries the live ladder fields.
+
+    b222/b230: the funnel cannot confirm without the b187 M5 trigger rows.
+    Passing m5_stream=None reproduces the pre-b222 shape (0 signals on these
+    bars post-trigger), which made the ledger silently empty instead of
+    measured. The M5 source is threaded the same way b80 does it.
+    """
+    funnel = b81.funnel_fn(m15, h1, h4, m5_stream=m5_stream)
 
     def pre_b109(row):
         s = funnel(row)
@@ -125,17 +135,35 @@ def measure_leg(name: str, m15, h1, h4) -> dict:
         "d_exp_R": (round(b["exp_R"] - a["exp_R"], 3)
                     if a["exp_R"] is not None and b["exp_R"] is not None
                     else None),
-        "d_net_R": round(b["net_R"] - a["net_R"], 1),
+        "d_net_R": (round(b["net_R"] - a["net_R"], 1)
+                    if a["net_R"] is not None and b["net_R"] is not None
+                    else None),
         "d_trades": b["trades"] - a["trades"],
-        "d_dd_R": round(b["maxDD_R"] - a["maxDD_R"], 1),
+        "d_dd_R": (round(b["maxDD_R"] - a["maxDD_R"], 1)
+                   if a["maxDD_R"] is not None and b["maxDD_R"] is not None
+                   else None),
     }
-    out["lane_census"] = lane_census(m15, h1, h4)
+    out["lane_census"] = lane_census(m15, h1, h4, m5_stream=m5_stream)
     return out
 
 
 def main() -> int:
     wins = wl.load_windows()
     c = json.load(open("data/backtest/ab_aggressive_data.json"))
+    # b222: price the b187 M5 trigger on the legs the M5 source covers,
+    # the same way b80 does. Without this the funnel cannot confirm and the
+    # ledger goes silently empty instead of measured.
+    m5_all = m5_source_rows(M5_SOURCE)
+    m5_span = (int(m5_all[0]["time"]), int(m5_all[-1]["time"])) if m5_all else None
+
+    def m5_for(rows):
+        if not m5_span:
+            return None
+        span = (int(rows[0]["time"]), int(rows[-1]["time"]))
+        if span[1] < m5_span[0] or span[0] > m5_span[1]:
+            return None
+        return m5_all
+
     led = {"_note": "b109: the funnel re-measured with the live ladder fields "
                     "actually reaching _partial_close_fraction. pre/post legs "
                     "differ ONLY in that (same bars, same engine, same "
@@ -143,10 +171,12 @@ def main() -> int:
            "_live_min_grade": b81.MIN_SETUP_GRADE,
            "_b108_reference": "data/backtest/b108_rescore_corrected.json"}
     print("##### cached (in-sample, informational) #####", flush=True)
-    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"])
+    led["cached"] = measure_leg("cached", c["M15"], c["H1"], c["H4"],
+                                m5_stream=m5_for(c["M15"]))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                             m5_stream=m5_for(wins[w]["M15"]))
 
     # The decision-relevant summary: does the honest lane split move the
     # headline on the INDEPENDENT windows, and in which direction?

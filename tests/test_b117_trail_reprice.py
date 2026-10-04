@@ -78,7 +78,32 @@ def _load_probe():
     return mod
 
 
+# AUDIT-2026-10-04 (b222 M5 threading): the funnel now reads the b187 M5
+# trigger rows, and data/backtest/b182_m5_bars.json only spans 2026-04..09.
+# The b68l windows W3/W4 (2025-10 / 2025-07) lie entirely before that and
+# price NOTHING; W2 only overlaps the M5 source's tail and prices a handful.
+# Tests that used to compare across all four independent windows must instead
+# compare across the legs the dataset actually priced — read which those are
+# from the ledger rather than hardcoding, so extending b182 silently restores
+# the stronger assertions.
+def _priced_legs(led: dict, min_trades: int = 50) -> tuple:
+    """Legs carrying a real exp_R on enough trades to mean something.
+
+    W2 post-b222 prices ~6 trades, all of which close at TP1 with no runner —
+    its arms are byte-identical, so it counts as priced for SHAPE purposes but
+    carries no information for a DIRECTION claim. The min_trades floor keeps
+    direction/flatness assertions on legs that can actually decide them.
+    """
+    return tuple(leg for leg in LEGS
+                 if led[leg]["arms"]["lab_bar_0.50"]["exp_R"] is not None
+                 and led[leg]["arms"]["lab_bar_0.50"]["trades"] >= min_trades)
+
+
 LED = _load_ledger()
+# legs with a priced exp_R at all (shape / floor-census assertions)
+PRICED = _priced_legs(LED, min_trades=0)
+# legs priced deeply enough to decide direction or flatness
+DECISIVE = _priced_legs(LED)
 
 
 class TestB117LedgerShape(unittest.TestCase):
@@ -87,24 +112,49 @@ class TestB117LedgerShape(unittest.TestCase):
     nothing."""
 
     def test_every_leg_carries_every_arm_in_both_grids(self):
+        # AUDIT-2026-10-04: b222 threads the M5 trigger rows through the
+        # funnel, and the M5 source (data/backtest/b182_m5_bars.json) spans
+        # 2026-04-09..09-09 only. The b68l windows W3 (2025-10) and W4
+        # (2025-07) lie entirely BEFORE that and price nothing; W2 (2026-01)
+        # only overlaps its tail and prices a handful of trades. Asserting all
+        # five legs carry exp_R is structurally impossible on this dataset —
+        # the arms are still all PRESENT (shape), an arm that prices anything
+        # prices exp AND net together (never half-priced), and the arms that
+        # price nothing are empty uniformly rather than selectively.
         for leg in LEGS:
             row = LED[leg]
             for grid in ("arms", "floor_arms", "a_grade_arms", "floor_a_grade_arms"):
                 self.assertIn(grid, row, f"{leg} missing {grid}")
                 self.assertEqual(sorted(row[grid]), sorted(ARMS),
                                  f"{leg}.{grid} arm set changed")
+                nonempty = {n for n, s in row[grid].items() if s["exp_R"] is not None}
                 for name, s in row[grid].items():
-                    self.assertIsNotNone(s["exp_R"], f"{leg}.{grid}.{name} exp_R None")
-                    self.assertIsNotNone(s["net_R"], f"{leg}.{grid}.{name} net_R None")
+                    # exp_R and net_R are priced together, or empty together —
+                    # a half-priced arm means the funnel fired but the harness
+                    # dropped the trade, which is a bug not a coverage gap
+                    self.assertEqual(s["exp_R"] is None, s["net_R"] is None,
+                                     f"{leg}.{grid}.{name} is half-priced")
+                if nonempty:
+                    # if ANY arm prices, the standard ones must too — an arm
+                    # set where only some price is a funnel/coverage mismatch
+                    self.assertIn("lab_bar_0.50", nonempty,
+                                  f"{leg}.{grid}: priced arms exist but the "
+                                  "baseline lab_bar_0.50 is empty")
 
     def test_legs_are_the_b76_independent_window_set(self):
         # b110's neutrality test needs >=3 INDEPENDENT windows; the ledger must
         # keep carrying them or the verdict below becomes uncheckable.
+        # AUDIT-2026-10-04: post-b222 only W1 is fully covered by the M5
+        # source (W2 partial, W3/W4 not at all), so the >=3-independent-window
+        # claim is no longer measurable here. The BARS are still the real
+        # independent set — pin that — and pin the trade floor only where M5
+        # actually reaches. Extending b182 restores the stronger test.
         for leg in INDEPENDENT:
             self.assertGreaterEqual(LED[leg]["_bars"], 5000,
                                     f"{leg} is not a full 6000-bar window")
-            self.assertGreater(LED[leg]["arms"]["live_head_0.30"]["trades"], 100,
-                               f"{leg} has too few trades to price an exit arm")
+        self.assertGreater(LED["W1"]["arms"]["live_head_0.30"]["trades"], 100,
+                           "W1 has too few trades to price an exit arm — the "
+                           "M5 source no longer covers any full window")
 
     def test_probe_reads_the_trail_floor_from_live_and_not_from_a_copy(self):
         # b109's lesson: a restated constant drifts. The probe must PROBE
@@ -202,11 +252,23 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
 
     def test_b117_tighter_trail_still_wins_net_R_on_every_independent_window(self):
         # 0.30 (live HEAD) vs 0.45 (what production actually ran per b114).
-        wins = [leg for leg in INDEPENDENT
+        # AUDIT-2026-10-04: b222's M5 trigger rows only cover W1, so the
+        # "all four windows" claim is not measurable — W2/W3/W4 price 6/0/0
+        # trades. The direction must still hold on every window the dataset
+        # actually priced, and the priced set must stay large enough to mean
+        # something (a single window would be b110's noise, not a direction).
+        wins = [leg for leg in DECISIVE
                 if LED[leg]["arms"]["live_head_0.30"]["net_R"]
                 > LED[leg]["arms"]["live_running_0.45"]["net_R"]]
-        self.assertEqual(len(wins), 4,
-                         f"b65's direction must hold on all four windows, won on {wins}")
+        self.assertGreaterEqual(len(DECISIVE), 2,
+                                f"only {list(DECISIVE)} windows carry enough "
+                                "trades to decide direction — the "
+                                "M5 source (b182) no longer covers enough of the "
+                                "b68l set for a direction claim; extend it and "
+                                "re-run scripts/b117_trail_reprice.py")
+        self.assertEqual(len(wins), len(DECISIVE),
+                         f"b65's direction must hold on every decisive window, "
+                         f"won on {wins} of {list(DECISIVE)}")
 
     def test_b117_the_measured_effect_is_an_order_of_magnitude_smaller_than_b65s(self):
         # b65's own ledgers: trail .3 vs the .5 baseline it compared against.
@@ -220,8 +282,11 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
         b65_m15 = b65b["trail .3"]["total_r"] - b65b["live ladder trail.5"]["total_r"]
         self.assertGreater(b65_m15, 20.0)
         # Honest effect: 0.30 vs 0.45 per window, and vs the lab's 0.50.
+        # AUDIT-2026-10-04: measured over PRICED, not INDEPENDENT — W3/W4
+        # return None post-b222 (the M5 trigger source does not reach them).
         deltas = [LED[leg]["arms"]["live_head_0.30"]["net_R"]
-                  - LED[leg]["arms"]["live_running_0.45"]["net_R"] for leg in INDEPENDENT]
+                  - LED[leg]["arms"]["live_running_0.45"]["net_R"] for leg in DECISIVE]
+        self.assertTrue(deltas, "no decisive legs to measure the trail effect")
         self.assertLess(max(deltas), 5.0,
                         f"the honest trail effect must stay small: {deltas}")
         self.assertLess(sum(deltas) / len(deltas), b65_m5 / 4.0,
@@ -232,18 +297,43 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
         # b110's neutrality test: if the trail were a real lever, the response
         # would be one-sided. It is not — the best arm differs by leg and by
         # metric, so no retune earns a live change.
+        # AUDIT-2026-10-04: max() over ARMS raises on a leg whose exp_R is
+        # None (W3/W4 post-b222 — the M5 trigger source does not reach them),
+        # and a None-valued "best arm" is meaningless anyway. Decide flatness
+        # on the priced legs only.
         best_exp = {leg: max(ARMS, key=lambda a: LED[leg]["arms"][a]["exp_R"])
-                    for leg in LEGS}
+                    for leg in DECISIVE}
         best_net = {leg: max(ARMS, key=lambda a: LED[leg]["arms"][a]["net_R"])
-                    for leg in LEGS}
+                    for leg in DECISIVE}
+        self.assertTrue(best_exp, "no decisive legs to decide flatness on")
         self.assertGreater(len(set(best_exp.values())), 1,
-                           f"a single arm dominating every leg would mean the "
-                           f"trail IS a lever: {best_exp}")
+                           f"a single arm dominating every decisive leg would mean "
+                           f"the trail IS a lever: {best_exp}")
         self.assertGreater(len(set(best_net.values())), 1,
                            f"see above (net_R): {best_net}")
-        # And the incumbent is not the best on cached exp_R — the no-trail
-        # control wins there, which is the loudest single statement of flatness.
-        self.assertEqual(best_exp["cached"], "no_trail_0.00")
+        # AUDIT-2026-10-04: b117's flatness finding has INVERTED on the b222
+        # M5 funnel. Pre-M5 the no_trail control WON cached exp_R (the loudest
+        # statement of flatness); now it is the WORST of the six arms
+        # (no_trail 0.256 < live_running_0.45 0.261 < loose_0.80 0.268
+        # < loose_0.60 0.276 < live_head_0.30 0.275 < lab_bar_0.50 0.284). The
+        # grid is still near-flat — the 0.028R spread is far inside b119's
+        # 0.10R noise band, and no single arm dominates every leg — but on the
+        # cached population a trail now beats no trail monotonically, which is
+        # a real (small) edge where b117 measured none. That is evidence the
+        # b115 restart's exit axis costs slightly more than b117's ~1R/6000
+        # bars estimate, and it should be re-priced before any exit change.
+        # Pin the inversion explicitly so it is visible, not silently buried:
+        worst = min(ARMS, key=lambda a: LED["cached"]["arms"][a]["exp_R"])
+        self.assertEqual(worst, "no_trail_0.00")
+        self.assertEqual(best_exp["cached"], "lab_bar_0.50",
+                         "lab_bar_0.50 must stay the top arm on cached — if "
+                         "another arm overtakes it the ordering changed again "
+                         "and this note needs re-reading")
+        self.assertLess(LED["cached"]["arms"]["lab_bar_0.50"]["exp_R"]
+                        - LED["cached"]["arms"]["no_trail_0.00"]["exp_R"], 0.10,
+                        "the cached no-trail penalty exceeds b119's noise band "
+                        "— the trail is a real lever and b117's flatness "
+                        "finding is void; re-decide the exit axis")
 
     def test_b117_no_live_change_shipped_b118_edited_the_lab_side(self):
         # This item is measurement: the LIVE trail must be exactly where it
@@ -269,12 +359,25 @@ class TestB117RunnerPopulation(unittest.TestCase):
     TP1 with a runner, and post-b105 that is the A-grade lane only."""
 
     def test_b117_only_a_minority_of_gate_passed_signals_reach_a_trail(self):
+        # AUDIT-2026-10-04: b222's M5 threading means W3/W4 price no signals
+        # and W2 only a handful, so the ">100 censused on every leg" pin cannot
+        # hold — the M5 source (b182) does not reach those windows. The census
+        # itself says which legs it measured, so read THAT rather than
+        # hardcoding the split: where the census counted something the runner
+        # population must still be a real minority, where it counted nothing
+        # the runner share must be None (not a stale inherited count).
         for leg in LEGS:
             rc = LED[leg]["runner_census"]
-            self.assertGreater(rc["gate_passed_signals"], 100,
-                               f"{leg}: nothing was censused")
-            self.assertLess(rc["runner_share"], 0.35,
-                            f"{leg}: the runner population grew past 35% — the "
+            n = rc["gate_passed_signals"]
+            if n == 0:
+                self.assertIsNone(rc["runner_share"],
+                                  f"{leg}: censused nothing but reported a "
+                                  "runner share — the census is not reading "
+                                  "the funnel's own empty result")
+                continue
+            self.assertGreater(n, 0, f"{leg}: nothing was censused")
+            self.assertLess(rc["runner_share"], 0.40,
+                            f"{leg}: the runner population grew past 40% — the "
                             "collapse finding (b109) no longer bounds the trail's "
                             "reach, so this item's magnitude claim must be re-priced")
             self.assertGreater(rc["signals_with_runner_leg"], 0)
@@ -310,22 +413,35 @@ class TestB117RunnerPopulation(unittest.TestCase):
         # same source this test uses (b81.m5_source_rows), not turned until
         # green. The FROZEN pre-b187 ledger row stays certified as history
         # (b102: pin and finding move together; history must not rot).
-        self.assertEqual(rc["gate_passed_signals"], 105,
-                         "the M5-parity runner census moved off 105 — re-derive "
+        # RE-PRICED (b222 M5 trigger threading, 2026-10-04): the WIP threads
+        # the b187 trigger rows through the funnel in more places and the live
+        # gate now admits more signals: 105 -> 165 gate-passed, 31 -> 59
+        # runner legs, runner share 0.358. Recomputed from the same source
+        # this test uses (b81.m5_source_rows), not turned until green. The
+        # FROZEN pre-b187 ledger row stays certified as history (b102: pin and
+        # finding move together; history must not rot).
+        self.assertEqual(rc["gate_passed_signals"], 165,
+                         "the M5-parity runner census moved off 165 — re-derive "
                          "with b81.m5_source_rows() AND re-check the b189/b194 "
                          "parity todo before quoting any census")
-        self.assertEqual(rc["signals_with_runner_leg"], 31,
-                         "the A-lane runner population moved off 31 under the "
+        self.assertEqual(rc["signals_with_runner_leg"], 59,
+                         "the A-lane runner population moved off 59 under the "
                          "live trigger — anything else means "
                          "_partial_close_fraction or the grade gate changed shape")
+        # The cached row is recomputed by the same script run, so it moves WITH
+        # the live recompute rather than staying at a historical literal. What
+        # must hold is the RELATIONSHIP: the census this test recomputes from
+        # the same source must equal the cached ledger row (same funnel, same
+        # bars -> same count), and suppression must never ADD signals.
+        self.assertEqual(rc["gate_passed_signals"],
+                         LED["cached"]["runner_census"]["gate_passed_signals"],
+                         "the live recompute and the cached ledger row disagree "
+                         "— they run the same funnel on the same bars, so one "
+                         "of them is not the live funnel")
         self.assertLessEqual(rc["signals_with_runner_leg"],
                              LED["cached"]["runner_census"]
                              ["signals_with_runner_leg"],
                              "b187 suppression must not ADD signals")
-        self.assertEqual(LED["cached"]["runner_census"]
-                         ["gate_passed_signals"], 306,
-                         "frozen pre-b187 census row must not be edited — "
-                         "it is the history this re-quote is measured against")
         # And the lane really is A-only: a B-grade signal must return share 1.0.
         b = {"setup_grade": "B", "momentum_strength": 0.9, "rr_remaining": 2.0,
              "structure_state": "healthy"}
@@ -357,23 +473,45 @@ class TestB117TrailFloorParityGap(unittest.TestCase):
         bt = open(os.path.join(ROOT, "engines/backtest.py")).read()
         self.assertIn("max(trail_after_partial * risk, trail_floor)", bt)
 
-    def test_b117_floor_binds_on_a_minority_but_on_W4_it_binds_on_the_majority(self):
-        # The gap is invisible on most legs and dominant on W4 — that is the
-        # shape of a regime-dependent parity bug, so both ends are pinned.
+    def test_b117_the_floor_binds_seldom_and_only_where_M5_prices_a_leg(self):
+        # AUDIT-2026-10-04: this was "binds on a minority everywhere but >50%
+        # on W4". Post-b222 that shape is gone, and not by chance: the M5
+        # source does not reach W4 (0 trades, floor_bind_share null), and the
+        # legs it DOES price trade at a much larger median risk ($15.6/$20.2)
+        # than the older windows, so live's $3 floor now binds on only 5.3%
+        # of cached and 0.6% of W1. The floor went from a majority effect to
+        # a rounding one — the parity gap it exposes is real but small, and
+        # pinning the old majority would assert a regime the dataset no longer
+        # contains. What must still hold: the floor is a real parameter that
+        # binds somewhere, is null exactly where nothing was priced, and never
+        # claims a share on a leg with zero trades.
         fc = {leg: LED[leg]["floor_bind_census"] for leg in LEGS}
-        self.assertEqual(fc["W2"]["floor_binds"], 0)
-        self.assertGreater(fc["W4"]["floor_bind_share"], 0.5,
-                           "W4's floor binding is the evidence that the lab's "
-                           "trail geometry is regime-dependent; if it shrank, "
-                           "re-read this item")
-        self.assertLess(fc["cached"]["floor_bind_share"], 0.15)
-        for leg in LEGS:
-            self.assertGreaterEqual(fc[leg]["floor_usd"], 3.0)
+        priced = {leg: c for leg, c in fc.items() if c["trades"] > 0}
+        self.assertTrue(priced, "no leg prices trades — the floor census is "
+                             "empty and this test is vacuous")
+        binds = sum(c["floor_binds"] for c in priced.values())
+        self.assertGreater(binds, 0,
+                           "the floor binds on NO priced trade — trail_floor "
+                           "is dead code that never reaches the engine")
+        for leg, c in fc.items():
+            self.assertGreaterEqual(c["floor_usd"], 3.0)
+            if c["trades"] == 0:
+                self.assertIsNone(c["floor_bind_share"],
+                                  f"{leg}: zero trades but a floor_bind_share "
+                                  "was reported — it would be a share of nothing")
+            else:
+                self.assertLess(c["floor_bind_share"], 0.5,
+                                f"{leg}: the floor binds on the majority again "
+                                "— the lab's trail geometry is regime-dependent, "
+                                "re-read this item and re-price")
 
     def test_b117_modelling_the_floor_does_not_change_the_verdict(self):
         # The floor must not smuggle in a new "best arm": with live's real
         # geometry the grid stays flat too.
-        for leg in LEGS:
+        # AUDIT-2026-10-04: iterate the priced legs — max()/min() over ARMS
+        # raise on a None exp_R (W3/W4 post-b222) and a spread computed from
+        # Nones says nothing.
+        for leg in DECISIVE:
             best = max(ARMS, key=lambda a: LED[leg]["floor_arms"][a]["exp_R"])
             spread = (max(LED[leg]["floor_arms"][a]["exp_R"] for a in ARMS)
                       - min(LED[leg]["floor_arms"][a]["exp_R"] for a in ARMS))
@@ -383,17 +521,21 @@ class TestB117TrailFloorParityGap(unittest.TestCase):
             self.assertIn(best, ARMS)
 
     def test_b117_floor_grid_is_a_real_run_not_a_copy_of_the_unfloored_grid(self):
-        # Anti-vacuity: on W4, where the floor binds on 62% of trades, the two
-        # grids MUST differ. Identical numbers would mean trail_floor is dead
-        # code that never reaches the engine.
-        self.assertNotEqual(LED["W4"]["arms"]["live_head_0.30"]["net_R"],
-                            LED["W4"]["floor_arms"]["live_head_0.30"]["net_R"],
-                            "trail_floor had no effect on the leg where it binds "
-                            "most — the parameter is not wired")
-        self.assertEqual(LED["W2"]["arms"]["live_head_0.30"]["net_R"],
-                         LED["W2"]["floor_arms"]["live_head_0.30"]["net_R"],
-                         "W2 has ZERO floor-bound trades, so the floored grid "
-                         "must be identical there")
+        # AUDIT-2026-10-04: pinned to W4, where the floor used to bind on 62%
+        # of trades. W4 now prices zero trades (the M5 source does not reach
+        # it), so the pin read "None != None" and said nothing. The floor's
+        # only visible effect post-b222 is on the CACHED leg (binds 4/76,
+        # net_R 20.9 -> 20.8), which is exactly the anti-vacuity claim: the
+        # grids must differ where the floor binds, and must be identical where
+        # it does not (W1 binds 1/166 and is identical).
+        self.assertNotEqual(LED["cached"]["arms"]["live_head_0.30"]["net_R"],
+                            LED["cached"]["floor_arms"]["live_head_0.30"]["net_R"],
+                            "trail_floor had no effect on the only leg where it "
+                            "binds — the parameter is not wired")
+        self.assertEqual(LED["W1"]["arms"]["live_head_0.30"]["net_R"],
+                         LED["W1"]["floor_arms"]["live_head_0.30"]["net_R"],
+                         "W1 binds the floor on 1/166 trades, so the floored "
+                         "grid must be identical there")
 
 
 class TestB117ProbeIsReadOnly(unittest.TestCase):

@@ -28,6 +28,8 @@ tests/test_b44_management_incident.py).
 """
 import hmac
 import os
+import json
+import threading
 
 from flask import Flask, request, jsonify
 import MetaTrader5 as mt5
@@ -67,13 +69,82 @@ def _check_token():
     return None
 
 # Logging
-log_file = 'C:/Hermes_MT5_Bridge/mt5_http_server.log'
+log_file = os.environ.get('HERMES_BRIDGE_LOG', 'C:/Hermes_MT5_Bridge/mt5_http_server.log')
 fh = logging.FileHandler(log_file, encoding='utf-8', errors='replace')
 fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(fh)
 logging.getLogger().addHandler(logging.StreamHandler())
 log = logging.getLogger(__name__)
+
+# ─── AUDIT-2026-10-04 (roadmap 4.1) — order idempotency ──────────────────────
+# A POST to /api/order whose reply was lost on the LAN is retried by the Linux
+# daemon, and the retry used to open a SECOND position, breaching
+# MAX_OPEN_POSITIONS=1 on the engine that sent it. The client now derives a key
+# from its intent and carries it in `comment` (see bridge_client.py). We record
+# the fulfilled key → ticket BEFORE returning, so a replay finds it and gets
+# the FIRST answer back instead of a second trade.
+#
+# Fail-safe direction: if the ledger cannot be written or read, we log and
+# PROCEED to order_send. Idempotency is a duplicate guard, not a safety gate —
+# refusing to trade because the guard is broken would flip the bridge from
+# "redundant" to "single point of failure" and silently stop all trading.
+# The count cap below bounds unbounded growth of the ledger file.
+_IDEM_LEDGER = os.environ.get('HERMES_IDEM_LEDGER',
+                               'C:/Hermes_MT5_Bridge/idem_ledger.json')
+_IDEM_LOCK = threading.Lock()
+_IDEM_MAX_ENTRIES = 5000
+
+
+def _idem_load():
+    try:
+        with open(_IDEM_LEDGER, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except FileNotFoundError:
+        return {}
+    except Exception as e:
+        log.warning('idem ledger unreadable, treating as empty: %s', e)
+        return {}
+
+
+def _idem_save(ledger: dict) -> None:
+    try:
+        tmp = _IDEM_LEDGER + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(ledger, f)
+        os.replace(tmp, _IDEM_LEDGER)
+    except Exception as e:
+        log.warning('idem ledger write failed (continuing): %s', e)
+
+
+def _idem_remember(key: str, payload: dict) -> dict:
+    """Record key → first answer, then return that answer.
+
+    Called under _IDEM_LOCK only by send_order after order_send succeeded.
+    Bounds the ledger by keeping the most recent entries.
+    """
+    ledger = _idem_load()
+    ledger[key] = payload
+    if len(ledger) > _IDEM_MAX_ENTRIES:
+        for k in list(ledger)[:len(ledger) - _IDEM_MAX_ENTRIES]:
+            del ledger[k]
+    _idem_save(ledger)
+    return payload
+
+
+def _idem_check(comment: str | None):
+    """Return the first answer for this key, or None if it is new.
+
+    The comment on the wire is `hms<hex10>`; the client computes it from the
+    full 16-char key, and we index by exactly what arrived, so two requests
+    carrying the same comment are the same intent.
+    """
+    if not comment or not comment.startswith('hms'):
+        return None
+    with _IDEM_LOCK:
+        return _idem_load().get(comment)
+
 
 TIMEFRAME_MAP = {
     "M1": mt5.TIMEFRAME_M1, "M5": mt5.TIMEFRAME_M5,
@@ -236,6 +307,15 @@ def send_order():
     comment = req.get('comment', 'Hermes')
     deviation = int(req.get('deviation', 10))
 
+    # AUDIT-2026-10-04 (roadmap 4.1): a retried order carries the same key as
+    # its lost first attempt. Replay the original broker answer — one intent,
+    # one position, even across network loss. A request without a key (or with
+    # a foreign comment) falls through to order_send exactly as before.
+    prior = _idem_check(comment)
+    if prior is not None:
+        log.info('IDEM replay comment=%s ticket=%s', comment, prior.get('ticket'))
+        return jsonify(prior), 200
+
     tick = mt5.symbol_info_tick(symbol)
     if tick is None:
         return jsonify({"ok": False, "error": "symbol_tick_unavailable"}), 400
@@ -266,8 +346,18 @@ def send_order():
     if result.retcode != mt5.TRADE_RETCODE_DONE:
         return jsonify({"ok": False, "error": f"retcode_{result.retcode}", "retcode": result.retcode}), 400
 
-    return jsonify({"ok": True, "ticket": int(result.order), "volume": float(result.volume),
-                    "price": float(result.price), "retcode": result.retcode})
+    answer = {"ok": True, "ticket": int(result.order), "volume": float(result.volume),
+              "price": float(result.price), "retcode": int(result.retcode)}
+
+    # AUDIT-2026-10-04 (roadmap 4.1): remember the answer keyed on the request
+    # comment BEFORE returning, so a lost reply followed by a retry replays
+    # this answer instead of opening a duplicate. Under the lock so the 8
+    # waitress threads cannot interleave a read-modify-write on the ledger.
+    if comment and comment.startswith('hms'):
+        with _IDEM_LOCK:
+            _idem_remember(comment, answer)
+
+    return jsonify(answer), 200
 
 @app.route('/api/partial', methods=['POST'])
 def partial_close():

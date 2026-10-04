@@ -71,7 +71,10 @@ os.chdir(_ROOT)
 from engines import lab_harness as lh                    # noqa: E402
 from engines.trade_management import _trail_params        # noqa: E402
 from scripts import b81_lane_rescore as b81               # noqa: E402
+from scripts.b81_lane_rescore import m5_source_rows      # noqa: E402
 from scripts import b68l_windows as wl                    # noqa: E402
+
+M5_SOURCE = "data/backtest/b182_m5_bars.json"
 
 OUT = "data/backtest/b117_trail_reprice.json"
 LEGS = b81.LEGS
@@ -126,12 +129,12 @@ def runner_census(m15, h1, h4, m5_stream=None) -> dict:
             "runner_share": round(runner / total, 4) if total else None}
 
 
-def floor_bind_census(m15, h1, h4, mult: float = 0.30) -> dict:
+def floor_bind_census(m15, h1, h4, m5_stream=None, mult: float = 0.30) -> dict:
     """How many ACTUAL trades have risk small enough that live's $ floor, not
     the multiplier, sets the trail distance? The lab models only the
     multiplier, so every one of these trades is scored on trail geometry live
     does not use."""
-    funnel = b81.funnel_fn(m15, h1, h4)
+    funnel = b81.funnel_fn(m15, h1, h4, m5_stream=m5_stream)
     ts = lh.live_time_stop_bars(m15)
     kw = dict(lh.LADDER)
     kw["trail_floor"] = 0.0            # b118: this census measures the UNFLOORED
@@ -164,7 +167,7 @@ def _a_slice(m15, funnel, kw) -> dict:
             "net_R": round(sum(rs), 1) if rs else None}
 
 
-def measure_leg(m15, h1, h4) -> dict:
+def measure_leg(m15, h1, h4, m5_stream=None) -> dict:
     """All trail arms on IDENTICAL bars through the ONE harness.
 
     `extra_modes` is the harness's own extension point, so plain/ladder/
@@ -176,7 +179,7 @@ def measure_leg(m15, h1, h4) -> dict:
     floor so the ledger carries the number for the geometry live ACTUALLY runs.
     """
     from engines.backtest import backtest_ohlc
-    funnel = b81.funnel_fn(m15, h1, h4)
+    funnel = b81.funnel_fn(m15, h1, h4, m5_stream=m5_stream)
     # b118 PARITY NOTE (edit, not a change to the frozen ledger): the harness
     # LADDER used to carry NO `trail_floor`, so `arms` below was by construction
     # the floor-OFF grid ("the historical lab shape", see measure_leg's
@@ -211,8 +214,9 @@ def measure_leg(m15, h1, h4) -> dict:
             "_time_stop_bars": ts,
             "arms": rows, "a_grade_arms": a_only,
             "floor_arms": floor_rows, "floor_a_grade_arms": floor_a,
-            "runner_census": runner_census(m15, h1, h4),
-            "floor_bind_census": floor_bind_census(m15, h1, h4)}
+            "runner_census": runner_census(m15, h1, h4, m5_stream=m5_stream),
+            "floor_bind_census": floor_bind_census(m15, h1, h4,
+                                                  m5_stream=m5_stream)}
 
 
 def main() -> int:
@@ -228,11 +232,24 @@ def main() -> int:
            "_trail_floor_usd": trail_floor(),
            "_arms": {n: m for n, m in ARMS},
            "_live_min_grade": b81.MIN_SETUP_GRADE}
+    m5_all = m5_source_rows(M5_SOURCE)
+    m5_span = (int(m5_all[0]["time"]), int(m5_all[-1]["time"])) if m5_all else None
+
+    def m5_for(rows):
+        if not m5_span:
+            return None
+        span = (int(rows[0]["time"]), int(rows[-1]["time"]))
+        if span[1] < m5_span[0] or span[0] > m5_span[1]:
+            return None
+        return m5_all
+
     print("##### cached #####", flush=True)
-    led["cached"] = measure_leg(c["M15"], c["H1"], c["H4"])
+    led["cached"] = measure_leg(c["M15"], c["H1"], c["H4"],
+                                m5_stream=m5_for(c["M15"]))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = measure_leg(wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = measure_leg(wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                             m5_stream=m5_for(wins[w]["M15"]))
 
     # b110's neutrality test: the trail-vs-bar margin per arm, per leg.
     # One-sided across >=3 independent windows = the old ranking was contaminated.

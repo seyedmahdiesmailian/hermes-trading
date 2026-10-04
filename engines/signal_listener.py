@@ -535,11 +535,34 @@ def check_signals(bridge=None) -> list[dict]:
             "parsed": parsed_dict,
             "decision": decision,
             "timestamp": msg.get("date"),
+            # AUDIT-2026-10-04 (roadmap 4.1): the order-idempotency seed. A
+            # channel signal re-posted or edited keeps its message_id, and the
+            # daemon retries orders whose reply was lost — without a stable
+            # identifier a retry would open a duplicate position.
+            "chat_id": msg.get("chat_id", ""),
+            "message_id": msg.get("message_id", 0),
         }
         signals_found.append(signal_record)
         _log_signal(msg["text"], parsed_dict, decision)
 
     return signals_found
+
+
+def _signal_order_key(sig_record: dict, command: dict) -> str:
+    """Deterministic idempotency key for one channel signal (roadmap 4.1).
+
+    Seeded from the channel chat_id + message_id: a re-posted or edited signal
+    keeps its message_id, so every execution attempt of that ONE signal hashes
+    to the same key and the bridge replays its first answer instead of trading
+    again. Order geometry (side/lot/sl/tp) is mixed in so a second signal
+    sharing the same message id — a different instrument or size — never
+    collides with it.
+    """
+    from bridge_client import make_idempotency_key
+    intent = f"{sig_record.get('chat_id', '')}:{sig_record.get('message_id', 0)}"
+    return make_idempotency_key(
+        intent, command["side"], command["lot"],
+        sl=command.get("sl"), tp=command.get("tp"))
 
 
 def _log_signal_risk_stack(eval_result: dict, command: dict,
@@ -802,7 +825,8 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 continue
             pres = signal_pending.place_signal_limit(
                 bridge, command, symbol=parsed.get("symbol", "XAUUSD"),
-                dry_run=dry_run)
+                dry_run=dry_run,
+                idempotency_key=_signal_order_key(sig_record, command))
             executions.append({
                 "signal": parsed,
                 "verdict": "limit_pending" if pres.get("ok") else "skip",
@@ -830,7 +854,8 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                                    ticket=pres.get("ticket"))
             continue
 
-        result = execute_trade(command, bridge, dry_run=dry_run)
+        result = execute_trade(command, bridge, dry_run=dry_run,
+                               idempotency_key=_signal_order_key(sig_record, command))
 
         # Alert hygiene (b10 bug class, signal side): a broker rejection after
         # passing every gate must NOT report verdict='execute' + executed=False —

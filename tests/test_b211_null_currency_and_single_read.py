@@ -186,12 +186,13 @@ class TestSingleAccountReadPerSignal(unittest.TestCase):
         # before it) or the count check would be vacuous.
         self.assertEqual(res["signals_found"], 1)
         self.assertNotIn("fail_closed", str(res["executions"][0].get("reasons", [])))
-        # 1 read in check_signals (per-message policy #1) + 1 in
-        # run_signal_check (the single shared snapshot). Pre-fix: 3.
+        # 1 read in check_signals (per-message policy #1) + 0 in
+        # run_signal_check, which now REUSES that snapshot (b211(c), the
+        # b211(b) follow-through). Pre-b211(c): 2. Pre-b211(b): 3.
         self.assertEqual(
-            counts["account"], 2,
-            "run_signal_check must reuse the one account read (b211(b)); "
-            "found " + str(counts["account"]))
+            counts["account"], 1,
+            "run_signal_check must reuse the single account read from "
+            "check_signals (b211(c)); found " + str(counts["account"]))
 
     def test_b211b_zero_reads_on_empty_batch(self):
         # anti-vacuity for the harness itself: with no signals the function

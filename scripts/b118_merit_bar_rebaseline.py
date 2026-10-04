@@ -54,7 +54,10 @@ os.chdir(_ROOT)
 from engines import lab_harness as lh                    # noqa: E402
 from engines.trade_management import LADDER_FIELDS       # noqa: E402
 from scripts import b81_lane_rescore as b81              # noqa: E402
+from scripts.b81_lane_rescore import m5_source_rows     # noqa: E402
 from scripts import b68l_windows as wl                   # noqa: E402
+
+M5_SOURCE = "data/backtest/b182_m5_bars.json"
 
 OUT = "data/backtest/b118_merit_bar_rebaseline.json"
 LEGS = b81.LEGS
@@ -95,8 +98,8 @@ def _row(m15, funnel, **over) -> dict:
                       time_stop_bars=kw["time_stop_bars"])
 
 
-def measure_leg(m15, h1, h4) -> dict:
-    funnel = b81.funnel_fn(m15, h1, h4)
+def measure_leg(m15, h1, h4, m5_stream=None) -> dict:
+    funnel = b81.funnel_fn(m15, h1, h4, m5_stream=m5_stream)
     mult = lh.LIVE_TRAIL_MULT
     floor = lh.LIVE_TRAIL_FLOOR
     return {
@@ -124,15 +127,21 @@ def attribution(led: dict) -> dict:
     attr = {}
     for leg in LEGS:
         L = led[leg]
+
+        def _d(a, b, nd=3):
+            if a is None or b is None:
+                return None
+            return round(a - b, nd)
+
         attr[leg] = {
-            "d_b109_ladder_fields": round(L["lab_bar_0_50"]["exp_R"]
-                                          - L["quoted_pre_b109"]["exp_R"], 3),
-            "d_trail_0_50_to_live": round(L["live_trail_no_floor"]["exp_R"]
-                                          - L["lab_bar_0_50"]["exp_R"], 3),
-            "d_trail_floor": round(L["live_parity"]["exp_R"]
-                                   - L["live_trail_no_floor"]["exp_R"], 3),
-            "d_total_vs_stored": round(L["live_parity"]["exp_R"]
-                                       - led["_stored_b108_bar"][leg], 3),
+            "d_b109_ladder_fields": _d(L["lab_bar_0_50"]["exp_R"],
+                                       L["quoted_pre_b109"]["exp_R"]),
+            "d_trail_0_50_to_live": _d(L["live_trail_no_floor"]["exp_R"],
+                                       L["lab_bar_0_50"]["exp_R"]),
+            "d_trail_floor": _d(L["live_parity"]["exp_R"],
+                                L["live_trail_no_floor"]["exp_R"]),
+            "d_total_vs_stored": _d(L["live_parity"]["exp_R"],
+                                    led["_stored_b108_bar"][leg]),
             "trades_quoted": L["quoted_pre_b109"]["trades"],
             "trades_live_parity": L["live_parity"]["trades"],
         }
@@ -157,10 +166,23 @@ def main() -> int:
            "_live_min_rr": lh.LIVE_MIN_RR}
 
     print("##### cached #####", flush=True)
-    led["cached"] = measure_leg(c["M15"], c["H1"], c["H4"])
+    m5_all = m5_source_rows(M5_SOURCE)
+    m5_span = (int(m5_all[0]["time"]), int(m5_all[-1]["time"])) if m5_all else None
+
+    def m5_for(rows):
+        if not m5_span:
+            return None
+        span = (int(rows[0]["time"]), int(rows[-1]["time"]))
+        if span[1] < m5_span[0] or span[0] > m5_span[1]:
+            return None
+        return m5_all
+
+    led["cached"] = measure_leg(c["M15"], c["H1"], c["H4"],
+                                m5_stream=m5_for(c["M15"]))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = measure_leg(wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = measure_leg(wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                             m5_stream=m5_for(wins[w]["M15"]))
 
     # The stored bar this repo quotes, read from b108's own ledger.
     led["_stored_b108_bar"] = {leg: old[leg]["funnel_graded"]["exp_R"]
@@ -175,17 +197,23 @@ def main() -> int:
 
     print(f"{'leg':8s} {'stored':>8s} {'quoted':>8s} {'lab050':>8s} "
           f"{'livetr':>8s} {'parity':>8s}   attribution")
+    def _f(x, nd=3):
+        return f"{x:>.{nd}f}" if x is not None else "       —"
+
+    def _g(x, nd=3):
+        return f"{x:+.{nd}f}" if x is not None else "       —"
+
     for leg in LEGS:
-        L, a = led[leg], attr[leg]
-        print(f"{leg:8s} {led['_stored_b108_bar'][leg]:>8.3f} "
-              f"{L['quoted_pre_b109']['exp_R']:>8.3f} "
-              f"{L['lab_bar_0_50']['exp_R']:>8.3f} "
-              f"{L['live_trail_no_floor']['exp_R']:>8.3f} "
-              f"{L['live_parity']['exp_R']:>8.3f}   "
-              f"b109={a['d_b109_ladder_fields']:+.3f} "
-              f"trail={a['d_trail_0_50_to_live']:+.3f} "
-              f"floor={a['d_trail_floor']:+.3f} "
-              f"total={a['d_total_vs_stored']:+.3f}")
+        L, a = led[leg], led["_attribution"][leg]
+        print(f"{leg:8s} {_f(led['_stored_b108_bar'][leg])} "
+              f"{_f(L['quoted_pre_b109']['exp_R'])} "
+              f"{_f(L['lab_bar_0_50']['exp_R'])} "
+              f"{_f(L['live_trail_no_floor']['exp_R'])} "
+              f"{_f(L['live_parity']['exp_R'])}   "
+              f"b109={_g(a['d_b109_ladder_fields'])} "
+              f"trail={_g(a['d_trail_0_50_to_live'])} "
+              f"floor={_g(a['d_trail_floor'])} "
+              f"total={_g(a['d_total_vs_stored'])}")
     json.dump(led, open(OUT, "w"), indent=1)
     print("saved:", os.path.abspath(OUT))
     return 0

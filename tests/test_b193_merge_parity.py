@@ -97,14 +97,42 @@ class TestMergeBehaviour(unittest.TestCase):
         self.assertFalse(fired)
         self.assertEqual(ctx["bias"], "bullish")
 
-    def test_range_kill_still_wins_over_merge(self):
-        ctx = _fresh_ctx(regime="range")
+    def test_range_kill_fires_on_disagreement(self):
+        # b230: the range-kill breaks a FIGHT between classic and SMC. Classic
+        # is bearish, SMC calls bullish at low confidence, regime is range —
+        # the two models disagree, so the weak SMC call loses and the plan goes
+        # neutral. This is the only case the kill still fires.
+        ctx = _fresh_ctx(bias="bearish", regime="range")
         apply_smc_merge(ctx, _merged("bullish", 0.2), entry_close=3950.0,
                         smc_result={"x": 1})
         self.assertEqual(ctx["bias"], "neutral")
         self.assertEqual(ctx["quality"]["smc_confidence"], 0.2)
         self.assertEqual(ctx["context"]["smc"], {"x": 1})
         self.assertNotIn("stale_at_birth", ctx["quality"])
+
+    def test_range_kill_does_not_fire_on_agreement(self):
+        # b230: the kill used to fire on AGREEMENT too, which murdered every
+        # directional SMC call in a range even when classic already agreed with
+        # it — 495/500 live plans shipped neutral and the system traded roughly
+        # once a week. Agreement is not a conflict: a low-confidence SMC call
+        # that matches the classic bias is kept, not killed.
+        ctx = _fresh_ctx(bias="bullish", regime="range")
+        apply_smc_merge(ctx, _merged("bullish", 0.2), entry_close=3950.0,
+                        smc_result={"x": 1})
+        self.assertEqual(ctx["bias"], "bullish")
+        self.assertEqual(ctx["quality"]["smc_confidence"], 0.2)
+        self.assertEqual(ctx["context"]["smc"], {"x": 1})
+        self.assertNotIn("stale_at_birth", ctx["quality"])
+
+    def test_range_kill_still_wins_over_merge_when_confident_but_disagreeing(self):
+        # Confidence below RANGE_KILL_CONF (0.35) is what makes the SMC call
+        # weak. A call AT the threshold still dies — the disagreement plus low
+        # confidence is what the gate measures, and confidence at the boundary
+        # is still a weak call.
+        ctx = _fresh_ctx(bias="bullish", regime="range")
+        apply_smc_merge(ctx, _merged("bearish", 0.30), entry_close=3890.0,
+                        smc_result={"x": 1})
+        self.assertEqual(ctx["bias"], "neutral")
 
     def test_live_only_stamps_are_absent_when_smc_result_omitted(self):
         lab = _fresh_ctx(regime="range")

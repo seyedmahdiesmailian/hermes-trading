@@ -35,6 +35,7 @@ from engines.auto_executor import (evaluate_proposal, execute_trade,
 from engines.bridge_payload import positions_list, positions_readable
 from engines.kill_switch import check_kill_switch
 from engines.process_lock import exclusive as _state_lock
+from engines.market_hours import is_market_open
 
 from engines import paths as _paths  # state paths resolved at CALL time (b39)
 
@@ -820,6 +821,24 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         return halted_payload
 
     # ── Plan / Reassess Step ──
+    # AUDIT-2026-10-04: planning on a closed market produced 517 plans on
+    # Saturday and 355 on Sunday, all on a frozen price (tick frozen at
+    # 4139.19 across 80 consecutive plans). Every one was grade C — the market
+    # is closed, so there is nothing to grade. The plan step is skipped, while
+    # position management above keeps running: a position held over the
+    # weekend still needs its trail/TP manager alive.
+    if step in {'plan', 'reassess'} and not is_market_open():
+        runtime['last_step'] = step
+        runtime['last_report_key'] = runtime.get('last_report_key', '')
+        _runtime_log(f"plan step skipped: market closed ({step})")
+        return {
+            'ok': True,
+            'step': step,
+            'market_closed': True,
+            'will_execute_now': False,
+            'positions_managed': bool(positions),
+        }
+
     if step in {'plan', 'reassess'}:
         plan, err = build_live_plan(bridge, now)
         if err:
@@ -987,7 +1006,15 @@ def cycle(bridge, now: datetime | None = None, dry_run: bool = False, macro_cale
         if eval_result.get('execute'):
             cmd = eval_result.get('command')
             if cmd:
-                execution_result = execute_trade(cmd, bridge, dry_run=dry_run)
+                # AUDIT-2026-10-04 (roadmap 4.1): key the order on this plan's
+                # identity + the order geometry, so a cycle that retries a lost
+                # bridge reply opens the position once, not twice.
+                from bridge_client import make_idempotency_key
+                _pk = make_idempotency_key(
+                    f"plan:{plan.get('plan_id') or plan.get('id', 'noid')}",
+                    cmd['side'], cmd['lot'], sl=cmd.get('sl'), tp=cmd.get('tp'))
+                execution_result = execute_trade(cmd, bridge, dry_run=dry_run,
+                                                 idempotency_key=_pk)
                 will_execute = execution_result.get('executed', False)
                 proposal['auto_execution'] = eval_result
                 proposal['execution_result'] = execution_result

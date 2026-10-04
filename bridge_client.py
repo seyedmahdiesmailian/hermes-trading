@@ -15,6 +15,47 @@ from engines.config import (BRIDGE_TIMEOUT_GET, BRIDGE_TIMEOUT_HEALTH,
 WIN_IP = win_ip()
 BRIDGE_URL = bridge_url()
 
+
+# AUDIT-2026-10-04 (roadmap 4.1) — order idempotency.
+# A bridge POST whose reply is lost on the LAN is retried by a daemon, and the
+# retry opened a SECOND position against MAX_OPEN_POSITIONS=1. The fix is a key
+# derived from the caller's intent (a signal message id, a plan id) plus the
+# order geometry, so:
+#   * two genuinely different orders never collide (side/lot/sl/tp are in the
+#     hash), and
+#   * one intent retried yields the SAME key, letting the bridge replay its
+#     first answer instead of trading again.
+# It is carried in the request `comment` because the canonical bridge already
+# forwards comment verbatim into the MT5 request, where MT5 keeps it on the
+# deal — so the key doubles as the audit trail tying a position to its intent.
+# MT5 truncates comment to 31 chars, so the 10-char hex prefix is what MT5
+# records; the full key is checked bridge-side before order_send is reached.
+IDEMPOTENCY_PREFIX = "hms"
+
+
+def make_idempotency_key(intent: str, side: str, lot: float, sl=None, tp=None) -> str:
+    """Deterministic key for ONE order intent.
+
+    `intent` is a stable caller-owned identifier (the Telegram message id, a
+    plan id). It must NOT be a wall-clock value — a retried order must hash to
+    the same key as its first attempt.
+    """
+    import hashlib
+    body = "|".join(str(x) for x in (
+        intent, str(side).upper(), f"{float(lot):.2f}",
+        f"{float(sl):.2f}" if sl is not None else "",
+        f"{float(tp):.2f}" if tp is not None else "",
+    ))
+    return hashlib.sha256(body.encode()).hexdigest()[:16]
+
+
+def _idempotency_comment(key: str) -> str:
+    """MT5-safe carrier for the key. 31-char limit: prefix + 10 hex."""
+    import hashlib
+    short = hashlib.sha256(key.encode()).hexdigest()[:10]
+    return f"{IDEMPOTENCY_PREFIX}{short}"
+
+
 class BridgeClient:
     def __init__(self, url: str | None = None, token: str | None = None):
         # url/token resolve at CONSTRUCTION time (b52/b63), so a daemon built
@@ -106,17 +147,37 @@ class BridgeClient:
         return None
 
     # execution endpoints — used by the autonomous executor and signal listener
-    def send_order(self, side, lot, symbol="XAUUSD", sl=None, tp=None):
-        return self._post("/api/order", {"type": side.lower(), "volume": float(lot), "symbol": symbol, "sl": sl, "tp": tp})
+    def send_order(self, side, lot, symbol="XAUUSD", sl=None, tp=None,
+                   idempotency_key: str | None = None):
+        # AUDIT-2026-10-04 (roadmap 4.1): no key meant a lost-then-retried
+        # network reply opened a SECOND position, violating MAX_OPEN_POSITIONS=1.
+        # The bridge now refuses a key it has already fulfilled (see
+        # scripts/mt5_http_server_v2.py send_order) and replays its first
+        # answer instead. A key is only emitted when the caller passes one;
+        # absent callers keep today's behaviour.
+        payload = {"type": side.lower(), "volume": float(lot), "symbol": symbol,
+                   "sl": sl, "tp": tp}
+        if idempotency_key:
+            payload["comment"] = _idempotency_comment(idempotency_key)
+        return self._post("/api/order", payload)
     def close_position(self, ticket): return self._post("/api/close", {"ticket": int(ticket)})
     def partial_close(self, ticket, percent): return self._post("/api/partial", {"ticket": int(ticket), "percent": float(percent)})
     def modify_position(self, ticket, sl=None, tp=None): return self._post("/api/modify", {"ticket": int(ticket), "sl": sl, "tp": tp})
 
     # b70 — pending (limit) orders for signals whose entry price hasn't been reached
-    def send_pending(self, side, lot, symbol="XAUUSD", price=None, sl=None, tp=None):
-        r = self._post("/api/pending", {"type": 2 if str(side).upper() == "BUY" else 3,
-                                        "volume": float(lot), "symbol": symbol,
-                                        "price": float(price), "sl": sl, "tp": tp})
+    def send_pending(self, side, lot, symbol="XAUUSD", price=None, sl=None, tp=None,
+                     idempotency_key: str | None = None):
+        # AUDIT-2026-10-04 (roadmap 4.1): the pending/limit path is the same
+        # class of hazard as the market path — a lost reply plus a retry opens a
+        # duplicate limit order. The /api/pending route forwards `comment`
+        # straight into the MT5 request, so the key carrier needs no server
+        # change beyond the same replay check the market route got.
+        payload = {"type": 2 if str(side).upper() == "BUY" else 3,
+                   "volume": float(lot), "symbol": symbol,
+                   "price": float(price), "sl": sl, "tp": tp}
+        if idempotency_key:
+            payload["comment"] = _idempotency_comment(idempotency_key)
+        r = self._post("/api/pending", payload)
         if r.get("ok") and r.get("order") and not r.get("ticket"):
             r["ticket"] = int(r["order"])   # bridge returns 'order', engine reads 'ticket'
         return r

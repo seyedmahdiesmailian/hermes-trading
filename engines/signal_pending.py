@@ -72,7 +72,8 @@ def save_pending(items: list[dict]):
 
 
 def place_signal_limit(bridge, command: dict, symbol: str = "XAUUSD",
-                       alert=None, dry_run: bool = False) -> dict:
+                       alert=None, dry_run: bool = False,
+                       idempotency_key: str | None = None) -> dict:
     """Place a BUY_LIMIT/SELL_LIMIT for a vetted signal command.
 
     Returns {'ok': bool, 'ticket': int|None, 'error': str|None}.
@@ -88,6 +89,9 @@ def place_signal_limit(bridge, command: dict, symbol: str = "XAUUSD",
     to the only bridge.send_pending() call, so it cannot be bypassed by a new
     call site. Default is False, matching execute_trade()'s contract — callers
     pass dry_run explicitly down their own path.
+
+    `idempotency_key` (roadmap 4.1): same replay guarantee as the market path —
+    a lost reply followed by a retry must not stack a duplicate limit order.
     """
     def _say(msg: str):
         if alert:
@@ -126,7 +130,8 @@ def place_signal_limit(bridge, command: dict, symbol: str = "XAUUSD",
 
     try:
         res = bridge.send_pending(side=side, lot=lot, symbol=symbol,
-                                  price=entry, sl=sl, tp=tp) or {}
+                                  price=entry, sl=sl, tp=tp,
+                                  idempotency_key=idempotency_key) or {}
     except Exception as e:
         return {"ok": False, "ticket": None, "error": f"bridge:{str(e)[:120]}"}
 

@@ -7,37 +7,35 @@
   "_first": 1784109600,
   "_last": 1787960700,
   "pre_b109_constant_ladder": {
-   "trades": 110,
-   "exp_R": 0.285,
-   "net_R": 31.3,
-   "WR%": 70.9,
-   "maxDD_R": -2.3,
-   "mean_hold_bars": 8.8
+   "trades": 77,
+   "exp_R": 0.272,
+   "net_R": 20.9,
+   "WR%": 67.5,
+   "maxDD_R": -3.8,
+   "mean_hold_bars": 11.2
   },
   "post_b109_live_ladder": {
-   "trades": 107,
-   "exp_R": 0.27,
-   "net_R": 28.9,
-   "WR%": 71.0,
-   "maxDD_R": -2.3,
-   "mean_hold_bars": 9.4
+   "trades": 76,
+   "exp_R": 0.274,
+   "net_R": 20.8,
+   "WR%": 68.4,
+   "maxDD_R": -3.9,
+   "mean_hold_bars": 11.6
   },
   "delta": {
-   "d_exp_R": -0.015,
-   "d_net_R": -2.4,
-   "d_trades": -3,
-   "d_dd_R": 0.0
+   "d_exp_R": 0.002,
+   "d_net_R": -0.1,
+   "d_trades": -1,
+   "d_dd_R": -0.1
   },
   "lane_census": {
    "signals_by_grade": {
-    "C": 542,
-    "A": 84,
-    "B": 222
+    "A": 59,
+    "B": 106
    },
    "lane_split": {
-    "A|0.3|strong_runner_keep_more": 84,
-    "B|1.0|balanced_full_exit_at_tp1": 222,
-    "C|1.0|weak_full_exit_at_tp1": 542
+    "A|0.3|strong_runner_keep_more": 59,
+    "B|1.0|balanced_full_exit_at_tp1": 106
    }
   }
  },
@@ -46,37 +44,35 @@
   "_first": 1776187800,
   "_last": 1784108700,
   "pre_b109_constant_ladder": {
-   "trades": 182,
-   "exp_R": 0.202,
-   "net_R": 36.7,
-   "WR%": 65.4,
-   "maxDD_R": -6.1,
-   "mean_hold_bars": 7.7
+   "trades": 167,
+   "exp_R": 0.138,
+   "net_R": 23.1,
+   "WR%": 58.7,
+   "maxDD_R": -5.4,
+   "mean_hold_bars": 10.5
   },
   "post_b109_live_ladder": {
-   "trades": 180,
-   "exp_R": 0.205,
-   "net_R": 37.0,
-   "WR%": 65.6,
-   "maxDD_R": -6.1,
-   "mean_hold_bars": 8.1
+   "trades": 166,
+   "exp_R": 0.144,
+   "net_R": 23.9,
+   "WR%": 59.0,
+   "maxDD_R": -5.2,
+   "mean_hold_bars": 10.8
   },
   "delta": {
-   "d_exp_R": 0.003,
-   "d_net_R": 0.3,
-   "d_trades": -2,
-   "d_dd_R": 0.0
+   "d_exp_R": 0.006,
+   "d_net_R": 0.8,
+   "d_trades": -1,
+   "d_dd_R": 0.2
   },
   "lane_census": {
    "signals_by_grade": {
-    "C": 893,
-    "A": 145,
-    "B": 391
+    "B": 233,
+    "A": 142
    },
    "lane_split": {
-    "A|0.3|strong_runner_keep_more": 145,
-    "B|1.0|balanced_full_exit_at_tp1": 391,
-    "C|1.0|weak_full_exit_at_tp1": 893
+    "A|0.3|strong_runner_keep_more": 142,
+    "B|1.0|balanced_full_exit_at_tp1": 233
    }
   }
  },
@@ -85,37 +81,35 @@
   "_first": 1768203000,
   "_last": 1776186900,
   "pre_b109_constant_ladder": {
-   "trades": 175,
-   "exp_R": 0.206,
-   "net_R": 36.0,
-   "WR%": 65.1,
-   "maxDD_R": -5.1,
-   "mean_hold_bars": 10.1
+   "trades": 6,
+   "exp_R": -0.584,
+   "net_R": -3.5,
+   "WR%": 16.7,
+   "maxDD_R": -4.0,
+   "mean_hold_bars": 7.8
   },
   "post_b109_live_ladder": {
-   "trades": 169,
-   "exp_R": 0.227,
-   "net_R": 38.4,
-   "WR%": 65.1,
-   "maxDD_R": -5.1,
-   "mean_hold_bars": 10.6
+   "trades": 6,
+   "exp_R": -0.584,
+   "net_R": -3.5,
+   "WR%": 16.7,
+   "maxDD_R": -4.0,
+   "mean_hold_bars": 7.8
   },
   "delta": {
-   "d_exp_R": 0.021,
-   "d_net_R": 2.4,
-   "d_trades": -6,
+   "d_exp_R": 0.0,
+   "d_net_R": 0.0,
+   "d_trades": 0,
    "d_dd_R": 0.0
   },
   "lane_census": {
    "signals_by_grade": {
-    "B": 385,
-    "C": 1021,
-    "A": 138
+    "B": 5,
+    "A": 2
    },
    "lane_split": {
-    "A|0.3|strong_runner_keep_more": 138,
-    "B|1.0|balanced_full_exit_at_tp1": 385,
-    "C|1.0|weak_full_exit_at_tp1": 1021
+    "A|0.3|strong_runner_keep_more": 2,
+    "B|1.0|balanced_full_exit_at_tp1": 5
    }
   }
  },
@@ -124,38 +118,30 @@
   "_first": 1759932900,
   "_last": 1768202100,
   "pre_b109_constant_ladder": {
-   "trades": 206,
-   "exp_R": 0.227,
-   "net_R": 46.8,
-   "WR%": 68.0,
-   "maxDD_R": -7.6,
-   "mean_hold_bars": 9.5
+   "trades": 0,
+   "exp_R": null,
+   "net_R": null,
+   "WR%": null,
+   "maxDD_R": null,
+   "mean_hold_bars": null
   },
   "post_b109_live_ladder": {
-   "trades": 205,
-   "exp_R": 0.223,
-   "net_R": 45.7,
-   "WR%": 67.8,
-   "maxDD_R": -7.6,
-   "mean_hold_bars": 9.8
+   "trades": 0,
+   "exp_R": null,
+   "net_R": null,
+   "WR%": null,
+   "maxDD_R": null,
+   "mean_hold_bars": null
   },
   "delta": {
-   "d_exp_R": -0.004,
-   "d_net_R": -1.1,
-   "d_trades": -1,
-   "d_dd_R": 0.0
+   "d_exp_R": null,
+   "d_net_R": null,
+   "d_trades": 0,
+   "d_dd_R": null
   },
   "lane_census": {
-   "signals_by_grade": {
-    "C": 1030,
-    "B": 590,
-    "A": 147
-   },
-   "lane_split": {
-    "A|0.3|strong_runner_keep_more": 147,
-    "B|1.0|balanced_full_exit_at_tp1": 590,
-    "C|1.0|weak_full_exit_at_tp1": 1030
-   }
+   "signals_by_grade": {},
+   "lane_split": {}
   }
  },
  "W4": {
@@ -163,70 +149,62 @@
   "_first": 1752043500,
   "_last": 1759932000,
   "pre_b109_constant_ladder": {
-   "trades": 179,
-   "exp_R": 0.222,
-   "net_R": 39.7,
-   "WR%": 68.7,
-   "maxDD_R": -5.9,
-   "mean_hold_bars": 10.8
+   "trades": 0,
+   "exp_R": null,
+   "net_R": null,
+   "WR%": null,
+   "maxDD_R": null,
+   "mean_hold_bars": null
   },
   "post_b109_live_ladder": {
-   "trades": 176,
-   "exp_R": 0.221,
-   "net_R": 38.8,
-   "WR%": 68.8,
-   "maxDD_R": -5.9,
-   "mean_hold_bars": 11.0
+   "trades": 0,
+   "exp_R": null,
+   "net_R": null,
+   "WR%": null,
+   "maxDD_R": null,
+   "mean_hold_bars": null
   },
   "delta": {
-   "d_exp_R": -0.001,
-   "d_net_R": -0.9,
-   "d_trades": -3,
-   "d_dd_R": 0.0
+   "d_exp_R": null,
+   "d_net_R": null,
+   "d_trades": 0,
+   "d_dd_R": null
   },
   "lane_census": {
-   "signals_by_grade": {
-    "C": 1167,
-    "B": 439,
-    "A": 139
-   },
-   "lane_split": {
-    "A|0.3|strong_runner_keep_more": 139,
-    "B|1.0|balanced_full_exit_at_tp1": 439,
-    "C|1.0|weak_full_exit_at_tp1": 1167
-   }
+   "signals_by_grade": {},
+   "lane_split": {}
   }
  },
  "_summary": {
   "cached": {
-   "pre": 0.285,
-   "post": 0.27,
-   "delta": -0.015,
-   "a_signals": 84
+   "pre": 0.272,
+   "post": 0.274,
+   "delta": 0.002,
+   "a_signals": 59
   },
   "W1": {
-   "pre": 0.202,
-   "post": 0.205,
-   "delta": 0.003,
-   "a_signals": 145
+   "pre": 0.138,
+   "post": 0.144,
+   "delta": 0.006,
+   "a_signals": 142
   },
   "W2": {
-   "pre": 0.206,
-   "post": 0.227,
-   "delta": 0.021,
-   "a_signals": 138
+   "pre": -0.584,
+   "post": -0.584,
+   "delta": 0.0,
+   "a_signals": 2
   },
   "W3": {
-   "pre": 0.227,
-   "post": 0.223,
-   "delta": -0.004,
-   "a_signals": 147
+   "pre": null,
+   "post": null,
+   "delta": null,
+   "a_signals": 0
   },
   "W4": {
-   "pre": 0.222,
-   "post": 0.221,
-   "delta": -0.001,
-   "a_signals": 139
+   "pre": null,
+   "post": null,
+   "delta": null,
+   "a_signals": 0
   }
  }
 }
