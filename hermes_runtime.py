@@ -57,7 +57,12 @@ TIMEFRAME = 'M5'
 # 26%/14% and was also +7.48 better over 5 disjoint windows. Must stay in
 # step with backtest_real's smc_depth default, or the lab and live analyse
 # different histories. See scripts/ab_b237_depth.py.
-M5_SCAN_DEPTH = int(os.getenv('HERMES_M5_SCAN_DEPTH', '250'))
+try:
+    M5_SCAN_DEPTH = int(os.getenv('HERMES_M5_SCAN_DEPTH', '250'))
+except (TypeError, ValueError):
+    # A typo'd value must fall back to the pinned depth (250) rather than
+    # crash the monitor at import — test_b237 pins lab/live parity to 250.
+    M5_SCAN_DEPTH = 250
 # Max ask-bid (in $) to allow a NEW entry. Normal XAUUSD spread here is ~0.18;
 # news/rollover spikes can blow past 2.0. Backtests charge a flat 0.20 cost,
 # so live must not enter when the real cost is multiples of that.
