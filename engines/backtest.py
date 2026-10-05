@@ -21,6 +21,11 @@ def backtest_ohlc(
     trail_after_partial: float = 0.0,   # b55c: trail SL this many x risk behind the
                                         # bar extreme AFTER a partial fill (0 = off,
                                         # which is what every earlier sweep ran with)
+    be_lock_r: float = 0.0,             # b235: after TP1, LOCK the stop at
+                                        # entry + K*R instead of plain entry. 0.0
+                                        # reproduces the live plain_breakeven move
+                                        # byte-identically. A/B-able, see
+                                        # tests/test_b235_be_lock.py
     time_stop_bars: int = 0,            # b57: force-close at bar close after N bars
                                         # without TP1/TP hit (0 = off)
     trail_floor: float = 0.0,           # b117: absolute $ floor under the trail
@@ -244,7 +249,12 @@ def backtest_ohlc(
                                 # construction: never arm, whatever the share.
                                 if arm:
                                     t["be_moved"] = True
-                                    t["sl"] = t["entry"]  # live: partial comes with BE move
+                                    # b235: the live _breakeven_stop returns entry
+                                    # (plain_breakeven). be_lock_r=0.0 reproduces
+                                    # that exactly; K>0 locks profit at entry+K*R.
+                                    t["sl"] = (t["entry"] + be_lock_r * risk
+                                               if side == "BUY"
+                                               else t["entry"] - be_lock_r * risk)
                                     t["prot_armed"] = True
                     # 4) plain BE move — effective from next bar
                     if breakeven_at_r > 0 and not t["be_moved"] and risk > 0:

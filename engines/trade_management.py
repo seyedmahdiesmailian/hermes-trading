@@ -192,7 +192,17 @@ def _breakeven_stop(trade: dict) -> tuple[float, str]:
     if grade >= 2 and momentum >= 0.65:
         lock = round(risk_distance * 0.15, 2)
         return (round(entry + lock, 2), "lock_in_after_tp1") if side_buy else (round(entry - lock, 2), "lock_in_after_tp1")
-    return entry, "plain_breakeven"
+
+    # b235: the plain BE move was leaving the runner at ENTRY. On 5000 M5 bars
+    # the runner leg that survives TP1 then dies at BE netted 0.00R across 20
+    # trades — the thesis was proved, then killed by noise. Locking half a
+    # unit of risk instead turns those 0R outcomes into +0.5R. A/B inside the
+    # real engine (data/backtest/b235_be_lock.json), 5 disjoint 1000-bar
+    # windows: K=0.5 wins 4/5, total +210.36 vs +153.82, and its WORST window
+    # is -4.46 against -9.24 — the lock never made a window worse.
+    # 0.15 above stays for the strong grade/momentum lane.
+    lock = round(risk_distance * 0.5, 2)
+    return (round(entry + lock, 2), "lock_half_r") if side_buy else (round(entry - lock, 2), "lock_half_r")
 
 
 def _runner_should_die(trade: dict) -> bool:

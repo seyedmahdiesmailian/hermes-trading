@@ -52,6 +52,12 @@ def _plan_dir():
 
 SYMBOL = 'XAUUSD'
 TIMEFRAME = 'M5'
+# b237: M5 bars the SMC engine sees. A rolling scan measured the verdict at
+# 120 flips 39% of the time and reads neutral 28% of the time; 250 settles to
+# 26%/14% and was also +7.48 better over 5 disjoint windows. Must stay in
+# step with backtest_real's smc_depth default, or the lab and live analyse
+# different histories. See scripts/ab_b237_depth.py.
+M5_SCAN_DEPTH = int(os.getenv('HERMES_M5_SCAN_DEPTH', '250'))
 # Max ask-bid (in $) to allow a NEW entry. Normal XAUUSD spread here is ~0.18;
 # news/rollover spikes can blow past 2.0. Backtests charge a flat 0.20 cost,
 # so live must not enter when the real cost is multiples of that.
@@ -227,7 +233,7 @@ def _positions_list(resp: dict) -> list:
 def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, dict | None]:
     now = now or _now()
     session = _detect_session(now)
-    m5 = _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, 120))
+    m5 = _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, M5_SCAN_DEPTH))
     m15 = _data_list(bridge.get_rates(SYMBOL, 'M15', 80))  # analytical vote only (b28)
     h1 = _data_list(bridge.get_rates(SYMBOL, 'H1', 80))
     h4 = _data_list(bridge.get_rates(SYMBOL, 'H4', 80))
@@ -235,7 +241,7 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     if len(m5) < 50:
         import time as _t
         _t.sleep(4)
-        m5 = _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, 120))
+        m5 = _data_list(bridge.get_rates(SYMBOL, TIMEFRAME, M5_SCAN_DEPTH))
     if not (m5 and h1 and h4):
         return None, {'ok': False, 'error': 'insufficient_market_data', 'counts': {'M5': len(m5), 'H1': len(h1), 'H4': len(h4)}, 'session': session}
     ctx = build_plan_context(m5, h1, h4, session, m15_rows=m15)

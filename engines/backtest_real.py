@@ -84,7 +84,7 @@ def m5_window_for(m5_stream: list[dict], m5_times: list[int],
 
 
 
-def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar_index: int, m15_window: list[dict] | None = None, range_kill_conf: float = 0.35, m5_rows: list[dict] | None = None, derive_m5: bool = True) -> dict | None:
+def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar_index: int, m15_window: list[dict] | None = None, range_kill_conf: float = 0.35, m5_rows: list[dict] | None = None, derive_m5: bool = True, smc_depth: int = 250) -> dict | None:
     """Strategy function for backtest — runs the EXACT live funnel.
 
     No hand-copied gates: builds the plan with build_plan_from_context and
@@ -143,8 +143,14 @@ def strategy_signal(row: dict, h1_window: list[dict], h4_window: list[dict], bar
         # NOTE: m15_window here is the ENTRY stream (M5 in live-parity runs),
         # not real M15 bars — so no analytical m15 vote is recorded in backtest.
         # The vote is a live-reporting field only and never decides entries.
-        ctx = build_plan_context(m15_window[-120:], h1_window[-80:], h4_window[-80:], session)
-        smc_result = smc_analyse(m15_window[-120:], now=now, h1_rows=h1_window[-80:])
+        # b237: the window the SMC engine sees. 120 mirrors live's
+        # get_rates(..., 120). A rolling scan showed the verdict at that depth
+        # flips 39% of the time and reads neutral on 28% of samples, while 250
+        # settles to 26%/14% and also yields a non-empty active-OB book.
+        # A/B-able, see scripts/ab_b237_depth.py.
+        _m5w = m15_window[-smc_depth:]
+        ctx = build_plan_context(_m5w, h1_window[-80:], h4_window[-80:], session)
+        smc_result = smc_analyse(_m5w, now=now, h1_rows=h1_window[-80:])
         merged = merge_smc_with_classic(ctx, smc_result)
         # b193: this was a hand-copy of build_live_plan's merge block that never
         # carried b188(a)'s stale-at-birth veto — live kills those plans at the
@@ -210,6 +216,13 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
                  tp1_position: float = 0.5,
                  partial_share_fn=None,
                  trail_after_partial: float = 0.0,   # b55c: live-parity trail after TP1
+                 be_lock_r: float = 0.5,             # b235: post-TP1 lock, entry+K*R.
+                                                     # MUST mirror _breakeven_stop's
+                                                     # lock_half_r (0.5) — b233b: the
+                                                     # lab default has to equal the
+                                                     # live rule or every backtest
+                                                     # silently simulates the wrong
+                                                     # system. Override only for A/B.
                  trail_floor: float = 0.0,           # b117: live's absolute $ floor
                                                      # under the trail distance
                                                      # (max(risk*mult, 3.0)); 0 = off
@@ -218,7 +231,12 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
                  # (needed when the ENTRY stream is coarser than M5, e.g. the
                  # M15 legs cached in data/backtest). None = derive from the
                  # entry stream when it is itself M5, else no trigger rows.)
-                 m5_stream: list[dict] | None = None) -> dict:   # b57: dead-trade time stop
+                 m5_stream: list[dict] | None = None,   # b57: dead-trade time stop
+                 smc_depth: int = 250,                  # b237: M5 bars the SMC
+                                                        # engine sees. Live and
+                                                        # lab must AGREE — see
+                                                        # tests/test_b237_smc_depth_parity.py
+                 ) -> dict:
     """Run backtest on real OHLC data from Bridge.
 
     exclude_styles: drop signals whose decision execution_style matches one of
@@ -282,7 +300,9 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         bar_time = row.get("time", 0)
         h1_window = [r for r in h1_data if r.get("time", 0) <= bar_time][-80:]
         h4_window = [r for r in h4_data if r.get("time", 0) <= bar_time][-80:]
-        m15_window = m15_data[max(0, idx - 120):idx + 1]
+        # b237: the window is sized here — smc_depth slices the same array the
+        # SMC engine will see. 120 mirrors live's get_rates(..., 120).
+        m15_window = m15_data[max(0, idx - smc_depth):idx + 1]
         # b189: the live decision moment is the bar's CLOSE, so a row counts as
         # settled when its own close happened at or before that instant. With
         # no M5 source at all (an M15 leg with m5_stream=None) the window is
@@ -291,7 +311,8 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         _m5 = m5_window_for(m5_stream, m5_times,
                             (bar_time or 0) + bar_spacing)
         return strategy_signal(row, h1_window, h4_window, idx, m15_window=m15_window,
-                               range_kill_conf=range_kill_conf, m5_rows=_m5)
+                               range_kill_conf=range_kill_conf, m5_rows=_m5,
+                               smc_depth=smc_depth)
 
     result = backtest_ohlc(
         m15_data,
@@ -303,6 +324,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
         tp1_position=tp1_position,
         partial_share_fn=partial_share_fn,    # b54c: grade-aware ladder (mirrors _partial_close_fraction)
         trail_after_partial=trail_after_partial,  # b55c: mirror live trailing stop after TP1
+        be_lock_r=be_lock_r,                  # b235: post-TP1 lock (0.0 = live plain BE)
         trail_floor=trail_floor,              # b117: mirror live's max(risk*mult, $floor)
         time_stop_bars=time_stop_bars,            # b57: dead-trade time stop
         spread=spread_override if spread_override is not None else 0.20,  # XAUUSD demo round-trip cost

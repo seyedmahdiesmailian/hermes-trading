@@ -75,13 +75,31 @@ def detect_order_blocks(rows: list[dict], lookback: int = 20) -> list[dict]:
                     }
                     obs.append(ob)
 
-    # Check mitigation: price returning into OB zone
-    last_price = rows[-1]["close"]
+    # Check mitigation: price returning into the OB zone.
+    # b234: the old test was DIRECTIONALLY INVERTED on both sides. It asked
+    # `last_price <= bull_ob.high` — but price is almost always below an old
+    # OB's high, so 51/58 bull OBs were marked mitigated, while the bear test
+    # `last_price >= bear_ob.low` (price above an old OB's low — also nearly
+    # always true) mitigated only 2/71. The result was a supply book with ~69
+    # phantom unmitigated bearish OBs against ~7 real bullish ones, feeding
+    # _derive_smc_bias +2.0 per OB — a permanent ~138-point bearish skew.
+    #
+    # ICT rule: mitigation requires price to RETRACE back into the zone after
+    # the breakout, i.e. a later bar trades up to the bull OB's high (or
+    # through its low) / down to the bear OB's low (or through its high).
     for ob in obs:
-        if ob["type"] == "bullish" and last_price <= ob["high"]:
-            ob["mitigated"] = True
-        elif ob["type"] == "bearish" and last_price >= ob["low"]:
-            ob["mitigated"] = True
+        zone_lo, zone_hi = ob["low"], ob["high"]
+        # the block sits at ob["index"], the breakout bar right after it, so
+        # the retracement scan starts two bars past the block
+        for j in range(ob["index"] + 2, len(rows)):
+            if ob["type"] == "bullish":
+                if rows[j]["low"] <= zone_hi:
+                    ob["mitigated"] = True
+                    break
+            else:
+                if rows[j]["high"] >= zone_lo:
+                    ob["mitigated"] = True
+                    break
 
     return obs
 
@@ -510,6 +528,7 @@ def smc_analyse(rows: list[dict], now: Optional[datetime] = None, h1_rows: Optio
         obs + h1_obs, unmitigated_obs + h1_unmitigated,
         fvgs + h1_fvgs, unfilled_fvgs + h1_unfilled,
         sweep_side, structure_phase, pd_zone, killzone_weight,
+        h1_structure_phase,
     )
 
     # ── 8. Signal ──
@@ -613,6 +632,7 @@ def _empty_smc_result(now: datetime) -> dict:
 def _derive_smc_bias(
     obs, unmitigated_obs, fvgs, unfilled_fvgs,
     sweep_side, structure_phase, pd_zone, killzone_weight,
+    h1_structure_phase="unknown",
 ) -> tuple[str, float]:
     """Derive SMC-based market bias from all signals."""
     bullish_score = 0.0
@@ -649,6 +669,23 @@ def _derive_smc_bias(
         bullish_score += 1.5
     elif structure_phase == "choch_bearish":
         bearish_score += 1.5
+
+    # b236: A/B'd and REVERTED. The H1 structure call was computed but never
+    # fed to the bias, which was a genuine wiring bug — but wiring it in
+    # MEASURED WORSE at every weight. scripts/ab_b236_h1_weight.py, 5 disjoint
+    # 1000-bar windows:
+    #   weight 0.0  total +200.37  worst  -4.46
+    #   weight 1.5  total +122.51  worst  -4.46
+    #   weight 2.5  total +162.54  worst  -4.46
+    #   weight 4.0  total +133.16  worst -27.76
+    #   weight 5.0  total +121.64  worst -27.38
+    # No weight beat 0.0 on the total, and 4.0/5.0 also wrecked the worst
+    # window. The H1 market_structure_phase call is a 10-bar half-split
+    # heuristic (50 min of H1) and carries no predictive signal here; feeding
+    # it in only adds noise. The parameter stays accepted and IGNORED so the
+    # wiring is not silently re-broken — a later H1 structure detector with
+    # real evidence can flip it back on. h1_structure remains in the result
+    # dict for reporting.
 
     # Premium/Discount
     if pd_zone["zone"] == "discount":
@@ -808,6 +845,12 @@ def detect_breaker_blocks(rows: list[dict], lookback: int = 10) -> list[dict]:
 
     Bullish OB broken -> becomes bearish breaker (resistance).
     Bearish OB broken -> becomes bullish breaker (support).
+
+    DORMANT: no live caller. scripts/audit_dormant_ict.py measured this on
+    2500 real M5 bars at h=2/6/12 horizons: 49%/50%/49% directional hit rate
+    against a 50% coin flip — no edge. Kept only because
+    tests/test_b157_smc_window_params.py pins it as public API; remove that
+    pin before deleting this function.
     """
     obs = detect_order_blocks(rows, lookback)
     if not obs:
