@@ -1,0 +1,16 @@
+{
+ "base": {
+  "trades": 40,
+  "net": 105.36,
+  "wr": 62.5,
+  "worstR": 0.5,
+  "meanR": 1.1
+ },
+ "fix": {
+  "trades": 53,
+  "net": 124.61,
+  "wr": 58.5,
+  "worstR": 0.5,
+  "meanR": 1.11
+ }
+}

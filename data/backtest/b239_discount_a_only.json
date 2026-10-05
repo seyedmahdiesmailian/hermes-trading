@@ -1,0 +1,12 @@
+{
+ "base": {
+  "trades": 39,
+  "net": 96.69,
+  "disc_B": 21
+ },
+ "fix": {
+  "trades": 22,
+  "net": 137.92,
+  "disc_B": 0
+ }
+}

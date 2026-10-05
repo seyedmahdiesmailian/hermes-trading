@@ -1,0 +1,42 @@
+[
+ {
+  "chunk": 0,
+  "base_net": 95.72,
+  "fix_net": 108.31,
+  "delta": 12.59,
+  "base_trades": 16,
+  "fix_trades": 12
+ },
+ {
+  "chunk": 1,
+  "base_net": 115.83,
+  "fix_net": 103.51,
+  "delta": -12.32,
+  "base_trades": 15,
+  "fix_trades": 9
+ },
+ {
+  "chunk": 2,
+  "base_net": 17.16,
+  "fix_net": 3.95,
+  "delta": -13.21,
+  "base_trades": 14,
+  "fix_trades": 9
+ },
+ {
+  "chunk": 3,
+  "base_net": 50.5,
+  "fix_net": 90.58,
+  "delta": 40.08,
+  "base_trades": 18,
+  "fix_trades": 10
+ },
+ {
+  "chunk": 4,
+  "base_net": 21.76,
+  "fix_net": 37.72,
+  "delta": 15.96,
+  "base_trades": 15,
+  "fix_trades": 8
+ }
+]
