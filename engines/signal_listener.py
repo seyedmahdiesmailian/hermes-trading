@@ -307,7 +307,14 @@ def check_signals(bridge=None) -> list[dict]:
     # a message_id is processed; later ones are dropped before evaluation.
     from engines.process_lock import exclusive as _state_lock
     try:
-        with _state_lock("signal_dedup", timeout=2.0):
+        # b256: MUST be the SAME lock name as _fetch_new_messages_unlocked
+        # ("telegram_updates"). exclusive() keys the lock file on the NAME
+        # (engines/process_lock.py: lock_dir / f"{name}.lock"), so a
+        # different name here was a DIFFERENT lock with zero mutual
+        # exclusion — the fetch side's read-modify-write clobbered this
+        # block's seen_message_ids, silently wiping every dedup key.
+        # That is how the replay flood defeated the message_id dedup.
+        with _state_lock("telegram_updates", timeout=2.0):
             _st = _load_state()
             _seen = _st.get("seen_message_ids", {})
             if not isinstance(_seen, dict):
@@ -345,7 +352,9 @@ def check_signals(bridge=None) -> list[dict]:
             messages = _deduped
     except Exception:
         # fail-OPEN on dedup bookkeeping: a lock timeout must not drop
-        # signals. The freshness + eval gates below still apply.
+        # signals. The freshness + eval gates below still apply. The b256
+        # lock-name fix means this branch should not normally fire; keeping
+        # it open is a deliberate availability-vs-dedup tradeoff.
         pass
 
     for msg in messages:

@@ -31,3 +31,7 @@ requirements.lock.txt
 /data/ops/head_verified.json
 /data/ops/daemon_code_drift.json
 
+
+# b255 strategy research: cached bridge data (311d H1, 26d M5)
+data/probe_h1_5000.json
+data/probe_m5_5000.json
