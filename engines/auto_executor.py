@@ -48,6 +48,16 @@ STYLE_RISK_MULT = {
     "aggressive_discount_entry": 0.5,
     "aggressive_value_entry": 0.5,
 }
+# b233d: styles exempt from the MIN_RISK_REWARD floor. The 5000-bar OOS study
+# (2026-10-04, 5000 M5 bars) showed the floor is actively HARMFUL on these:
+# aggressive_value_entry netted +115.00 over 27 trades at 70% wr, and 93% of
+# its trades have realized rr < 2.0 — the floor would kill the edge to save
+# the losers in the WORSE styles. Keeping the floor on the chase styles only
+# won 5/5 disjoint windows. See tests/test_b233d_rr_floor_exemption.py.
+RR_FLOOR_EXEMPT_STYLES = frozenset({
+    "aggressive_value_entry",
+    "pullback_continuation",
+})
 # Session prior (learning.py promised "session-aware later" and never
 # wired it). 16/29 live entries fired 00-07 UTC; 5 of 8 fat losses
 # (#103649120 -106, #104292973 -104, #104905967 -100, #105127383 -89,
@@ -248,12 +258,25 @@ def evaluate_proposal(
         reasons.append("invalid_geometry_buy")
         return {"execute": False, "reason": "invalid_geometry", "command": None, "reasons": reasons}
 
-    # ── Check 5.6: Risk:Reward floor (never risk $1 to make $0.15) ──
+# ── Check 5.6: Risk:Reward floor (never risk $1 to make $0.15) ──
+    # b233d: the floor is not applied blindly. A 5000-bar OOS study
+    # (data/backtest/b233c_large_sweep.json + b233c_oos_disjoint.json) split the
+    # trade log by entry style and found the floor's benefit is concentrated in
+    # the CHASE styles: aggressive_discount_entry netted -66.33 over 38 trades
+    # at 47% wr, while aggressive_value_entry netted +115.00 over 27 at 70% wr.
+    # Exempting the strong style and keeping the floor on the weak one won 5/5
+    # disjoint windows (vs 4/5 for the global floor) at 31 trades vs 5 and
+    # +203.89 vs +130.12. The exempt set is pinned by
+    # tests/test_b233d_rr_floor_exemption.py.
     _sl_dist = abs(entry - sl)
     _tp_dist = abs(tp - entry)
     if _sl_dist > 0:
         _rr = _tp_dist / _sl_dist
-        if _rr < max(MIN_RISK_REWARD, _eff_min_rr):
+        _style = str(proposal.get("execution_style") or "")
+        _floor = max(MIN_RISK_REWARD, _eff_min_rr)
+        if _style in RR_FLOOR_EXEMPT_STYLES:
+            _floor = 0.0
+        if _rr < _floor:
             reasons.append(f"poor_rr_{_rr:.2f}")
             return {
                 "execute": False,

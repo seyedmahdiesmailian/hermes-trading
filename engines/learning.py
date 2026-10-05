@@ -512,7 +512,12 @@ def load_learning_state() -> dict:
             return json.loads(learning_json.read_text(encoding='utf-8'))
         except Exception:
             pass
-    return {'min_rr': 1.5, 'min_grade': 'B', 'risk_mult': 1.0,
+    # b233b: no min_rr literal here. The executor takes max(MIN_RISK_REWARD,
+    # learning min_rr) so this default can only ever be redundant, but a
+    # literal is free to drift from the live floor and re-introduce exactly
+    # the drift class b233b pinned in backtest_real. Reuse the live value.
+    from engines.auto_executor import MIN_RISK_REWARD
+    return {'min_rr': MIN_RISK_REWARD, 'min_grade': 'B', 'risk_mult': 1.0,
             'updated_at': None}
 
 

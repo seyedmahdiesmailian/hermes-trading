@@ -205,7 +205,7 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
                  # phantom +943). 0.0 = honest live geometry.
                  breakeven_at_r: float = 0.0,
                  min_grade: str | None = "B",
-                 min_rr: float = 1.5,
+                 min_rr: float | None = None,
                  partial_tp1_share: float = 0.5,
                  tp1_position: float = 0.5,
                  partial_share_fn=None,
@@ -230,6 +230,14 @@ def run_backtest(bridge, symbol: str = "XAUUSD", timeframe: str = "M15", count: 
     """
     # Fetch data — entry timeframe must match live TIMEFRAME (M5); the
     # internal variable keeps the m15_ name for the cached-data key compat.
+    # b233: min_rr defaults to the LIVE executor floor (MIN_RISK_REWARD), not a
+    # hardcoded literal. A literal here silently drifted from the live gate
+    # — shipping 1.5 while the executor ran 2.0 made every lab backtest a
+    # counterfactual against a config the system no longer runs. Only an
+    # explicit override (A/B sweep) may depart from live parity.
+    if min_rr is None:
+        from engines.auto_executor import MIN_RISK_REWARD
+        min_rr = MIN_RISK_REWARD
     if data:
         m15_data = data.get(timeframe) or data.get("M15") or []
         h1_data = data.get("H1") or []
