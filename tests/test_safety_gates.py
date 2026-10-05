@@ -122,6 +122,13 @@ class SignalFreshnessGateTests(unittest.TestCase):
                  "from": "x", "text": "BUY XAUUSD 4470 SL 4460 TP 4500",
                  "date": now - a} for i, a in enumerate(ages_sec)]
         orig = {"fetch": sl.fetch_new_messages, "log": sl._log_signal}
+        # b254: check_signals now dedupes on signal CONTENT too (a re-broadcast
+        # storm arrived with distinct ids), persisting to the real state file.
+        # Isolate it, else a repeat call in this process drops the fixture.
+        orig["load"], orig["save"] = sl._load_state, sl._save_state
+        _state = {"last_update_id": 0, "last_check": "", "seen_message_ids": {}}
+        sl._load_state = lambda: dict(_state)
+        sl._save_state = lambda st: _state.update(st)
         sl.fetch_new_messages = lambda: msgs
         sl._log_signal = lambda *a, **k: None
         os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100test"
@@ -129,6 +136,7 @@ class SignalFreshnessGateTests(unittest.TestCase):
             return len(sl.check_signals(bridge=None))
         finally:
             sl.fetch_new_messages, sl._log_signal = orig["fetch"], orig["log"]
+            sl._load_state, sl._save_state = orig["load"], orig["save"]
 
     def test_fresh_signal_passes_stale_dropped(self):
         self.assertEqual(self._found_count([60]), 1)          # 1 min old → live

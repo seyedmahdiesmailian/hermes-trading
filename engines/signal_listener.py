@@ -313,19 +313,31 @@ def check_signals(bridge=None) -> list[dict]:
             if not isinstance(_seen, dict):
                 _seen = {}
             _now_ts = datetime.now(timezone.utc).timestamp()
-            # expire entries older than the 600s freshness gate above: a
-            # message_id older than that is age-rejected anyway, and keeping
-            # the set bounded stops unbounded growth on an active channel.
-            _HORIZON = 900
+            # b254: the message_id key is NOT sufficient. The channel's forwarder
+            # bot delivers the SAME signal text as a stream of messages with
+            # DISTINCT message_ids (verified: 174 records of one
+            # "SELL XAUUSD 4450" post, 157 re-arrivals within the 900s horizon,
+            # gaps down to 0.001s — a re-edit/re-post storm, not horizon expiry).
+            # Dedupe additionally on a hash of the signal CONTENT, so a repeated
+            # call cannot re-enter the pipeline no matter what id it arrives under.
+            import hashlib as _hashlib
+            _CONTENT_HORIZON = 86400  # 24h: a stale re-broadcast is not a new call
             _seen = {k: v for k, v in _seen.items()
-                     if _now_ts - float(v or 0) < _HORIZON}
+                     if _now_ts - float(v or 0) < _CONTENT_HORIZON}
             _deduped = []
             for msg in messages:
                 _mid = msg.get("message_id") or 0
+                _keys = []
                 if _mid:
-                    _k = f'{msg.get("chat_id", "")}:{_mid}'
-                    if _k in _seen:
-                        continue
+                    _keys.append(f'{msg.get("chat_id", "")}:{_mid}')
+                # content key: same text from the same chat is the same signal
+                _txt = (msg.get("text") or "")[:500]
+                if _txt:
+                    _keys.append("txt:" + _hashlib.sha1(
+                        f'{msg.get("chat_id", "")}:{_txt}'.encode()).hexdigest())
+                if any(k in _seen for k in _keys):
+                    continue
+                for _k in _keys:
                     _seen[_k] = _now_ts
                 _deduped.append(msg)
             _st["seen_message_ids"] = _seen
@@ -691,7 +703,15 @@ def run_signal_check(bridge, dry_run: bool = False) -> dict:
                 # above) → the premise is broken, keep the old skip.
                 _not_reached = ((parsed["side"] == "BUY" and cur > entry) or
                                 (parsed["side"] == "SELL" and cur < entry))
-                if (_not_reached and abs(cur - entry) <= risk_dist
+                # b254: channels post entry levels far above/below the market
+                # ("SELL XAUUSD 4450" with price at 4136 = 314 pts away, risk
+                # only 12). The 1R parking cap rejected these as stale even
+                # though price simply has not REACHED the level yet — that is
+                # exactly what a limit order is FOR. Lift the parking cap to
+                # 10R for far-but-not-passed entries; a level price already
+                # passed still skips.
+                _park_cap = risk_dist * 10.0 if _not_reached else risk_dist
+                if (_not_reached and abs(cur - entry) <= _park_cap
                         and signal_pending.pending_enabled()
                         and not dry_run):
                     _use_pending = True

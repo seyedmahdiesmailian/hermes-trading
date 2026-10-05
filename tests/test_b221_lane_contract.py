@@ -181,6 +181,15 @@ def _signal_executions(dark: bool) -> list[dict]:
     _orig_fetch = SL.fetch_new_messages
     _orig_execute = AE.execute_trade
     _orig_group = SL.os.environ.get("TELEGRAM_SIGNAL_GROUP")
+    # b254: check_signals dedupes on (chat_id, message_id) AND on a hash of the
+    # signal content, persisting both to the real listener_state.json. Without
+    # isolating that state a repeat call with the same fixture text is silently
+    # dropped as a re-broadcast, and the lane produces no verdict at all.
+    _orig_load = SL._load_state
+    _orig_save = SL._save_state
+    _test_state = {"last_update_id": 0, "last_check": "", "seen_message_ids": {}}
+    SL._load_state = lambda: dict(_test_state)
+    SL._save_state = lambda st: _test_state.update(st)
     # b221 fix: run_signal_check calls evaluate_proposal through the SIGNAL
     # lane's OWN imports, so the ambient gates have to be stubbed there too —
     # the same _evaluate() discipline. auto_executor already imported
@@ -222,6 +231,8 @@ def _signal_executions(dark: bool) -> list[dict]:
     finally:
         SL.fetch_new_messages = _orig_fetch
         AE.execute_trade = _orig_execute
+        SL._load_state = _orig_load
+        SL._save_state = _orig_save
         MH.is_market_open = _orig_open
         AE.is_market_open = _orig_ae_open
         CD.check_entry_cooldown = _orig_cd

@@ -73,6 +73,14 @@ def _run(bridge):
     """run_signal_check on exactly one fresh signal message, read-only."""
     orig_fetch = SL.fetch_new_messages
     orig_group = SL.os.environ.get("TELEGRAM_SIGNAL_GROUP")
+    # b254: the signal path dedupes on (chat_id, message_id) AND on a hash of
+    # the content, persisting both to the real listener_state.json. The fixture
+    # carries no message_id, so the content key is what fires — isolate state
+    # or every _run() after the first silently drops the message.
+    orig_load, orig_save = SL._load_state, SL._save_state
+    _state = {"last_update_id": 0, "last_check": "", "seen_message_ids": {}}
+    SL._load_state = lambda: dict(_state)
+    SL._save_state = lambda st: _state.update(st)
     SL.fetch_new_messages = lambda: [dict(_MSG)]
     SL.os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100b211c"
     # a dry_run executor must never reach an order endpoint
@@ -80,6 +88,7 @@ def _run(bridge):
         return SL.run_signal_check(bridge, dry_run=True)
     finally:
         SL.fetch_new_messages = orig_fetch
+        SL._load_state, SL._save_state = orig_load, orig_save
         if orig_group is None:
             SL.os.environ.pop("TELEGRAM_SIGNAL_GROUP", None)
         else:
