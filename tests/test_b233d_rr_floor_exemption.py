@@ -24,9 +24,12 @@ from engines.auto_executor import (MIN_RISK_REWARD, RR_FLOOR_EXEMPT_STYLES,
 
 
 class TestFloorExemptionSet(unittest.TestCase):
-    def test_the_two_strong_styles_are_exempt(self):
+    def test_the_strong_style_is_exempt(self):
+        # b238: pullback_continuation was REMOVED — b238 reanchors it to a
+        # real 1.5R geometry, so the floor no longer conflicts with it and
+        # leaving it exempt would let a degenerate blueprint through.
         self.assertIn("aggressive_value_entry", RR_FLOOR_EXEMPT_STYLES)
-        self.assertIn("pullback_continuation", RR_FLOOR_EXEMPT_STYLES)
+        self.assertNotIn("pullback_continuation", RR_FLOOR_EXEMPT_STYLES)
 
     def test_the_chase_styles_are_not_exempt(self):
         # the floor must still bind on the losers it was protecting against
@@ -80,10 +83,13 @@ class TestFloorBehavior(unittest.TestCase):
         self.assertTrue(r.get("execute"),
                         f"exempt style must pass below floor, got {r.get('reason')}")
 
-    def test_exempt_style_admitted_at_terrible_rr(self):
+    def test_pullback_continuation_is_gated(self):
+        # b238: pullback_continuation is no longer exempt. A 0.5R pullback
+        # must be refused by the floor — that is exactly the trade that
+        # produced live ticket 111572408 (0.05R).
         r = self._run(0.5, "pullback_continuation")
-        self.assertTrue(r.get("execute"),
-                        f"exempt style must pass even at rr 0.5, got {r.get('reason')}")
+        self.assertFalse(r.get("execute"),
+                         f"pullback must be gated at rr 0.5, got {r.get('reason')}")
 
     def test_chase_style_rejected_below_floor(self):
         r = self._run(1.2, "aggressive_discount_entry")

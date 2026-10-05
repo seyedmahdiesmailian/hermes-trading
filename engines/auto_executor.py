@@ -54,9 +54,14 @@ STYLE_RISK_MULT = {
 # its trades have realized rr < 2.0 — the floor would kill the edge to save
 # the losers in the WORSE styles. Keeping the floor on the chase styles only
 # won 5/5 disjoint windows. See tests/test_b233d_rr_floor_exemption.py.
+# b238: pullback_continuation REMOVED from this set. The exemption made sense
+# only while the pullback carried raw structural geometry (sl = whole-zone
+# invalidation), so its RR was structurally sub-2.0 and the floor would have
+# refused every one. b238 reanchors the pullback to a real 1.5R geometry, so
+# the floor no longer conflicts with it — and leaving it exempt would let a
+# degenerate blueprint through the very gate that exists to catch it.
 RR_FLOOR_EXEMPT_STYLES = frozenset({
     "aggressive_value_entry",
-    "pullback_continuation",
 })
 # Session prior (learning.py promised "session-aware later" and never
 # wired it). 16/29 live entries fired 00-07 UTC; 5 of 8 fat losses

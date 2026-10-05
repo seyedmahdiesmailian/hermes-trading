@@ -354,10 +354,18 @@ def _buy_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
 
     if zones["long_entry_low"] <= price <= zones["long_entry_high"]:
         if trigger_ok:
-            # B2: a confirmed pullback keeps the structural SL/TP ladder.
-            # Reanchor was discarding the 3-level plan and fabricating a
-            # 1.5R scalp — journal avg win $30 vs avg loss $63.
+            # b238: reanchor the in-zone pullback like every other entry
+            # style. The raw structural geometry here is sl = whole-zone
+            # invalidation and tp = tp_levels[0], which is the ZONE BOUNDARY
+            # — the same number as long_entry_high. Entering near the top of
+            # the zone therefore produces a sub-0.2R trade: live ticket
+            # 111572408 carried a $30.59 stop against a $1.67 target (0.05R).
+            # The old comment said reanchor "discards the 3-level plan", but
+            # a 0.05R ladder is not a plan that can pay; the reanchored
+            # 1.55R single-target trade is strictly better. Pinned by
+            # tests/test_b238_pullback_reanchor.py.
             bp = build_trade_blueprint(plan, price=price, trigger_ok=trigger_ok)
+            bp = _reanchor_blueprint(bp, price, _plan_atr(plan))
             return {
                 "action": "market_entry_now",
                 "zone": "long_zone",
@@ -469,7 +477,9 @@ def _sell_logic(plan: dict, price: float, trigger_ok: bool, now: datetime,
 
     if zones["short_entry_low"] <= price <= zones["short_entry_high"]:
         if trigger_ok:
+            # b238: mirror of the buy-side reanchor (see _buy_logic).
             bp = build_trade_blueprint(plan, price=price, trigger_ok=trigger_ok)
+            bp = _reanchor_blueprint(bp, price, _plan_atr(plan))
             return {
                 "action": "market_entry_now",
                 "zone": "short_zone",
