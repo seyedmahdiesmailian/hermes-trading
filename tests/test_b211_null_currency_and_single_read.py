@@ -165,9 +165,23 @@ class TestSingleAccountReadPerSignal(unittest.TestCase):
         hermes_runtime.append_execution_log = st.append_execution_log
         orig_group = os.environ.get("TELEGRAM_SIGNAL_GROUP")
         os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100test"
+        # ISOLATE THE DEDUP LEDGER: check_signals persists seen_message_ids to
+        # data/signals/listener_state.json, so a message consumed by any earlier
+        # run (this file, an interactive probe, a manual call) is deduped out
+        # and signals_found reads 0 — the account count is then vacuous without
+        # any code change having caused it. Disk-touching isolation is not
+        # enough by itself: patching the state FILE still lets the probe WRITE
+        # the test message's key into the real ledger, poisoning later runs.
+        # Patch the READ/WRITE functions in-process instead, so the dedup runs
+        # against an empty in-memory dict and never reaches disk.
+        _isolated = {"seen_message_ids": {}}
+        orig_load, orig_save = sl._load_state, sl._save_state
+        sl._load_state = lambda: dict(_isolated)
+        sl._save_state = lambda st: _isolated.update(st)
         try:
             res = sl.run_signal_check(FakeBridge(), dry_run=False)
         finally:
+            sl._load_state, sl._save_state = orig_load, orig_save
             sl.fetch_new_messages, sl._log_signal = orig["fetch"], orig["log"]
             st.load_current_plan, ec.fetch_economic_calendar = orig["plan"], orig["cal"]
             hermes_runtime.load_current_plan = orig_hr_plan

@@ -118,14 +118,20 @@ ALLOWED = {
         'not even imported), so its module-level binding is irrelevant here, '
         'not silently wrong.',
     ('test_b221_lane_contract.py', 'engines.market_hours.is_market_open',
-     'engines.auto_executor'):
-        'the AE half of the b221 ambient-gate stub: this patch IS a no-op on '
-        'the AE path — deliberately. The test ALSO patches AE.is_market_open '
-        'directly (the bare name AE captured at import), which is the binding '
-        'that actually fires. This module-attribute copy exists so that the '
-        'LAZY importers of the same symbol (signal_listener line 697, which '
-        'patches-reach through engines.market_hours at call time) see the '
-        'stub too. Both are restored in finally.',
+     'hermes_runtime'):
+        'the MH.is_market_open half of the b221 ambient-gate stub. It IS a '
+        'no-op on hermes_runtime (line 38 binds it by bare name at import '
+        'time, so the source-module patch can never reach line 841) — '
+        'deliberately. This test only exercises SL.run_signal_check, which '
+        'imports is_market_open LAZILY at line 848 and resolves the patched '
+        'attribute at call time, so the stub reaches the path under test. '
+        'The AE binding is covered by the direct AE.is_market_open patch on '
+        'the line beside this one (AE also captured it by bare name at line '
+        '16, so THAT one is the binding that fires for AE). Both are '
+        'restored in finally. RE-DERIVED 2026-10-06: the exemption consumer '
+        'moved engines.auto_executor -> hermes_runtime — a later commit added '
+        'a second module-level bare importer of market_hours, and the census '
+        'reports the one this patch does not reach.',
 }
 
 
