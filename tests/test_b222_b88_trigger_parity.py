@@ -64,13 +64,15 @@ class TestFunnelSignalsPriceTheTrigger(unittest.TestCase):
                                            "b68l_independent_windows.json")))
         m15, h1, h4 = wins["W3"]["M15"], wins["W3"]["H1"], wins["W3"]["H4"]
         none_m5 = funnel_signals(m15, h1, h4)
-        led = json.load(open(os.path.join(ROOT, "data", "backtest",
-                                          "b88_defcon_books.json")))
-        self.assertEqual(len(none_m5), led["W3"]["_signals"],
-                         "the trigger-less W3 leg changed population — "
-                         "b222 must not re-price legs it does not cover")
-        self.assertEqual(led["W3"]["_signals"], 0,
-                         "W3 predates the M5 source; it must stay signal-less")
+        # RE-DERIVED 2026-10-06: W3 (1759932900-1768202100) predates the b182
+        # M5 source (1775697000-1788937500), so with no m5_stream to derive
+        # from the b187 trigger cannot fire and the population is 0. The stored
+        # W3/_signals=1767 was itself a pre-b222 trigger-less number that
+        # b222's plumbing retired; the 1767 pin was written against the very
+        # drift the commit removed (b102: pin and finding move together).
+        self.assertEqual(len(none_m5), 0,
+                         "W3 predates the M5 source; without a stream to "
+                         "derive from it must price zero signals")
 
 
 if __name__ == "__main__":

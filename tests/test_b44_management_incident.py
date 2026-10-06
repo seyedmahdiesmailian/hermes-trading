@@ -173,8 +173,14 @@ class StopMustFaceTheMarket(unittest.TestCase):
 
     def test_breakeven_fires_when_price_is_valid_side(self):
         now = datetime.now(timezone.utc)
-        m = evaluate_trade_management(self._trade(), 4405.0, now)
+        # b235 changed the geometry: BE is now a 0.5R lock, not a plain move
+        # to entry. risk = |4415.82 - 4460| = 44.18 -> lock 22.09 -> BE stop
+        # 4393.73, so the SELL stop must stay ABOVE market by 0.5 (b52 guard).
+        # 4388.0 clears it; the old 4405.0 fixture sat 11.7 above the lock and
+        # was a wrong-side stop, correctly rejected as 'hold'.
+        m = evaluate_trade_management(self._trade(), 4388.0, now)
         self.assertEqual(m['action'], 'move_stop_to_breakeven')
+        self.assertAlmostEqual(m['new_sl'], 4393.73, places=2)
 
     def test_trail_holds_instead_of_hammering_invalid_stop(self):
         now = datetime.now(timezone.utc)

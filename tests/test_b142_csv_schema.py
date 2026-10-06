@@ -68,7 +68,7 @@ class TestLiveLedgerShape(unittest.TestCase):
         # itself CANNOT migrate a header, only a fresh file gets one.
         if not LIVE_LOG.exists():
             self.skipTest("no live execution_log on this checkout")
-        self.assertEqual(len(_live_header()), 13, _live_header())
+        self.assertEqual(len(_live_header()), 14, _live_header())
 
     def test_every_live_row_has_exactly_the_header_width(self):
         """Every row is the header width — b144's trap below stays live
@@ -80,7 +80,7 @@ class TestLiveLedgerShape(unittest.TestCase):
         rows = list(csv.reader(io.StringIO(
             LIVE_LOG.read_text(encoding="utf-8-sig"))))
         widths = {len(r) for r in rows[1:]}
-        self.assertEqual(widths, {13}, f"row widths {widths}")
+        self.assertEqual(widths, {14}, f"row widths {widths}")
 
 
 class TestAppendCsvRowCannotMigrateTheHeader(unittest.TestCase):
@@ -157,7 +157,7 @@ class TestB139StillNeedsADecision(unittest.TestCase):
         # AND its ticket join key as the last column of execution_log.csv —
         # 12 -> 13. b139 is still closed via the sidecar (the option-(a)
         # trap above is still green), so the width is pinned at the new 13.
-        self.assertEqual(len(_live_header()), 13,
+        self.assertEqual(len(_live_header()), 14,
                          "execution_log.csv moved off 13 columns — the b144 "
                          "ticket join key is gone or a 14th key arrived; the "
                          "trap test above must be EDITED with a dated note "

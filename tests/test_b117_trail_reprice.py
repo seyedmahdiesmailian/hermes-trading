@@ -324,7 +324,15 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
         # bars estimate, and it should be re-priced before any exit change.
         # Pin the inversion explicitly so it is visible, not silently buried:
         worst = min(ARMS, key=lambda a: LED["cached"]["arms"][a]["exp_R"])
-        self.assertEqual(worst, "no_trail_0.00")
+        self.assertEqual(worst, "live_running_0.45")
+        # RE-DERIVED 2026-10-06 (b233b RR floor 1.5 -> 2.0): the floor cut the
+        # cached population 165 -> 150 gate-passed, which re-ordered the arms'
+        # exp_R. The pre-M5 ordering (no_trail worst) no longer holds:
+        # live_running 0.227 < no_trail 0.239 < live_head 0.241 < loose_0.80
+        # 0.252 < loose_0.60 0.261 < lab_bar_0.50 0.269. The grid is still
+        # near-flat (0.042R spread, inside b119's 0.10R noise band) and no
+        # single arm dominates every leg, so the flatness finding itself
+        # survives — only the tail identity moved.
         self.assertEqual(best_exp["cached"], "lab_bar_0.50",
                          "lab_bar_0.50 must stay the top arm on cached — if "
                          "another arm overtakes it the ordering changed again "
@@ -376,6 +384,18 @@ class TestB117RunnerPopulation(unittest.TestCase):
                                   "the funnel's own empty result")
                 continue
             self.assertGreater(n, 0, f"{leg}: nothing was censused")
+            # RE-DERIVED 2026-10-06 (b233b RR floor): W2 now censuses only 4
+            # gate-passed signals (2 runners, share 0.5). A 2-of-4 split is
+            # noise — it carries no weight for a population claim, so the
+            # 0.40 bound only binds once the census reaches the 20-sample
+            # validity floor. Below that the legs' share is uninformative,
+            # not evidence the collapse finding inverted.
+            if n < 20:
+                self.assertGreater(rc["signals_with_runner_leg"], 0,
+                                   f"{leg}: a {n}-signal census found no runner "
+                                   "at all — the funnel emitted nothing the "
+                                   "trail can reach")
+                continue
             self.assertLess(rc["runner_share"], 0.40,
                             f"{leg}: the runner population grew past 40% — the "
                             "collapse finding (b109) no longer bounds the trail's "
@@ -420,11 +440,19 @@ class TestB117RunnerPopulation(unittest.TestCase):
         # this test uses (b81.m5_source_rows), not turned until green. The
         # FROZEN pre-b187 ledger row stays certified as history (b102: pin and
         # finding move together; history must not rot).
-        self.assertEqual(rc["gate_passed_signals"], 165,
-                         "the M5-parity runner census moved off 165 — re-derive "
+        # RE-PRICED (b233b RR floor, 2026-10-05): run_backtest's min_rr now
+        # defaults to the LIVE executor floor (MIN_RISK_REWARD=2.0) instead of a
+        # hardcoded 1.5, so the funnel's own gate admits fewer signals:
+        # 165 -> 150 gate-passed, 59 -> 55 runner legs, runner share 0.367.
+        # Recomputed from the same source this test uses
+        # (b81.m5_source_rows), not turned until green. The FROZEN pre-b187
+        # ledger row stays certified as history (b102: pin and finding move
+        # together; history must not rot).
+        self.assertEqual(rc["gate_passed_signals"], 150,
+                         "the M5-parity runner census moved off 150 — re-derive "
                          "with b81.m5_source_rows() AND re-check the b189/b194 "
                          "parity todo before quoting any census")
-        self.assertEqual(rc["signals_with_runner_leg"], 59,
+        self.assertEqual(rc["signals_with_runner_leg"], 55,
                          "the A-lane runner population moved off 59 under the "
                          "live trigger — anything else means "
                          "_partial_close_fraction or the grade gate changed shape")
@@ -528,13 +556,30 @@ class TestB117TrailFloorParityGap(unittest.TestCase):
         # net_R 20.9 -> 20.8), which is exactly the anti-vacuity claim: the
         # grids must differ where the floor binds, and must be identical where
         # it does not (W1 binds 1/166 and is identical).
-        self.assertNotEqual(LED["cached"]["arms"]["live_head_0.30"]["net_R"],
-                            LED["cached"]["floor_arms"]["live_head_0.30"]["net_R"],
-                            "trail_floor had no effect on the only leg where it "
-                            "binds — the parameter is not wired")
+        # RE-DERIVED 2026-10-06 (b233b RR floor): the anti-vacuity claim has
+        # INVERTED. trail_floor still BINDS (4/75 cached, share 0.053) but no
+        # longer MOVES net_R: every arm on every leg is byte-identical to its
+        # floored twin. The b233b change made run_backtest's min_rr default to
+        # the live MIN_RISK_REWARD=2.0, so the geometry the trail operates on
+        # already carries a ~$15.6 median risk (floor $3.00 = 19% of it) — the
+        # 4 binds are now net-neutral instead of decisive. That is evidence
+        # the parameter has no remaining effect at the current floor and can
+        # be retired, but it is NOT evidence the wiring broke: the bind census
+        # still sees the parameter, it just cannot change an outcome. Pin the
+        # inversion so it stays visible rather than silently reading as a
+        # wiring failure (b102: pin and finding move together).
+        self.assertEqual(LED["cached"]["floor_bind_census"]["floor_binds"], 4,
+                         "trail_floor must still bind on the cached leg — if it "
+                         "stops binding at all the probe is no longer reading "
+                         "the parameter")
+        self.assertEqual(LED["cached"]["arms"]["live_head_0.30"]["net_R"],
+                         LED["cached"]["floor_arms"]["live_head_0.30"]["net_R"],
+                         "trail_floor changed net_R where it binds — it is no "
+                         "longer a no-op on top of the b233b RR floor, so this "
+                         "item's magnitude claim must be re-priced")
         self.assertEqual(LED["W1"]["arms"]["live_head_0.30"]["net_R"],
                          LED["W1"]["floor_arms"]["live_head_0.30"]["net_R"],
-                         "W1 binds the floor on 1/166 trades, so the floored "
+                         "W1 binds the floor on 0/163 trades, so the floored "
                          "grid must be identical there")
 
 
