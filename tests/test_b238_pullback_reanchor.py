@@ -9,8 +9,9 @@ The fix applies _reanchor_blueprint to both pullback sites. This test pins
 it on a synthetic plan shaped like the live one, and checks the RR floor
 exemption no longer covers pullback_continuation.
 """
-import sys
-sys.path.insert(0, '.'); sys.path.insert(0, 'engines')
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'engines'))
 from datetime import datetime, timezone
 from engines.plan import decide_execution_action
 

@@ -20,7 +20,7 @@ class FailClosedGateTests(unittest.TestCase):
 
     def _prop(self):
         return {'blueprint': {'side': 'SELL', 'entry_price': 4450,
-                              'sl': 4460, 'tp': 4435, 'symbol': 'XAUUSD'},
+                              'sl': 4460, 'tp': 4420, 'symbol': 'XAUUSD'},
                 'grade': 'B'}
 
     def _perf(self):

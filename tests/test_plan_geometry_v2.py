@@ -190,9 +190,17 @@ class PullbackKeepsStructure(unittest.TestCase):
         self.assertEqual(decision["action"], "market_entry_now")
         self.assertEqual(decision["execution_style"], "pullback_continuation")
         bp = decision["blueprint"]
-        self.assertFalse(bp.get("reanchored"))
-        self.assertEqual(bp["sl"], 4300.0)
-        self.assertEqual(bp["tp_levels"], [4380.0, 4400.0, 4420.0])
+        # b238: the pullback entry reanchors like every other style. A raw
+        # whole-zone stop against tp_levels[0] produced a sub-0.2R trade
+        # (live ticket 111572408: $30.59 stop vs $1.67 target). The blueprint
+        # is rebuilt to clear the RR floor, so tp_levels collapses to one.
+        self.assertTrue(bp.get("reanchored"))
+        # entry 4330, atr 5.0: the reanchor caps the stop at 2*ATR below price
+        # (4320) which is TIGHTER than the 4300 zone invalidation.
+        self.assertEqual(bp["sl"], 4320.0)
+        self.assertGreaterEqual(
+            abs(bp["tp"] - 4330.0) / abs(4330.0 - bp["sl"]), 1.0,
+            "reanchored pullback must clear the RR floor")
 
     def test_plan_atr_never_falls_back_to_20(self):
         from engines.plan import _plan_atr

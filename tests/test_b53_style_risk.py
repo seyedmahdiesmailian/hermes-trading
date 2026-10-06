@@ -27,7 +27,7 @@ def _pol():
             'open_positions': 0, 'balance': 5000.0}
 
 
-def _prop(style=None, sl=4460, tp=4435):
+def _prop(style=None, sl=4460, tp=4420):
     p = {'blueprint': {'side': 'SELL', 'entry_price': 4450,
                        'sl': sl, 'tp': tp, 'symbol': 'XAUUSD'},
          'grade': 'B'}
@@ -99,7 +99,7 @@ class TestProposalCarriesStyle(unittest.TestCase):
         monitor = {'action': 'market_entry_now',
                    'execution_style': 'aggressive_discount_entry',
                    'blueprint': {'side': 'SELL', 'entry_price': 4450,
-                                 'sl': 4460, 'tp': 4435, 'symbol': 'XAUUSD'}}
+                                 'sl': 4460, 'tp': 4420, 'symbol': 'XAUUSD'}}
         p = _build_proposal({}, monitor, {}, 4450.0)
         self.assertEqual(p['execution_style'], 'aggressive_discount_entry')
 

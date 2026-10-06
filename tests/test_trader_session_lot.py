@@ -26,7 +26,7 @@ def _pol(balance=5000.0):
             "open_positions": 0, "balance": balance}
 
 
-def _prop(sl=4460.0, tp=4435.0):
+def _prop(sl=4460.0, tp=4420.0):
     return {"blueprint": {"side": "SELL", "entry_price": 4450.0,
                           "sl": sl, "tp": tp, "symbol": "XAUUSD"},
             "grade": "B"}
@@ -38,7 +38,7 @@ def _perf():
             "recent_closed": []}
 
 
-def _eval(plan=None, sl=4460.0, tp=4435.0, balance=5000.0):
+def _eval(plan=None, sl=4460.0, tp=4420.0, balance=5000.0):
     real_open, real_cd = AE.is_market_open, CD.check_entry_cooldown
     AE.is_market_open = lambda *a, **k: True
     CD.check_entry_cooldown = lambda now=None: {"allowed": True}
@@ -74,14 +74,14 @@ class LotCeiling(unittest.TestCase):
     def test_tight_stop_is_skipped_on_the_5k_book(self):
         # 6$ stop at 2% of 5k used to be 0.16 lots and the four -100$ hits.
         # Noise floor now skips rather than sizing the scalp.
-        r = _eval(sl=4456.0, tp=4435.0)  # 6$ stop, RR = 15/6 = 2.5
+        r = _eval(sl=4456.0, tp=4420.0)  # 6$ stop, RR = 15/6 = 2.5
         self.assertFalse(r.get("execute"), r)
         self.assertEqual(r.get("reason"), "stop_too_tight")
         self.assertEqual(AE.MAX_LOT, 0.10)
         self.assertEqual(AE.MIN_STOP_DISTANCE, 8.0)
 
     def test_eight_dollar_stop_still_prints(self):
-        r = _eval(sl=4458.0, tp=4435.0)  # 8$ stop, RR = 15/8 = 1.875
+        r = _eval(sl=4458.0, tp=4420.0)  # 8$ stop, RR = 15/8 = 1.875
         self.assertTrue(r.get("execute"), r.get("reason"))
         self.assertLessEqual(r["command"]["lot"], AE.MAX_LOT)
 
@@ -92,7 +92,7 @@ class LotCeiling(unittest.TestCase):
 
     def test_small_account_5pt_stop_is_not_the_noise_gate(self):
         # b196 contract: $799 / 1% / 5pt still has to execute 0.01.
-        r = _eval(sl=4455.0, tp=4435.0, balance=799.0)
+        r = _eval(sl=4455.0, tp=4420.0, balance=799.0)
         self.assertNotEqual(r.get("reason"), "stop_too_tight")
 
 
