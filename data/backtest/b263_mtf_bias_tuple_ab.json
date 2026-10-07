@@ -1,0 +1,22 @@
+{
+  "experiment": "b263_mtf_bias_tuple_ab",
+  "samples_base": 250,
+  "samples_challenger": 250,
+  "baseline": {
+    "total": 250,
+    "aligned_pct": 41.2,
+    "neutral_pct": 0.0,
+    "aligned_n": 103,
+    "mean_trend_strength": 0.0,
+    "mean_abs_net": 0.0
+  },
+  "challenger": {
+    "total": 250,
+    "aligned_pct": 34.0,
+    "neutral_pct": 0.0,
+    "aligned_n": 85,
+    "mean_trend_strength": 0.0,
+    "mean_abs_net": 0.0
+  },
+  "verdict": "BASELINE_KEEP"
+}

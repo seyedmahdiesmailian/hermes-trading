@@ -1,0 +1,24 @@
+{
+  "experiment": "b264_h4_neutral_h1_fallback",
+  "h4_neutral_windows": 218,
+  "per_bias": {
+    "bullish": {
+      "hit_pct": 43.5,
+      "n": 62
+    },
+    "bearish": {
+      "hit_pct": 60.0,
+      "n": 70
+    },
+    "neutral": {
+      "hit_pct": 0.0,
+      "n": 86
+    },
+    "directional_combined": {
+      "hit_pct": 52.3,
+      "n": 132
+    }
+  },
+  "mean_abs_forward_move": 55.03,
+  "verdict": "INCONCLUSIVE"
+}

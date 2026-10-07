@@ -82,7 +82,27 @@ MAX_LOT = 0.10
 # those entries rather than size them. Below MIN_STOP_BALANCE the b196
 # 5pt/1% path must still print 0.01 lot — a small account has no other
 # way to clear min_meaningful_lot.
+#
+# b262: the absolute 8.0 floor contradicted the reanchor's own stop
+# construction. engines/plan._reanchor_blueprint caps the stop at
+# REANCHOR_STOP_ATR_CAP * atr (2.0 * ATR), so whenever the plan ATR fell
+# below 4.0 the cap produced a stop of 2*ATR < 8.0 and this gate refused
+# EVERY reanchored entry. Measured on 200 live M5 bars: 60% of windows had
+# 2*ATR(14) < 8.0 — 60% of entries were dead on arrival from a config
+# contradiction, not from market risk (the live skip log showed
+# stop_too_tight with sl_dist 5.83/5.91 on a plan ATR of 2.9).
+#
+# The dollar evidence was real but it was a SMALL-VOLATILITY signal read
+# as an ABSOLUTE distance. A 6pt stop in a 3-ATR market is noise; the same
+# 6pt stop in a 12-ATR market is free money. The floor now scales with
+# volatility: stop must be at least MIN_STOP_ATR_MULT * plan ATR, floored
+# by the absolute 8.0 only when volatility is high enough for that to be
+# the binding constraint. The absolute value survives as a CEILING on the
+# scaled floor (so a volatility spike can't push the required stop past
+# 8.0 and re-tighten the gate), keeping the gate a strict subset of its
+# former self on every ATR regime.
 MIN_STOP_DISTANCE = 8.0
+MIN_STOP_ATR_MULT = 2.0
 MIN_STOP_BALANCE = 1500.0
 STOP_TRADING_REGIMES = {"locked"}   # regimes that block new trades
 # b136: "recovery" was MISSING here. engines/risk.assess_account_policy emits
@@ -291,7 +311,17 @@ def evaluate_proposal(
             }
 
     # ── Check 5.65: gold noise floor (see MIN_STOP_DISTANCE) ──
-    if _sl_dist < MIN_STOP_DISTANCE and balance >= MIN_STOP_BALANCE:
+    # b262: the floor scales with volatility. A plan ATR of 2.9 makes the
+    # reanchor cap 2*2.9 = 5.8pt stops, and the old absolute 8.0 floor then
+    # refused every reanchored entry — 60% of M5 windows on the live feed sit
+    # below ATR 4.0. The four −100$ disasters the 8.0 floor was built from were
+    # 5.8–7.0pt moves on 0.15–0.17 lots: a LOT-SIZE failure, not a
+    # distance failure. Tightening distance does not fix size.
+    _atr = float((plan or {}).get("atr") or 0)
+    _min_stop = MIN_STOP_DISTANCE
+    if _atr > 0:
+        _min_stop = min(MIN_STOP_ATR_MULT * _atr, MIN_STOP_DISTANCE)
+    if _sl_dist < _min_stop and balance >= MIN_STOP_BALANCE:
         reasons.append(f"stop_too_tight_{_sl_dist:.2f}")
         return {
             "execute": False,
