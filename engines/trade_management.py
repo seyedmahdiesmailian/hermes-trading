@@ -54,11 +54,22 @@ def build_tp_ladder(price_open: float, side: str, broker_tp, raw_levels) -> list
     side_buy = (side == 'BUY')
     tp_levels = [float(t) for t in (raw_levels or [])
                  if (float(t) > price_open) == side_buy]
-    if tp_levels:
+    # b261: this guard must be on the CANDIDATE SET, not on raw_levels. A
+    # neutral-bias plan writes plan.targets = [] (engines/context.py), so the
+    # ladder collapsed to [] here even though the executor had set a perfectly
+    # valid broker_tp on the position — _next_unfilled_target then returned
+    # None, _partial_close_fraction fell through to the 'balanced_full_exit'
+    # 1.0 share, and EVERY winner was amputated at TP1 while every loser still
+    # took the full SL. Live 60d: 38W/23L (62% WR) netting −$22, payoff 0.50,
+    # because wins averaged 6.8pts of movement against 11.6pts for losses.
+    # Falling back to broker_tp keeps the b60 midpoint geometry in the one case
+    # where the plan supplied no targets of its own.
+    _bt_cands = [float(broker_tp)] if (broker_tp and (float(broker_tp) > price_open) == side_buy) else []
+    if tp_levels or _bt_cands:
         # The broker TP (set by the executor from the blueprint) IS the final
         # target the backtest rides to; prefer it when it is on the profit
         # side, else the furthest plan target.
-        _cands = [float(broker_tp)] if (broker_tp and (float(broker_tp) > price_open) == side_buy) else []
+        _cands = _bt_cands
         _cands += [t for t in tp_levels if (t > price_open) == side_buy]
         _final = max(_cands, key=lambda t: abs(t - price_open)) if _cands else None
         if _final:

@@ -483,6 +483,21 @@ def adjustments() -> dict:
     # but may never be raised here — relaxation is done by the operator, not by
     # a small-sample win streak (legacy bug: it relaxed at WR>=0.55 which let a
     # lucky cluster re-inflate risk right before a losing streak).
+    #
+    # b261: the elif avg < 0 branch re-ran EVERY cycle (master polls every 5
+    # min) and subtracted 0.1 each time, so risk_mult hit the 0.5 floor within
+    # an hour of any mildly-negative sample and STAYED there — nothing in the
+    # loop could raise it back. That crushed position size to 0.01 lots, which
+    # then made positions unsplittable (trade_management._partial_close_fraction
+    # needs >=0.02 for a half-close), which amputated every winner at TP1 and
+    # made the sample MORE negative. A tightening loop that ratchets on every
+    # poll is a one-way valve, not a feedback loop.
+    #
+    # Fix: only propose a tightening step when the state is NOT already at (or
+    # below) what this rule would set. With avg<0 and wr>=0.40 the only knob
+    # this branch moves is risk_mult, so if it is already at the 0.5 floor
+    # there is nothing left to propose and we return empty — the operator
+    # decides when to relax.
     if avg < 0 and wr < 0.40:
         if cur_rr < RR_FLOOR_CEILING:
             changes['min_rr'] = _clamp(cur_rr + 0.25, RR_FLOOR_FLOOR, RR_FLOOR_CEILING)
@@ -495,7 +510,11 @@ def adjustments() -> dict:
         # _reanchor_blueprint manufactures every entry at 1.55R (b84: 99.7%
         # of the funnel sits in 1.55±0.06, and the first +0.25 step to 1.75
         # drops 98.9–100% of trades). Grade stays put — same reason as before.
-        changes['risk_mult'] = _clamp(cur_risk - 0.1, 0.5, 1.0)
+        # b261: skip when already at the floor (see the SAFETY RULE note —
+        # otherwise this re-runs every 5 min and ratchets risk to 0.5 forever).
+        _proposed = _clamp(cur_risk - 0.1, 0.5, 1.0)
+        if _proposed < cur_risk:
+            changes['risk_mult'] = _proposed
     # NOTE: sell_rr_extra was removed — it was produced here but never consumed
     # by any consumer (dead config).
 
