@@ -45,7 +45,20 @@ def _log_file() -> Path:
     return _paths.logs_dir() / 'signal_daemon.log'
 
 
-def log(msg: str):
+_last_heartbeat = None
+
+
+def log(msg: str, throttle_s: float = 0):
+    """Log a line. throttle_s>0 drops the message unless that many seconds
+    have passed since an IDENTICAL message was last written (b260 heartbeat
+    — the watchdog reads the last line as the daemon's heartbeat, so a
+    throttled 'poll ok' every 10 min satisfies it without unbounded growth)."""
+    global _last_heartbeat
+    if throttle_s:
+        now_ts = datetime.now(timezone.utc).timestamp()
+        if _last_heartbeat and now_ts - _last_heartbeat < throttle_s:
+            return
+        _last_heartbeat = now_ts
     log_file = _log_file()
     log_file.parent.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
@@ -95,36 +108,44 @@ def main():
         try:
             result = run_signal_check(bridge, dry_run=DRY_RUN)
             found = result.get('signals_found', 0)
-            if found > 0:
-                log(f'{found} signal(s) processed')
-                for se in result.get('executions', []):
-                    sig = se.get('signal', {})
-                    verdict = se.get('verdict', '?')
-                    log(f'  {sig.get("side")} {sig.get("symbol")} @ {sig.get("entry")} '
-                        f'sl={sig.get("sl")} tp={sig.get("tp")} -> {verdict} '
-                        f'(executed={se.get("executed")})')
-                    # Instant Telegram report
-                    if se.get('executed'):
-                        send_telegram(
-                            f"📡 SIGNAL TRADE ✅\n"
-                            f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
-                            f"SL: {sig.get('sl')} | TP: {sig.get('tp')}\n"
-                            f"lot: {se.get('lot', sig.get('lot', '?'))}"
-                        )
-                    elif verdict == 'skip':
-                        reasons = ', '.join(se.get('reasons', [])[:3])
-                        send_telegram(
-                            f"🚫 SIGNAL SKIP\n"
-                            f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
-                            f"دلیل: {reasons}"
-                        )
-                    elif verdict == 'limit_pending':
-                        send_telegram(
-                            f"🕒 LIMIT گذاشته شد (منتظر رسیدن قیمت به ورود)\n"
-                            f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
-                            f"SL: {sig.get('sl')} | TP: {sig.get('tp')} | "
-                            f"lot: {se.get('lot', '?')} | ticket: {se.get('pending_ticket')}"
-                        )
+            # b260: heartbeat even when idle. Without this the daemon stays
+            # silent for 24h+ whenever the signal group is quiet (weekend,
+            # low activity), and the trading-lane watchdog reads the LAST log
+            # line as the daemon's heartbeat and fires a false 'stuck' alert.
+            # Throttled to 10 min so the log does not grow without bound.
+            if found == 0:
+                log('poll ok, no new signals', throttle_s=600)
+                time.sleep(2)
+                continue
+            log(f'{found} signal(s) processed')
+            for se in result.get('executions', []):
+                sig = se.get('signal', {})
+                verdict = se.get('verdict', '?')
+                log(f'  {sig.get("side")} {sig.get("symbol")} @ {sig.get("entry")} '
+                    f'sl={sig.get("sl")} tp={sig.get("tp")} -> {verdict} '
+                    f'(executed={se.get("executed")})')
+                # Instant Telegram report
+                if se.get('executed'):
+                    send_telegram(
+                        f"📡 SIGNAL TRADE ✅\n"
+                        f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
+                        f"SL: {sig.get('sl')} | TP: {sig.get('tp')}\n"
+                        f"lot: {se.get('lot', sig.get('lot', '?'))}"
+                    )
+                elif verdict == 'skip':
+                    reasons = ', '.join(se.get('reasons', [])[:3])
+                    send_telegram(
+                        f"🚫 SIGNAL SKIP\n"
+                        f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
+                        f"دلیل: {reasons}"
+                    )
+                elif verdict == 'limit_pending':
+                    send_telegram(
+                        f"🕒 LIMIT گذاشته شد (منتظر رسیدن قیمت به ورود)\n"
+                        f"{sig.get('side')} {sig.get('symbol')} @ {sig.get('entry')}\n"
+                        f"SL: {sig.get('sl')} | TP: {sig.get('tp')} | "
+                        f"lot: {se.get('lot', '?')} | ticket: {se.get('pending_ticket')}"
+                    )
             # b70: reconcile parked LIMIT orders (filled / expired / cancelled)
             from engines import signal_pending
             from engines.market_hours import is_market_open
