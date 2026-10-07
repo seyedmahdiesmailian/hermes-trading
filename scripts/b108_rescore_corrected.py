@@ -53,7 +53,13 @@ from scripts import b81_lane_rescore as b81          # noqa: E402
 from scripts import b68l_windows as wl               # noqa: E402
 
 OUT = "data/backtest/b108_rescore_corrected.json"
-OLD_LEDGER = "data/backtest/b81_lane_rescore.json"
+# b233b: OLD_LEDGER used to read the live b81 file, but b81 was re-run on the
+# SAME b105-corrected engine, so "old" and "new" became the same measurement
+# and every delta collapsed to 0. This document's whole point is corrected vs
+# INFLATED, so the inflated engine's output is pinned as a static reference
+# (harvested from the last b81 ledger that still ran the pre-b105 engine).
+INFLATED_REF = "data/backtest/b81_lane_rescore_inflated.json"
+OLD_LEDGER = INFLATED_REF
 LEGS = b81.LEGS if hasattr(b81, "LEGS") else ("cached", "W1", "W2", "W3", "W4")
 WINDOWS = b81.WINDOWS if hasattr(b81, "WINDOWS") else ("W1", "W2", "W3", "W4")
 ARMS = ["funnel_graded", "funnel_ungraded"] + list(b81.PROVENANCE)
@@ -157,10 +163,12 @@ def main():
            "_provenance": {k: v[0] for k, v in b81.PROVENANCE.items()}}
 
     print("##### cached (in-sample, informational) #####", flush=True)
-    led["cached"] = b81.measure_leg("cached", c["M15"], c["H1"], c["H4"])
+    led["cached"] = b81.measure_leg("cached", c["M15"], c["H1"], c["H4"],
+                                    m5_stream=b81.m5_span_for(c["M15"]))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = b81.measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = b81.measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                                 m5_stream=b81.m5_span_for(wins[w]["M15"]))
     for leg in LEGS:
         led[leg]["_compare"] = compare(led[leg], old[leg])
 

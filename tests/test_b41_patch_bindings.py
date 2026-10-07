@@ -81,6 +81,20 @@ ALLOWED = {
      'hermes_runtime'):
         'same as load_current_plan: lazy consumer under test, real binding '
         'pre-captured by the up-front import.',
+    ('test_b211c_single_account_read.py', 'engines.storage.load_current_plan',
+     'hermes_runtime'):
+        "patch targets signal_listener's LAZY import (inside "
+        'run_signal_check) — the path under test. hermes_runtime keeps the '
+        'real binding thanks to the up-front module-level import, and the '
+        'fake is additionally mirrored onto hermes_runtime itself inside the '
+        'window, restoring the original in finally.',
+    ('test_b221_lane_contract.py', 'engines.storage.load_current_plan',
+     'hermes_runtime'):
+        "patch targets signal_listener's LAZY import (inside "
+        'run_signal_check) — the path under test. hermes_runtime keeps the '
+        'real binding thanks to the up-front module-level import, and the '
+        'fake is additionally mirrored onto hermes_runtime itself inside the '
+        'window, restoring the original in finally.',
     ('test_b211_null_currency_and_single_read.py', 'engines.storage.load_current_plan',
      'hermes_runtime'):
         "patch targets signal_listener's LAZY import (inside "

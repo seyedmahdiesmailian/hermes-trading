@@ -155,10 +155,12 @@ def main():
            "_provenance": {k: v[0] for k, v in b81.PROVENANCE.items()}}
 
     print("##### cached #####", flush=True)
-    led["cached"] = b81.measure_leg("cached", c["M15"], c["H1"], c["H4"])
+    led["cached"] = b81.measure_leg("cached", c["M15"], c["H1"], c["H4"],
+                                    m5_stream=b81.m5_span_for(c["M15"]))
     for w in WINDOWS:
         print(f"##### {w} #####", flush=True)
-        led[w] = b81.measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"])
+        led[w] = b81.measure_leg(w, wins[w]["M15"], wins[w]["H1"], wins[w]["H4"],
+                                 m5_stream=b81.m5_span_for(wins[w]["M15"]))
     for leg in LEGS:
         led[leg]["_margins"] = margin_table(led[leg], stored[leg])
 
@@ -179,13 +181,15 @@ def main():
                       for k, v in
                       led["_b70_redecision_live_parity"].items()}, indent=1))
     print("=== PER-LANE MARGIN DRIFT (live_parity minus stored_b108) ===")
+    def _f(x, spec="{:+.3f}"):
+        return spec.format(x) if isinstance(x, (int, float)) and x == x else str(x)
     for leg in LEGS:
         for lane, row in led[leg]["_margins"].items():
             print(f"{leg:7s} {lane:24s} exp_R {row['stored_b108']['exp_R']}"
                   f" -> {row['live_parity']['exp_R']}"
-                  f" | margin {row['d_exp_R_stored_b108']:+} ->"
-                  f" {row['d_exp_R_live_parity']:+}"
-                  f" (drift {row['margin_drift']:+})"
+                  f" | margin {_f(row['d_exp_R_stored_b108'])} ->"
+                  f" {_f(row['d_exp_R_live_parity'])}"
+                  f" (drift {_f(row['margin_drift'])})"
                   f"{' FLIPPED' if row['verdict_flipped'] else ''}")
     json.dump(led, open(OUT, "w"), indent=1)
     print("saved:", os.path.abspath(OUT))

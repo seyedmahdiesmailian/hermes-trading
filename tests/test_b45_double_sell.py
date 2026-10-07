@@ -194,7 +194,7 @@ class TestHistoryFailClosed(unittest.TestCase):
                    "open_positions": 0, "balance": 5000.0}
             perf = compute_performance_state({}, now.date().isoformat(), 5000.0, [])
             prop = {"blueprint": {"side": "SELL", "entry_price": 4450,
-                                  "sl": 4460, "tp": 4435, "symbol": "XAUUSD"},
+                                  "sl": 4460, "tp": 4420, "symbol": "XAUUSD"},
                     "grade": "B"}
             r = evaluate_proposal(prop, pol, perf, {}, None)
             if not r.get("execute"):

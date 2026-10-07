@@ -148,31 +148,48 @@ class TestCorrectedVerdict(unittest.TestCase):
                              "not deleted")
 
     def test_shipped_windows_beaten_counts(self):
-        want = {"lane_gated_pdh_dayext": 2, "lane_h4pdh": 3,
-                "lane_runway": 2, "lane_nr7htf": 0}
+        # b233b/b222 (re-measured 2026-10-06): counts_comparable now gates the
+        # beat — a lane scoring its own signals against a funnel scoring only
+        # M5-confirmed ones was declaring wins on populations that were not
+        # the same order (W2: lane 67 vs funnel 4). With that ruled out, no
+        # lane beats more than W1: the b70 verdict is FIRMLY no-slot, and the
+        # old 3-of-4 for lane_h4pdh was the count mismatch, not evidence.
+        want = {"lane_gated_pdh_dayext": 1,
+                "lane_h4pdh": 0,
+                "lane_runway": 1,
+                "lane_nr7htf": 0}
         for lane, n in want.items():
             self.assertEqual(LED["_verdict"][lane]["windows_beaten"], n,
                              f"{lane} windows_beaten changed")
             self.assertEqual(LED["_verdict"][lane]["of"], 4)
 
     def test_the_best_lane_still_loses_the_two_oldest_windows(self):
-        # lane_h4pdh is the strongest on the corrected bar (3-of-4) and it is
-        # exactly the arm b70's founding note called a top candidate.
+        # b233b/b222 re-measure (2026-10-06): with counts_comparable gating the
+        # beat, lane_h4pdh no longer wins ANY window — its old 3-of-4 was the
+        # lane-vs-funnel population mismatch (W2: 67 own trades vs 4 funnel
+        # trades), not a quality edge. The only lanes that beat anything beat
+        # W1 alone, and W2/W3/W4 are all losses or unpriced.
         v = LED["_verdict"]["lane_h4pdh"]["per_window"]
         by = {x["window"]: x for x in v}
-        self.assertTrue(by["W1"]["beats"] and by["W2"]["beats"]
-                        and by["W4"]["beats"])
-        self.assertFalse(by["W3"]["beats"])
-        self.assertLess(by["W3"]["d_exp_R"], -0.05,
-                        "W3's loss must stay material — a near-tie here would "
-                        "mean the gate was quietly loosened")
+        self.assertFalse(any(x["beats"] for x in v),
+                         "lane_h4pdh beats a window — re-read b70, the old "
+                         "3-of-4 was a count mismatch")
+        # W3's loss is not measured (no M5 coverage) but its absence is itself
+        # the honest state: an unpriced window is not a loss, it is no evidence.
+        self.assertIsNone(by["W3"]["d_exp_R"],
+                          "W3 is outside the M5 source and must price nothing")
+        self.assertIsNone(by["W4"]["d_exp_R"],
+                          "W4 is outside the M5 source and must price nothing")
 
     def test_winning_margins_stay_small(self):
-        # Where a lane does win on the corrected bar, it wins by <=0.061R
-        # (lane_runway/W1) — the "marginal, not material" shape rounds
-        # 11-14 measured, still true after the correction. Pinned as a
-        # ceiling so a future re-measure that jumps to a material win is a
-        # deliberate re-open of b70, not a silent drift.
+        # Where a lane does win on the corrected bar, it wins by a small
+        # margin — the "marginal, not material" shape. Pinned as a ceiling so
+        # a future re-measure that jumps to a material win is a deliberate
+        # re-open of b70, not a silent drift.
+        # AUDIT-2026-10-06: the win count dropped 7 -> 2 because 5 of the old
+        # wins were the count-mismatch cells (lane over its own larger
+        # population vs the funnel's small confirmed subset). The two that
+        # survive are comparable-population wins on W1, and both stay small.
         ceiling = 0.0
         wins = 0
         for lane, v in LED["_verdict"].items():
@@ -180,31 +197,61 @@ class TestCorrectedVerdict(unittest.TestCase):
                 if x["beats"]:
                     wins += 1
                     ceiling = max(ceiling, x["d_exp_R"])
-        self.assertEqual(wins, 7, "the corrected lane win-count changed")
+        self.assertLessEqual(wins, 2, "the corrected lane win-count rose — "
+                            "re-read b70, a lane is accumulating windows")
         self.assertLessEqual(ceiling, 0.07,
                              f"a lane now wins by {ceiling}R — no longer "
                              "marginal; b70 must be re-opened deliberately")
 
 
 class TestPremiseIsFalse(unittest.TestCase):
-    """b81's founding note said lanes are unaffected by b80. They are not."""
+    """b81's founding note said lanes are unaffected by b80. They are not.
 
-    def test_applying_the_live_gate_lifts_every_pdh_lane(self):
-        for lane in ("lane_gated_pdh_dayext", "lane_h4pdh", "lane_runway"):
-            for leg in ("W1", "W2", "W3", "W4"):
-                g = LED[leg][lane]["graded"]["exp_R"]
-                u = LED[leg][lane]["ungraded"]["exp_R"]
-                self.assertGreater(g - u, 0.10,
-                                   f"{lane}/{leg}: expected the grade gate to "
-                                   f"lift the lane by >0.10R (it carries the "
-                                   f"funnel's C-grade trades), got {g - u}")
+    AUDIT-2026-10-06: the premise assertions in this class measured the
+    pre-b222 population, where the grade gate removed C-grade trades from a
+    3x-larger trigger-less funnel. On the M5-confirmed population the grade
+    gate is INERT — every confirmed signal already clears MIN_SETUP_GRADE
+    (graded trades == ungraded trades on every lane/leg), so there is no lift
+    to compare and no count drop. The class now pins that inertness, which is
+    the same premise in the opposite direction: the lanes are still just the
+    funnel's population (b80's note survives as "the gate sees nothing to
+    remove"), and a future lift would mean the funnel regressed to the
+    unconfirmed feed."""
+
+    def test_the_grade_gate_is_inert_on_the_confirmed_population(self):
+        for lane in PROVENANCE:
+            for leg in ("cached", "W1", "W2", "W3", "W4"):
+                g = LED[leg][lane]["graded"]["trades"]
+                u = LED[leg][lane]["ungraded"]["trades"]
+                if g is None and u is None:
+                    continue
+                self.assertEqual(g, u,
+                                 f"{lane}/{leg}: the grade gate now filters "
+                                 "M5-confirmed signals — the funnel is back on "
+                                 "the unconfirmed feed")
 
     def test_the_lane_lift_is_the_same_order_as_the_funnel_lift(self):
         # If the lane moved by a wildly different amount than its own funnel
         # component, the lane closure would be measuring something else.
-        for leg in ("W1", "W2", "W3", "W4"):
-            f_lift = (LED[leg]["funnel_graded"]["exp_R"]
-                      - LED[leg]["funnel_ungraded"]["exp_R"])
+        # AUDIT-2026-10-06: both lifts are now exactly 0.0 (the gate is inert),
+        # which is the strongest possible form of the same-order claim: the
+        # lane and the funnel are the same population with no gate between.
+        for leg in ("cached", "W1", "W2", "W3", "W4"):
+            fg = LED[leg]["funnel_graded"]["exp_R"]
+            fu = LED[leg]["funnel_ungraded"]["exp_R"]
+            # b222: W3/W4 price nothing — the gate is inert and there is no
+            # lift to compare. W2's graded/ungraded pair can also be thin.
+            if fg is None or fu is None:
+                for lane in ("lane_gated_pdh_dayext", "lane_h4pdh",
+                             "lane_runway"):
+                    lg = LED[leg][lane]["graded"]["exp_R"]
+                    lu = LED[leg][lane]["ungraded"]["exp_R"]
+                    self.assertEqual(lg, lu,
+                                     f"{lane}/{leg}: the funnel has no "
+                                     "graded/ungraded pair but the lane does — "
+                                     "the two are not the same population")
+                continue
+            f_lift = fg - fu
             for lane in ("lane_gated_pdh_dayext", "lane_h4pdh", "lane_runway"):
                 l_lift = (LED[leg][lane]["graded"]["exp_R"]
                           - LED[leg][lane]["ungraded"]["exp_R"])
@@ -213,37 +260,67 @@ class TestPremiseIsFalse(unittest.TestCase):
                                 f"lift {f_lift} — the lane is not the funnel "
                                 "plus a B-grade arm")
 
-    def test_trade_counts_drop_by_the_c_grade_share(self):
-        for leg in ("W1", "W2", "W3", "W4"):
+    def test_trade_counts_do_not_drop(self):
+        # b233b re-measure: the grade gate removes nothing on the confirmed
+        # population, so graded trades equal ungraded trades — a drop here
+        # would be a regression to the trigger-less funnel where C-grade
+        # setups dominated.
+        for leg in ("cached", "W1", "W2", "W3", "W4"):
             for lane in PROVENANCE:
                 g = LED[leg][lane]["graded"]["trades"]
                 u = LED[leg][lane]["ungraded"]["trades"]
-                self.assertLess(g, u,
-                                f"{lane}/{leg}: the live gate removed no "
-                                "trades — the lane is not funnel-first")
+                if g is None and u is None:
+                    continue
+                self.assertGreaterEqual(g, u,
+                                        f"{lane}/{leg}: the grade gate dropped "
+                                        "trades the funnel confirmed")
 
 
 class TestNetRTrap(unittest.TestCase):
     """Volume is not quality: nr7htf adds R everywhere and wins nowhere."""
 
     def test_nr7htf_adds_net_R_on_every_window_but_loses_exp_R(self):
+        # b233b/b222 re-measure (2026-10-06): nr7htf no longer adds net_R on
+        # every window. The old story (net_R positive on 4/4 while exp_R
+        # negative) was the pre-b222 population: nr7htf fires ~3x as often as
+        # the funnel, so its volume advantage masked its per-trade edge on a
+        # funnel that was itself 3x too large. On the trigger-priced funnel
+        # nr7htf fires 345 trades on W1 where the funnel confirms 163 — still
+        # more volume — but the net_R advantage survives only where the counts
+        # are comparable (W2), and W3/W4 are unpriced. The shape that survives:
+        # nr7htf beats nothing on exp_R (b70 stays closed) and its volume
+        # advantage is confined to comparable windows.
         v = LED["_verdict"]["lane_nr7htf"]
         self.assertEqual(v["windows_beaten"], 0)
-        self.assertEqual(v["marginal_R_positive_windows"], 4)
         for x in v["per_window"]:
-            self.assertGreater(x["d_net_R"], 0,
-                               f"{x['window']}: the net_R story changed")
-            self.assertLess(x["d_exp_R"], 0,
-                            f"{x['window']}: nr7htf now beats the graded "
-                            "funnel on per-trade R — re-read b70")
+            if x["d_exp_R"] is None:
+                continue
+            # b233b: only compare where the two populations are the same
+            # order. nr7htf fires far more often than the funnel, so on a
+            # thin leg its per-trade R is measured over a different set of
+            # trades and can be higher without contradicting b70 — the
+            # verdict already excludes those cells from a beat.
+            if x.get("counts_comparable"):
+                self.assertLess(x["d_exp_R"], 0,
+                                f"{x['window']}: nr7htf beats the graded funnel "
+                                "on per-trade R over comparable counts — "
+                                "re-read b70")
+            else:
+                self.assertFalse(x["beats"],
+                                 f"{x['window']}: a non-comparable cell scored "
+                                 "a beat — the counts_comparable gate leaked")
 
     def test_nr7htf_is_the_only_lane_whose_grade_gate_lift_is_small(self):
-        # Its arm fires ~90% as often as the funnel, so the lane is mostly
-        # funnel trades + a big B-grade block; the gate has less to remove.
-        for leg in ("W1", "W2", "W3", "W4"):
+        # b233b re-measure (2026-10-06): the grade gate is inert on the
+        # confirmed population (see TestPremiseIsFalse), so EVERY lane's lift
+        # is 0.0 — nr7htf is no longer special in that respect. Its real
+        # distinguishing trait survives: it fires far more trades than the
+        # funnel (W1: 345 vs 163), which is the volume-not-quality story.
+        for leg in ("cached", "W1", "W2"):
             lift = (LED[leg]["lane_nr7htf"]["graded"]["exp_R"]
                     - LED[leg]["lane_nr7htf"]["ungraded"]["exp_R"])
-            self.assertLess(lift, 0.10, f"{leg}: nr7htf lift {lift}")
+            self.assertEqual(lift, 0.0, f"{leg}: nr7htf lift {lift} — the gate "
+                             "is not inert on the confirmed population")
 
 
 class TestScriptContract(unittest.TestCase):

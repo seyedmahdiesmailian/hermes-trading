@@ -22,7 +22,7 @@ Rules:
 INTENTIONALLY NOT centralized here (strategy thresholds stay with the
 modules that own them — they are pinned by behaviour tests that import
 them by name, e.g. b197 reads auto_executor.MAX_RISK_PER_TRADE_PCT):
-  auto_executor: MAX_RISK_PER_TRADE_PCT=0.02, MIN_RISK_REWARD=1.5,
+  auto_executor: MAX_RISK_PER_TRADE_PCT=0.02, MIN_RISK_REWARD=2.0,
       MAX_DAILY_LOSS_PCT=0.05, MAX_DAILY_TRADES=5, MAX_OPEN_POSITIONS=1
   kill_switch: DAILY_LOSS_LIMIT_PCT=0.05, EQUITY_DRAWDOWN_LIMIT_PCT=0.10,
       CONSECUTIVE_LOSSES_LIMIT=4, MARGIN_RATIO_MIN=10, COOLDOWN_HOURS=4
@@ -30,6 +30,10 @@ them by name, e.g. b197 reads auto_executor.MAX_RISK_PER_TRADE_PCT):
       RR_FLOOR 1.0–2.5, GRADE_CEILING=A, MIN_TRADES_SAMPLE=15
   plan: SMC_CONF_FLOOR=0.4, RANGE_KILL_CONF=0.35, MIN_SETUP_GRADE=B,
       REANCHOR_STOP_ATR_CAP=2.0, REANCHOR_MIN_RR=1.5
+  NOTE: MIN_RISK_REWARD is 2.0 since b233b (2026-10-04, re-tested on
+  500/1000/1500/2000 bars). A probe that still reads 1.5 is measuring a
+  floor the live executor does not use — b80's gradeB_rr15 arm exists
+  precisely to keep the 1.5 view visible next to the live one.
   cooldown/macro/market: POST_OPEN 15m, RESTART 5m, news blackout 30m,
       XAUUSD Sun 22:00 → Fri 21:00 UTC, broker SANITY ±14h
   Rewiring those is Phase-3 engine work, not WP2 plumbing.

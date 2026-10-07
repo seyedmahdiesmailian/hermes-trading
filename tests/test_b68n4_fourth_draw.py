@@ -94,6 +94,11 @@ class TestLedgerContract(unittest.TestCase):
             self.assertIn("ladder_ts", row, arm)
             for mode in ("plain", "ladder", "ladder_ts"):
                 s = row[mode]
+                # b233b: W4 sits outside the M5 source span, so the b222
+                # M5-confirmation trigger prices nothing there. Hold-bars are
+                # legitimately absent on the whole window.
+                if s.get("trades") == 0:
+                    continue
                 for col in ("mean_hold_bars", "p95_hold_bars",
                             "max_hold_bars", "holds_over_time_exit"):
                     self.assertIsNotNone(s[col], f"W4/{arm}:{mode}.{col}")
@@ -117,47 +122,70 @@ class TestFourthDrawVerdict(unittest.TestCase):
         cls.v = cls.led["_verdict"]
 
     def test_candidate_dies_on_w4(self):
-        # THE round's headline: funnel_h4t_agree 0.517 (n=267) vs funnel
-        # 0.532 (n=340) on the SAME W4 bars — the all-window streak breaks.
-        self.assertFalse(self.v["beats_funnel_W4"])
+        # b233b: the round's headline read "the all-window streak breaks on
+        # W4: funnel_h4t_agree 0.517 (n=267) vs funnel 0.532 (n=340)". Under
+        # the live floor W4 prices NOTHING (the b222 M5 trigger's source span
+        # ends inside W3), so the streak cannot be tested on W4 at all. What
+        # the ledger still says is that the *verdict* is DIES — but now on
+        # the strength of W2's inversion, not W4's. Pin the new reading so
+        # the old claim is not quietly re-quoted.
         self.assertEqual(self.v["verdict"], "DIES")
-        self.assertEqual(self.v["W4_agree_exp_R"], 0.517)
-        self.assertEqual(self.v["W4_funnel_exp_R"], 0.532)
-        self.assertEqual(self.v["W4_agree_n"], 267)
-        self.assertEqual(self.v["W4_funnel_n"], 340)
+        self.assertIsNone(self.v["W4_agree_exp_R"])
+        self.assertIsNone(self.v["W4_funnel_exp_R"])
+        self.assertEqual(self.v["W4_agree_n"], 0)
+        self.assertEqual(self.v["W4_funnel_n"], 0)
+        # The inversion that now carries the verdict is W2, not W4:
+        self.assertLess(self.v["margin_series"]["W2"], 0)
 
     def test_margin_series_exact_and_chronologically_monotonic(self):
         m = self.v["margin_series"]
-        self.assertEqual(m, {"W1": 0.093, "W2": 0.032, "W3": 0.008,
-                             "W4": -0.015})
-        # Read in TIME order (W4 oldest -> W1 newest) the margin GROWS
-        # monotonically: the gate's edge is a property of the RECENT
-        # regime, not a stable property of gold M15. Pinning the ordering
-        # so a future round cannot quietly re-sell it as regime-free.
-        chrono = [m["W4"], m["W3"], m["W2"], m["W1"]]
-        self.assertEqual(chrono, sorted(chrono))
+        # b233b: the series was {0.093, 0.032, 0.008, -0.015} across W1..W4.
+        # Now W3/W4 are unpriced and W2 inverts to -0.637, so the round's
+        # "margin grows monotonically into the recent regime" story is gone.
+        # What survives: the priced windows are exact, and W2 is the sign
+        # flip the round had attributed to W4.
+        self.assertEqual(m, {"W1": 0.034, "W2": -0.637, "W3": None,
+                             "W4": None})
+        # W2 carries the inversion now, and it is a large one, not noise:
+        self.assertLess(m["W2"], 0)
 
     def test_selection_ordering_holds_on_w4_despite_the_loss(self):
-        # agree 0.517 > cut 0.445 on W4 — the flip was a W3/cached
-        # phenomenon; the honest read is that BOTH properties (beat and
-        # ordering) must hold, and only the beat fails here.
-        self.assertTrue(self.v["ordering_holds_W4"])
-        self.assertGreater(self.v["W4_agree_exp_R"], self.v["W4_cut_exp_R"])
+        # b233b: the funnel prices zero bars on W4 (its M5 trigger's source
+        # span ends inside W3), but the ARMS still have trades here —
+        # pdh_h4t_agree alone carries 83. The round's ordering claim compared
+        # agree against the funnel, and that comparison has no denominator
+        # now. What can still be pinned: the funnel itself is empty, so the
+        # "ordering holds" verdict must be False, not silently True.
+        self.assertFalse(self.v["ordering_holds_W4"])
+        self.assertIsNone(self.v["W4_funnel_exp_R"])
+        # and the arm population that used to be compared is still real:
+        self.assertGreater(self.led[W4]["pdh_h4t_agree"]["ladder_ts"]["trades"],
+                           20)
 
     def test_champion_continuity_rows_on_w4(self):
-        # pdh_h4t_agree BEATS the funnel on W4 (0.597 vs 0.532, n=82) —
-        # it is 3-of-4 windows (failed W3). Pinned so the write-up cannot
-        # cherry-pick either direction.
+        # b233b: pdh_h4t_agree beat the funnel on W4 (0.597 vs 0.532) and
+        # failed W3. Under the live floor the funnel prices nothing on W4,
+        # so the arm's 83 trades have nothing to be compared against and the
+        # 3-of-4 count cannot be recomputed. Pin the arm's own numbers so
+        # they are not lost, and the funnel's absence so the old margin
+        # (0.597 vs 0.532) is not re-quoted.
         w = self.led[W4]
-        self.assertGreater(w["pdh_h4t_agree"]["ladder_ts"]["exp_R"],
-                           w["CURRENT_FUNNEL"]["ladder_ts"]["exp_R"])
-        self.assertLess(self.led["W3"]["pdh_h4t_agree"]["ladder_ts"]["exp_R"],
-                        self.led["W3"]["CURRENT_FUNNEL"]["ladder_ts"]["exp_R"])
+        self.assertIsNone(w["CURRENT_FUNNEL"]["ladder_ts"]["exp_R"])
+        self.assertEqual(w["CURRENT_FUNNEL"]["ladder_ts"]["trades"], 0)
+        self.assertAlmostEqual(w["pdh_h4t_agree"]["ladder_ts"]["exp_R"],
+                               0.061, places=3)
+        self.assertEqual(w["pdh_h4t_agree"]["ladder_ts"]["trades"], 83)
 
     def test_lane_still_positive_on_w4_but_not_promotable(self):
+        # b233b: the lane arm still books 83 trades on W4 at 0.061R, but with
+        # the funnel empty there is no margin to be "positive" against. The
+        # "not promotable" half of the claim survives for a different
+        # reason: there is no denominator.
         w = self.led[W4]
-        self.assertGreater(w["lane_funnel_then_h4pdh"]["ladder_ts"]["exp_R"],
-                           w["CURRENT_FUNNEL"]["ladder_ts"]["exp_R"])
+        lane = w["lane_funnel_then_h4pdh"]["ladder_ts"]
+        self.assertEqual(lane["trades"], 83)
+        self.assertAlmostEqual(lane["exp_R"], 0.061, places=3)
+        self.assertEqual(w["CURRENT_FUNNEL"]["ladder_ts"]["trades"], 0)
 
 
 class TestProbeAntiVacuity(unittest.TestCase):
@@ -166,24 +194,27 @@ class TestProbeAntiVacuity(unittest.TestCase):
         cls.p = _load(LEDGER)[W4]["_probe"]["h4_funnel"]
 
     def test_gate_cuts_a_real_slice_on_w4(self):
-        self.assertGreaterEqual(self.p["cut_share"], 0.05)
-        self.assertGreaterEqual(self.p["gate_share"], 0.35)
-        self.assertGreaterEqual(self.p["disagree"], 20)
+        # b233b: W4 has no priced funnel population (the M5 source span
+        # ends inside W3), so every share here is over a zero denominator.
+        # The anti-vacuity check the round wrote is vacuous by construction
+        # now — pin the empty population instead of deleting the test.
+        self.assertEqual(self.p["funnel_signals"], 0)
 
     def test_probe_counts_partition_the_funnel_population(self):
         self.assertEqual(self.p["agree"] + self.p["disagree"]
                          + self.p["silent"], self.p["funnel_signals"])
 
     def test_oracle_is_a_state_on_w4_too(self):
-        self.assertGreaterEqual(self.p["agree_state_age_median_htf_bars"], 5)
+        self.assertIsNone(self.p["agree_state_age_median_htf_bars"])
 
     def test_funnel_gate_arms_are_subsets(self):
         led = _load(LEDGER)
         f = led[W4]["CURRENT_FUNNEL"]["ladder_ts"]["trades"]
         a = led[W4]["funnel_h4t_agree"]["ladder_ts"]["trades"]
         d = led[W4]["funnel_h4t_disagree"]["ladder_ts"]["trades"]
+        # still a partition, just an empty one
         self.assertLessEqual(a + d, f)
-        self.assertGreaterEqual(a, 20)
+        self.assertEqual(f, 0)
 
 
 class TestVerdictRuleSynthetic(unittest.TestCase):

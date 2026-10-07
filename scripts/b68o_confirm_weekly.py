@@ -44,7 +44,9 @@ sys.path.insert(0, _ROOT)
 from engines import lab_harness as lh              # noqa: E402
 from engines import lab_decay as ld                # noqa: E402  (b77)
 from engines import lab_fire_rate as lf            # noqa: E402  (b79)
-from engines.backtest_real import strategy_signal  # noqa: E402
+from engines.backtest_real import (strategy_signal,  # noqa: E402
+                                   m5_window_for)
+from scripts.b81_lane_rescore import m5_span_for   # noqa: E402 (b222 M5 source)
 from scripts import b68l_windows as wl             # noqa: E402
 from scripts import b68o_weekly_lab as wk          # noqa: E402
 
@@ -60,10 +62,23 @@ CONTINUITY = os.path.join(_ROOT, "data", "backtest", "b68n4_fourth_draw.json")
 def funnel_signals(m15, h1, h4):
     """The live funnel replayed bar-by-bar on one dataset — the exact
     convention b68n's measure_window uses (only fully-closed HTF context
-    bars, 80-bar H1/H4 windows, 120-bar M15 window)."""
+    bars, 80-bar H1/H4 windows, 120-bar M15 window).
+
+    b233b: the b187 trigger needs the M5 stream or an M15 leg prices a 3x
+    larger trigger-less population. The slice is cut per bar at decision
+    time (bar close + spacing) exactly as b81.funnel_fn does — strategy_signal
+    forwards m5_rows to the monitor, which reads m5_rows[-n:], so the whole
+    stream would price the trigger off M5 closes not yet formed (look-ahead).
+    """
     h1t = [r.get("time", 0) for r in h1]
     h4t = [r.get("time", 0) for r in h4]
     idx_of = {r["time"]: n for n, r in enumerate(m15)}
+    m5_all = m5_span_for(m15)
+    m5t = [int(r.get("time", 0)) for r in (m5_all or [])]
+    gaps = sorted(int(m15[i + 1]["time"]) - int(m15[i]["time"])
+                  for i in range(len(m15) - 1))
+    gaps = [g for g in gaps if g > 0]
+    bar_spacing = gaps[len(gaps) // 2] if gaps else 300
     sigs = {}
     for i, row in enumerate(m15):
         bt = row.get("time", 0)
@@ -72,7 +87,9 @@ def funnel_signals(m15, h1, h4):
         hw = h1[max(0, j1 - 80):j1]
         h4w = h4[max(0, j4 - 80):j4]
         mw = m15[max(0, i - 120):i + 1]
-        s = strategy_signal(row, hw, h4w, i, m15_window=mw)
+        _m5 = (m5_window_for(m5_all, m5t, int(bt) + bar_spacing)
+               if m5_all else None)
+        s = strategy_signal(row, hw, h4w, i, m15_window=mw, m5_rows=_m5)
         if s:
             sigs[i] = s
 
@@ -128,6 +145,7 @@ def verdict(led, windows=WINDOWS):
             v[w][arm] = {"exp_R": row["exp_R"], "n": row["trades"],
                          "dd_R": row.get("maxDD_R"),
                          "beats_funnel": (row["exp_R"] is not None
+                                          and f["exp_R"] is not None
                                           and row["exp_R"] > f["exp_R"])}
     v["replicated_in_all"] = {
         arm: all(bool(v[w][arm]["beats_funnel"]) for w in windows)

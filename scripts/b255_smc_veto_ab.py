@@ -12,6 +12,8 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)
 sys.path.insert(0, _ROOT)
 os.chdir(_ROOT)
+from env_loader import load_dotenv
+load_dotenv(os.path.join(_ROOT, ".env"))
 
 from engines.context import build_plan_context
 from engines.smc import smc_analyse, merge_smc_with_classic

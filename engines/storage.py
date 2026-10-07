@@ -92,24 +92,43 @@ def collect_plan_history_stamps(base_dir: str | Path | None = None) -> set[str]:
     if repo is None:
         return stamps
     try:
-        # only meaningful when the tree sits inside the git repo
-        ls = subprocess.run(
-            ["git", "log", "--diff-filter=D", "--name-only", "--pretty=format:",
+        # only meaningful when the tree sits inside the git repo.
+        # b93 perf: the deleted prefix is thousands of files and the old loop
+        # ran 2 subprocesses PER file (git log -- path + git show) — 2590
+        # deletions = 5+ minutes, blowing every caller's budget. git log
+        # --raw already carries each blob's sha, so the whole prefix is two
+        # subprocesses: one --raw walk to collect (path, blob_sha) pairs, then
+        # one git cat-file --batch stream to read every body.
+        raw = subprocess.run(
+            ["git", "log", "--diff-filter=D", "--raw", "--format=%H", "-z",
              "--", rel],
-            cwd=str(repo), capture_output=True, text=True, check=True).stdout
-        for fn in (l.strip() for l in ls.splitlines() if l.strip()):
+            cwd=str(repo), capture_output=True, text=True,
+            check=True).stdout
+        pairs: list[tuple[str, str]] = []
+        for rec in raw.split("\0"):
+            rec = rec.strip("\n")
+            # lines look like ":100644 000000 <sha> 0000000 D\tpath"
+            if rec.startswith(":") and "\t" in rec:
+                meta, path = rec.split("\t", 1)
+                parts = meta.split()
+                if len(parts) >= 3 and parts[2] != "0" * 40:
+                    pairs.append((path, parts[2]))
+        if not pairs:
+            return stamps
+        # one piped git cat-file --batch reads every body at once
+        batch = subprocess.run(
+            ["git", "cat-file", "--batch"],
+            cwd=str(repo), input="".join(f"{sha}\n" for _, sha in pairs),
+            capture_output=True, text=True).stdout
+        # stream: "<sha> blob <size>\n<body>\n" per object, separated by blank lines
+        for chunk in batch.split("\n\n"):
+            if "\n" not in chunk:
+                continue
+            header, _, body = chunk.partition("\n")
+            if " blob " not in header:
+                continue
             try:
-                add = subprocess.run(
-                    ["git", "log", "--all", "--diff-filter=A", "--format=%H",
-                     "--", fn],
-                    cwd=str(repo), capture_output=True, text=True
-                ).stdout.strip().splitlines()
-                if not add:
-                    continue
-                content = subprocess.run(
-                    ["git", "show", f"{add[-1]}:{fn}"],
-                    cwd=str(repo), capture_output=True, text=True).stdout
-                at = _json.loads(content).get("created_at")
+                at = _json.loads(body).get("created_at")
                 if at:
                     stamps.add(at)
             except Exception:

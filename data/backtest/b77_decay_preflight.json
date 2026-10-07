@@ -9,7 +9,8 @@
   ],
   "_slope_min_R": 0.02,
   "pdh_w10_control": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W4",
     "W3",
@@ -17,17 +18,16 @@
     "W1"
    ],
    "series": [
-    -0.052,
-    -0.158,
-    0.102,
-    0.088
+    null,
+    null,
+    0.461,
+    0.108
    ],
-   "slope_R_per_step": 0.0467,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "pdh_h4t_agree": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W4",
     "W3",
@@ -35,17 +35,16 @@
     "W1"
    ],
    "series": [
-    0.065,
-    -0.023,
-    0.406,
-    0.133
+    null,
+    null,
+    0.663,
+    0.175
    ],
-   "slope_R_per_step": 0.0227,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "pdh_h4t_disagree": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W4",
     "W3",
@@ -53,17 +52,16 @@
     "W1"
    ],
    "series": [
-    -0.327,
-    -0.572,
-    0.11,
-    -0.073
+    null,
+    null,
+    0.45,
+    -0.014
    ],
-   "slope_R_per_step": 0.0847,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "lane_funnel_then_h4pdh": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W4",
     "W3",
@@ -71,17 +69,16 @@
     "W1"
    ],
    "series": [
-    0.014,
-    -0.013,
-    0.014,
-    0.01
+    null,
+    null,
+    0.624,
+    -0.015
    ],
-   "slope_R_per_step": -0.0013,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "funnel_h4t_agree": {
-   "verdict": "REGIME_GIFTED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W4",
     "W3",
@@ -89,17 +86,16 @@
     "W1"
    ],
    "series": [
-    -0.015,
-    0.008,
-    0.032,
-    0.093
+    null,
+    null,
+    -0.637,
+    0.034
    ],
-   "slope_R_per_step": 0.036,
-   "monotone_increasing": true,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "funnel_h4t_disagree": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W4",
     "W3",
@@ -107,14 +103,12 @@
     "W1"
    ],
    "series": [
-    -0.087,
-    0.025,
-    -0.035,
-    -0.267
+    null,
+    null,
+    0.636,
+    -0.081
    ],
-   "slope_R_per_step": -0.06,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   }
  },
  "three_window_pre_w4": {
@@ -125,112 +119,106 @@
   ],
   "_slope_min_R": 0.02,
   "pdh_w10_control": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W3",
     "W2",
     "W1"
    ],
    "series": [
-    -0.158,
-    0.102,
-    0.088
+    null,
+    0.461,
+    0.108
    ],
-   "slope_R_per_step": 0.123,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "pdh_h4t_agree": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W3",
     "W2",
     "W1"
    ],
    "series": [
-    -0.023,
-    0.406,
-    0.133
+    null,
+    0.663,
+    0.175
    ],
-   "slope_R_per_step": 0.078,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "pdh_h4t_disagree": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W3",
     "W2",
     "W1"
    ],
    "series": [
-    -0.572,
-    0.11,
-    -0.073
+    null,
+    0.45,
+    -0.014
    ],
-   "slope_R_per_step": 0.2495,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "lane_funnel_then_h4pdh": {
-   "verdict": "MIXED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W3",
     "W2",
     "W1"
    ],
    "series": [
-    -0.013,
-    0.014,
-    0.01
+    null,
+    0.624,
+    -0.015
    ],
-   "slope_R_per_step": 0.0115,
-   "monotone_increasing": false,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "funnel_h4t_agree": {
-   "verdict": "REGIME_GIFTED",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W3",
     "W2",
     "W1"
    ],
    "series": [
-    0.008,
-    0.032,
-    0.093
+    null,
+    -0.637,
+    0.034
    ],
-   "slope_R_per_step": 0.0425,
-   "monotone_increasing": true,
-   "monotone_decreasing": false
+   "slope_R_per_step": null
   },
   "funnel_h4t_disagree": {
-   "verdict": "DECAYING",
+   "verdict": "INSUFFICIENT",
+   "reason": "a window has no measurable margin (None)",
    "chrono_order": [
     "W3",
     "W2",
     "W1"
    ],
    "series": [
-    0.025,
-    -0.035,
-    -0.267
+    null,
+    0.636,
+    -0.081
    ],
-   "slope_R_per_step": -0.146,
-   "monotone_increasing": false,
-   "monotone_decreasing": true
+   "slope_R_per_step": null
   }
  },
  "_headline": {
   "arm": "funnel_h4t_agree",
-  "four_window_verdict": "REGIME_GIFTED",
+  "four_window_verdict": "INSUFFICIENT",
   "four_window_series_chrono": [
-   -0.015,
-   0.008,
-   0.032,
-   0.093
+   null,
+   null,
+   -0.637,
+   0.034
   ],
-  "three_window_verdict_before_w4_draw": "REGIME_GIFTED",
-  "would_have_stopped_before_W4": true
+  "three_window_verdict_before_w4_draw": "INSUFFICIENT",
+  "would_have_stopped_before_W4": false
  }
 }

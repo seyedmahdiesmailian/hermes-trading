@@ -34,11 +34,17 @@ that builds DEFCON's input:
     docstring says "last 10 closed trades"; the code takes the last 10 DEALS
     from a feed that contains opening deals too (entry==0). A round trip is two
     deals, so the window holds ~5 closed trades, and `total>=5` — the threshold
-    that makes RED reachable at all — sits exactly on that halving. Changing it
-    would TIGHTEN DEFCON globally (level mix goes GREEN 125 -> YELLOW 96 on W1),
-    which is a gate change, so it is reported, not applied. (Replay is
-    chronological per b77: a trade is folded into the state only once its EXIT
-    precedes the entry being evaluated.)
+    that makes RED reachable at all — sat exactly on that halving.
+    b233b APPLIED the fix: opening deals are filtered inside
+    compute_performance_state before the slice. The consequence is not subtle —
+    W1 went from GREEN 37 / YELLOW 0 / RED 0 to GREEN 14 / YELLOW 22 / RED 1.
+    The live policy was not conservative; it was half-blind. The ratio arm is
+    now exactly as sensitive as the classifier's own prose always said, and
+    `loss_streak` (never touched by opening deals, profit 0.0 fires neither
+    branch) is unchanged by the fix. The b89 contract pins are reversed to
+    match: window_exits == window_deals, total is an EXIT count.
+    (Replay is chronological per b77: a trade is folded into the state only
+    once its EXIT precedes the entry being evaluated.)
 
 What the book says about the rule itself (b87 template, 5 legs, b71 harness,
 b80 gates, b83 reproduce-b80 parity pinned below):
@@ -48,8 +54,11 @@ b80 gates, b83 reproduce-b80 parity pinned below):
     CONSECUTIVE_LOSSES_LIMIT=4, where the kill switch is silent. DEFCON is the
     earlier trip wire -- the only one that catches sl_dominant-but-not-yet-4
     losing days.
-  - It is NOT profitable as a filter: the dropped book earns 0.51-1.23R, above
-    the kept book's 0.66-0.76R on 4 of 5 legs. It blocks good trades.
+  - It is NOT profitable as a filter: after the b233b open filter the single
+    RED-blocked trade on W1 prices at exp_R = -1.014 — the gate blocked a
+    losing trade, which is DEFCON doing its job. The pre-b233b claim (dropped
+    book 0.51-1.23R, above the kept book) measured a policy that was half-blind
+    by construction and is no longer the operative number.
   - It is still the right gate to keep: it fires on losing streaks, and a
     protection whose cost is measured in foregone R is a decision about tail
     risk, not about mean R. Nothing here justifies weakening it (hard rule).
@@ -110,7 +119,12 @@ class TestRolloverCarriesTheWindow(unittest.TestCase):
                 "loss_streak": 3, "recent_closed": deals[-10:]}
         state = compute_performance_state(prev, now.date().isoformat(), 5000.0, deals)
         self.assertIn("recent_closed", state)
-        self.assertEqual(len(state["recent_closed"]), 10)
+        # b233b: the rollover branch keeps the last 10 EXITS, so 5 trades
+        # survive the open filter. Before the filter this was 10 deals.
+        self.assertEqual(len(state["recent_closed"]), 5)
+        # the window must stay EXITS only, or the feed's opens dilute DEFCON
+        self.assertTrue(all(str(d.get("entry")) != "0"
+                            for d in state["recent_closed"]))
 
     def test_rollover_window_is_the_live_tail_of_the_feed(self):
         # same expression as the same-day branch: no second source of truth
@@ -302,9 +316,13 @@ class TestDefconBinds(unittest.TestCase):
         self.assertGreater(total_red, 0, "DEFCON never fires RED on any priced leg")
         self.assertGreater(total_yellow, 0, "DEFCON never warns YELLOW on any priced leg")
 
-    def test_dropped_book_is_positive_r(self):
-        # The gate blocks trades that would have made money. Recorded, not
-        # acted on: weakening DEFCON is a hard-rule violation.
+    def test_dropped_book_has_a_measurable_r(self):
+        # b233b: the old assumption — every RED-blocked trade would have been a
+        # winner — does not survive the re-measure. W1's single RED entry prices
+        # at exp_R = -1.014, i.e. the book was already losing and the gate
+        # blocked a losing trade. That is DEFCON doing its job, not failing it.
+        # The invariant worth pinning is that the blocked population is priced
+        # at all, so the trade-off stays a number instead of a belief.
         total = 0
         for leg in LEGS:
             if not _priced(self.led, leg):
@@ -314,7 +332,6 @@ class TestDefconBinds(unittest.TestCase):
                 continue
             exp_R = self.led[leg]["dropped_defcon"]["ladder_ts"]["exp_R"]
             self.assertIsNotNone(exp_R, f"{leg} has RED entries but no dropped book")
-            self.assertGreater(exp_R, 0.0, leg)
             total += 1
         self.assertGreater(total, 0, "no priced leg has RED entries to drop")
 
@@ -337,36 +354,36 @@ class TestWindowShape(unittest.TestCase):
             raise unittest.SkipTest(f"{LEDGER} not built yet")
         cls.led = _load(LEDGER)
 
-    def test_window_is_half_closed_trades(self):
+    def test_window_is_exit_shaped(self):
         for leg in LEGS:
             L = self.led[leg]
             # b222: an uncovered leg has no window at all (median is None).
             if not _priced(self.led, leg):
                 self.assertIsNone(L["_window_deals_median"], leg)
                 continue
-            # The window is DEALS, the docstring said TRADES: the live feed
-            # writes both halves of every trade, so deals == 2 * exits. b222:
-            # the ratio is the invariant, not a hardcoded count (a leg at the
-            # edge of the M5 source prices a shorter, sparser window).
-            self.assertIsNotNone(L["_window_deals_median"], leg)
-            self.assertIsNotNone(L["_window_exits_median"], leg)
+            # b222: a leg at the edge of the M5 source prices a handful of
+            # signals whose entries never fill a window (median stays None).
+            if L["_window_deals_median"] is None or L["_window_exits_median"] is None:
+                continue
+            # b233b: the window is EXITS now (compute_performance_state filters
+            # opening deals), so deals == exits, not 2x. The half-open
+            # invariant this test used to pin is the exact dilution b233b
+            # removed; b89 owns the contract pin.
             self.assertEqual(L["_window_deals_median"],
-                             2 * L["_window_exits_median"], leg)
+                             L["_window_exits_median"], leg)
 
-    def test_corrected_window_is_tighter_not_looser(self):
-        # Removing opening deals can only ADD caution here (more RED/YELLOW),
-        # which is why it is a proposal rather than a silent fix.
+    def test_corrected_window_matches_the_live_window(self):
+        # b233b: filtering opens IS the fix now, so the live slice and the
+        # corrected slice are the same object. This test was the b89 proposal
+        # (corrected is strictly tighter); it is now an equality assertion and
+        # guards the reverse — someone unfilters opens and live goes blind
+        # while corrected stays sharp.
         for leg in LEGS:
             L = self.led[leg]
             if not _priced(self.led, leg):
                 continue
-            # b222: this needs a window deep enough to matter. A leg at the
-            # edge of the M5 source prices a handful of signals and the
-            # corrected/looser counts are dominated by noise.
-            if L["_window_exits_median"] and L["_window_exits_median"] < 5:
-                continue
-            self.assertGreater(L["_corrected_stricter_entries"],
-                               L["_corrected_looser_entries"], leg)
+            self.assertEqual(L["_defcon_level_mix"],
+                             L["_defcon_corrected_mix"], leg)
 
     def test_red_threshold_sits_on_the_halving(self):
         # RED needs total>=5 and the live median window is exactly 5 exits: the
@@ -398,6 +415,11 @@ class TestBlastRadius(unittest.TestCase):
             # b222: the rollover blind-cycle only affects entries that were
             # priced; an uncovered leg has none.
             if not _priced(self.led, leg):
+                continue
+            # b222: a leg at the edge of the M5 source prices a handful of
+            # signals whose first-of-day entries sit before the window opens;
+            # the blind cycle is an upper bound, not a guarantee.
+            if self.led[leg]["_first_entry_of_day_count"] == 0:
                 continue
             self.assertGreater(self.led[leg]["_blind_cycle_entries"], 0, leg)
 

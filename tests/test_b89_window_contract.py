@@ -1,30 +1,35 @@
-"""b89 — DEFCON WINDOW: DEALS vs TRADES. Option (b) executed: the slice stays
-as it is (option (a) would TIGHTEN the only feedback-loop gate globally — a
-human decision, priced in b88), and the contract gets written down where both
-sides of it live, pinned by tests so code and documentation cannot drift again.
+"""b89 — DEFCON WINDOW: DEALS vs TRADES, REVERSED in b233b.
 
-The contract, measured by scripts/b89_window_contract.py against the LIVE
-producer (engines/risk.compute_performance_state) and the LIVE classifier
-(engines/defcon.compute_insights) — never restated here:
+b89 executed option (b): it kept the unfiltered deal-level slice and wrote the
+contract down as deliberate, deferring the open filter (option (a)) to a human
+decision because it TIGHTENS the only feedback-loop gate globally.
 
-  1. `recent_closed` is the last 10 DEALS of the bridge history feed, opening
-     deals (entry==0, profit 0.0) included. A one-position book alternates
-     open/close, so a FULL window holds exactly 5 exits. This is the number the
-     todo asked to pin: window_exits == 5.
-  2. engines/defcon's `total` is therefore a DEAL count and `sl_ratio`'s
-     denominator includes opens. In a full alternating window RED needs
-     sl_ratio >= 0.5 over 10 deals = EVERY exit an SL. One non-SL exit inside
-     the window (a TP or a managed close pushing an SL out of the tail) drops
-     the ratio to 0.4 and the level to GREEN.
-  3. The dilution is ONE-DIRECTIONAL: opening deals carry profit 0.0, which
-     fires neither loss_streak branch, so the streak arm is exact while the
-     ratio arm is HARDER than the legacy prose suggested. No shape exists where
-     the deal-level slice reads a LOOSER level than the documented trade-level
-     slice on the same book — which is why b88 measured the corrected slice as
-     a global tightening (W1 GREEN 90 -> 11), not a mixed change.
+b233b took that decision. The reason it had to be taken: with the deal-level
+slice, a one-position book alternates open/close, so the 10-deal window held
+exactly 5 exits and `sl_ratio`'s denominator was half what the classifier's own
+prose assumed. The b88 re-measure proved the consequence — the live policy
+never left GREEN (W1: GREEN 37 / YELLOW 0 / RED 0), while the corrected slice
+on the same book went GREEN 14 / YELLOW 22 / RED 1. DEFCON was half-blind by
+construction, not by intent.
 
-If any of these stops being true — someone slices closing deals only, changes
-the window length, or moves a threshold — a test here goes red and points at
+The contract as of b233b, measured by scripts/b89_window_contract.py against
+the LIVE producer (engines/risk.compute_performance_state) and the LIVE
+classifier (engines/defcon.compute_insights) — never restated here:
+
+  1. `recent_closed` is the last 10 EXITS of the bridge history feed, opening
+     deals (entry==0, profit 0.0) filtered out by compute_performance_state.
+     The cap is still 10 DEALS' worth of history, so a full window holds 10
+     exits, not 5.
+  2. engines/defcon's `total` is an EXIT count and `sl_ratio`'s denominator is
+     exits. In a full window RED still needs sl_ratio >= 0.5, but that is now
+     HALF the exits at SL instead of ALL of them — the window is twice as
+     sensitive to a losing book as it was.
+  3. The streak arm was unaffected (opening deals carry profit 0.0 and fired
+     neither branch), so loss_streak was always exact; only the ratio arm was
+     diluted. The b88 numbers above are the measured direction and magnitude.
+
+If any of these stops being true — someone unfilters opens, changes the window
+length, or moves a threshold — a test here goes red and points at
 data/backtest/b89_window_contract.json.
 """
 import hashlib
@@ -61,7 +66,12 @@ def _feed(n_trips, sl_at_end=0, partials=0):
 
 
 def _level(deals, daily_pnl=-1.0, loss_streak=0):
+    # b233b: the live producer filters opening deals out of recent_closed
+    # (engines/risk.compute_performance_state). Mirror it here so the levels
+    # this file asserts on are the levels the gate actually computes.
     from engines.defcon import classify_exits, compute_insights
+    from engines.risk import _entry_value
+    deals = [d for d in deals if not _entry_value(d)]
     return compute_insights(loss_streak=loss_streak, daily_pnl=daily_pnl,
                             balance=5000.0,
                             classified=classify_exits(deals))
@@ -77,57 +87,70 @@ class TestWindowExitCount(unittest.TestCase):
         return st["recent_closed"]
 
     def test_full_window_is_10_deals_5_exits(self):
-        w = self._window(8)
+        # b233b: opens are filtered out now, so a full window is 10 EXITS
+        # (built from 20 deals, 10 opens + 10 closes). The contract moved from
+        # deal-level to trade-level, which is why b89's pins changed shape.
+        w = self._window(10)
         self.assertEqual(len(w), WINDOW_DEALS)
         exits = [d for d in w if str(d.get("entry")) != "0"]
-        self.assertEqual(len(exits), 5,
-                         "DEFCON's window no longer holds 5 closed trades per "
-                         "10 deals — the DEALS-vs-TRADES contract changed; "
-                         "re-run scripts/b89_window_contract.py and update "
+        self.assertEqual(len(exits), WINDOW_DEALS,
+                         "DEFCON's window no longer holds 10 closed trades — "
+                         "the TRADES-level contract changed; re-run "
+                         "scripts/b89_window_contract.py and update "
                          "engines/risk.py + engines/defcon.py together")
 
     def test_short_feed_keeps_every_exit_available(self):
-        # 3 trips = 6 deals: window is the whole feed, 3 exits — RED's
-        # total>=5 is deal-count, so 6 deals already pass it.
+        # 3 trips = 6 deals, 3 exits after the open filter. The window is the
+        # whole feed — nothing is lost to the tail slice.
         w = self._window(3)
-        self.assertEqual(len(w), 6)
+        self.assertEqual(len(w), 3)
         self.assertEqual(sum(1 for d in w if str(d.get("entry")) != "0"), 3)
 
-    def test_slice_is_not_closing_deals_only(self):
-        # Option (a) of b89 would flip this test red ON PURPOSE: filtering
-        # opens inside compute_performance_state is a gate TIGHTENING and must
-        # arrive as a human decision, not a quiet edit.
+    def test_slice_is_closing_deals_only(self):
+        # b233b executed option (a) of b89: opens are filtered inside
+        # compute_performance_state. This was the gate tightening b89 deferred
+        # to a human; the b88 re-measure priced it (W1: GREEN 37 -> 14) and it
+        # is deliberate. If this test goes red, the filter regressed and DEFCON
+        # goes half-blind again.
         w = self._window(8)
         opens = [d for d in w if str(d.get("entry")) == "0"]
-        self.assertEqual(len(opens), 5)
+        self.assertEqual(len(opens), 0)
 
 
 class TestDealDenominator(unittest.TestCase):
-    """What the deal-level denominator does to the SL arms (probe C/D)."""
+    """What the exit-level denominator does to the SL arms (probe C/D).
+
+    b233b: the denominator is EXITS now, so the ratios below are 2x the
+    deal-level numbers b89 recorded. 5 SLs of 10 deals was 0.5; 5 SLs of 5
+    exits is 1.0, and one non-SL exit costs 0.2 not 0.1.
+    """
 
     def test_full_alternating_window_needs_every_exit_sl_for_red(self):
-        # 5 trips, all SL -> 5 SLs + 5 opens = ratio 0.5 -> RED
+        # 5 trips, all SL -> 5 exits, 5 SLs = ratio 1.0 -> RED
         deals = _feed(5, sl_at_end=5)[-WINDOW_DEALS:]
         ins = _level(deals)
         self.assertEqual(ins["defcon"], "RED")
-        self.assertEqual(ins["exit_stats"]["total"], 10)
-        self.assertEqual(ins["exit_stats"]["sl_ratio"], 0.5)
+        self.assertEqual(ins["exit_stats"]["total"], 5)
+        self.assertEqual(ins["exit_stats"]["sl_ratio"], 1.0)
 
     def test_one_non_sl_exit_inside_breaks_sl_dominance(self):
-        # 4 SL trips + 1 TP trip, all inside the window: 4 SLs / 10 deals = 0.4
-        # -> NOT sl_dominant -> GREEN (streak 0, daily_pnl<0 alone cannot arm).
+        # 4 SL trips + 1 TP trip = 5 exits: 4/5 = 0.8 is still sl_dominant, so
+        # RED. One non-SL exit costs 0.2, not 0.1 — the window is half as
+        # forgiving as it was under the deal-level denominator.
         deals = _feed(5, sl_at_end=4)[-WINDOW_DEALS:]
         ins = _level(deals)
-        self.assertLess(ins["exit_stats"]["sl_ratio"], 0.5)
-        self.assertEqual(ins["defcon"], "GREEN")
+        self.assertGreaterEqual(ins["exit_stats"]["sl_ratio"], 0.5)
+        self.assertEqual(ins["defcon"], "RED")
 
-    def test_yellow_sl_arm_needs_half_the_deals(self):
-        # 2 trips both SL = 4 deals: total>=3 passes, 2/4 = 0.5 -> YELLOW
-        deals = _feed(2, sl_at_end=2)[-WINDOW_DEALS:]
+    def test_yellow_sl_arm_needs_half_the_exits(self):
+        # 3 trips all SL = 3 exits: total>=3 passes, 3/3 = 1.0 -> YELLOW. The
+        # exit-level denominator halves the window's tolerance, so this arm now
+        # fires on a 3-exit book where it needed 6 deals before.
+        deals = _feed(3, sl_at_end=3)[-WINDOW_DEALS:]
         ins = _level(deals)
         self.assertEqual(ins["defcon"], "YELLOW")
-        # 1 of 2 trips SL: 1/4 = 0.25 -> GREEN
-        self.assertEqual(_level(_feed(2, sl_at_end=1)[-WINDOW_DEALS:])["defcon"],
+        # 2 trips both SL = 2 exits: total>=3 does NOT pass -> GREEN
+        self.assertEqual(_level(_feed(2, sl_at_end=2)[-WINDOW_DEALS:])["defcon"],
                          "GREEN")
 
     def test_opening_deals_are_neutral_for_the_streak(self):
@@ -177,18 +200,23 @@ class TestLedgerPinsTheContract(unittest.TestCase):
         self.assertEqual(levels[-1], "GREEN")
 
     def test_producer_shape_recorded(self):
+        # b233b: opens are filtered out, so deals == exits and opens is 0.
+        # The tail cap still bites at 20 trips (10-deal window) — that is the
+        # one shape the cap ever reaches.
         shapes = {r["feed_trips"]: r for r in self.led["producer_window_shape"]}
-        self.assertEqual(shapes[8]["window_deals"], 10)
-        self.assertEqual(shapes[8]["window_exits"], 5)
-        self.assertEqual(shapes[8]["window_opens"], 5)
+        self.assertEqual(shapes[8]["window_deals"], 8)
+        self.assertEqual(shapes[8]["window_exits"], 8)
+        self.assertEqual(shapes[8]["window_opens"], 0)
+        self.assertEqual(shapes[20]["window_deals"], 10)
 
-    def test_live_window_snapshot_is_deal_shaped(self):
+    def test_live_window_snapshot_is_exit_shaped(self):
         lw = self.led["live_window"]
         if not lw.get("present"):
             self.skipTest("no live performance_state.json on this host")
-        # whatever the live book holds, `total` DEFCON sees must equal the DEAL
-        # count, never the exit count (that would mean option (a) shipped).
-        self.assertEqual(lw["total_as_defcon_sees_it"], lw["window_deals"])
+        # b233b: `total` DEFCON sees is now the EXIT count, never the deal
+        # count. If this flips back, the open filter regressed and DEFCON goes
+        # half-blind again (see b88).
+        self.assertEqual(lw["total_as_defcon_sees_it"], lw["window_exits"])
 
 
 class TestDocsSayWhatCodeDoes(unittest.TestCase):

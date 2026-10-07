@@ -32,6 +32,7 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 
 import engines.signal_listener as SL  # noqa: E402
+import hermes_runtime  # noqa: E402 (b41: leak half of the storage patch closed)
 
 _NOW_TS = int(datetime.now(timezone.utc).timestamp())
 _MSG = {
@@ -83,12 +84,31 @@ def _run(bridge):
     SL._save_state = lambda st: _state.update(st)
     SL.fetch_new_messages = lambda: [dict(_MSG)]
     SL.os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100b211c"
+    # b211c: the live data/xau_plan carries whatever bias the market has today.
+    # The signal is a SELL, so a bullish plan vetoes it with direction_conflict,
+    # nothing executes, and no snapshot is threaded out. Patch a SELL plan in so
+    # the signal reaches the executor and the snapshot path is actually covered.
+    from engines import storage as _st
+    _orig_plan = _st.load_current_plan
+    _fake = lambda *a, **k: {
+        "bias": "bearish", "side": "SELL",
+        "quality": {"confidence": 0.8}, "timestamp": time.time(),
+    }
+    _st.load_current_plan = _fake
+    # b41: hermes_runtime from-imports load_current_plan at module level and
+    # calls it by bare name, so the storage patch is a NO-OP on that path.
+    # Mirror the fake onto the binding hermes_runtime actually holds, and
+    # restore both in finally (same shape as test_b211_null_currency_and_single_read).
+    _orig_rt_plan = hermes_runtime.load_current_plan
+    hermes_runtime.load_current_plan = _fake
     # a dry_run executor must never reach an order endpoint
     try:
         return SL.run_signal_check(bridge, dry_run=True)
     finally:
         SL.fetch_new_messages = orig_fetch
         SL._load_state, SL._save_state = orig_load, orig_save
+        _st.load_current_plan = _orig_plan
+        hermes_runtime.load_current_plan = _orig_rt_plan
         if orig_group is None:
             SL.os.environ.pop("TELEGRAM_SIGNAL_GROUP", None)
         else:

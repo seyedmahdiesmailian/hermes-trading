@@ -26,8 +26,10 @@ import bisect
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 
-from engines import lab_harness as lh              # noqa: E402
-from engines.backtest_real import strategy_signal  # noqa: E402
+from engines import lab_harness as lh              # noqa: E402  (b71 harness)
+from engines.backtest_real import (strategy_signal,  # noqa: E402
+                                   m5_window_for)
+from scripts.b81_lane_rescore import m5_span_for   # noqa: E402 (b222 M5 source)
 from scripts import b68l_windows as wl             # noqa: E402
 from scripts import b68m_htf_pdh_lab as mm         # noqa: E402
 
@@ -48,6 +50,23 @@ def measure_window(name, rows):
     h1t = [r.get("time", 0) for r in h1]
     h4t = [r.get("time", 0) for r in h4]
     f_sig = {}
+    # b222: the funnel's b187 trigger cannot fire without the M5 stream — an
+    # M15 leg reaches no confirmation, so pre-b222 this probe priced a 3x
+    # larger trigger-less population. Hand the leg its own M5 slice so the
+    # funnel is the same one the live executor confirms against. Where the
+    # b182 M5 source does not cover the leg the slice is empty and the
+    # funnel legitimately prices nothing.
+    # b233b: the slice must be cut per bar at decision time (bar close +
+    # spacing), exactly as funnel_fn does — strategy_signal forwards
+    # m5_rows straight to the monitor, whose m5_confirmation reads
+    # m5_rows[-n:], so passing the whole stream would price the trigger off
+    # M5 closes that had not yet formed (a look-ahead).
+    m5_all = m5_span_for(m15)
+    m5t = [int(r.get("time", 0)) for r in (m5_all or [])]
+    gaps = sorted(int(m15[i + 1]["time"]) - int(m15[i]["time"])
+                  for i in range(len(m15) - 1))
+    gaps = [g for g in gaps if g > 0]
+    bar_spacing = gaps[len(gaps) // 2] if gaps else 300
     for i, row in enumerate(m15):
         bt = row.get("time", 0)
         j1 = bisect.bisect_right(h1t, bt)
@@ -55,7 +74,9 @@ def measure_window(name, rows):
         hw = h1[max(0, j1 - 80):j1]
         h4w = h4[max(0, j4 - 80):j4]
         mw = m15[max(0, i - 120):i + 1]
-        s = strategy_signal(row, hw, h4w, i, m15_window=mw)
+        _m5 = (m5_window_for(m5_all, m5t, int(bt) + bar_spacing)
+               if m5_all else None)
+        s = strategy_signal(row, hw, h4w, i, m15_window=mw, m5_rows=_m5)
         if s:
             f_sig[i] = s
 
@@ -104,7 +125,8 @@ def verdict(led, windows=("W1", "W2")):
             row = win[arm]["ladder_ts"]
             v[w][arm] = {"exp_R": row["exp_R"], "n": row["trades"],
                          "beats_funnel": (row["exp_R"] is not None
-                                          and row["exp_R"] > f["exp_R"])}
+                                         and f["exp_R"] is not None
+                                         and row["exp_R"] > f["exp_R"])}
     both = {}
     for arm in v[windows[0]]:
         if arm in ("funnel_exp_R", "funnel_n"):

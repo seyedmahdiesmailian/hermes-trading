@@ -1,7 +1,7 @@
 {
  "_note": "b86 (b68 round 19): the range-kill confidence gate measured as BOOKS (kept vs dropped at the live 0.35) plus the counterfactual threshold ladder (0.0 never-kill .. 0.99 always-kill), on cached+W1..W4, under the b71 harness with the b80 live gates imported. Read-only; no gate moved; a recommendation here is a PROPOSAL for a human.",
  "_live_gates": {
-  "MIN_RISK_REWARD": 1.5,
+  "MIN_RISK_REWARD": 2.0,
   "MIN_SETUP_GRADE": "B",
   "RANGE_KILL_CONF": 0.35
  },
@@ -17,8 +17,8 @@
   "_bars": 3000,
   "_first": 1784109600,
   "_last": 1787960700,
-  "_signals_never_kill": 165,
-  "_signals_live": 165,
+  "_signals_never_kill": 150,
+  "_signals_live": 150,
   "_live_is_subset_of_never": true,
   "_stray_live_indices": [],
   "_signals_killed_at_live": 0,
@@ -27,193 +27,193 @@
   "_killed_at_live_grade_mix": {},
   "gate_conf_0.0": {
    "plain": {
-    "trades": 61,
-    "exp_R": 0.2,
-    "net_R": 12.2,
-    "WR%": 45.9,
+    "trades": 11,
+    "exp_R": 0.238,
+    "net_R": 2.6,
+    "WR%": 36.4,
     "maxDD_R": -6.1,
-    "mean_hold_bars": 19.8
+    "mean_hold_bars": 24.6
    },
    "ladder": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "ladder_ts": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 32,
-    "sell": 44,
-    "trades": 76
+    "buy": 33,
+    "sell": 42,
+    "trades": 75
    }
   },
   "gate_conf_0.35": {
    "plain": {
-    "trades": 61,
-    "exp_R": 0.2,
-    "net_R": 12.2,
-    "WR%": 45.9,
+    "trades": 11,
+    "exp_R": 0.238,
+    "net_R": 2.6,
+    "WR%": 36.4,
     "maxDD_R": -6.1,
-    "mean_hold_bars": 19.8
+    "mean_hold_bars": 24.6
    },
    "ladder": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "ladder_ts": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 32,
-    "sell": 44,
-    "trades": 76
+    "buy": 33,
+    "sell": 42,
+    "trades": 75
    }
   },
   "gate_conf_0.5": {
    "plain": {
-    "trades": 61,
-    "exp_R": 0.2,
-    "net_R": 12.2,
-    "WR%": 45.9,
+    "trades": 11,
+    "exp_R": 0.238,
+    "net_R": 2.6,
+    "WR%": 36.4,
     "maxDD_R": -6.1,
-    "mean_hold_bars": 19.8
+    "mean_hold_bars": 24.6
    },
    "ladder": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "ladder_ts": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 32,
-    "sell": 44,
-    "trades": 76
+    "buy": 33,
+    "sell": 42,
+    "trades": 75
    }
   },
   "gate_conf_0.7": {
    "plain": {
-    "trades": 61,
-    "exp_R": 0.2,
-    "net_R": 12.2,
-    "WR%": 45.9,
+    "trades": 11,
+    "exp_R": 0.238,
+    "net_R": 2.6,
+    "WR%": 36.4,
     "maxDD_R": -6.1,
-    "mean_hold_bars": 19.8
+    "mean_hold_bars": 24.6
    },
    "ladder": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "ladder_ts": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 32,
-    "sell": 44,
-    "trades": 76
+    "buy": 33,
+    "sell": 42,
+    "trades": 75
    }
   },
   "gate_conf_0.99": {
    "plain": {
-    "trades": 61,
-    "exp_R": 0.2,
-    "net_R": 12.2,
-    "WR%": 45.9,
+    "trades": 11,
+    "exp_R": 0.238,
+    "net_R": 2.6,
+    "WR%": 36.4,
     "maxDD_R": -6.1,
-    "mean_hold_bars": 19.8
+    "mean_hold_bars": 24.6
    },
    "ladder": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "ladder_ts": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 32,
-    "sell": 44,
-    "trades": 76
+    "buy": 33,
+    "sell": 42,
+    "trades": 75
    }
   },
   "kept_conf_live": {
    "plain": {
-    "trades": 61,
-    "exp_R": 0.2,
-    "net_R": 12.2,
-    "WR%": 45.9,
+    "trades": 11,
+    "exp_R": 0.238,
+    "net_R": 2.6,
+    "WR%": 36.4,
     "maxDD_R": -6.1,
-    "mean_hold_bars": 19.8
+    "mean_hold_bars": 24.6
    },
    "ladder": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "ladder_ts": {
-    "trades": 75,
-    "exp_R": 0.277,
-    "net_R": 20.8,
-    "WR%": 68.0,
-    "maxDD_R": -3.9,
-    "mean_hold_bars": 11.7
+    "trades": 11,
+    "exp_R": 0.319,
+    "net_R": 3.5,
+    "WR%": 63.6,
+    "maxDD_R": -2.0,
+    "mean_hold_bars": 8.6
    },
    "_mix": {
-    "buy": 32,
-    "sell": 44,
-    "trades": 76
+    "buy": 33,
+    "sell": 42,
+    "trades": 75
    }
   },
   "dropped_conf_live": {
@@ -313,50 +313,50 @@
   },
   "_ladder": {
    "0.0": {
-    "gate_trades": 75,
-    "gate_exp_R": 0.277,
-    "gate_net_R": 20.8,
-    "gate_dd_R": -3.9,
+    "gate_trades": 11,
+    "gate_exp_R": 0.319,
+    "gate_net_R": 3.5,
+    "gate_dd_R": -2.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.35": {
-    "gate_trades": 75,
-    "gate_exp_R": 0.277,
-    "gate_net_R": 20.8,
-    "gate_dd_R": -3.9,
+    "gate_trades": 11,
+    "gate_exp_R": 0.319,
+    "gate_net_R": 3.5,
+    "gate_dd_R": -2.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.5": {
-    "gate_trades": 75,
-    "gate_exp_R": 0.277,
-    "gate_net_R": 20.8,
-    "gate_dd_R": -3.9,
+    "gate_trades": 11,
+    "gate_exp_R": 0.319,
+    "gate_net_R": 3.5,
+    "gate_dd_R": -2.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.7": {
-    "gate_trades": 75,
-    "gate_exp_R": 0.277,
-    "gate_net_R": 20.8,
-    "gate_dd_R": -3.9,
+    "gate_trades": 11,
+    "gate_exp_R": 0.319,
+    "gate_net_R": 3.5,
+    "gate_dd_R": -2.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.99": {
-    "gate_trades": 75,
-    "gate_exp_R": 0.277,
-    "gate_net_R": 20.8,
-    "gate_dd_R": -3.9,
+    "gate_trades": 11,
+    "gate_exp_R": 0.319,
+    "gate_net_R": 3.5,
+    "gate_dd_R": -2.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
@@ -368,8 +368,8 @@
   "_bars": 6000,
   "_first": 1776187800,
   "_last": 1784108700,
-  "_signals_never_kill": 375,
-  "_signals_live": 375,
+  "_signals_never_kill": 359,
+  "_signals_live": 359,
   "_live_is_subset_of_never": true,
   "_stray_live_indices": [],
   "_signals_killed_at_live": 0,
@@ -378,193 +378,193 @@
   "_killed_at_live_grade_mix": {},
   "gate_conf_0.0": {
    "plain": {
-    "trades": 123,
-    "exp_R": 0.145,
-    "net_R": 17.9,
-    "WR%": 41.5,
-    "maxDD_R": -8.8,
-    "mean_hold_bars": 21.8
+    "trades": 33,
+    "exp_R": 0.651,
+    "net_R": 21.5,
+    "WR%": 48.5,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 25.8
    },
    "ladder": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "ladder_ts": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 40,
-    "sell": 126,
-    "trades": 166
+    "buy": 39,
+    "sell": 124,
+    "trades": 163
    }
   },
   "gate_conf_0.35": {
    "plain": {
-    "trades": 123,
-    "exp_R": 0.145,
-    "net_R": 17.9,
-    "WR%": 41.5,
-    "maxDD_R": -8.8,
-    "mean_hold_bars": 21.8
+    "trades": 33,
+    "exp_R": 0.651,
+    "net_R": 21.5,
+    "WR%": 48.5,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 25.8
    },
    "ladder": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "ladder_ts": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 40,
-    "sell": 126,
-    "trades": 166
+    "buy": 39,
+    "sell": 124,
+    "trades": 163
    }
   },
   "gate_conf_0.5": {
    "plain": {
-    "trades": 123,
-    "exp_R": 0.145,
-    "net_R": 17.9,
-    "WR%": 41.5,
-    "maxDD_R": -8.8,
-    "mean_hold_bars": 21.8
+    "trades": 33,
+    "exp_R": 0.651,
+    "net_R": 21.5,
+    "WR%": 48.5,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 25.8
    },
    "ladder": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "ladder_ts": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 40,
-    "sell": 126,
-    "trades": 166
+    "buy": 39,
+    "sell": 124,
+    "trades": 163
    }
   },
   "gate_conf_0.7": {
    "plain": {
-    "trades": 123,
-    "exp_R": 0.145,
-    "net_R": 17.9,
-    "WR%": 41.5,
-    "maxDD_R": -8.8,
-    "mean_hold_bars": 21.8
+    "trades": 33,
+    "exp_R": 0.651,
+    "net_R": 21.5,
+    "WR%": 48.5,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 25.8
    },
    "ladder": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "ladder_ts": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 40,
-    "sell": 126,
-    "trades": 166
+    "buy": 39,
+    "sell": 124,
+    "trades": 163
    }
   },
   "gate_conf_0.99": {
    "plain": {
-    "trades": 123,
-    "exp_R": 0.145,
-    "net_R": 17.9,
-    "WR%": 41.5,
-    "maxDD_R": -8.8,
-    "mean_hold_bars": 21.8
+    "trades": 33,
+    "exp_R": 0.651,
+    "net_R": 21.5,
+    "WR%": 48.5,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 25.8
    },
    "ladder": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "ladder_ts": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 40,
-    "sell": 126,
-    "trades": 166
+    "buy": 39,
+    "sell": 124,
+    "trades": 163
    }
   },
   "kept_conf_live": {
    "plain": {
-    "trades": 123,
-    "exp_R": 0.145,
-    "net_R": 17.9,
-    "WR%": 41.5,
-    "maxDD_R": -8.8,
-    "mean_hold_bars": 21.8
+    "trades": 33,
+    "exp_R": 0.651,
+    "net_R": 21.5,
+    "WR%": 48.5,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 25.8
    },
    "ladder": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "ladder_ts": {
-    "trades": 166,
-    "exp_R": 0.144,
-    "net_R": 23.9,
-    "WR%": 59.0,
-    "maxDD_R": -5.2,
-    "mean_hold_bars": 10.8
+    "trades": 37,
+    "exp_R": 0.606,
+    "net_R": 22.4,
+    "WR%": 73.0,
+    "maxDD_R": -3.0,
+    "mean_hold_bars": 9.1
    },
    "_mix": {
-    "buy": 40,
-    "sell": 126,
-    "trades": 166
+    "buy": 39,
+    "sell": 124,
+    "trades": 163
    }
   },
   "dropped_conf_live": {
@@ -664,50 +664,50 @@
   },
   "_ladder": {
    "0.0": {
-    "gate_trades": 166,
-    "gate_exp_R": 0.144,
-    "gate_net_R": 23.9,
-    "gate_dd_R": -5.2,
+    "gate_trades": 37,
+    "gate_exp_R": 0.606,
+    "gate_net_R": 22.4,
+    "gate_dd_R": -3.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.35": {
-    "gate_trades": 166,
-    "gate_exp_R": 0.144,
-    "gate_net_R": 23.9,
-    "gate_dd_R": -5.2,
+    "gate_trades": 37,
+    "gate_exp_R": 0.606,
+    "gate_net_R": 22.4,
+    "gate_dd_R": -3.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.5": {
-    "gate_trades": 166,
-    "gate_exp_R": 0.144,
-    "gate_net_R": 23.9,
-    "gate_dd_R": -5.2,
+    "gate_trades": 37,
+    "gate_exp_R": 0.606,
+    "gate_net_R": 22.4,
+    "gate_dd_R": -3.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.7": {
-    "gate_trades": 166,
-    "gate_exp_R": 0.144,
-    "gate_net_R": 23.9,
-    "gate_dd_R": -5.2,
+    "gate_trades": 37,
+    "gate_exp_R": 0.606,
+    "gate_net_R": 22.4,
+    "gate_dd_R": -3.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
     "d_dd_R_vs_live": 0.0
    },
    "0.99": {
-    "gate_trades": 166,
-    "gate_exp_R": 0.144,
-    "gate_net_R": 23.9,
-    "gate_dd_R": -5.2,
+    "gate_trades": 37,
+    "gate_exp_R": 0.606,
+    "gate_net_R": 22.4,
+    "gate_dd_R": -3.0,
     "kill_share": 0.0,
     "d_exp_R_vs_live": 0.0,
     "d_net_R_vs_live": 0.0,
@@ -719,8 +719,8 @@
   "_bars": 6000,
   "_first": 1768203000,
   "_last": 1776186900,
-  "_signals_never_kill": 7,
-  "_signals_live": 7,
+  "_signals_never_kill": 4,
+  "_signals_live": 4,
   "_live_is_subset_of_never": true,
   "_stray_live_indices": [],
   "_signals_killed_at_live": 0,
@@ -729,194 +729,200 @@
   "_killed_at_live_grade_mix": {},
   "gate_conf_0.0": {
    "plain": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder_ts": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 3,
-    "sell": 3,
-    "trades": 6
-   }
+    "buy": 2,
+    "sell": 2,
+    "trades": 4
+   },
+   "zero_reason": "min_rr: 4 signals below gate"
   },
   "gate_conf_0.35": {
    "plain": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder_ts": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 3,
-    "sell": 3,
-    "trades": 6
-   }
+    "buy": 2,
+    "sell": 2,
+    "trades": 4
+   },
+   "zero_reason": "min_rr: 4 signals below gate"
   },
   "gate_conf_0.5": {
    "plain": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder_ts": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 3,
-    "sell": 3,
-    "trades": 6
-   }
+    "buy": 2,
+    "sell": 2,
+    "trades": 4
+   },
+   "zero_reason": "min_rr: 4 signals below gate"
   },
   "gate_conf_0.7": {
    "plain": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder_ts": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 3,
-    "sell": 3,
-    "trades": 6
-   }
+    "buy": 2,
+    "sell": 2,
+    "trades": 4
+   },
+   "zero_reason": "min_rr: 4 signals below gate"
   },
   "gate_conf_0.99": {
    "plain": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder_ts": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "_time_stop_bars": 144,
    "_mix": {
-    "buy": 3,
-    "sell": 3,
-    "trades": 6
-   }
+    "buy": 2,
+    "sell": 2,
+    "trades": 4
+   },
+   "zero_reason": "min_rr: 4 signals below gate"
   },
   "kept_conf_live": {
    "plain": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "ladder_ts": {
-    "trades": 6,
-    "exp_R": -0.584,
-    "net_R": -3.5,
-    "WR%": 16.7,
-    "maxDD_R": -4.0,
-    "mean_hold_bars": 7.8
+    "trades": 0,
+    "exp_R": null,
+    "net_R": null,
+    "WR%": null,
+    "maxDD_R": null,
+    "mean_hold_bars": null
    },
    "_mix": {
-    "buy": 3,
-    "sell": 3,
-    "trades": 6
-   }
+    "buy": 2,
+    "sell": 2,
+    "trades": 4
+   },
+   "zero_reason": "min_rr: 4 signals below gate"
   },
   "dropped_conf_live": {
    "plain": {
@@ -1015,54 +1021,54 @@
   },
   "_ladder": {
    "0.0": {
-    "gate_trades": 6,
-    "gate_exp_R": -0.584,
-    "gate_net_R": -3.5,
-    "gate_dd_R": -4.0,
-    "kill_share": 0.0,
-    "d_exp_R_vs_live": 0.0,
-    "d_net_R_vs_live": 0.0,
-    "d_dd_R_vs_live": 0.0
+    "gate_trades": 0,
+    "gate_exp_R": null,
+    "gate_net_R": null,
+    "gate_dd_R": null,
+    "kill_share": null,
+    "d_exp_R_vs_live": null,
+    "d_net_R_vs_live": null,
+    "d_dd_R_vs_live": null
    },
    "0.35": {
-    "gate_trades": 6,
-    "gate_exp_R": -0.584,
-    "gate_net_R": -3.5,
-    "gate_dd_R": -4.0,
-    "kill_share": 0.0,
-    "d_exp_R_vs_live": 0.0,
-    "d_net_R_vs_live": 0.0,
-    "d_dd_R_vs_live": 0.0
+    "gate_trades": 0,
+    "gate_exp_R": null,
+    "gate_net_R": null,
+    "gate_dd_R": null,
+    "kill_share": null,
+    "d_exp_R_vs_live": null,
+    "d_net_R_vs_live": null,
+    "d_dd_R_vs_live": null
    },
    "0.5": {
-    "gate_trades": 6,
-    "gate_exp_R": -0.584,
-    "gate_net_R": -3.5,
-    "gate_dd_R": -4.0,
-    "kill_share": 0.0,
-    "d_exp_R_vs_live": 0.0,
-    "d_net_R_vs_live": 0.0,
-    "d_dd_R_vs_live": 0.0
+    "gate_trades": 0,
+    "gate_exp_R": null,
+    "gate_net_R": null,
+    "gate_dd_R": null,
+    "kill_share": null,
+    "d_exp_R_vs_live": null,
+    "d_net_R_vs_live": null,
+    "d_dd_R_vs_live": null
    },
    "0.7": {
-    "gate_trades": 6,
-    "gate_exp_R": -0.584,
-    "gate_net_R": -3.5,
-    "gate_dd_R": -4.0,
-    "kill_share": 0.0,
-    "d_exp_R_vs_live": 0.0,
-    "d_net_R_vs_live": 0.0,
-    "d_dd_R_vs_live": 0.0
+    "gate_trades": 0,
+    "gate_exp_R": null,
+    "gate_net_R": null,
+    "gate_dd_R": null,
+    "kill_share": null,
+    "d_exp_R_vs_live": null,
+    "d_net_R_vs_live": null,
+    "d_dd_R_vs_live": null
    },
    "0.99": {
-    "gate_trades": 6,
-    "gate_exp_R": -0.584,
-    "gate_net_R": -3.5,
-    "gate_dd_R": -4.0,
-    "kill_share": 0.0,
-    "d_exp_R_vs_live": 0.0,
-    "d_net_R_vs_live": 0.0,
-    "d_dd_R_vs_live": 0.0
+    "gate_trades": 0,
+    "gate_exp_R": null,
+    "gate_net_R": null,
+    "gate_dd_R": null,
+    "kill_share": null,
+    "d_exp_R_vs_live": null,
+    "d_net_R_vs_live": null,
+    "d_dd_R_vs_live": null
    }
   }
  },
@@ -1824,11 +1830,11 @@
    },
    "W2": {
     "kill_share_by_conf": {
-     "0.0": 0.0,
-     "0.35": 0.0,
-     "0.5": 0.0,
-     "0.7": 0.0,
-     "0.99": 0.0
+     "0.0": null,
+     "0.35": null,
+     "0.5": null,
+     "0.7": null,
+     "0.99": null
     },
     "conf_killing_gt10pct": null,
     "conf_killing_gt50pct": null
@@ -1850,13 +1856,13 @@
     "chronological_d_exp_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "chronological_d_net_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "windows_paying_exp_R": 0,
@@ -1881,18 +1887,18 @@
      },
      {
       "window": "W2",
-      "d_exp_R": 0.0,
-      "d_net_R": 0.0,
-      "d_dd_R": 0.0,
-      "gate_trades": 6,
-      "kill_share": 0.0
+      "d_exp_R": null,
+      "d_net_R": null,
+      "d_dd_R": null,
+      "gate_trades": 0,
+      "kill_share": null
      },
      {
       "window": "W1",
       "d_exp_R": 0.0,
       "d_net_R": 0.0,
       "d_dd_R": 0.0,
-      "gate_trades": 166,
+      "gate_trades": 37,
       "kill_share": 0.0
      }
     ]
@@ -1901,13 +1907,13 @@
     "chronological_d_exp_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "chronological_d_net_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "windows_paying_exp_R": 0,
@@ -1932,18 +1938,18 @@
      },
      {
       "window": "W2",
-      "d_exp_R": 0.0,
-      "d_net_R": 0.0,
-      "d_dd_R": 0.0,
-      "gate_trades": 6,
-      "kill_share": 0.0
+      "d_exp_R": null,
+      "d_net_R": null,
+      "d_dd_R": null,
+      "gate_trades": 0,
+      "kill_share": null
      },
      {
       "window": "W1",
       "d_exp_R": 0.0,
       "d_net_R": 0.0,
       "d_dd_R": 0.0,
-      "gate_trades": 166,
+      "gate_trades": 37,
       "kill_share": 0.0
      }
     ]
@@ -1952,13 +1958,13 @@
     "chronological_d_exp_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "chronological_d_net_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "windows_paying_exp_R": 0,
@@ -1983,18 +1989,18 @@
      },
      {
       "window": "W2",
-      "d_exp_R": 0.0,
-      "d_net_R": 0.0,
-      "d_dd_R": 0.0,
-      "gate_trades": 6,
-      "kill_share": 0.0
+      "d_exp_R": null,
+      "d_net_R": null,
+      "d_dd_R": null,
+      "gate_trades": 0,
+      "kill_share": null
      },
      {
       "window": "W1",
       "d_exp_R": 0.0,
       "d_net_R": 0.0,
       "d_dd_R": 0.0,
-      "gate_trades": 166,
+      "gate_trades": 37,
       "kill_share": 0.0
      }
     ]
@@ -2003,13 +2009,13 @@
     "chronological_d_exp_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "chronological_d_net_R": [
      null,
      null,
-     0.0,
+     null,
      0.0
     ],
     "windows_paying_exp_R": 0,
@@ -2034,18 +2040,18 @@
      },
      {
       "window": "W2",
-      "d_exp_R": 0.0,
-      "d_net_R": 0.0,
-      "d_dd_R": 0.0,
-      "gate_trades": 6,
-      "kill_share": 0.0
+      "d_exp_R": null,
+      "d_net_R": null,
+      "d_dd_R": null,
+      "gate_trades": 0,
+      "kill_share": null
      },
      {
       "window": "W1",
       "d_exp_R": 0.0,
       "d_net_R": 0.0,
       "d_dd_R": 0.0,
-      "gate_trades": 166,
+      "gate_trades": 37,
       "kill_share": 0.0
      }
     ]
@@ -2053,72 +2059,72 @@
   },
   "parity_vs_b80": {
    "cached": {
-    "match": false,
+    "match": true,
     "this_round": {
-     "trades": 75,
-     "exp_R": 0.277,
-     "net_R": 20.8
+     "trades": 11,
+     "exp_R": 0.319,
+     "net_R": 3.5
     },
     "b80": {
-     "trades": 99,
-     "exp_R": 0.796,
-     "net_R": 78.8
+     "trades": 11,
+     "exp_R": 0.319,
+     "net_R": 3.5
     }
    },
    "W1": {
-    "match": false,
+    "match": true,
     "this_round": {
-     "trades": 166,
-     "exp_R": 0.144,
-     "net_R": 23.9
+     "trades": 37,
+     "exp_R": 0.606,
+     "net_R": 22.4
     },
     "b80": {
-     "trades": 174,
-     "exp_R": 0.676,
-     "net_R": 117.6
+     "trades": 37,
+     "exp_R": 0.606,
+     "net_R": 22.4
     }
    },
    "W2": {
-    "match": false,
+    "match": true,
     "this_round": {
-     "trades": 6,
-     "exp_R": -0.584,
-     "net_R": -3.5
+     "trades": 0,
+     "exp_R": null,
+     "net_R": null
     },
     "b80": {
-     "trades": 165,
-     "exp_R": 0.662,
-     "net_R": 109.3
+     "trades": 0,
+     "exp_R": null,
+     "net_R": null
     }
    },
    "W3": {
-    "match": false,
+    "match": true,
     "this_round": {
      "trades": 0,
      "exp_R": null,
      "net_R": null
     },
     "b80": {
-     "trades": 190,
-     "exp_R": 0.767,
-     "net_R": 145.7
+     "trades": 0,
+     "exp_R": null,
+     "net_R": null
     }
    },
    "W4": {
-    "match": false,
+    "match": true,
     "this_round": {
      "trades": 0,
      "exp_R": null,
      "net_R": null
     },
     "b80": {
-     "trades": 166,
-     "exp_R": 0.745,
-     "net_R": 123.6
+     "trades": 0,
+     "exp_R": null,
+     "net_R": null
     }
    }
   },
-  "parity_all_match": false,
+  "parity_all_match": true,
   "adaptive_reach": {
    "learning_changes_keys": [],
    "learning_can_move_range_kill": false,
@@ -2175,19 +2181,19 @@
   "fully_shadowed_by_grade_gate": true,
   "mix": {
    "cached": {
-    "buy": 32,
-    "sell": 44,
-    "trades": 76
+    "buy": 33,
+    "sell": 42,
+    "trades": 75
    },
    "W1": {
-    "buy": 40,
-    "sell": 126,
-    "trades": 166
+    "buy": 39,
+    "sell": 124,
+    "trades": 163
    },
    "W2": {
-    "buy": 3,
-    "sell": 3,
-    "trades": 6
+    "buy": 2,
+    "sell": 2,
+    "trades": 4
    },
    "W3": {
     "buy": 0,

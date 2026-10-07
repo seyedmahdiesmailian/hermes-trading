@@ -114,7 +114,15 @@ def compute_performance_state(current: dict, today: str, balance: float, closed_
             # b88: keep the recent broker window through UTC rollover so
             # DEFCON is not blind on the first cycle of a new day. Only the
             # day-scoped PnL and streak reset here.
-            "recent_closed": (closed_trades or [])[-10:],
+            # b233b: filter OPENING deals (entry==0/IN, profit 0.0). They are
+            # not exits and never carry a realised loss, so leaving them in
+            # dilutes `sl_ratio` (5 SL closes of a 10-deal half-open window
+            # reads 0.5, not 1.0) and DEFCON stops escalating at exactly the
+            # moment the book turns. The b88 re-measure with the filter
+            # applied shows YELLOW on 16 and RED on 1 of 359 W1 entries;
+            # without it DEFCON never leaves GREEN.
+            "recent_closed": [d for d in (closed_trades or [])
+                              if not _entry_value(d)][-10:],
         }
 
     # Existing state files predate the net-PnL contract. Rebuild today's
@@ -176,8 +184,12 @@ def compute_performance_state(current: dict, today: str, balance: float, closed_
         # returns a shorter window than the previous tick
         "trades_today": max(entries_today, int(state.get("trades_today", 0) or 0)),
         "last_closed_ticket": new_trades[-1].get("ticket") if new_trades else last_closed_ticket,
-        # last 10 closed deals (with MT5 comment) → DEFCON classification
-        "recent_closed": (closed_trades or [])[-10:],
+        # last 10 closed deals (with MT5 comment) → DEFCON classification.
+        # b233b: opening deals filtered out (see the branch above) — an
+        # opening deal is not an exit and dilutes sl_ratio by half, which is
+        # exactly why the live policy never left GREEN.
+        "recent_closed": [d for d in (closed_trades or [])
+                          if not _entry_value(d)][-10:],
     }
 
 

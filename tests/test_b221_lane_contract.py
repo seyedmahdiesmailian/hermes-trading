@@ -62,6 +62,7 @@ sys.path.insert(0, str(ROOT))
 
 from engines import auto_executor as AE  # noqa: E402
 from engines import signal_listener as SL  # noqa: E402
+import hermes_runtime  # noqa: E402 (b41: leak half of the storage patch closed)
 from hermes_runtime import _performance_and_policy  # noqa: E402
 
 FLAG = "positions_unreadable"
@@ -205,6 +206,23 @@ def _signal_executions(dark: bool) -> list[dict]:
     # check_entry_cooldown stays on CD only: AE imports it lazily at line 316.
     _orig_ae_open = AE.is_market_open
     SL.os.environ["TELEGRAM_SIGNAL_GROUP"] = "-100contract"
+    # b221: the live data/xau_plan holds whatever bias the market has today; a
+    # bullish plan vetoes this SELL fixture with direction_conflict and the
+    # lane is never exercised. Pin a bearish plan so the contract is actually
+    # tested against today's plan state.
+    from engines import storage as _st
+    _orig_plan = _st.load_current_plan
+    _fake = lambda *a, **k: {
+        "bias": "bearish", "side": "SELL",
+        "quality": {"confidence": 0.8}, "timestamp": _NOW.timestamp(),
+    }
+    _st.load_current_plan = _fake
+    # b41: hermes_runtime from-imports load_current_plan at module level and
+    # calls it by bare name, so the storage patch is a NO-OP on that path.
+    # Mirror the fake onto the binding hermes_runtime actually holds, and
+    # restore both in finally (same shape as test_b211c_single_account_read).
+    _orig_rt_plan = hermes_runtime.load_current_plan
+    hermes_runtime.load_current_plan = _fake
     SL.fetch_new_messages = lambda: [{
         "update_id": 1,
         "chat_id": "-100contract",
@@ -235,6 +253,8 @@ def _signal_executions(dark: bool) -> list[dict]:
         SL._save_state = _orig_save
         MH.is_market_open = _orig_open
         AE.is_market_open = _orig_ae_open
+        _st.load_current_plan = _orig_plan
+        hermes_runtime.load_current_plan = _orig_rt_plan
         CD.check_entry_cooldown = _orig_cd
         if _orig_group is None:
             SL.os.environ.pop("TELEGRAM_SIGNAL_GROUP", None)

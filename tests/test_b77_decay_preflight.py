@@ -91,32 +91,52 @@ class TestShippedPreflight(unittest.TestCase):
         row = self.p["four_window"][CHAMPION]
         self.assertEqual(row["series"],
                          [by_label[w] for w in row["chrono_order"]])
-        self.assertEqual(row["series"], [-0.015, 0.008, 0.032, 0.093])
-        self.assertEqual(row["verdict"], "REGIME_GIFTED")
-        self.assertTrue(row["monotone_increasing"])
-        self.assertGreaterEqual(row["slope_R_per_step"], ld.SLOPE_MIN_R)
+        # b233b: the series carries two gaps because W3/W4 are unpriced. The
+        # pre-flight must read the gaps (None) rather than synthesise zeros,
+        # and verdict INSUFFICIENT rather than REGIME_GIFTED on a 2-window map.
+        self.assertEqual(row["series"], [None, None, -0.637, 0.034])
+        self.assertEqual(row["verdict"], "INSUFFICIENT")
+        self.assertIn("no measurable margin", row.get("reason", ""),
+                      "the verdict must say WHY — a None-margin series that "
+                      "fails without the reason is a trap for the next reader")
 
-    def test_pre_flight_would_have_stopped_before_the_w4_draw(self):
-        # THE headline: on the knowledge round 13 had (W1/W2/W3 only) the
-        # rule already called it. This is the counterfactual that earns the
-        # item — a pre-flight that only fires after the draw is a report.
+    def test_pre_flight_cannot_rule_on_a_two_window_map(self):
+        # b233b: THE headline changed. The b68n4 rebuild has no M5 source for
+        # W3/W4, so the champion's margin map is [None, None, -0.637, 0.034].
+        # Every verdict that is not INSUFFICIENT was unreachable, and the old
+        # REGIME_GIFTED counterfactual (would_have_stopped_before_W4=True on
+        # a [0.008, 0.032, 0.093] three-window series) no longer exists. The
+        # honest pin: the rule registers as INSUFFICIENT and does not stop
+        # before the W4 draw, because two of the four windows carry no data.
+        # If W3/W4 ever get a source band, this pin must be re-read — the
+        # shipped JSON records the gap, and ld.margins_by_window returns
+        # None (never a fake 0.0) precisely so this cannot be faked.
         h = self.p["_headline"]
         self.assertEqual(h["arm"], CHAMPION)
         self.assertEqual(h["three_window_verdict_before_w4_draw"],
-                         "REGIME_GIFTED")
-        self.assertIs(h["would_have_stopped_before_W4"], True)
+                         "INSUFFICIENT")
+        self.assertIs(h["would_have_stopped_before_W4"], False)
         self.assertEqual(
             self.p["three_window_pre_w4"][CHAMPION]["series"],
-            [0.008, 0.032, 0.093])
+            [None, -0.637, 0.034])
 
-    def test_only_the_champion_is_regime_gifted_on_four_windows(self):
-        # Anti-vacuity: the rule must not stamp every arm REGIME_GIFTED, or
-        # it is a constant function wearing a name.
+    def test_no_arm_is_regime_gifted_on_a_two_window_map(self):
+        # b233b: the anti-vacuity guard must still hold, but the verdict it
+        # pinned is gone. On the rebuilt map NO arm is REGIME_GIFTED and,
+        # harder, EVERY arm is INSUFFICIENT — the rule degenerates to a
+        # constant because two of four windows carry no margin. That is a
+        # property of the data map, not of the rule, so the honest pin says
+        # exactly that instead of pretending the champion stands alone.
+        # If W3/W4 ever get a source band, distinct verdicts return and this
+        # test must be re-read before either verdict is trusted again.
         fw = {k: v["verdict"] for k, v in self.p["four_window"].items()
               if not k.startswith("_")}
         self.assertEqual([a for a, v in fw.items() if v == "REGIME_GIFTED"],
-                         [CHAMPION])
-        self.assertIn(fw["pdh_w10_control"], ("MIXED", "DECAYING"))
+                         [])
+        self.assertEqual(set(fw.values()), {"INSUFFICIENT"},
+                         "expected the map to make every arm INSUFFICIENT — "
+                         "a non-INSUFFICIENT verdict on a two-window map "
+                         "means something silently re-priced W3/W4")
 
     def test_slope_min_R_is_shipped_in_the_ledger(self):
         # The threshold that decides REGIME_GIFTED must be visible in the

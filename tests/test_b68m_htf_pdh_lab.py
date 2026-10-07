@@ -201,12 +201,20 @@ class TestShippedVerdicts(unittest.TestCase):
         # b70 input: the H4-gated lane beats the funnel on both windows but
         # by < +0.05R/trade — the same marginal shape as round 11's gated
         # lane, NOT round 9's contaminated headline.
-        for w in ("W1", "W2"):
-            lane, f = self._r(w, "lane_funnel_then_h4pdh"), \
-                self._r(w, "CURRENT_FUNNEL")
-            self.assertGreater(lane["exp_R"], f["exp_R"], w)
-            self.assertLess(lane["exp_R"] - f["exp_R"], 0.05, w)
-        self.assertTrue(self.v["replicated_in_both"]["lane_funnel_then_h4pdh"])
+        # b233b: W1's direction inverts under the live floor (0.082 vs 0.097)
+        # — the lane is no longer a marginal positive there, it is a small
+        # negative. W2 still "wins" but only against a 4-trade funnel stub.
+        # The honest read: the lane's marginal-positive claim died with the
+        # 1.5 floor. Pin the inversion, not the old direction.
+        lane, f = self._r("W1", "lane_funnel_then_h4pdh"), \
+            self._r("W1", "CURRENT_FUNNEL")
+        self.assertLess(lane["exp_R"], f["exp_R"], "W1")
+        self.assertLess(abs(lane["exp_R"] - f["exp_R"]), 0.05, "W1")
+        f2 = self._r("W2", "CURRENT_FUNNEL")
+        self.assertLess(f2["trades"], 20,
+                        "W2 funnel recovered to a real sample — the W2 stub "
+                        "carve-out is stale, re-read the direction")
+        self.assertFalse(self.v["replicated_in_both"]["lane_funnel_then_h4pdh"])
 
     def test_stretch_probe_shows_no_chase_tax_on_two_of_three_legs(self):
         # b73 rule (b): gated mean stretch should not exceed control by more

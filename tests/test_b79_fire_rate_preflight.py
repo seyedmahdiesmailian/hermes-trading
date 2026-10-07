@@ -111,12 +111,24 @@ class TestShippedPreflight(unittest.TestCase):
         self.assertIn("relative", row["swing_basis"])
         self.assertGreater(row["swing_points"], lf.SWING_FAIL_POINTS)
 
-    def test_round14_both_h4_oracles_stable_but_funnel_gate_looser(self):
+    def test_round14_h4_pdh_stable_but_funnel_oracle_is_unpriced(self):
+        # b233b: this used to assert both h4 oracles STABLE with the pdh one
+        # the tighter of the two. On the rebuilt map the funnel arm has no
+        # priceable W3/W4 windows, so its fire-rate verdict is INSUFFICIENT
+        # (swing None) while the pdh arm is still STABLE at 3.4 swing points.
+        # The honest pin: the funnel oracle cannot be read at all, so the
+        # comparison between the two is not available — pin the gap, and
+        # require the reason so a future reader does not mistake INSUFFICIENT
+        # for a stability verdict.
         pdh = self.p["ledgers"]["b68n4_fourth_draw:h4_pdh"]
         fun = self.p["ledgers"]["b68n4_fourth_draw:h4_funnel"]
         self.assertEqual(pdh["verdict"], "STABLE")
-        self.assertEqual(fun["verdict"], "STABLE")
-        self.assertLess(pdh["swing_points"], fun["swing_points"])
+        self.assertEqual(fun["verdict"], "INSUFFICIENT")
+        self.assertIsNotNone(pdh["swing_points"])
+        self.assertNotIn("swing_points", fun,
+                         "the funnel arm carries a swing score despite an "
+                         "INSUFFICIENT verdict — the rule computed a score "
+                         "on an unpriced map, re-read this pin")
 
     def test_verdicts_discriminate_not_constant(self):
         # Anti-vacuity: if every ledger got the same stamp the rule is a

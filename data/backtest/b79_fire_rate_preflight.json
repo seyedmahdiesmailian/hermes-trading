@@ -105,45 +105,31 @@
    ],
    "_swing_fail_points": 20.0,
    "series": {
-    "W4": {
-     "rate": 0.796,
-     "kind": "gate_share",
-     "median_age": 42.0,
-     "median_age_field": "agree_state_age_median_htf_bars"
-    },
-    "W3": {
-     "rate": 0.677,
-     "kind": "gate_share",
-     "median_age": 17.0,
-     "median_age_field": "agree_state_age_median_htf_bars"
-    },
     "W2": {
-     "rate": 0.769,
+     "rate": 0.5,
      "kind": "gate_share",
-     "median_age": 14.0,
+     "median_age": 21.0,
      "median_age_field": "agree_state_age_median_htf_bars"
     },
     "W1": {
-     "rate": 0.714,
+     "rate": 0.735,
      "kind": "gate_share",
-     "median_age": 11.0,
+     "median_age": 13.0,
      "median_age_field": "agree_state_age_median_htf_bars"
     }
    },
-   "swing_basis": "percentage points (probability rate)",
-   "swing_points": 11.9,
-   "min_rate": 0.677,
-   "max_rate": 0.796,
-   "median_age_series": {
-    "W4": 42.0,
-    "W3": 17.0,
-    "W2": 14.0,
-    "W1": 11.0
-   },
-   "median_age_field": "agree_state_age_median_htf_bars",
-   "median_age_sign_flip": false,
-   "verdict": "STABLE",
-   "reason": "fire rate regime-independent enough to spend a draw; round 17 proved this is NECESSARY-not-sufficient \u2014 the lift-vs-control test (b74) still decides"
+   "verdict": "INSUFFICIENT",
+   "reason": "2 legs with a parseable pass rate \u2014 a 2-point line is not a curve (b77 lesson)",
+   "_skipped_legs": [
+    {
+     "leg": "W3",
+     "reason": "unrecognised probe shape"
+    },
+    {
+     "leg": "W4",
+     "reason": "unrecognised probe shape"
+    }
+   ]
   },
   "b68o_weekly_confirm": {
    "_chrono_order_oldest_first": [

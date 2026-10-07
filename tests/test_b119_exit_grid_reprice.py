@@ -156,16 +156,18 @@ class TestB119LedgerShape(unittest.TestCase):
                 self.assertNotEqual(pre, want, f"{leg}: b119's funnel matches "
                                     "the re-quoted bar without threading M5 — "
                                     "one of the two is not the funnel it claims")
-                # The band is set to the largest measured b222 re-price across
-                # the decisive legs (W1 moved 0.067R; cached 0.004R), NOT to
-                # cached's small move — the windows differ and the binding is
-                # the worst case. A crossing past it means the gap is no longer
-                # the funnel change and the engine needs checking.
-                self.assertAlmostEqual(pre, want, delta=0.07,
-                                       msg=f"{leg}: b119 is more than 0.07R from "
+                # The band covers the largest measured funnel re-price across
+                # the decisive legs. b222's M5 threading moved W1 by 0.067R;
+                # b233b (MIN_RISK_REWARD 1.5 -> 2.0) then removed the sub-floor
+                # trades on top of that, and the two effects compose — W1 now
+                # sits 0.114R from b119's pre-b222, pre-floor funnel. The band
+                # is the worst case, so 0.12R; a crossing past it means the gap
+                # is no longer funnel change and the engine needs checking.
+                self.assertAlmostEqual(pre, want, delta=0.12,
+                                       msg=f"{leg}: b119 is more than 0.12R from "
                                            "b118's re-quoted bar — beyond the "
-                                           "measured b222 re-price on any "
-                                           "decisive leg; check for engine "
+                                           "composed b222 + b233b re-price on "
+                                           "any decisive leg; check for engine "
                                            "drift, not funnel change")
                 continue
             if want is None:

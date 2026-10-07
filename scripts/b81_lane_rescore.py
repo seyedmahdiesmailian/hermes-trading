@@ -223,6 +223,10 @@ def delta(lane, fun):
     exp_R is the quality axis, net_R the volume axis, maxDD_R the risk axis,
     marginal_R_per_extra_trade what the extra trades actually paid."""
     dn = lane["trades"] - fun["trades"]
+    comparable = (lane["trades"] is not None and fun["trades"] is not None
+                  and (lane["trades"] == fun["trades"]
+                       or (fun["trades"] > 0
+                           and lane["trades"] <= 10 * fun["trades"])))
     return {
         "d_exp_R": _r(lane["exp_R"], fun["exp_R"], "exp_R"),
         "d_net_R": _r(lane["net_R"], fun["net_R"], "net_R"),
@@ -232,13 +236,21 @@ def delta(lane, fun):
             round((lane["net_R"] - fun["net_R"]) / dn, 3)
             if dn and lane["net_R"] is not None and fun["net_R"] is not None
             else None),
-        "beats_funnel_exp_R": (lane["exp_R"] is not None
+        # b233b: a lane scores its own signals while the funnel scores only
+        # M5-confirmed ones, so a thin leg can leave the funnel with a small
+        # confirmed subset while the lane carries many more of its own bars.
+        # exp_R over two different populations is not a margin, so a beat
+        # requires comparable counts (same order) as well as a higher exp_R.
+        "beats_funnel_exp_R": (comparable
+                               and lane["exp_R"] is not None
                                and fun["exp_R"] is not None
                                and lane["exp_R"] > fun["exp_R"]),
         # b222: an uncovered leg has no net_R to compare — None is not a beat.
-        "beats_funnel_net_R": (lane["net_R"] is not None
+        "beats_funnel_net_R": (comparable
+                               and lane["net_R"] is not None
                                and fun["net_R"] is not None
                                and lane["net_R"] > fun["net_R"]),
+        "counts_comparable": comparable,
     }
 
 
@@ -262,6 +274,8 @@ def verdict(led):
                          "d_net_R": leg["graded_vs_graded_funnel"]["d_net_R"],
                          "marginal_R": leg["graded_vs_graded_funnel"]
                          ["marginal_R_per_extra_trade"],
+                         "counts_comparable": leg["graded_vs_graded_funnel"]
+                         ["counts_comparable"],
                          "beats": leg["graded_vs_graded_funnel"]
                          ["beats_funnel_exp_R"]})
         v[lane] = {

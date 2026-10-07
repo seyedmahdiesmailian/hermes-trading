@@ -52,7 +52,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.264,
     "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": 0.004,
@@ -61,7 +62,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.264,
     "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    }
   },
   "lane_h4pdh": {
@@ -88,7 +90,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.2,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": -0.009,
@@ -97,7 +100,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.2,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    }
   },
   "lane_runway": {
@@ -124,7 +128,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.215,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": -0.003,
@@ -133,7 +138,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.215,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    }
   },
   "lane_nr7htf": {
@@ -160,7 +166,8 @@
     "d_dd_R": -3.2,
     "marginal_R_per_extra_trade": 0.168,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": -0.035,
@@ -169,7 +176,8 @@
     "d_dd_R": -3.2,
     "marginal_R_per_extra_trade": 0.168,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    }
   }
  },
@@ -217,7 +225,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.312,
     "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": 0.019,
@@ -226,7 +235,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.312,
     "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    }
   },
   "lane_h4pdh": {
@@ -253,7 +263,8 @@
     "d_dd_R": -2.7,
     "marginal_R_per_extra_trade": -0.026,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": -0.015,
@@ -262,7 +273,8 @@
     "d_dd_R": -2.7,
     "marginal_R_per_extra_trade": -0.026,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": true
    }
   },
   "lane_runway": {
@@ -289,7 +301,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.486,
     "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": 0.059,
@@ -298,7 +311,8 @@
     "d_dd_R": 0.0,
     "marginal_R_per_extra_trade": 0.486,
     "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_net_R": true,
+    "counts_comparable": true
    }
   },
   "lane_nr7htf": {
@@ -325,7 +339,8 @@
     "d_dd_R": -6.6,
     "marginal_R_per_extra_trade": -0.023,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": true
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": -0.063,
@@ -334,7 +349,8 @@
     "d_dd_R": -6.6,
     "marginal_R_per_extra_trade": -0.023,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": true
    }
   }
  },
@@ -381,8 +397,9 @@
     "d_trades": 38,
     "d_dd_R": -9.2,
     "marginal_R_per_extra_trade": 0.016,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": 0.349,
@@ -390,8 +407,9 @@
     "d_trades": 38,
     "d_dd_R": -9.2,
     "marginal_R_per_extra_trade": 0.016,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_h4pdh": {
@@ -417,8 +435,9 @@
     "d_trades": 63,
     "d_dd_R": -5.1,
     "marginal_R_per_extra_trade": 0.292,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": 0.624,
@@ -426,8 +445,9 @@
     "d_trades": 63,
     "d_dd_R": -5.1,
     "marginal_R_per_extra_trade": 0.292,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_runway": {
@@ -453,8 +473,9 @@
     "d_trades": 47,
     "d_dd_R": -3.1,
     "marginal_R_per_extra_trade": 0.138,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": 0.47,
@@ -462,8 +483,9 @@
     "d_trades": 47,
     "d_dd_R": -3.1,
     "marginal_R_per_extra_trade": 0.138,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_nr7htf": {
@@ -489,8 +511,9 @@
     "d_trades": 296,
     "d_dd_R": -16.7,
     "marginal_R_per_extra_trade": 0.029,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": 0.395,
@@ -498,8 +521,9 @@
     "d_trades": 296,
     "d_dd_R": -16.7,
     "marginal_R_per_extra_trade": 0.029,
-    "beats_funnel_exp_R": true,
-    "beats_funnel_net_R": true
+    "beats_funnel_exp_R": false,
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   }
  },
@@ -547,7 +571,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -556,7 +581,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_h4pdh": {
@@ -583,7 +609,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -592,7 +619,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_runway": {
@@ -619,7 +647,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -628,7 +657,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_nr7htf": {
@@ -655,7 +685,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -664,7 +695,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   }
  },
@@ -712,7 +744,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -721,7 +754,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_h4pdh": {
@@ -748,7 +782,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -757,7 +792,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_runway": {
@@ -784,7 +820,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -793,7 +830,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   },
   "lane_nr7htf": {
@@ -820,7 +858,8 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    },
    "ungraded_vs_ungraded_funnel": {
     "d_exp_R": null,
@@ -829,13 +868,14 @@
     "d_dd_R": null,
     "marginal_R_per_extra_trade": null,
     "beats_funnel_exp_R": false,
-    "beats_funnel_net_R": false
+    "beats_funnel_net_R": false,
+    "counts_comparable": false
    }
   }
  },
  "_verdict": {
   "lane_gated_pdh_dayext": {
-   "windows_beaten": 2,
+   "windows_beaten": 1,
    "of": 4,
    "replicated_all_windows": false,
    "marginal_R_positive_windows": 2,
@@ -847,6 +887,7 @@
      "d_exp_R": 0.019,
      "d_net_R": 5.0,
      "marginal_R": 0.312,
+     "counts_comparable": true,
      "beats": true
     },
     {
@@ -856,7 +897,8 @@
      "d_exp_R": 0.349,
      "d_net_R": 0.6,
      "marginal_R": 0.016,
-     "beats": true
+     "counts_comparable": false,
+     "beats": false
     },
     {
      "window": "W3",
@@ -865,6 +907,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     },
     {
@@ -874,6 +917,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     }
    ],
@@ -884,7 +928,7 @@
    }
   },
   "lane_h4pdh": {
-   "windows_beaten": 1,
+   "windows_beaten": 0,
    "of": 4,
    "replicated_all_windows": false,
    "marginal_R_positive_windows": 1,
@@ -896,6 +940,7 @@
      "d_exp_R": -0.015,
      "d_net_R": -0.6,
      "marginal_R": -0.026,
+     "counts_comparable": true,
      "beats": false
     },
     {
@@ -905,7 +950,8 @@
      "d_exp_R": 0.624,
      "d_net_R": 18.4,
      "marginal_R": 0.292,
-     "beats": true
+     "counts_comparable": false,
+     "beats": false
     },
     {
      "window": "W3",
@@ -914,6 +960,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     },
     {
@@ -923,6 +970,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     }
    ],
@@ -933,7 +981,7 @@
    }
   },
   "lane_runway": {
-   "windows_beaten": 2,
+   "windows_beaten": 1,
    "of": 4,
    "replicated_all_windows": false,
    "marginal_R_positive_windows": 2,
@@ -945,6 +993,7 @@
      "d_exp_R": 0.059,
      "d_net_R": 14.1,
      "marginal_R": 0.486,
+     "counts_comparable": true,
      "beats": true
     },
     {
@@ -954,7 +1003,8 @@
      "d_exp_R": 0.47,
      "d_net_R": 6.5,
      "marginal_R": 0.138,
-     "beats": true
+     "counts_comparable": false,
+     "beats": false
     },
     {
      "window": "W3",
@@ -963,6 +1013,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     },
     {
@@ -972,6 +1023,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     }
    ],
@@ -982,7 +1034,7 @@
    }
   },
   "lane_nr7htf": {
-   "windows_beaten": 1,
+   "windows_beaten": 0,
    "of": 4,
    "replicated_all_windows": false,
    "marginal_R_positive_windows": 1,
@@ -994,6 +1046,7 @@
      "d_exp_R": -0.063,
      "d_net_R": -4.2,
      "marginal_R": -0.023,
+     "counts_comparable": true,
      "beats": false
     },
     {
@@ -1003,7 +1056,8 @@
      "d_exp_R": 0.395,
      "d_net_R": 8.7,
      "marginal_R": 0.029,
-     "beats": true
+     "counts_comparable": false,
+     "beats": false
     },
     {
      "window": "W3",
@@ -1012,6 +1066,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     },
     {
@@ -1021,6 +1076,7 @@
      "d_exp_R": null,
      "d_net_R": null,
      "marginal_R": null,
+     "counts_comparable": false,
      "beats": false
     }
    ],

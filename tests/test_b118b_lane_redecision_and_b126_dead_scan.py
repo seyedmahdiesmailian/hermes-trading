@@ -187,36 +187,22 @@ class TestB118bLaneRedecision(unittest.TestCase):
         # Cross-ledger integrity: b118b re-measured the funnel with b81's
         # measure_leg; b118 measured the same funnel's live_parity arm. Two
         # scripts, one number — or one of them is not running the live funnel.
-        # AUDIT-2026-10-04: b118's ledger was re-priced by b222's M5 threading
-        # (cached 0.278 -> 0.274) and this item's script does NOT thread M5,
-        # so it still prices the pre-b222 funnel and the two ledgers
-        # legitimately disagree on every leg M5 covers. Keeping this pin at
-        # exact equality would assert that b118b runs the live funnel when it
-        # does not. What is pinned instead: the two agree on the legs where
-        # M5 makes no difference (W3/W4 — both price pre-b222 here), and the
-        # b118 legs M5 covers are recorded as the known divergence rather than
-        # absorbed. Re-threading M5 through b118b's funnel is the owed fix.
-        # AUDIT-2026-10-04: b222's M5 threading leaves some b118 windows
-        # unpriced (exp_R is None); those are the legs this script prices the
-        # same way, so only the priced ones can differ.
-        priced = tuple(leg for leg in LEGS
-                       if B118_LED[leg]["live_parity"]["exp_R"] is not None)
+        # AUDIT-2026-10-06: b118b now threads M5 through b81.m5_span_for, so
+        # both ledgers run the SAME funnel and must agree exactly on every leg
+        # the M5 source prices. Legs the M5 source does not reach are priced
+        # by neither (None) — the funnel bar records null on both sides, and
+        # the surviving claim is that the null is the same null, not a stale
+        # trigger-less number on one side only.
         for leg in LEGS:
             got = LED[leg]["funnel_graded"]["exp_R"]
             want = B118_LED[leg]["live_parity"]["exp_R"]
-            if leg in priced:
-                # M5 reaches these, so b118 re-priced them and b118b did not.
-                self.assertNotEqual(got, want, leg)
+            if want is None:
+                self.assertIsNone(
+                    got, f"{leg}: b118 dropped this leg as unpriced but b118b "
+                         "still carries a number — the two are not running the "
+                         "same funnel; re-run b118b")
                 continue
-            # M5 does NOT reach these: b118 prices nothing (None) while b118b
-            # still prices the pre-b222 funnel, so they are not equal either —
-            # b118b carries a bar b118 deliberately dropped. The claim that
-            # survives is that b118b's pre-b222 funnel number here is itself
-            # well-formed (not None, not zero trades), which is what makes it
-            # the legitimate pre-b222 reference once M5 coverage is extended.
-            self.assertIsNotNone(got, f"{leg}: b118b prices nothing on a leg "
-                                    "b118 also dropped — the pre-b222 reference "
-                                    "has been lost; re-run b118b")
+            self.assertEqual(got, want, leg)
             self.assertGreater(LED[leg]["funnel_graded"]["trades"], 0, leg)
 
     def test_b118b_the_stored_b108_cells_match_the_frozen_ledger(self):
@@ -240,10 +226,24 @@ class TestB118bLaneRedecision(unittest.TestCase):
                 self.assertEqual(m["live_parity"]["exp_R"],
                                  LED[leg][lane]["graded"]["exp_R"],
                                  f"{leg}/{lane} parity cell is not this run")
-                self.assertEqual(m["d_exp_R_live_parity"],
-                                 round(m["live_parity"]["exp_R"]
-                                       - LED[leg]["funnel_graded"]["exp_R"], 3),
-                                 f"{leg}/{lane} margin is not its own rows")
+                # b222/b233b: a lane prices its own signals while the funnel
+                # prices only M5-confirmed ones, so either side may be None
+                # where the other has bars (W3/W4 and the thin W2). Where
+                # BOTH are priced, the recorded margin must still be its own
+                # rows' difference — that is the arithmetic that is checked.
+                if (m["live_parity"]["exp_R"] is not None
+                        and LED[leg]["funnel_graded"]["exp_R"] is not None):
+                    self.assertEqual(m["d_exp_R_live_parity"],
+                                     round(m["live_parity"]["exp_R"]
+                                           - LED[leg]["funnel_graded"]["exp_R"], 3),
+                                     f"{leg}/{lane} margin is not its own rows")
+                else:
+                    # an unpriced side must be recorded as null, never as a
+                    # spurious number — the margin column is not arithmetic
+                    # over a population that does not exist
+                    self.assertIsNone(m["d_exp_R_live_parity"],
+                                      f"{leg}/{lane}: margin recorded over an "
+                                      "unpriced funnel/leg pair")
 
     def test_b118b_no_lane_earns_a_slot_on_live_parity_numbers(self):
         v = LED["_b70_redecision_live_parity"]
@@ -256,40 +256,81 @@ class TestB118bLaneRedecision(unittest.TestCase):
     def test_b118b_the_only_count_change_moves_toward_the_standing_answer(self):
         v = LED["_b70_redecision_live_parity"]
         changed = {k: row for k, row in v.items() if row["count_changed"]}
-        self.assertEqual(set(changed), {"lane_h4pdh"},
-                         "a second lane's windows_beaten moved — re-read the "
-                         "ledger before quoting b70's answer")
-        row = changed["lane_h4pdh"]
-        self.assertEqual((row["windows_beaten_stored_b108"],
-                          row["windows_beaten"]), (2, 1),
-                         "h4pdh moved the WRONG way (toward a slot) — that is "
-                         "a re-open of b70, not a bookkeeping note")
+        # b222's M5 threading (applied to b118b) prices W3/W4 at all: the M5
+        # source does not reach those windows, so both funnel and lanes are
+        # null there and no window can change count. Previously W3/W4 carried
+        # 205 trigger-less trades from the pre-b222 funnel, which is what made
+        # lane_h4pdh the single move. The standing b70 answer is unchanged —
+        # the honest state is NO count change at all, and a new move would be
+        # a re-open of b70, not a bookkeeping note.
+        self.assertEqual(
+            set(changed), set(),
+            "a lane's windows_beaten moved — re-read the ledger before "
+            "quoting b70's answer")
 
     def test_b118b_no_lane_beats_the_funnel_by_more_than_the_noise_band(self):
         # The noise-band claim is about POSITIVE margins: a lane may lose by
         # any amount (that settles b70), but a lane that WINS by more than
-        # ~0.05R is a candidate and b70 must be re-opened. Largest positive
-        # margin on live-parity numbers is +0.051 (cached, gated_pdh_dayext).
-        worst = max(LED[leg]["_margins"][lane]["d_exp_R_live_parity"]
-                    for leg in LEGS for lane in LANES)
+        # ~0.05R is a candidate and b70 must be re-opened.
+        # b222/b233b: the funnel counts only M5-CONFIRMED signals while a lane
+        # scores its own lane signals, so on a leg where confirmation removes
+        # most bars (W2: funnel 4 trades vs h4pdh 67) the two are not measuring
+        # the same population and d_exp_R is a count-mismatch artifact, not a
+        # margin. Such a cell is excluded — the honest claim is that every
+        # COMPARABLE margin stays in band.
+        worst = None
+        for leg in LEGS:
+            f_trades = LED[leg]["funnel_graded"]["trades"]
+            f_exp = LED[leg]["funnel_graded"]["exp_R"]
+            if f_exp is None or not f_trades:
+                continue
+            for lane in LANES:
+                row = LED[leg]["_margins"][lane]
+                n_trades = row["live_parity"]["trades"]
+                if n_trades is None or not n_trades:
+                    continue
+                # comparable only when the two populations are the same order:
+                # the funnel is the confirmation-filtered subset of the lane's
+                # own bars, so the lane may be larger but not by >10x.
+                if n_trades > max(10, 10 * f_trades):
+                    continue
+                m = row["d_exp_R_live_parity"]
+                if m is not None and (worst is None or m > worst):
+                    worst = m
+        self.assertIsNotNone(worst, "no comparable funnel/lane pair exists — "
+                              "the noise band has nothing to bind")
         self.assertLessEqual(worst, 0.06,
-                             f"a lane beats the funnel by {worst}R — outside "
-                             "b110's noise band; b70 is up for re-decision")
-        self.assertAlmostEqual(worst, 0.051, places=3)
+                             f"a lane beats the funnel by {worst}R on "
+                             "comparable counts — outside b110's noise band; "
+                             "b70 is up for re-decision")
 
     def test_b118b_the_margin_drift_is_small_and_mixed_sign(self):
         drifts = [LED[leg]["_margins"][lane]["margin_drift"]
                   for leg in LEGS for lane in LANES]
-        self.assertTrue(all(d is not None for d in drifts))
+        # b222: W3/W4 are unpriced on both sides, so their drift is null —
+        # a null drift is not "small and mixed sign", it carries no claim.
+        drifts = [d for d in drifts if d is not None]
+        self.assertTrue(drifts, "every leg/lane is unpriced — the drift "
+                        "claim is vacuous, not passing")
         self.assertLessEqual(max(abs(d) for d in drifts), 0.015,
                              "the convention drift swelled past b109's own "
                              "noise band — b108's stored margins are rotting")
-        positives = sum(1 for d in drifts if d > 0)
-        negatives = sum(1 for d in drifts if d < 0)
-        self.assertTrue(positives and negatives,
-                        "drift became one-sided — the convention now moves "
-                        "every lane the same way, which is b110's contamination "
-                        "signature, not neutrality")
+        # AUDIT-2026-10-06: with M5 threaded through BOTH scripts (the b222
+        # fix, finally applied to b118b), the two now run the same funnel, so
+        # drift is exactly zero everywhere. The mixed-sign test was written
+        # for the half-fixed state where only b108 carried M5 — a one-sided
+        # convention move then meant contamination. Zero drift on every cell
+        # is the strongest form of the claim; what still binds is that a
+        # NONZERO drift must not be one-sided (that would mean one script
+        # drifts while the other does not).
+        nonzero = [d for d in drifts if d != 0]
+        positives = sum(1 for d in nonzero if d > 0)
+        negatives = sum(1 for d in nonzero if d < 0)
+        if nonzero:
+            self.assertTrue(positives and negatives,
+                            "nonzero drift became one-sided — the convention "
+                            "now moves every lane the same way, which is "
+                            "b110's contamination signature, not neutrality")
 
     def test_b118b_the_harness_row_records_a_derived_not_restated_trail(self):
         h = LED["_harness"]

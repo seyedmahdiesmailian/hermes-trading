@@ -74,14 +74,15 @@ def classify_exit(comment: str, profit: float) -> str:
 def classify_exits(deals: list[dict]) -> list[dict]:
     """Attach exit_type to each deal.
 
-    WARNING (b89): the live caller (auto_executor Check 6.6) passes
-    performance_state['recent_closed'] straight through, and that window is the
-    last 10 DEALS of the bridge history feed — OPENING deals (entry==0, profit
-    0.0, comment 'Hermes') are NOT filtered upstream. They classify as
-    'unknown' (profit 0.0) and still count in analyze_exits' `total`, which is
-    why `total`/`sl_ratio` are deal-based. The docstring's old "(entry deals
-    filtered upstream)" described the legacy snapshot_closed_deals() caller,
-    not this one.
+    b233b: the live caller (auto_executor Check 6.6) passes
+    performance_state['recent_closed'] straight through, and since b233b that
+    window is the last 10 EXITS — engines/risk.compute_performance_state
+    filters opening deals (entry==0, profit 0.0) before slicing. This is the
+    option (a) fix b89 deferred to a human decision, and it was applied because
+    the b88 re-measure showed the unfiltered window left DEFCON half-blind
+    (W1: GREEN 37 -> YELLOW 22, RED 1 after the filter). With it, `total` is an
+    EXIT count and `sl_ratio`'s denominator is exits, so the old deal-level
+    numbers are all 2x — b89's pins were reversed to match.
     """
     out = []
     for d in deals:
