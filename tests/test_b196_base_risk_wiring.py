@@ -35,8 +35,16 @@ def _blueprint():
 
 def _perf():
     from engines.risk import compute_performance_state
-    return compute_performance_state(
+    perf = compute_performance_state(
         {}, datetime.now(timezone.utc).date().isoformat(), 5000.0, [])
+    # b267 (2026-10-08): evaluate_proposal otherwise loads the LIVE
+    # learning_state.json, whose risk_mult drifted to 0.5 on 2026-10-07.
+    # These tests pin the BASE leg of the risk stack, not the learning leg,
+    # so a neutral state is injected — the learning multiplier has its own
+    # clamping tests (test_b230_*).
+    perf["_learning_state"] = {"risk_mult": 1.0, "min_rr": 2.0,
+                               "min_grade": "B"}
+    return perf
 
 
 def _eval(policy: dict) -> dict:

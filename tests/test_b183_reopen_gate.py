@@ -128,9 +128,22 @@ class GateCounting(unittest.TestCase):
         out = G.positions_since_ship(G.journal_path(), SHIP)
         self.assertEqual(out["dead_predicate_rows_matched_at_column"], 0)
         self.assertEqual(out["dead_predicate_rows_matched_close_time_string"], 0)
-        # and the honest count is a small n — the item must stay parked.
-        self.assertLess(out["positions_post_ship"], G.REOPEN_MIN_TRADES)
-        self.assertFalse(out["reopen_met"])
+        # REOPENED 2026-10-08: the reopen condition (>=30 post-ship positions)
+        # was MET at n=30, so the "must stay parked" pin is dead — the gate
+        # now says REOPEN. The honest remaining claim is what the gate did NOT
+        # establish: b183's actual lane is the 0.01-lot trade (it cannot be
+        # halved, so it under-earns on the half+runner lane), and only 4 of
+        # the 30 post-ship positions are 0.01 lots — the gate counts ALL lots.
+        # That is too thin a sample to settle b183 either way, and it is the
+        # fact the next decision needs, so it is pinned here instead of the
+        # now-vacuous parking assertion.
+        self.assertTrue(out["reopen_met"],
+                        "reopen condition is met — this test must not re-pin "
+                        "the parking verdict; update it instead")
+        self.assertLess(out["post_001_lot_positions"], 10,
+                        "the 0.01-lot lane is the population b183 asks about "
+                        "and it is still a thin slice of the post-ship sample")
+        self.assertFalse(out["dead_predicate_rows_matched_at_column"])
 
 
 class NoSideEffects(unittest.TestCase):

@@ -158,11 +158,19 @@ def evaluate_proposal(
     # learning_state.json holds params auto-adjusted from the trade journal.
     # Learning can only TIGHTEN (raise RR floor / grade / lower risk) or gently
     # relax risk within hard clamps defined in engines/learning.py.
+    # b267 (2026-10-08): the learning state is load_learning_state()'s by
+    # default, but a caller (and a test) may pass one in — b196/b136 asserted
+    # the base leg at risk_mult 1.0 while the LIVE state had drifted to 0.5,
+    # so those tests measured live state, not the wiring they pinned. The
+    # default is unchanged for every production caller.
     try:
         from engines.learning import load_learning_state
-        _ls = load_learning_state()
+        _ls = dict(load_learning_state())
     except Exception:
         _ls = {}
+    _ls_override = (performance_state or {}).pop("_learning_state", None)
+    if _ls_override is not None:
+        _ls = dict(_ls_override)
     _eff_min_rr = float(_ls.get("min_rr", MIN_RISK_REWARD))
 
     # ── Check 1: Valid proposal ──

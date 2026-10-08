@@ -62,6 +62,11 @@ def _result_for(regime: str):
             daily_pnl=0.0, loss_streak=0, open_positions=0)["base_risk_pct"]
         perf = compute_performance_state(
             {}, datetime.now(timezone.utc).date().isoformat(), 5000.0, [])
+        # b267 (2026-10-08): inject a neutral learning state — see
+        # test_b196's _perf. The LIVE learning_state.json drifted to
+        # risk_mult 0.5, which halved the lot these tests compare against.
+        perf["_learning_state"] = {"risk_mult": 1.0, "min_rr": 2.0,
+                                   "min_grade": "B"}
         return AE.evaluate_proposal({"blueprint": dict(_blueprint()),
                                      "grade": "B"}, pol, perf, {}, None)
     finally:
