@@ -187,8 +187,8 @@ class MT5Gateway(IMarketDataRepository):
         Returns:
             List of Candle objects
         """
-        url = f"{self.bridge_url}/api/ohlc/{symbol}/{timeframe}"
-        params = {'count': count}
+        url = f"{self.bridge_url}/api/ohlc/{symbol}"
+        params = {'timeframe': timeframe, 'count': count}
         
         try:
             response = requests.get(
@@ -211,7 +211,7 @@ class MT5Gateway(IMarketDataRepository):
                     high=float(bar['high']),
                     low=float(bar['low']),
                     close=float(bar['close']),
-                    volume=int(bar.get('volume', 0))
+                    volume=int(bar.get('tick_volume', bar.get('volume', 0)))
                 )
                 candles.append(candle)
             

@@ -89,7 +89,8 @@ class AutonomousTradingUseCase:
             analysis = self.market_analyzer.analyze(market_state)
             
             # 3. Get account state
-            account_state = self.state_repo.get_account_state()
+            # Get from MT5 directly (state_repo is for persistence)
+            account_state = self.market_data.get_account_state()
             if not account_state:
                 return AutonomousTradingResponse(
                     success=False,
