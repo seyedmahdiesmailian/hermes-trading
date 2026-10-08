@@ -33,6 +33,10 @@ DATA = ROOT / 'data'   # READ-ONLY by design (an operator panel must show the
 # sys.path) and lazily from signal_listener, so guard the path here.
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+# V2: Add legacy_v1 to path for engines
+legacy = ROOT / 'legacy_v1'
+if legacy.exists() and str(legacy) not in sys.path:
+    sys.path.insert(0, str(legacy))
 from engines.bridge_payload import positions_list, position_count  # noqa: E402
 TEHRAN = timezone(timedelta(hours=3, minutes=30))
 WEEK_FA = ['دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه', 'یکشنبه']
@@ -52,7 +56,7 @@ def _audit_log() -> Path:
     from engines import paths as _paths
     return _paths.logs_dir() / 'control_audit.log'
 
-RESTARTABLE = {'hermes-signal': 'سرویس سیگنال', 'hermes-position': 'سرویس پوزیشن',
+RESTARTABLE = {'hermes-signal-v2': 'سرویس سیگنال V2', 'hermes-position-v2': 'سرویس پوزیشن V2',
                'hermes-dashboard': 'سرویس داشبورد'}
 
 
