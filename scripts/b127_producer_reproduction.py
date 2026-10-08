@@ -720,6 +720,14 @@ BASELINE_UNCOVERED: tuple[str, ...] = (
     # artifacts over fixed history — deterministic given the same MT5 data,
     # but not re-derived in CI (same debt class as b77/b79 above).
     "b72", "b73", "b75", "b76", "b78",
+    # b263-b267 (2026-10-08): the MTF-bias / M5-trigger A-B sweep family. Each
+    # pulls a locked dataset from the live bridge and writes one sweep ledger.
+    # Deterministic given the same MT5 data, but re-deriving needs the live
+    # bridge and a full backtest per arm — same debt class as the b72-b78
+    # census ledgers above, not a frozen-verdict producer. When one of these
+    # settles into a shipped decision that must be re-provable, write a
+    # check_bNNN_* for it and remove its token here (the ratchet only burns).
+    "b263", "b264", "b265", "b266", "b267",
 )
 
 
