@@ -16,10 +16,9 @@ except ImportError:
     from env_loader import load_dotenv
 load_dotenv(os.path.join(_ROOT, '.env'))
 
-# WP2: canonical precedence (b52/b63) via engines.config. Resolved at module
-# level so the b52 behavioural test can import and inspect it (same shape).
-from engines.config import bridge_url as _bridge_url
-BRIDGE_URL = _bridge_url()
+# V2: Get bridge URL from env instead of engines.config
+sys.path.insert(0, os.path.join(_ROOT, 'legacy_v1'))  # For engines if needed
+BRIDGE_URL = os.getenv('HERMES_BRIDGE_URL', 'http://192.168.10.51:5050')
 
 DAYS = 7
 WEEK_S = DAYS * 86400

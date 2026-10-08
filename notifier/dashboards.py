@@ -180,7 +180,7 @@ def _market_state():
 # + hermes-trading.timer). The old list of 4 made "همه‌چیز روال است"
 # while forwarder/webui/omniroute were down.
 _SVC_NAMES = [
-    'hermes-signal', 'hermes-position', 'hermes-dashboard',
+    'hermes-signal-v2', 'hermes-position-v2', 'hermes-dashboard',
     'hermes-gateway', 'hermes-forwarder', 'hermes-trading',
     'hermes-trading.timer', 'hermes-webui', 'omniroute',
 ]
@@ -197,8 +197,8 @@ def _services() -> dict:
 
 
 _SVC_LABEL = {
-    'hermes-signal': '📡 سیگنال',
-    'hermes-position': '📌 پوزیشن',
+    'hermes-signal-v2': '📡 سیگنال',
+    'hermes-position-v2': '📌 پوزیشن',
     'hermes-dashboard': '🛰 داشبورد',
     'hermes-gateway': '🖥 گیت‌وی',
     'hermes-forwarder': '📨 فورواردر',
@@ -1382,8 +1382,8 @@ def trade_control() -> tuple[str, list]:
         kb.append([_btn('▶️ ازسرگیری ترید', 'tr:ask:trade:resume')])
     else:
         kb.append([_btn('⛔ توقف فوری ترید', 'tr:ask:trade:halt')])
-    kb.append([_btn('🔁 ریستارت سرویس سیگنال', 'tr:ask:restart:hermes-signal'),
-               _btn('🔁 ریستارت سرویس پوزیشن', 'tr:ask:restart:hermes-position')])
+    kb.append([_btn('🔁 ریستارت سرویس سیگنال', 'tr:ask:restart:hermes-signal-v2'),
+               _btn('🔁 ریستارت سرویس پوزیشن', 'tr:ask:restart:hermes-position-v2')])
     kb.append(_nav('tr', 'home'))
     return '\n'.join(lines), kb
 

@@ -47,12 +47,7 @@ def bridge_urls() -> tuple[str, str]:
 
 def _env():
     """V2: Get ops token and chat from env."""
-    return os.getenv('TELEGRAM_BOT_TOKEN', ''), os.getenv('TELEGRAM_CHAT_ID', '') load_dotenv
-    except ImportError:
-        import sys
-        sys.path.insert(0, str(BASE))
-        from env_loader import load_dotenv
-    load_dotenv(BASE / '.env')
+    return os.getenv('TELEGRAM_BOT_TOKEN', ''), os.getenv('TELEGRAM_CHAT_ID', '')
 
 
 def log(msg: str):
