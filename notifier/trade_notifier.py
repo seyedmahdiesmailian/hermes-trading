@@ -7,6 +7,7 @@ Sends real-time notifications when:
 - Analysis completed
 """
 import os
+import sys
 import urllib.request
 import urllib.parse
 import json
