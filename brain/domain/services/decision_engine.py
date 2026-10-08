@@ -366,7 +366,7 @@ class DecisionEngine:
             # Risk check failed - immediate reject
             return (Decision.REJECT, 0.9)
         
-        if overall_score >= 0.70:
+        if overall_score >= 0.50:  # LOWERED FOR TESTING
             return (Decision.ENTER_TRADE, overall_score)
         elif overall_score >= 0.50:
             return (Decision.WAIT, overall_score)

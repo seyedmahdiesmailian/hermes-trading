@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "mode": "LIVE_TESTING",
+  "max_position_size": 0.01,
+  "max_daily_trades": 3,
+  "started_at": "2026-10-08T23:15:00+03:30",
+  "note": "Live testing phase - small positions only"
+}
