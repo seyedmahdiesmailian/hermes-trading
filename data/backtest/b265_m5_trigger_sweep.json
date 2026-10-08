@@ -1,0 +1,147 @@
+{
+  "experiment": "b265_m5_trigger_sweep",
+  "windows": {
+    "recent_3000": {
+      "K0": {
+        "trades": 52,
+        "net": 170.09,
+        "wr": 57.7,
+        "meanR": 0.0
+      },
+      "K1": {
+        "trades": 46,
+        "net": 117.09,
+        "wr": 56.5,
+        "meanR": 0.0
+      },
+      "K2": {
+        "trades": 43,
+        "net": 113.97,
+        "wr": 55.8,
+        "meanR": 0.0
+      },
+      "K3": {
+        "trades": 33,
+        "net": 97.94,
+        "wr": 57.6,
+        "meanR": 0.0
+      },
+      "K4": {
+        "trades": 26,
+        "net": 29.53,
+        "wr": 46.2,
+        "meanR": 0.0
+      },
+      "K5": {
+        "trades": 18,
+        "net": -74.26,
+        "wr": 27.8,
+        "meanR": 0.0
+      }
+    },
+    "recent_5000": {
+      "K0": {
+        "trades": 81,
+        "net": 222.2,
+        "wr": 59.3,
+        "meanR": 0.0
+      },
+      "K1": {
+        "trades": 72,
+        "net": 161.23,
+        "wr": 58.3,
+        "meanR": 0.0
+      },
+      "K2": {
+        "trades": 64,
+        "net": 144.49,
+        "wr": 59.4,
+        "meanR": 0.0
+      },
+      "K3": {
+        "trades": 50,
+        "net": 123.51,
+        "wr": 60.0,
+        "meanR": 0.0
+      },
+      "K4": {
+        "trades": 38,
+        "net": 91.25,
+        "wr": 52.6,
+        "meanR": 0.0
+      },
+      "K5": {
+        "trades": 24,
+        "net": -38.14,
+        "wr": 37.5,
+        "meanR": 0.0
+      }
+    },
+    "recent_8000": {
+      "K0": {
+        "trades": 127,
+        "net": 605.64,
+        "wr": 63.8,
+        "meanR": 0.0
+      },
+      "K1": {
+        "trades": 120,
+        "net": 556.46,
+        "wr": 63.3,
+        "meanR": 0.0
+      },
+      "K2": {
+        "trades": 106,
+        "net": 541.91,
+        "wr": 65.1,
+        "meanR": 0.0
+      },
+      "K3": {
+        "trades": 83,
+        "net": 317.86,
+        "wr": 62.7,
+        "meanR": 0.0
+      },
+      "K4": {
+        "trades": 64,
+        "net": 227.18,
+        "wr": 57.8,
+        "meanR": 0.0
+      },
+      "K5": {
+        "trades": 38,
+        "net": 17.83,
+        "wr": 47.4,
+        "meanR": 0.0
+      }
+    }
+  },
+  "aggregate": {
+    "K0": {
+      "trades": 260,
+      "net": 997.93
+    },
+    "K1": {
+      "trades": 238,
+      "net": 834.78
+    },
+    "K2": {
+      "trades": 213,
+      "net": 800.37
+    },
+    "K3": {
+      "trades": 166,
+      "net": 539.31
+    },
+    "K4": {
+      "trades": 128,
+      "net": 347.96000000000004
+    },
+    "K5": {
+      "trades": 80,
+      "net": -94.57000000000001
+    }
+  },
+  "k0_wins_windows": 3,
+  "verdict": "SHIP_ZONE_TOUCH_ENTRY"
+}

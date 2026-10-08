@@ -1,0 +1,23 @@
+{
+  "experiment": "b266_trigger_locked_data_ab",
+  "bars": {
+    "M15": 8000,
+    "H1": 746,
+    "H4": 246
+  },
+  "base_K3": {
+    "trades": 106,
+    "net": 536.87,
+    "wr": 65.1,
+    "worst": -44.12
+  },
+  "fix_K0": {
+    "trades": 128,
+    "net": 598.09,
+    "wr": 64.1,
+    "worst": -36.53
+  },
+  "delta_trades": 22,
+  "delta_net": 61.22,
+  "verdict": "SHIP_ZONE_TOUCH_ENTRY"
+}

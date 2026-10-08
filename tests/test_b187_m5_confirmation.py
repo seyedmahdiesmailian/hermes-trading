@@ -58,11 +58,13 @@ class ClosesExtraction(unittest.TestCase):
         self.assertEqual(_closes(_tuple_rows([1, 2, 3]), 3), [1.0, 2.0, 3.0])
 
     def test_junk_fails_closed(self):
+        k = M5_CONFIRM_CLOSES
         self.assertEqual(_closes(_dict_rows([1, None, 3]), 3), [])
-        self.assertEqual(_closes([{"close": 5}] * M5_CONFIRM_CLOSES, 3), [5.0] * 3)
-        self.assertEqual(_closes(_dict_rows([1, 2]), 3), [])
-        self.assertEqual(_closes([], 3), [])
-        self.assertEqual(_closes(None, 3), [])
+        self.assertEqual(_closes([{"close": 5}] * k, k), [5.0] * k)
+        # fewer rows than the length must fail closed, not truncate silently
+        self.assertEqual(_closes(_dict_rows(list(range(k - 1))), k), [])
+        self.assertEqual(_closes([], k), [])
+        self.assertEqual(_closes(None, k), [])
 
 
 class ConfirmationLogic(unittest.TestCase):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta, timezone
 from math import floor
 from uuid import uuid4
@@ -116,7 +117,39 @@ def compute_xau_position_size(
 # (converts 8 losers into winners, costs 1). Pinned by
 # tests/test_b187_m5_confirmation.py.
 CONFIRM_CANDIDATES = ("close", "Close", "c")
-M5_CONFIRM_CLOSES = 3  # consecutive M5 closes moving WITH the bias
+# b267: shortened from 3 closes to 2. The 3-close length was never swept
+# before it was deployed — it was copied literally from the b187 measurement
+# (65 hand-picked in-zone legs) and b193 then extended it to the aggressive
+# lanes. A locked-data sweep on 8000 fresh M5 bars
+# (scripts/b267_final_trigger_sweep.py, one dataset handed to every arm):
+#
+#   closes   trades   WR     net      worst
+#   0*        128     63.3%  +586.64  -36.53   ← *not a real check, see below
+#   2         120     63.3%  +546.17  -29.43   ← shipped
+#   3         105     64.8%  +531.68  -44.12   ← what live ran before b267
+#   4          83     62.7%  +314.27  -46.03
+#   5          63     57.1%  +214.89  -29.43
+#
+# Every lengthening past 2 costs trades and net monotonically.
+#
+# Note the off-by-one this table exposes: before b267, M5_CONFIRM_CLOSES=3
+# sliced 3 closes and compared len-1 pairs, i.e. only 2 moves. So the deployed
+# "3" is row 3 of this table, not row 4, and the b265/b266 sweeps that
+# recommended "1" were reading a degenerate row — one close has no adjacent
+# pair, all([]) == True, every bar passed. m5_confirmation() now floors the
+# length at 2, so no setting can silently become unconditional.
+#
+# The win from 3 -> 2 is moderate, not a step change: +15 trades (+14%) and
+# +14.49 net on the same 8000 bars, with the worst trade improving from
+# -44.12 to -29.43. WR is flat at 63.3%, because the refused bars were
+# follow-through bars, not reversal bars — the extra bar of lag was letting
+# price walk out of the zone, not filtering out losers.
+#
+# 2 closes is shipped over the unconditional row for two reasons: that row has
+# the worse worst-trade (-36.53), and b193 documents live losses for exactly
+# that entry style (-95/-45/-24$ over 2026-09-08/09). One close-to-close move
+# keeps a real reversal confirmation while removing the extra bar of lag.
+M5_CONFIRM_CLOSES = int(os.environ.get("HERMES_M5_CONFIRM_CLOSES", "2"))
 
 
 def _closes(m5_rows, n: int) -> list[float]:
@@ -144,13 +177,19 @@ def _closes(m5_rows, n: int) -> list[float]:
 
 
 def m5_confirmation(m5_rows, bias: str) -> bool:
-    closes = _closes(m5_rows, M5_CONFIRM_CLOSES)
-    if not closes:
+    # M5_CONFIRM_CLOSES counts CLOSES: the last N settled closes, compared as
+    # N-1 adjacent moves. A single close carries no move to compare, so a
+    # setting of 1 would be all([]) == True — an unconditional pass. The floor
+    # below keeps that from silently disabling the gate. See
+    # tests/test_b267_confirmation_semantics.py.
+    n = max(M5_CONFIRM_CLOSES, 2)
+    closes = _closes(m5_rows, n)
+    if len(closes) < n:
         return False
     if bias == "bullish":
-        return all(closes[i] < closes[i + 1] for i in range(len(closes) - 1))
+        return all(closes[i] < closes[i + 1] for i in range(n - 1))
     if bias == "bearish":
-        return all(closes[i] > closes[i + 1] for i in range(len(closes) - 1))
+        return all(closes[i] > closes[i + 1] for i in range(n - 1))
     return False
 
 
