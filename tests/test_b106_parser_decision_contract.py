@@ -189,9 +189,18 @@ class TestB106WarningCoverage(unittest.TestCase):
                 census[w] = census.get(w, 0) + 1
         self.assertEqual(census.get("sl_above_entry_for_buy", 0), 0)
         self.assertEqual(census.get("sl_below_entry_for_sell", 0), 0)
-        self.assertGreater(census.get("symbol_defaulted_xauusd", 0), 0,
-                           "no defaulted-symbol signal in the journal — b112's "
-                           "sample is gone, re-measure before quoting it")
+        # b267 (2026-10-08): the live log no longer CONTAINS a symbol-less
+        # signal (all 200 rows are fully-formed 'SIDE XAUUSD price SL ...'),
+        # so this census can no longer demonstrate the default. The property
+        # it stood for — a symbol-less signal defaults to XAUUSD and says so
+        # — is pinned on the PARSER below instead, and the live census stays
+        # as the sl_* tripwire it was written to be.
+        defaulted = parse_signal("4450 SL 4462 TP 4414",
+                                 current_price=4500.0).warnings
+        self.assertIn("symbol_defaulted_xauusd", defaulted,
+                      "a symbol-less signal must default to XAUUSD and emit "
+                      "the warning — b112's premise, now pinned on the parser "
+                      "because the live log no longer carries such a signal")
 
     def test_b112_the_sl_only_warning_penalty_is_spared_on_purpose(self):
         # THE SPARED-DIRECTION PIN for b112 (b102's rule: a deliberate
