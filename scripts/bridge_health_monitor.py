@@ -18,32 +18,36 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent  # b66: code location, not a literal
 sys.path.insert(0, str(BASE))
-from engines.config import bridge_url as _bridge_url  # WP2: canonical (noqa: E402)
-from engines.config import ops_bot_token as _ops_token  # noqa: E402
-from engines.config import ops_chat_id as _ops_chat  # noqa: E402
+
+# V2: Load config directly from .env instead of engines.config
+def _load_env():
+    env_file = BASE / '.env'
+    if not env_file.exists():
+        return
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, val = line.split('=', 1)
+            os.environ[key.strip()] = val.strip()
+
+_load_env()
+
 LOG_FILE = BASE / 'logs' / 'bridge_health.log'
 STATE_FILE = BASE / 'data' / 'bridge_health_state.json'
 FAIL_THRESHOLD = 3
 
 
 def bridge_urls() -> tuple[str, str]:
-    """b63: (health_url, root_url) resolved at CALL time from the documented
-    keys. Was two module-level literals pinning the only bridge host by IP —
-    the watchdog that pages ops when the bridge dies read NO env at all:
-    move the bridge and the trading path follows HERMES_BRIDGE_URL/
-    HERMES_WIN_IP while ops gets 'bridge down' every 5 minutes forever (and
-    never sees the REAL bridge fail). Precedence mirrors bridge_client
-    exactly: explicit HERMES_BRIDGE_URL > derived from HERMES_WIN_IP >
-    last-known default. Call-time, not import-time, because main() loads
-    .env first (b39 lesson).
-    """
-    url = _bridge_url().rstrip('/')  # WP2: canonical precedence (b52/b63)
+    """V2: Get bridge URL from env."""
+    url = os.getenv('HERMES_BRIDGE_URL', 'http://192.168.10.51:5050').rstrip('/')
     return f"{url}/health", f"{url}/"
 
 
 def _env():
-    try:
-        from dotenv import load_dotenv
+    """V2: Get ops token and chat from env."""
+    return os.getenv('TELEGRAM_BOT_TOKEN', ''), os.getenv('TELEGRAM_CHAT_ID', '') load_dotenv
     except ImportError:
         import sys
         sys.path.insert(0, str(BASE))
