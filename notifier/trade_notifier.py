@@ -17,6 +17,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = BASE_DIR / "logs"
 
 # Load from environment
+sys.path.insert(0, str(BASE_DIR))
+from env_loader import load_dotenv
+load_dotenv(BASE_DIR / '.env')
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 

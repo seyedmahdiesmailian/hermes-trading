@@ -60,7 +60,19 @@ def monitor_positions(use_case: PositionManagementUseCase, check_interval: int =
                     
                     if response.actions_taken:
                         for action in response.actions_taken:
-                            print(f"  Action: {action}")
+                            action_str = str(action)
+                            print(f"  Action: {action_str}")
+                            # V2: Notify on close
+                            if 'close' in action_str.lower() or 'exit' in action_str.lower():
+                                try:
+                                    notify_trade_closed(
+                                        ticket=0,
+                                        symbol="XAUUSD",
+                                        profit=0.0,
+                                        reason=action_str
+                                    )
+                                except Exception as e:
+                                    print(f"  Notification error: {e}")
             else:
                 if response.error:
                     print(f"[{datetime.now()}] Error: {response.error}")
