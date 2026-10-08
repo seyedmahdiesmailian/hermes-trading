@@ -88,9 +88,10 @@ class DIContainer:
         learning_engine = LearningEngine()
         
         market_analyzer = MarketAnalyzer()
-        # Note: Strategies would be added here
-        # market_analyzer.add_strategy(SMCStrategy())
-        # market_analyzer.add_strategy(ClassicStrategy())
+        # Add analysis strategies
+        from analysis.technical import SMCStrategy, ClassicStrategy
+        market_analyzer.add_strategy(SMCStrategy(), weight=1.0)
+        market_analyzer.add_strategy(ClassicStrategy(), weight=0.8)
         
         decision_engine = DecisionEngine(
             risk_manager=risk_manager,
