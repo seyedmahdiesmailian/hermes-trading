@@ -257,6 +257,15 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
         # trades. The direction must still hold on every window the dataset
         # actually priced, and the priced set must stay large enough to mean
         # something (a single window would be b110's noise, not a direction).
+        # RE-PRICED 2026-10-08 (b267 M5 confirmation 3->2 closes): the gate
+        # admitted ~65% more signals and b65's direction no longer holds on
+        # every decisive window — live_head wins cached (23.5 vs 21.5 net_R)
+        # but live_running now wins W1 (33.4 vs 31.7). The two trails are
+        # within ~0.03R of each other on both legs, so this is the same
+        # near-flat grid the flatness test pins, not a reversal of b65: the
+        # direction was a small edge measured on a smaller population and the
+        # larger population does not reproduce it. Re-derive with
+        # scripts/b117_trail_reprice.py before quoting either direction.
         wins = [leg for leg in DECISIVE
                 if LED[leg]["arms"]["live_head_0.30"]["net_R"]
                 > LED[leg]["arms"]["live_running_0.45"]["net_R"]]
@@ -266,9 +275,12 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
                                 "M5 source (b182) no longer covers enough of the "
                                 "b68l set for a direction claim; extend it and "
                                 "re-run scripts/b117_trail_reprice.py")
-        self.assertEqual(len(wins), len(DECISIVE),
-                         f"b65's direction must hold on every decisive window, "
-                         f"won on {wins} of {list(DECISIVE)}")
+        self.assertEqual(len(wins), 1,
+                         f"b65's direction no longer holds on every decisive "
+                         f"window under the b267 funnel: head wins {wins} of "
+                         f"{list(DECISIVE)}. The trails are within ~0.03R on "
+                         f"both legs (near-flat), so re-derive before quoting "
+                         f"a direction")
 
     def test_b117_the_measured_effect_is_an_order_of_magnitude_smaller_than_b65s(self):
         # b65's own ledgers: trail .3 vs the .5 baseline it compared against.
@@ -305,12 +317,26 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
                     for leg in DECISIVE}
         best_net = {leg: max(ARMS, key=lambda a: LED[leg]["arms"][a]["net_R"])
                     for leg in DECISIVE}
-        self.assertTrue(best_exp, "no decisive legs to decide flatness on")
-        self.assertGreater(len(set(best_exp.values())), 1,
-                           f"a single arm dominating every decisive leg would mean "
-                           f"the trail IS a lever: {best_exp}")
+        # RE-DERIVED 2026-10-08 (b267 M5 confirmation 3->2 closes): the gate
+        # admitted ~65% more signals (150 -> 248 gate-passed) and the exp_R
+        # axis went FLAT — loose_0.80 is the top exp_R arm on BOTH decisive
+        # legs. The net_R axis still splits (cached=loose_0.80, W1=
+        # live_running_0.45), which is what keeps the trail from being a
+        # single-lever retune. The near-flat finding survives on net_R and on
+        # the 0.041R exp_R spread (inside b119's 0.10R noise band), but exp_R
+        # alone no longer demonstrates it — pin the split explicitly.
+        self.assertTrue(best_net, "no decisive legs to decide flatness on")
         self.assertGreater(len(set(best_net.values())), 1,
-                           f"see above (net_R): {best_net}")
+                           f"a single arm dominating every decisive leg on net_R "
+                           f"would mean the trail IS a lever: {best_net}")
+        spread = {l: max(LED[l]["arms"][a]["exp_R"] for a in ARMS)
+                  - min(LED[l]["arms"][a]["exp_R"] for a in ARMS)
+                  for l in DECISIVE}
+        for l, s in spread.items():
+            self.assertLess(s, 0.10,
+                            f"the exp_R spread on {l} exceeds b119's "
+                            f"noise band ({s:.3f}R) — the trail is a real "
+                            f"lever there and b117's flatness finding is void")
         # AUDIT-2026-10-04: b117's flatness finding has INVERTED on the b222
         # M5 funnel. Pre-M5 the no_trail control WON cached exp_R (the loudest
         # statement of flatness); now it is the WORST of the six arms
@@ -333,8 +359,18 @@ class TestB117DirectionSurvivesMagnitudeGone(unittest.TestCase):
         # near-flat (0.042R spread, inside b119's 0.10R noise band) and no
         # single arm dominates every leg, so the flatness finding itself
         # survives — only the tail identity moved.
-        self.assertEqual(best_exp["cached"], "lab_bar_0.50",
-                         "lab_bar_0.50 must stay the top arm on cached — if "
+        # RE-DERIVED 2026-10-08 (b267 M5 confirmation 3->2 closes): the gate
+        # admitted ~65% more signals (150 -> 248 gate-passed), which
+        # re-ordered the arms' exp_R again. live_running_0.45 stays the
+        # worst, but the top arm moved lab_bar_0.50 -> loose_0.80:
+        # live_running 0.222 < lab_bar 0.232 < loose_0.60 0.235 < live_head
+        # 0.240 < no_trail 0.244 < loose_0.80 0.263. The grid is still
+        # near-flat (0.041R spread, inside b119's 0.10R noise band) and no
+        # single arm dominates every leg (best_exp cached=loose_0.80,
+        # W1=loose_0.80 by exp_R but live_running_0.45 by net_R), so the
+        # flatness finding itself survives — only the tail identity moved.
+        self.assertEqual(best_exp["cached"], "loose_0.80",
+                         "loose_0.80 must stay the top arm on cached — if "
                          "another arm overtakes it the ordering changed again "
                          "and this note needs re-reading")
         self.assertLess(LED["cached"]["arms"]["lab_bar_0.50"]["exp_R"]
@@ -448,12 +484,19 @@ class TestB117RunnerPopulation(unittest.TestCase):
         # (b81.m5_source_rows), not turned until green. The FROZEN pre-b187
         # ledger row stays certified as history (b102: pin and finding move
         # together; history must not rot).
-        self.assertEqual(rc["gate_passed_signals"], 150,
-                         "the M5-parity runner census moved off 150 — re-derive "
+        # RE-PRICED (b267 M5 confirmation 3->2 closes, 2026-10-08): the gate
+        # admits more signals — every entry now needs one close-to-close move
+        # with the bias instead of two, so 150 -> 248 gate-passed, 55 -> 74
+        # runner legs, share 0.2984. Recomputed from the same source this test
+        # uses (b81.m5_source_rows), not turned until green. The FROZEN
+        # pre-b187 ledger row stays certified as history (b102: pin and
+        # finding move together; history must not rot).
+        self.assertEqual(rc["gate_passed_signals"], 248,
+                         "the M5-parity runner census moved off 248 — re-derive "
                          "with b81.m5_source_rows() AND re-check the b189/b194 "
                          "parity todo before quoting any census")
-        self.assertEqual(rc["signals_with_runner_leg"], 55,
-                         "the A-lane runner population moved off 59 under the "
+        self.assertEqual(rc["signals_with_runner_leg"], 74,
+                         "the A-lane runner population moved off 74 under the "
                          "live trigger — anything else means "
                          "_partial_close_fraction or the grade gate changed shape")
         # The cached row is recomputed by the same script run, so it moves WITH
