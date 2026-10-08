@@ -25,11 +25,12 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 BASE = Path(__file__).resolve().parent.parent
-load_dotenv(BASE / ".env")
 sys.path.insert(0, str(BASE))
+
+from env_loader import load_dotenv  # noqa: E402
+
+load_dotenv(BASE / ".env")
 
 from bridge_client import BridgeClient  # noqa: E402
 from engines.context import (  # noqa: E402

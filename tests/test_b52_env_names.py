@@ -129,6 +129,7 @@ DOCUMENTED_KNOBS = {
     "HERMES_SIGNAL_PENDING_DISABLE": "b71 kill-switch for signal LIMIT parking: '1' disables, default off = enabled (engines/signal_pending.py)",
     "HERMES_PENDING_TTL_MIN": "b70 pending-order lifetime in minutes, default 240, engines/signal_pending.py",
     "HERMES_PENDING_MAX": "b70 max simultaneous parked signal limits, default 2, engines/signal_pending.py",
+    "HERMES_M5_CONFIRM_CLOSES": "b267 M5 entry confirmation: consecutive M5 closes that must move with the bias before an in-zone entry fires; K closes give K-1 close-to-close moves; m5_confirmation() floors the length at 2 so 1 is never unconditional, default 2, engines/orchestrator.py",
 }
 
 
@@ -341,8 +342,14 @@ def knob_shadow_hits(src: str) -> list[dict]:
     for key, lit, line in env_reads_with_literal_defaults(src):
         if key not in DOCUMENTED_KNOBS or not lit:
             continue
+        # b267: the rule above scopes the trap to an UNdocumented knob
+        # mirroring a documented value. When BOTH sides are documented knobs
+        # (HERMES_M5_CONFIRM_CLOSES '2' vs HERMES_PENDING_MAX '2' — unrelated
+        # facts that happen to share a default) the coincidence is not a
+        # second name for one fact, so it is not a shadow.
+        doc_knob_names = set(DOCUMENTED_KNOBS)
         for doc_key, doc_val in doc_vals.items():
-            if doc_key != key and lit == doc_val:
+            if doc_key not in doc_knob_names and doc_key != key and lit == doc_val:
                 hits.append({"knob": key, "default": lit,
                              "shadows": doc_key, "line": line})
     return hits

@@ -17,12 +17,13 @@ import json
 import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 BASE = Path(__file__).resolve().parent.parent
-load_dotenv(BASE / ".env")
 sys.path.insert(0, str(BASE))
 sys.path.insert(0, str(BASE / "engines"))
+
+from env_loader import load_dotenv  # noqa: E402
+
+load_dotenv(BASE / ".env")
 
 from bridge_client import BridgeClient  # noqa: E402
 from engines.backtest_real import run_backtest  # noqa: E402
