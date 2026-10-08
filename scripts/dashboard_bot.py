@@ -23,8 +23,15 @@ from env_loader import load_dotenv  # noqa: E402
 load_dotenv(ROOT / '.env')
 
 from notifier import dashboards  # noqa: E402
+# V2: Use legacy_v1 path for engines (temporary compatibility)
+legacy_path = ROOT / 'legacy_v1'
+if legacy_path.exists():
+    sys.path.insert(0, str(legacy_path))
 from engines import paths  # noqa: E402
-from engines.config import ops_chat_id as _ops_chat  # WP2: canonical (noqa: E402)
+
+# V2: Get ops_chat from env directly
+def _ops_chat():
+    return os.getenv('TELEGRAM_CHAT_ID', os.getenv('AUTOPILOT_REPORT_CHAT_ID', ''))
 
 STATE = ROOT / 'data/ops/dashboard_state.json'
 PANELS = {'sys': '🖥 سیستم', 'auto': '🤖 اتوپایلوت', 'ops': '💾 بکاپ/سلامت',
