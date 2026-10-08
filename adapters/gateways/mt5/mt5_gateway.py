@@ -3,6 +3,8 @@
 Implements market data and execution ports for MT5.
 """
 
+from infrastructure.cache import Cache, cached, cache_market_data, get_cached_market_data
+from infrastructure.connection_pool import ConnectionPool
 import requests
 from typing import List
 from datetime import datetime, timezone
@@ -40,6 +42,18 @@ class MT5Gateway(IMarketDataRepository):
         self.bridge_url = bridge_url.rstrip('/')
         self.token = token
         self.timeout = timeout
+        
+        # Use connection pool for better performance
+        self.pool = ConnectionPool(
+            base_url=bridge_url,
+            token=token,
+            pool_size=10,
+            max_retries=3,
+            timeout=timeout,
+            rate_limit=120  # 120 req/min
+        )
+        
+        # Keep old headers for compatibility
         self._headers = {
             'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json'
@@ -176,7 +190,25 @@ class MT5Gateway(IMarketDataRepository):
         except requests.RequestException as e:
             raise Exception(f"MT5 connection failed: {e}")
     
-    def _fetch_candles(self, symbol: str, timeframe: str, count: int) -> List[Candle]:
+    def _fetch_candles(self, symbol: str, timeframe: str, count: int = 500) -> List[Candle]:
+        """Fetch candles from MT5 with caching.
+        
+        Args:
+            symbol: Trading symbol
+            timeframe: Timeframe string
+            count: Number of candles
+            
+        Returns:
+            List of Candle objects
+        """
+        # Check cache first (30 second TTL)
+        cache_key = f"candles:{symbol}:{timeframe}:{count}"
+        cached_data = Cache.instance().get(cache_key)
+        
+        if cached_data:
+            return [Candle(**c) for c in cached_data]
+        
+        # Cache miss - fetch from MT5
         """Fetch candles from MT5.
         
         Args:
