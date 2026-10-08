@@ -22,6 +22,13 @@ from brain.application.use_cases.position_management import (
     ManagePositionRequest
 )
 
+# V2: Trade notifications
+try:
+    from notifier.trade_notifier import notify_trade_closed
+except ImportError:
+    def notify_trade_closed(*args, **kwargs):
+        pass
+
 # Global flag
 running = True
 
