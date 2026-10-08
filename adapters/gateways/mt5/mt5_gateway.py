@@ -236,3 +236,97 @@ class MT5Gateway(IMarketDataRepository):
     
     def __repr__(self) -> str:
         return f"MT5Gateway({self.bridge_url})"
+    
+    def place_order(self, symbol: str, order_type: str, volume: float,
+                   price: float, sl: float, tp: float, comment: str = "") -> dict:
+        """Place a new order.
+        
+        Args:
+            symbol: Trading symbol (e.g., "XAUUSD")
+            order_type: "BUY" or "SELL"
+            volume: Lot size
+            price: Entry price (0 for market)
+            sl: Stop loss
+            tp: Take profit
+            comment: Order comment
+        
+        Returns:
+            dict with order result: {"ok": bool, "ticket": int, "error": str}
+        """
+        url = f"{self.bridge_url}/api/order"
+        
+        payload = {
+            "symbol": symbol,
+            "type": order_type.upper(),
+            "volume": volume,
+            "price": price,
+            "sl": sl,
+            "tp": tp,
+            "comment": comment or "Hermes V2"
+        }
+        
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                headers=self._headers,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+    
+    def close_position(self, ticket: int) -> dict:
+        """Close an open position.
+        
+        Args:
+            ticket: Position ticket number
+        
+        Returns:
+            dict with result: {"ok": bool, "ticket": int, "error": str}
+        """
+        url = f"{self.bridge_url}/api/close"
+        
+        try:
+            response = requests.post(
+                url,
+                json={"ticket": ticket},
+                headers=self._headers,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+    
+    def modify_position(self, ticket: int, sl: float = None, tp: float = None) -> dict:
+        """Modify SL/TP of an open position.
+        
+        Args:
+            ticket: Position ticket number
+            sl: New stop loss (None = no change)
+            tp: New take profit (None = no change)
+        
+        Returns:
+            dict with result: {"ok": bool, "error": str}
+        """
+        url = f"{self.bridge_url}/api/modify"
+        
+        payload = {"ticket": ticket}
+        if sl is not None:
+            payload["sl"] = sl
+        if tp is not None:
+            payload["tp"] = tp
+        
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                headers=self._headers,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
