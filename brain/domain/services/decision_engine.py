@@ -378,22 +378,25 @@ class DecisionEngine:
         # Determine direction
         direction = "buy" if analysis.is_bullish() else "sell"
         
-        # Entry price (current price)
-        entry_price = market_state.current_price
+        # Entry price (current price or from analysis)
+        entry_price = analysis.key_levels.get('entry', [market_state.current_price])[0]
         
-        # Stop loss (placeholder - would use analysis levels)
-        sl_distance = 20.0  # Points
-        if direction == "buy":
-            stop_loss = entry_price - sl_distance
+        # Stop loss - USE ANALYSIS LEVELS
+        if 'stop_loss' in analysis.key_levels and analysis.key_levels['stop_loss']:
+            stop_loss = analysis.key_levels['stop_loss'][0]
         else:
-            stop_loss = entry_price + sl_distance
+            # Fallback
+            sl_distance = 20.0
+            stop_loss = entry_price - sl_distance if direction == "buy" else entry_price + sl_distance
         
-        # Take profit (2:1 RR minimum)
-        tp_distance = sl_distance * self.risk_manager.params.min_risk_reward
-        if direction == "buy":
-            take_profit = entry_price + tp_distance
+        # Take profit - USE ANALYSIS LEVELS
+        if 'take_profit' in analysis.key_levels and analysis.key_levels['take_profit']:
+            take_profit = analysis.key_levels['take_profit'][0]
         else:
-            take_profit = entry_price - tp_distance
+            # Fallback
+            sl_distance = abs(stop_loss - entry_price)
+            tp_distance = sl_distance * self.risk_manager.params.min_risk_reward
+            take_profit = entry_price + tp_distance if direction == "buy" else entry_price - tp_distance
         
         # Position size
         position_size = self.risk_manager.calculate_position_size(
