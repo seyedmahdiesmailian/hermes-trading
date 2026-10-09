@@ -556,44 +556,47 @@ class UltimateTrader:
             strategy = "range_bounce"
             sr_levels = self._find_support_resistance(recent)
             
-            if not sr_levels:
-                return None
+            # RELAXED: Accept even with weak S/R
+            if len(sr_levels) < 2:
+                # Try wider search
+                sr_levels = self._find_support_resistance(candles[-200:])
             
-            price = current.close
-            
-            for level in sr_levels:
-                dist = abs(price - level['price']) / price
+            if sr_levels:  # Any S/R found
+                price = current.close
                 
-                if dist < 0.003:
-                    if direction == 'buy' and level['type'] == 'support':
-                        reasons.append(f"At support {level['price']:.1f}")
-                        confidence += 20
-                        
-                        if current.is_bullish:
-                            reasons.append("Bullish bounce")
-                            confidence += 15
-                        
-                        if level['touches'] >= 3:
-                            reasons.append(f"{level['touches']} touches")
-                            confidence += 10
-                        
-                        if confidence >= 65:
-                            return {'confidence': confidence, 'reasons': reasons, 'strategy': strategy}
+                for level in sr_levels:
+                    dist = abs(price - level['price']) / price
                     
-                    elif direction == 'sell' and level['type'] == 'resistance':
-                        reasons.append(f"At resistance {level['price']:.1f}")
-                        confidence += 20
+                    if dist < 0.005:  # Relaxed from 0.003
+                        if direction == 'buy' and level['type'] == 'support':
+                            reasons.append(f"Near support {level['price']:.1f}")
+                            confidence += 20
+                            
+                            if current.is_bullish:
+                                reasons.append("Bullish bounce")
+                                confidence += 15
+                            
+                            if level['touches'] >= 2:  # Relaxed from 3
+                                reasons.append(f"{level['touches']} touches")
+                                confidence += 10
+                            
+                            if confidence >= 55:  # Relaxed
+                                return {'confidence': confidence, 'reasons': reasons, 'strategy': strategy}
                         
-                        if not current.is_bullish:
-                            reasons.append("Bearish rejection")
-                            confidence += 15
-                        
-                        if level['touches'] >= 3:
-                            reasons.append(f"{level['touches']} touches")
-                            confidence += 10
-                        
-                        if confidence >= 65:
-                            return {'confidence': confidence, 'reasons': reasons, 'strategy': strategy}
+                        elif direction == 'sell' and level['type'] == 'resistance':
+                            reasons.append(f"Near resistance {level['price']:.1f}")
+                            confidence += 20
+                            
+                            if not current.is_bullish:
+                                reasons.append("Bearish rejection")
+                                confidence += 15
+                            
+                            if level['touches'] >= 2:  # Relaxed from 3
+                                reasons.append(f"{level['touches']} touches")
+                                confidence += 10
+                            
+                            if confidence >= 55:  # Relaxed
+                                return {'confidence': confidence, 'reasons': reasons, 'strategy': strategy}
         
         return None
     
