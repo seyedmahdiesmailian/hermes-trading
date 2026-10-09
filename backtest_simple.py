@@ -14,6 +14,8 @@ from brain.domain.services.risk_manager import RiskManager
 from brain.domain.value_objects.risk import RiskParameters
 from analysis.technical.smc_strategy import SMCStrategy
 from analysis.technical.classic_strategy import ClassicStrategy
+from analysis.technical.scalping_strategy import ScalpingStrategy
+from analysis.technical.breakout_strategy import BreakoutStrategy
 
 print("🚀 BACKTEST - Hermes V2 System")
 print("="*60)
@@ -30,10 +32,12 @@ candles = [Candle(
 
 print(f"\n📊 {len(candles)} candles, {(candles[-1].time - candles[0].time).days} days")
 
-# Setup
+# Setup - AGGRESSIVE MULTI-STRATEGY
 analyzer = MarketAnalyzer()
-analyzer.add_strategy(SMCStrategy(), 1.0)
-analyzer.add_strategy(ClassicStrategy(), 0.8)
+analyzer.add_strategy(ScalpingStrategy(), 1.5)  # HIGHEST weight
+analyzer.add_strategy(BreakoutStrategy(), 1.2)
+analyzer.add_strategy(SMCStrategy(), 0.8)
+analyzer.add_strategy(ClassicStrategy(), 0.6)
 
 risk_params = RiskParameters(
     max_risk_per_trade_pct=0.02,  # 2%
