@@ -1,0 +1,16 @@
+[Unit]
+Description=Hermes Telegram Signal Listener
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai/hermes-trading
+Environment="PATH=/home/ai/hermes-trading/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/ai/hermes-trading/.venv/bin/python3 /home/ai/hermes-trading/telegram_signal_listener.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
