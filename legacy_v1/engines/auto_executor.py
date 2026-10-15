@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 from engines.orchestrator import compute_xau_position_size
 from engines.plan import setup_grade, MIN_SETUP_GRADE  # b79d: threshold lives
 from engines.market_hours import is_market_open
-from engines.defcon import filter_management_by_insights
+# REFACTORED (2026-10-15): Use new adapter for DEFCON (maintains same interface)
+from legacy_v1.adapters.defcon_adapter import filter_management_by_insights
 
 
 # ─── Risk Parameters (professional trader defaults) ───
@@ -373,7 +374,8 @@ def evaluate_proposal(
     # GREEN full risk / YELLOW half risk, no runner / RED no new entries.
     _defcon_insights = None
     try:
-        from engines.defcon import compute_insights, classify_exits
+        # REFACTORED: Use new adapter
+        from legacy_v1.adapters.defcon_adapter import compute_insights, classify_exits
         _deals = performance_state.get("recent_closed") or []
         _defcon_insights = compute_insights(
             loss_streak=int(performance_state.get("loss_streak", 0) or 0),
