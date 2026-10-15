@@ -115,23 +115,33 @@ class DataMigrator:
                 reader = csv.DictReader(f)
                 trades = list(reader)
             
+            # Filter: only real trades (have ticket)
+            real_trades = [t for t in trades if t.get('ticket') and t.get('ticket').strip()]
+            
             if not self.dry_run:
-                for trade in trades:
+                for trade in real_trades:
                     try:
+                        # Parse and validate
+                        ticket = int(trade['ticket'])
+                        entry = float(trade.get('entry', 0))
+                        
+                        if ticket <= 0 or entry <= 0:
+                            continue  # Skip invalid
+                        
                         db_trade = {
-                            'ticket': int(trade.get('ticket', 0)),
-                            'position_id': int(trade.get('position_id', 0)) if trade.get('position_id') else None,
-                            'symbol': trade.get('symbol', 'XAUUSD'),
-                            'side': trade.get('side', 'buy'),
-                            'volume': float(trade.get('volume', 0)),
-                            'entry_price': float(trade.get('entry_price', 0)),
-                            'stop_loss': float(trade.get('sl', 0)) if trade.get('sl') else None,
-                            'take_profit': float(trade.get('tp', 0)) if trade.get('tp') else None,
+                            'ticket': ticket,
+                            'position_id': None,
+                            'symbol': 'XAUUSD',
+                            'side': trade.get('side', 'buy').lower(),
+                            'volume': float(trade.get('lot', 0.01)),
+                            'entry_price': entry,
+                            'stop_loss': float(trade.get('sl')) if trade.get('sl') and trade.get('sl').strip() else None,
+                            'take_profit': float(trade.get('tp')) if trade.get('tp') and trade.get('tp').strip() else None,
                             'source': 'plan',
                             'source_ref': trade.get('plan_id'),
-                            'entry_time': self._parse_timestamp(trade.get('open_time')),
-                            'status': 'closed',  # All in log are closed
-                            'comment': trade.get('comment')
+                            'entry_time': self._parse_timestamp(trade.get('at')),
+                            'status': 'closed',
+                            'comment': trade.get('source', '')
                         }
                         
                         self.db.save_trade(db_trade)
@@ -140,9 +150,9 @@ class DataMigrator:
                     except Exception as e:
                         self.stats['errors'].append(f"Trade {trade.get('ticket')}: {e}")
             else:
-                self.stats['trades'] = len(trades)
+                self.stats['trades'] = len(real_trades)
             
-            print(f"  ✅ Migrated {len(trades)} trades")
+            print(f"  ✅ Migrated {len(real_trades)}/{len(trades)} trades (skipped {len(trades)-len(real_trades)} dry-run)")
         
         except Exception as e:
             self.stats['errors'].append(f"Trades: {e}")
