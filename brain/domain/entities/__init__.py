@@ -7,6 +7,17 @@ from .plan import TradingPlan, SetupGrade, PlanStage
 from .account import Account, AccountState
 from .defcon import DefconLevel, ExitType, ClosedDeal, ExitStatistics, DefconInsights
 from .risk import RiskRegime, PerformanceState, AccountPolicy, RiskBudget
+from .learning import (
+    SetupGrade as LearningSetupGrade,
+    TradingSession,
+    RegimeBucket,
+    JournalEntry,
+    PositionSummary,
+    TradeStatistics,
+    AnalysisResult,
+    LearningAdjustments,
+    LearningState,
+)
 
 __all__ = [
     # Market
@@ -39,4 +50,14 @@ __all__ = [
     'PerformanceState',
     'AccountPolicy',
     'RiskBudget',
+    # Learning
+    'LearningSetupGrade',
+    'TradingSession',
+    'RegimeBucket',
+    'JournalEntry',
+    'PositionSummary',
+    'TradeStatistics',
+    'AnalysisResult',
+    'LearningAdjustments',
+    'LearningState',
 ]

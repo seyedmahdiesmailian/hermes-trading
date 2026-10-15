@@ -1,0 +1,25 @@
+{
+  "id": "aa4fc448-3bd9-4951-8390-683412ab81a5",
+  "symbol": "XAUUSD",
+  "direction": "sell",
+  "entry_price": 4158.22,
+  "stop_loss": 4178.22,
+  "take_profit": 4118.22,
+  "position_size": 4.93,
+  "setup_grade": "B",
+  "reasoning": {
+    "analysis_quality": 0.8,
+    "risk_acceptable": 1.0,
+    "market_conditions": 0.8,
+    "learned_patterns": 0.5,
+    "timing": 0.7
+  },
+  "created_at": "2026-10-15T18:25:06.254991",
+  "stage": "ready",
+  "executed_at": null,
+  "closed_at": null,
+  "ticket": null,
+  "actual_entry_price": null,
+  "exit_price": null,
+  "profit": null
+}
