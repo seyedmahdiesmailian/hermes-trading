@@ -18,6 +18,13 @@ from .learning import (
     LearningAdjustments,
     LearningState,
 )
+from .context import (
+    MarketBias,
+    ZoneSource,
+    PriceZones,
+    ExecutionPlan,
+    MarketContext,
+)
 
 __all__ = [
     # Market
@@ -60,4 +67,10 @@ __all__ = [
     'AnalysisResult',
     'LearningAdjustments',
     'LearningState',
+    # Context
+    'MarketBias',
+    'ZoneSource',
+    'PriceZones',
+    'ExecutionPlan',
+    'MarketContext',
 ]
