@@ -17,13 +17,17 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
-from engines.context import build_plan_context
+# REFACTORED (2026-10-15): Use new context adapter
+from legacy_v1.adapters.context_adapter import build_plan_context
 from engines.bridge_payload import positions_list
-from engines.smc import smc_analyse, merge_smc_with_classic
+# REFACTORED (2026-10-15): Use new SMC adapter
+from legacy_v1.adapters.smc_adapter import SMCAdapter
+_smc_adapter = SMCAdapter()
 from engines.orchestrator import build_plan_from_context, route_runtime_step, evaluate_monitor_cycle, compute_xau_position_size
 from engines.trade_management import (evaluate_trade_management, ladder_fields,
                                       build_tp_ladder)
-from engines.risk import assess_account_policy, compute_performance_state
+# REFACTORED (2026-10-15): Use new risk adapter
+from legacy_v1.adapters.risk_adapter import assess_account_policy, compute_performance_state
 from engines.storage import load_current_plan, save_current_plan, load_runtime_state, save_runtime_state, load_performance_state, save_performance_state, append_execution_log, append_reassessment_log, append_risk_ledger
 from engines.plan import setup_grade, apply_smc_merge, _entry_close, stale_at_birth
 from engines.report import render_plan_brief, render_reassess_brief, render_monitor_brief, render_management_brief, render_execution_brief
@@ -250,8 +254,8 @@ def build_live_plan(bridge, now: datetime | None = None) -> tuple[dict | None, d
     if not (m5 and h1 and h4):
         return None, {'ok': False, 'error': 'insufficient_market_data', 'counts': {'M5': len(m5), 'H1': len(h1), 'H4': len(h4)}, 'session': session}
     ctx = build_plan_context(m5, h1, h4, session, m15_rows=m15)
-    smc_result = smc_analyse(m5, now=now, h1_rows=h1)
-    merged = merge_smc_with_classic(ctx, smc_result)
+    smc_result = _smc_adapter.analyze_smc(m5, h1_rows=h1, now=now)
+    merged = _smc_adapter.merge_smc_with_classic(ctx, smc_result)
     # b193: this 30-line block was build_live_plan's OWN copy of the merge; the
     # lab had a second copy that dropped the b188(a) veto. One definition now,
     # in engines.plan.apply_smc_merge, called by both paths. Behaviour here is
