@@ -77,6 +77,10 @@ def test_signal_flow():
     # Initialize components
     parser = SignalParser()
     market_analyzer = MarketAnalyzer()
+    
+    # Add ML Heuristic strategy (proven winner: -1.08%, 28.8% WR)
+    from brain.ml_heuristic_strategy import MLHeuristicStrategy
+    market_analyzer.add_strategy(MLHeuristicStrategy(), weight=1.0)
     risk_params = RiskParameters(
         max_risk_per_trade_pct=0.02,
         max_daily_loss_pct=0.05,
@@ -117,9 +121,12 @@ def test_signal_flow():
         # Step 2: Our analysis
         our_analysis = market_analyzer.analyze(market_state)
         print(f"\n   📈 Our Analysis:")
-        print(f"      Sentiment: {our_analysis.sentiment.value}")
+        print(f"      Trend: {our_analysis.trend}")
+        print(f"      Strength: {our_analysis.trend_strength:.2f}")
         print(f"      Quality: {our_analysis.quality_score:.2f}")
-        print(f"      Direction: {'BULLISH' if our_analysis.is_bullish() else 'BEARISH' if our_analysis.is_bearish() else 'NEUTRAL'}")
+        print(f"      Confidence: {our_analysis.confidence:.2f}")
+        direction_label = 'BULLISH' if our_analysis.is_bullish() else 'BEARISH' if our_analysis.is_bearish() else 'RANGING'
+        print(f"      Direction: {direction_label}")
         
         # Step 3: Cross-validation & Decision
         decision_result = decision_engine.evaluate_signal_entry(
