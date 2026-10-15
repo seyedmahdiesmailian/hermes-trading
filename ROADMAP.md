@@ -24,9 +24,9 @@
 
 | Phase | مدت | وضعیت | توضیح |
 |-------|-----|-------|-------|
-| Phase 0 | هفته 1-2 | 🟢 در حال اجرا | تثبیت + Database |
-| Phase 1 | هفته 3-4 | ⚪ بعدی | Refactor Engines |
-| Phase 2 | هفته 5-8 | ⚪ منتظر | Service Extraction |
+| Phase 0 | هفته 1-2 | ✅ کامل | تثبیت + Database |
+| Phase 1 | هفته 3-4 | ✅ کامل | Refactor Engines |
+| Phase 2 | هفته 5-8 | 🟢 در حال اجرا | Integration & Wiring |
 | Phase 3 | هفته 9-12 | ⚪ منتظر | Bridge بهبودیافته |
 | Phase 4 | هفته 13-18 | ⚪ آینده | AI Signal Analyzer |
 
@@ -60,8 +60,21 @@
 
 ---
 
-## Phase 1: Refactor Core Engines 🔄
+## Phase 1: Refactor Core Engines ✅
 **هدف:** `legacy_v1/engines/` را تمیز کن
+
+**Status:** ✅ **COMPLETE** (2026-10-15)
+
+### انجام شد:
+- ✅ Phase 1.1: DEFCON engine (197 lines → 103 entities + 269 service + 30 tests)
+- ✅ Phase 1.2: Risk engine (273 lines → 118 entities + 380 service + 21 tests)
+- ✅ Phase 1.3: Learning engine (568 lines → 184 entities + 577 service + 12 tests)
+- ✅ Phase 1.4: Context engine (392 lines → 124 entities + 510 service + 19 tests)
+- ✅ Phase 1.5: SMC engine (1,032 lines → 184 entities + 1,008 service + 32 tests)
+
+**Total:** 2,462 legacy lines → 4,249 clean code lines
+**Tests:** 124/124 passing (100%)
+**Architecture:** Domain entities + Service layer + Legacy adapters
 
 ### استراتژی:
 **نه rewrite، بلکه extract + simplify**
