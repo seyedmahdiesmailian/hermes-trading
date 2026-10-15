@@ -209,8 +209,32 @@ class TelegramSignalListener:
                 logger.info(f"   Entry: {signal.entry_price}, SL: {signal.stop_loss}, TP: {signal.take_profit}")
                 logger.info(f"   Size: {decision_result.action_params.get('position_size', 'N/A')}")
                 
-                # TODO: Execute via MT5
-                # self.mt5.place_order(...)
+                # Execute via MT5
+                try:
+                    order_type = 'buy' if signal.direction == 'buy' else 'sell'
+                    lot_size = decision_result.action_params.get('lot_size', 0.01)
+                    
+                    order_result = self.mt5.place_order(
+                        symbol=signal.symbol,
+                        order_type=order_type,
+                        volume=lot_size,
+                        sl=signal.stop_loss,
+                        tp=signal.take_profit,
+                        comment=f"Signal from {channel_name}"
+                    )
+                    
+                    if order_result and order_result.get('retcode') == 10009:
+                        ticket = order_result.get('order', 'N/A')
+                        logger.info(f"🎉 ORDER PLACED! Ticket: {ticket}")
+                        logger.info(f"   {order_type.upper()} {lot_size} lots {signal.symbol}")
+                        logger.info(f"   Entry: {signal.entry_price}, SL: {signal.stop_loss}, TP: {signal.take_profit}")
+                    else:
+                        logger.error(f"⛔ Order failed: {order_result}")
+                
+                except Exception as e:
+                    logger.error(f"⛔ Execution error: {e}")
+                    import traceback
+                    traceback.print_exc()
             else:
                 logger.info(f"❌ SIGNAL REJECTED: {decision_result.decision.value}")
             
