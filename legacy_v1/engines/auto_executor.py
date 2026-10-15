@@ -165,7 +165,7 @@ def evaluate_proposal(
     # so those tests measured live state, not the wiring they pinned. The
     # default is unchanged for every production caller.
     try:
-        from engines.learning import load_learning_state
+        from legacy_v1.adapters.learning_adapter import load_learning_state
         _ls = dict(load_learning_state())
     except Exception:
         _ls = {}
@@ -355,7 +355,7 @@ def evaluate_proposal(
 
     # ── Check 6.5: Adaptive learning grade gate (Phase 6) ──
     try:
-        from engines.learning import GRADES
+        from legacy_v1.adapters.learning_adapter import GRADES
         _grade_idx = GRADES.index(grade)
         if _grade_idx < GRADES.index(str(_ls.get("min_grade", "B"))):
             reasons.append(f"learned_grade_{_ls.get('min_grade')}")

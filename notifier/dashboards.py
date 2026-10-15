@@ -295,7 +295,7 @@ def _group_positions_fn():
     rather than silently show gross as net.
     """
     try:
-        from engines.learning import group_positions
+        from legacy_v1.adapters.learning_adapter import group_positions
         return group_positions
     except Exception:
         return None

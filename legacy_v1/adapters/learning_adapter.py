@@ -16,6 +16,11 @@ from brain.domain.entities.learning import (
 from database import get_db
 
 
+# Legacy constant (engines/learning.py line 41): ordered worst → best.
+# Kept as a plain list so legacy `GRADES.index(grade)` calls keep working.
+GRADES = ["C", "B", "A"]
+
+
 # Module-level service instance
 _service = LearningService(get_db())
 
@@ -24,6 +29,29 @@ def position_count(rows: list[dict]) -> int:
     """Count distinct positions from journal rows."""
     positions = _service.group_positions(rows)
     return len(positions)
+
+
+def journal(bridge, days: int = 30) -> int:
+    """Sync closed MT5 deals into the journal CSV. Returns rows added.
+
+    Delegate to the legacy journal writer: it is pure CSV/bridge plumbing
+    (broker deal parsing, entry-commission prorating) with no domain logic,
+    so it stays in engines/learning.py until the CSV layer is refactored.
+    """
+    from legacy_v1.engines import learning as legacy
+    return legacy.journal(bridge, days=days)
+
+
+def run_learning_cycle(bridge) -> dict:
+    """One full loop: journal → analyze → adjust → apply.
+
+    Mirrors engines/learning.py::run_learning_cycle but routed through the
+    refactored adapter for analyze/adjust/apply.
+    """
+    added = journal(bridge)
+    deltas = adjustments()
+    state = apply(deltas.get('changes') or {})
+    return {'journaled': added, 'proposal': deltas, 'learning_state': state}
 
 
 def group_positions(rows: list[dict]) -> dict[str, dict]:

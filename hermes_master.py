@@ -225,7 +225,7 @@ def main():
 
     # ── Phase 2.5: adaptive learning loop (journal → analyze → adjust) ──
     try:
-        from engines.learning import run_learning_cycle
+        from legacy_v1.adapters.learning_adapter import run_learning_cycle
         learning = run_learning_cycle(bridge)
         if learning.get('journaled'):
             log(f"Learning: +{learning['journaled']} journaled trades")
