@@ -5,6 +5,7 @@ from .trade import Order, Position, OrderType, OrderStatus
 from .signal import Signal, SignalSource, SignalQuality
 from .plan import TradingPlan, SetupGrade, PlanStage
 from .account import Account, AccountState
+from .defcon import DefconLevel, ExitType, ClosedDeal, ExitStatistics, DefconInsights
 
 __all__ = [
     # Market
@@ -26,4 +27,10 @@ __all__ = [
     # Account
     'Account',
     'AccountState',
+    # DEFCON
+    'DefconLevel',
+    'ExitType',
+    'ClosedDeal',
+    'ExitStatistics',
+    'DefconInsights',
 ]
