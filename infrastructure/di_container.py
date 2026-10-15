@@ -23,6 +23,11 @@ from brain.application.use_cases.position_management import PositionManagementUs
 # Adapters
 from adapters.gateways.mt5.mt5_gateway import MT5Gateway
 from adapters.gateways.data.json_repository import JSONRepository
+from adapters.gateways.data.sqlite_repository import (
+    SqliteEntitySignalRepository,
+    SqliteEntityStateRepository,
+    SqliteEntityTradeRepository,
+)
 
 T = TypeVar('T')
 
@@ -70,10 +75,21 @@ class DIContainer:
         )
         
         json_repo = JSONRepository(data_dir=data_dir)
-        
+
+        # SQLite entity repositories — the single source of truth.
+        # One shared connection pool is unnecessary here: each repo opens its
+        # own connection to the same WAL database (concurrent readers + one
+        # writer at a time is the SQLite contract we already rely on).
+        sqlite_trade_repo = SqliteEntityTradeRepository()
+        sqlite_signal_repo = SqliteEntitySignalRepository()
+        sqlite_state_repo = SqliteEntityStateRepository()
+
         # Register adapters
         self._services[MT5Gateway] = mt5_gateway
         self._services[JSONRepository] = json_repo
+        self._services[SqliteEntityTradeRepository] = sqlite_trade_repo
+        self._services[SqliteEntitySignalRepository] = sqlite_signal_repo
+        self._services[SqliteEntityStateRepository] = sqlite_state_repo
         
         # Domain Services
         risk_params = RiskParameters(
@@ -105,27 +121,28 @@ class DIContainer:
         self._services[MarketAnalyzer] = market_analyzer
         self._services[DecisionEngine] = decision_engine
         
-        # Use Cases
+        # Use Cases — wired to the SQLite entity repositories (single source
+        # of truth). JSONRepository remains registered for legacy consumers.
         autonomous_trading_uc = AutonomousTradingUseCase(
             market_analyzer=market_analyzer,
             decision_engine=decision_engine,
             market_data_repo=mt5_gateway,
-            trade_repo=json_repo,
-            state_repo=json_repo
+            trade_repo=sqlite_trade_repo,
+            state_repo=sqlite_state_repo
         )
         
         signal_processing_uc = SignalProcessingUseCase(
             market_analyzer=market_analyzer,
             decision_engine=decision_engine,
             market_data_repo=mt5_gateway,
-            signal_repo=json_repo,
-            state_repo=json_repo
+            signal_repo=sqlite_signal_repo,
+            state_repo=sqlite_state_repo
         )
         
         position_management_uc = PositionManagementUseCase(
             decision_engine=decision_engine,
             market_data_repo=mt5_gateway,
-            trade_repo=json_repo
+            trade_repo=sqlite_trade_repo
         )
         
         # Register use cases
