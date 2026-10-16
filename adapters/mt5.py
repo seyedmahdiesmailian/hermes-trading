@@ -6,8 +6,10 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import logging
 import time
+from pathlib import Path
 from typing import Optional
 
 import requests
@@ -36,16 +38,68 @@ class Mt5Adapter:
     هیچ‌گاه None خام برمی‌گردانند (جلوگیری از NPE در مغز).
     """
 
-    def __init__(self, url: str, token: str, timeout_s: int = 10, dry_run: bool = True):
+    def __init__(self, url: str, token: str, timeout_s: int = 10, dry_run: bool = True,
+                 sim_state_path: str | None = None):
         self._url = url.rstrip("/")
         self._headers = {"Authorization": f"Bearer {token}"}
         self._timeout = timeout_s
         self._dry_run = dry_run
-        # b240: دفتر پوزیشن‌های شبیه‌سازی‌شده در dry_run.
+        # b241: دفتر پوزیشن‌های شبیه‌سازی‌شده در dry_run.
         # bridge واقعی در dry_run سفارشی نمی‌بیند → این دفتر جایگزین
         # حقیقت بروکر می‌شود تا حلقه ورود/خروج مثل حالت LIVE کار کند.
+        # دفتر روی دیسک persist می‌شود — ریاستارت دیمن پوزیشن‌ها را گم نمی‌کند.
+        self._sim_state_path = Path(sim_state_path) if sim_state_path else None
         self._sim_ticket = 0
         self._sim_book: dict[int, BrokerPosition] = {}
+        if self._dry_run:
+            self._sim_load()
+
+    # ── دیسک (dry_run) ────────────────────────────────────
+
+    def _sim_load(self) -> None:
+        """بارگذاری دفتر شبیه‌سازی از دیسک — باز کردن دیمن پس از ریاستارت."""
+        if self._sim_state_path is None or not self._sim_state_path.exists():
+            return
+        try:
+            doc = json.loads(self._sim_state_path.read_text())
+            self._sim_ticket = int(doc.get("next_ticket", 1))
+            for row in doc.get("positions", []):
+                p = BrokerPosition(
+                    ticket=int(row["ticket"]),
+                    symbol=str(row["symbol"]),
+                    side=Side(row["side"]),
+                    volume=float(row["volume"]),
+                    open_price=float(row["open_price"]),
+                    current_price=float(row.get("current_price", row["open_price"])),
+                    sl=float(row.get("sl", 0.0)),
+                    tp=float(row.get("tp", 0.0)),
+                    profit=float(row.get("profit", 0.0)),
+                    swap=float(row.get("swap", 0.0)),
+                    open_time=int(row["open_time"]),
+                    comment=str(row.get("comment", "")),
+                )
+                self._sim_book[p.ticket] = p
+            if self._sim_book:
+                log.info("sim book: %d position(s) loaded from disk", len(self._sim_book))
+        except Exception as e:
+            log.warning("sim book load failed: %s — starting empty", e)
+            self._sim_book = {}
+            self._sim_ticket = 0
+
+    def _sim_save(self) -> None:
+        """ذخیره دفتر شبیه‌سازی روی دیسک — هر تغییر."""
+        if self._sim_state_path is None:
+            return
+        try:
+            doc = {
+                "next_ticket": self._sim_ticket + 1,
+                "positions": [dataclasses.asdict(p) for p in self._sim_book.values()],
+            }
+            tmp = self._sim_state_path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(doc, ensure_ascii=False))
+            tmp.replace(self._sim_state_path)
+        except Exception as e:
+            log.warning("sim book save failed: %s", e)
 
     # ── private ─────────────────────────────────────────
 
@@ -219,6 +273,7 @@ class Mt5Adapter:
                 comment=order_id,
             )
             self._sim_book[ticket] = pos
+            self._sim_save()
             log.info("DRY_RUN place_order %s %s %.2f lot sl=%.2f tp=%.2f → sim ticket=%d",
                      side.value, symbol, volume, sl, tp, ticket)
             return Order(
@@ -258,6 +313,7 @@ class Mt5Adapter:
         if self._dry_run:
             # b240: حذف از دفتر شبیه‌سازی
             self._sim_book.pop(ticket, None)
+            self._sim_save()
             log.info("DRY_RUN close_position ticket=%s", ticket)
             return True
         d = self._post("/api/close", {"ticket": ticket})
@@ -271,6 +327,7 @@ class Mt5Adapter:
             pos = self._sim_book.get(ticket)
             if pos is not None:
                 self._sim_book[ticket] = dataclasses.replace(pos, sl=sl, tp=tp or pos.tp)
+                self._sim_save()
             log.info("DRY_RUN modify ticket=%s sl=%.2f tp=%.2f", ticket, sl, tp)
             return True
         d = self._post("/api/modify", {"ticket": ticket, "sl": sl, "tp": tp})

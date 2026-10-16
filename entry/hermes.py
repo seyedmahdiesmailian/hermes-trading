@@ -57,6 +57,7 @@ class HermesDaemon:
         self.mt5 = Mt5Adapter(
             self.cfg.bridge.url, self.cfg.bridge.token,
             self.cfg.bridge.timeout_s, dry_run=self.dry_run,
+            sim_state_path=str(Path(__file__).resolve().parent.parent / "data" / "sim_book.json"),
         )
         self.led = Ledger()
         self.eng = Engine()
@@ -80,6 +81,7 @@ class HermesDaemon:
 
         self._running = True
         self._last_entry_loop = 0.0
+        self._last_exit_loop = 0.0
         self._last_atr = 0.0  # آخرین ATR زنده — trailing تحلیلی
 
     # ───────────────────────────────────────────────────
@@ -114,13 +116,15 @@ class HermesDaemon:
                     log.exception("entry loop خطای پیش‌بینی‌نشده")
                 self._last_entry_loop = now
 
-            # تایمر خروج — هر چرخه
-            try:
-                self._exit_loop()
-            except BridgeError as e:
-                log.warning("exit loop: bridge خطا: %s", e)
-            except Exception:
-                log.exception("exit loop خطای پیش‌بینی‌نشده")
+            # تایمر خروج — هر config.loop.exit_interval_s
+            if now - self._last_exit_loop >= self.cfg.loop.exit_interval_s:
+                try:
+                    self._exit_loop()
+                except BridgeError as e:
+                    log.warning("exit loop: bridge خطا: %s", e)
+                except Exception:
+                    log.exception("exit loop خطای پیش‌بینی‌نشده")
+                self._last_exit_loop = now
 
             time.sleep(1)
 
