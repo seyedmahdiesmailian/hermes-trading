@@ -1,0 +1,58 @@
+# ⚙️ پارامترهای ترید هرمس — یک جا، یک حقیقت
+# هیچ پارامتر تریدی در کد نباید hardcode شود؛ همه از اینجا خوانده شود.
+
+symbol: XAUUSD
+
+# ── اجرا ──────────────────────────────────────────────
+dry_run: true              # true = هیچ سفارش واقعی ارسال نمی‌شود (تا بک‌تست سبز)
+bridge:
+  url: http://192.168.10.51:5050
+  timeout_s: 10
+
+# ── حلقه اصلی ─────────────────────────────────────────
+loop:
+  entry_interval_s: 300    # هر ۵ دقیقه: تحلیل + تصمیم ورود
+  exit_interval_s: 15      # هر ۱۵ ثانیه: مدیریت پوزیشن‌های باز
+
+# ─ـ دروازه‌های ریسک (fail-closed) ──────────────────────
+gates:
+  max_open_positions: 1
+  max_daily_trades: 5
+  risk_per_trade_pct: 2.0       # درصد equity ریسک هر معامله
+  max_daily_loss_pct: 5.0       # ضرر روزانه → توقف کامل
+  min_rr: 1.0                  # حداقل reward/risk
+  min_grade: B                  # حداقل گرید برنامه
+  min_atr_stop_mult: 2.0        # استاپ حداقل ATR×۲
+  max_spread_points: 3.0
+
+# ─ـ مدیریت پوزیشن ─────────────────────────────────────
+position:
+  trailing_start_rr: 1.0        # فعال‌سازی trailing بعد از ۱R سود
+  breakeven_rr: 0.8             # جابجایی SL به نقطه ورود بعد از ۰.۸R
+  max_hold_hours: 24            # خروج زمانی
+  partial_tp_rr: 2.0            # بستن نیمی از حجم (در صورت فعال بودن)
+  partial_enabled: false
+
+# ─ـ یادگیری ───────────────────────────────────────────
+learning:
+  enabled: true
+  min_trades_to_adapt: 20       # کمتر از این تعداد، knobها دست‌نخورده
+  # knobs فقط سخت‌تر می‌شوند، هرگز نرم‌تر
+  floor:
+    min_rr: 1.0
+    min_grade: B
+
+# ── بازار ─────────────────────────────────────────────
+analysis:
+  timeframe: M15
+  candle_count: 200
+  higher_timeframes: [H1, H4]   # تأیید روند چند‌بازه‌ای
+  session_hours: [7, 17]        # ساعت UTC активности (London+NY)
+
+# ── منابع ─────────────────────────────────────────────
+signals:
+  log_path: data/signals/signals_log.json
+  state_path: data/signals/listener_state.json
+
+notify:
+  enabled: true
