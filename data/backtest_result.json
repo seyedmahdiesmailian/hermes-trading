@@ -1,0 +1,275 @@
+{
+  "config": {
+    "symbol": "XAUUSD",
+    "timeframe": "M15",
+    "start_balance": 4931.58,
+    "min_rr": 1.0,
+    "min_grade": "B",
+    "risk_per_trade_pct": 2.0,
+    "max_open_positions": 1,
+    "max_daily_trades": 5,
+    "max_daily_loss_pct": 5.0,
+    "min_atr_stop_mult": 2.0,
+    "breakeven_rr": 0.8,
+    "trailing_start_rr": 1.0,
+    "max_hold_hours": 24
+  },
+  "start_balance": 4931.58,
+  "end_balance": 58.23,
+  "total_pnl": -4873.35,
+  "total_trades": 6,
+  "wins": 0,
+  "losses": 6,
+  "win_rate": 0.0,
+  "avg_r": -0.843,
+  "avg_r_wins": 0.0,
+  "avg_r_losses": -0.843,
+  "denied_count": 666,
+  "denied": [
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T04:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T04:30:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T04:45:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T05:00:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T05:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T05:30:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T05:45:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T06:00:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)",
+        "stop_too_tight(12.00<12.06)"
+      ],
+      "timestamp": "2026-10-07T06:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T06:30:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T06:45:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T07:00:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T07:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T07:30:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T07:45:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T08:00:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T08:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T08:30:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T08:45:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T09:00:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T09:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T09:30:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T09:45:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T10:00:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T10:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)"
+      ],
+      "timestamp": "2026-10-07T10:30:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)",
+        "stop_too_tight(12.00<12.10)"
+      ],
+      "timestamp": "2026-10-07T10:45:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)",
+        "stop_too_tight(12.00<12.48)"
+      ],
+      "timestamp": "2026-10-07T11:00:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)",
+        "stop_too_tight(12.00<12.88)"
+      ],
+      "timestamp": "2026-10-07T11:15:00+00:00"
+    },
+    {
+      "signal": "2026-10-07T03:35:29.632207+00:00",
+      "reason": "guard",
+      "verdict": [
+        "daily_loss(-2062.00<=-143.48)",
+        "stop_too_tight(12.00<12.92)"
+      ],
+      "timestamp": "2026-10-07T11:30:00+00:00"
+    }
+  ]
+}

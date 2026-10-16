@@ -37,6 +37,7 @@ from core.entities import (
     Trade,
     TradeStatus,
 )
+from core.exits import ExitManager
 from core.gates import GatesEngine
 from core.params import DEFAULT_CONFIG_PATH, load_config
 
@@ -66,6 +67,13 @@ class HermesDaemon:
 
         # تلگرام — از .env خوانده می‌شود
         self.notify = self._build_notify()
+
+        # منطق خروج مشترک (دیمن زنده + بک‌تستر یک کد اجرا می‌کنند)
+        def _on_modify(ticket: int, new_sl: float) -> None:
+            self.mt5.modify_position(ticket, new_sl, 0.0)
+            log.info("SL modified: ticket=%s sl=%.2f", ticket, new_sl)
+
+        self.exits = ExitManager(self.cfg.position, on_modify=_on_modify)
 
         # سیگنال‌های قدیمی را رد کن — فقط آینده پردازش می‌شود
         self.signals.skip_backlog()
@@ -218,7 +226,6 @@ class HermesDaemon:
         account = self.mt5.get_account()
         self.led.snapshot_equity(account)
 
-        pos_cfg = self.cfg.position
         now = time.time()
 
         for pos in positions:
@@ -226,57 +233,11 @@ class HermesDaemon:
             if pos.comment and not pos.comment.startswith("hms"):
                 continue
 
-            decision = self._manage_position(pos, pos_cfg, now)
+            # منطق خروج مشترک — همان کدی که بک‌تستر اجرا می‌کند
+            decision = self.exits.manage(pos, now)
             if decision is not None:
                 exit_reason, exit_price = decision
                 self._close_position(pos, exit_reason, exit_price)
-
-    def _manage_position(self, pos: BrokerPosition, pos_cfg, now: float):
-        """تصمیم مدیریت یک پوزیشن → (reason, price) یا None."""
-        rr = pos.rr_progress  # 0=استاپ، 1=TP
-
-        # ۱) خروج زمانی
-        age_h = (now - pos.open_time) / 3600.0
-        if age_h >= pos_cfg.max_hold_hours:
-            return ExitReason.TIME_EXIT, pos.current_price
-
-        # ۲) breakeven — جابجایی SL به نقطه ورود
-        if rr >= pos_cfg.breakeven_rr and pos.sl != pos.open_price:
-            new_sl = pos.open_price
-            if pos.is_buy and new_sl > pos.sl:
-                self.mt5.modify_position(pos.ticket, new_sl, pos.tp)
-                log.info("breakeven: ticket=%s sl=%.2f", pos.ticket, new_sl)
-            elif not pos.is_buy and (pos.sl == 0 or new_sl < pos.sl):
-                self.mt5.modify_position(pos.ticket, new_sl, pos.tp)
-                log.info("breakeven: ticket=%s sl=%.2f", pos.ticket, new_sl)
-
-        # ۳) trailing stop — SL را دنبال قیمت می‌کند
-        if rr >= pos_cfg.trailing_start_rr and pos.sl > 0:
-            new_sl = self._trail_sl(pos, pos_cfg)
-            if new_sl is not None:
-                self.mt5.modify_position(pos.ticket, new_sl, pos.tp)
-
-        # ۴) خروج دستی اضطراری — پوزیشن در سود و نزدیک TP
-        # (SL بروکر خودش فعال می‌شود — اینجا فقط time-exit مدیریت می‌کنیم)
-        return None
-
-    def _trail_sl(self, pos: BrokerPosition, pos_cfg) -> float | None:
-        """محاسبه SL جدید برای trailing — فقط در جهت سود."""
-        # فاصله ATR-مانند: نیمی از فاصله فعلی تا TP
-        if pos.tp <= 0:
-            return None
-        dist = abs(pos.tp - pos.current_price) * 0.5
-        if dist <= 0:
-            return None
-        if pos.is_buy:
-            new_sl = pos.current_price - dist
-            if new_sl > pos.sl:
-                return new_sl
-        else:
-            new_sl = pos.current_price + dist
-            if pos.sl == 0 or new_sl < pos.sl:
-                return new_sl
-        return None
 
     def _close_position(self, pos: BrokerPosition, reason: ExitReason, exit_price: float) -> None:
         """بستن پوزیشن و ثبت در دفتر کل."""

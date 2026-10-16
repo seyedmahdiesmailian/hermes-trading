@@ -72,6 +72,7 @@ class Config:
     signals_log_path: str
     signals_state_path: str
     notify_enabled: bool
+    backtest_start_balance: float = 4931.58
 
     def with_bridge_token(self, token: str) -> "Config":
         """ساخت نسخه با token — از .env خوانده می‌شود."""
@@ -86,6 +87,7 @@ class Config:
             signals_log_path=self.signals_log_path,
             signals_state_path=self.signals_state_path,
             notify_enabled=self.notify_enabled,
+            backtest_start_balance=self.backtest_start_balance,
         )
 
 
@@ -156,6 +158,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
             signals_log_path=sig.get("log_path", "data/signals/signals_log.json"),
             signals_state_path=sig.get("state_path", "data/signals/listener_state.json"),
             notify_enabled=bool(raw.get("notify", {}).get("enabled", True)),
+            backtest_start_balance=float(raw.get("backtest", {}).get("start_balance", 4931.58)),
         )
     except KeyError as e:
         raise ConfigError(f"کلید گمشده در config.yaml: {e}") from e

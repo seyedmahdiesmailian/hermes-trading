@@ -56,3 +56,7 @@ signals:
 
 notify:
   enabled: true
+
+# بک‌تست
+backtest:
+  start_balance: 4931.58   # موجودی اولیه شبیه‌ساز = موجودی واقعی حساب
