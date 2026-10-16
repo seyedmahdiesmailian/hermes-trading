@@ -253,6 +253,27 @@ class HermesDaemon:
             if pos.comment and not pos.comment.startswith("hms"):
                 continue
 
+            # b240: در dry_run بروکری وجود ندارد — خودمان SL/TP را اجرا می‌کنیم
+            # (در حالت LIVE بروکر این کار را می‌کند)
+            if self.dry_run and pos.sl > 0:
+                hit = None
+                if pos.is_buy and pos.current_price <= pos.sl:
+                    hit = pos.sl
+                elif not pos.is_buy and pos.current_price >= pos.sl:
+                    hit = pos.sl
+                if hit is not None:
+                    self._close_position(pos, ExitReason.STOP_LOSS, hit)
+                    continue
+            if self.dry_run and pos.tp > 0:
+                hit = None
+                if pos.is_buy and pos.current_price >= pos.tp:
+                    hit = pos.tp
+                elif not pos.is_buy and pos.current_price <= pos.tp:
+                    hit = pos.tp
+                if hit is not None:
+                    self._close_position(pos, ExitReason.TAKE_PROFIT, hit)
+                    continue
+
             # ATR زنده برای مسیر trailing تحلیلی (پلن‌های بدون TP)
             # منطق خروج مشترک — همان کدی که بک‌تستر اجرا می‌کند
             decision = self.exits.manage(pos, now, atr=self._last_atr)
@@ -268,7 +289,15 @@ class HermesDaemon:
             return
 
         # رکورد ترید در دفتر کل
-        pnl = pos.profit
+        # b240: در dry_run سود را از قیمت خروج واقعی محاسبه می‌کنیم
+        if self.dry_run and exit_price > 0:
+            if pos.is_buy:
+                pnl = (exit_price - pos.open_price) * pos.volume * 100.0
+            else:
+                pnl = (pos.open_price - exit_price) * pos.volume * 100.0
+            pnl = round(pnl, 2)
+        else:
+            pnl = pos.profit
         trade = Trade(
             trade_id=f"trade-{pos.ticket}",
             plan_id=pos.comment or "",
@@ -284,7 +313,7 @@ class HermesDaemon:
             exit_reason=reason,
             opened_at=pos.open_time,
             closed_at=time.time(),
-            source="signal",
+            source="analysis" if (pos.comment or "").startswith("hms-auto") else "signal",
         )
         self.led.save_trade(trade)
         self.notify.trade_closed(pos.side.value, pos.symbol, pnl, reason.value)

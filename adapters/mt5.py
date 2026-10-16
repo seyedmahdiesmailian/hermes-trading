@@ -5,6 +5,7 @@
 """
 from __future__ import annotations
 
+import dataclasses
 import logging
 import time
 from typing import Optional
@@ -40,6 +41,11 @@ class Mt5Adapter:
         self._headers = {"Authorization": f"Bearer {token}"}
         self._timeout = timeout_s
         self._dry_run = dry_run
+        # b240: دفتر پوزیشن‌های شبیه‌سازی‌شده در dry_run.
+        # bridge واقعی در dry_run سفارشی نمی‌بیند → این دفتر جایگزین
+        # حقیقت بروکر می‌شود تا حلقه ورود/خروج مثل حالت LIVE کار کند.
+        self._sim_ticket = 0
+        self._sim_book: dict[int, BrokerPosition] = {}
 
     # ── private ─────────────────────────────────────────
 
@@ -114,6 +120,29 @@ class Mt5Adapter:
 
     def get_open_positions(self, symbol: Optional[str] = None) -> list[BrokerPosition]:
         """پوزیشن‌های باز — حقیقت نهایی، همیشه زنده."""
+        # b240: در dry_run دفتر شبیه‌سازی حقیقت بروکر است
+        if self._dry_run:
+            out = list(self._sim_book.values())
+            if symbol:
+                out = [p for p in out if p.symbol == symbol]
+            # به‌روزرسانی قیمت جاری و سود برای همه پوزیشن‌های شبیه‌سازی‌شده
+            upd = []
+            for p in out:
+                try:
+                    mid = self.get_tick(p.symbol).mid
+                except BridgeError:
+                    upd.append(p)
+                    continue
+                profit = (mid - p.open_price) * p.volume * 100.0 if p.is_buy \
+                    else (p.open_price - mid) * p.volume * 100.0
+                upd.append(dataclasses.replace(
+                    p, current_price=mid,
+                    profit=round(profit, 2),
+                ))
+            # بازنویسی دفتر با قیمت تازه (حقیقت زنده)
+            for p in upd:
+                self._sim_book[p.ticket] = p
+            return upd
         d = self._get("/api/positions", symbol=symbol) if symbol else self._get("/api/positions")
         self._requireOk(d, "/api/positions")
         out = []
@@ -168,18 +197,38 @@ class Mt5Adapter:
         if tp > 0:
             body["tp"] = tp
 
+        # b240: قیمت ورود مرجع — در dry_run از tick زنده خوانده می‌شود
+        price_ref = self.get_tick(symbol).mid
+
         if self._dry_run:
-            # fail-closed: شبیه‌سازی موفقیت بدون ارسال واقعی
-            log.info("DRY_RUN place_order %s %s %.2f lot sl=%.2f tp=%.2f",
-                     side.value, symbol, volume, sl, tp)
-            return Order(
-                order_id=order_id,
-                plan_id="",
-                ticket=0,
+            # b240: ثبت در دفتر شبیه‌سازی — حقیقت بروکر در dry_run.
+            self._sim_ticket += 1
+            ticket = self._sim_ticket
+            pos = BrokerPosition(
+                ticket=ticket,
                 symbol=symbol,
                 side=side,
                 volume=volume,
-                price=0.0,
+                open_price=price_ref,
+                current_price=price_ref,
+                sl=sl,
+                tp=tp,
+                profit=0.0,
+                swap=0.0,
+                open_time=int(time.time()),
+                comment=order_id,
+            )
+            self._sim_book[ticket] = pos
+            log.info("DRY_RUN place_order %s %s %.2f lot sl=%.2f tp=%.2f → sim ticket=%d",
+                     side.value, symbol, volume, sl, tp, ticket)
+            return Order(
+                order_id=order_id,
+                plan_id="",
+                ticket=ticket,
+                symbol=symbol,
+                side=side,
+                volume=volume,
+                price=price_ref,
                 sl=sl,
                 tp=tp,
                 status=OrderStatus.FILLED,
@@ -207,6 +256,8 @@ class Mt5Adapter:
     def close_position(self, ticket: int) -> bool:
         """بستن پوزیشن با ticket."""
         if self._dry_run:
+            # b240: حذف از دفتر شبیه‌سازی
+            self._sim_book.pop(ticket, None)
             log.info("DRY_RUN close_position ticket=%s", ticket)
             return True
         d = self._post("/api/close", {"ticket": ticket})
@@ -216,6 +267,10 @@ class Mt5Adapter:
     def modify_position(self, ticket: int, sl: float, tp: float) -> bool:
         """اصلاح SL/TP پوزیشن (trailing / breakeven)."""
         if self._dry_run:
+            # b240: اعمال SL جدید روی پوزیشن شبیه‌سازی‌شده
+            pos = self._sim_book.get(ticket)
+            if pos is not None:
+                self._sim_book[ticket] = dataclasses.replace(pos, sl=sl, tp=tp or pos.tp)
             log.info("DRY_RUN modify ticket=%s sl=%.2f tp=%.2f", ticket, sl, tp)
             return True
         d = self._post("/api/modify", {"ticket": ticket, "sl": sl, "tp": tp})
