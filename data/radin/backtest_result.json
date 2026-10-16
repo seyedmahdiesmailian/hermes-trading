@@ -1,0 +1,240 @@
+{
+  "config": {
+    "symbol": "XAUUSD",
+    "timeframe": "M15",
+    "start_balance": 4931.58,
+    "min_rr": 1.0,
+    "min_grade": "B",
+    "risk_per_trade_pct": 2.0,
+    "max_open_positions": 1,
+    "max_daily_trades": 5,
+    "max_daily_loss_pct": 5.0,
+    "min_atr_stop_mult": 2.0,
+    "breakeven_rr": 0.8,
+    "trailing_start_rr": 1.0,
+    "max_hold_hours": 24
+  },
+  "start_balance": 4931.58,
+  "end_balance": 3207.97,
+  "total_pnl": -1723.61,
+  "total_trades": 185,
+  "wins": 72,
+  "losses": 113,
+  "win_rate": 38.9,
+  "avg_r": 0.339,
+  "avg_r_wins": 2.232,
+  "avg_r_losses": -0.868,
+  "denied_count": 535,
+  "denied": [
+    {
+      "signal": "48093",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(13.00<20.38)"
+      ],
+      "timestamp": "2026-04-24T14:30:00+00:00"
+    },
+    {
+      "signal": "48123",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(15.00<16.30)"
+      ],
+      "timestamp": "2026-04-27T03:45:00+00:00"
+    },
+    {
+      "signal": "48163",
+      "reason": "trend_filter",
+      "timestamp": "2026-04-28T16:00:00+00:00"
+    },
+    {
+      "signal": "48180",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(12.00<14.68)"
+      ],
+      "timestamp": "2026-04-29T04:00:00+00:00"
+    },
+    {
+      "signal": "48207",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(18.00<23.18)"
+      ],
+      "timestamp": "2026-04-29T16:45:00+00:00"
+    },
+    {
+      "signal": "48243",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(10.00<15.38)"
+      ],
+      "timestamp": "2026-04-30T07:45:00+00:00"
+    },
+    {
+      "signal": "48247",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(10.00<15.56)"
+      ],
+      "timestamp": "2026-04-30T08:00:00+00:00"
+    },
+    {
+      "signal": "48254",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(15.00<16.20)"
+      ],
+      "timestamp": "2026-04-30T08:30:00+00:00"
+    },
+    {
+      "signal": "48256",
+      "reason": "trend_filter",
+      "timestamp": "2026-04-30T11:30:00+00:00"
+    },
+    {
+      "signal": "48281",
+      "reason": "trend_filter",
+      "timestamp": "2026-04-30T17:15:00+00:00"
+    },
+    {
+      "signal": "48286",
+      "reason": "trend_filter",
+      "timestamp": "2026-04-30T19:30:00+00:00"
+    },
+    {
+      "signal": "48294",
+      "reason": "trend_filter",
+      "timestamp": "2026-05-01T17:15:00+00:00"
+    },
+    {
+      "signal": "48336",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(12.00<22.26)"
+      ],
+      "timestamp": "2026-05-04T05:45:00+00:00"
+    },
+    {
+      "signal": "48341",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(12.00<20.80)"
+      ],
+      "timestamp": "2026-05-04T13:15:00+00:00"
+    },
+    {
+      "signal": "1432",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(20.00<22.46)"
+      ],
+      "timestamp": "2026-05-04T14:15:00+00:00"
+    },
+    {
+      "signal": "1435",
+      "reason": "trend_filter",
+      "timestamp": "2026-05-04T14:45:00+00:00"
+    },
+    {
+      "signal": "1437",
+      "reason": "trend_filter",
+      "timestamp": "2026-05-04T15:30:00+00:00"
+    },
+    {
+      "signal": "48360",
+      "reason": "trend_filter",
+      "timestamp": "2026-05-04T16:45:00+00:00"
+    },
+    {
+      "signal": "48363",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(20.00<26.44)"
+      ],
+      "timestamp": "2026-05-04T18:00:00+00:00"
+    },
+    {
+      "signal": "48387",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(12.00<21.20)"
+      ],
+      "timestamp": "2026-05-06T03:30:00+00:00"
+    },
+    {
+      "signal": "48417",
+      "reason": "trend_filter",
+      "timestamp": "2026-05-06T07:15:00+00:00"
+    },
+    {
+      "signal": "1462",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(20.00<23.08)"
+      ],
+      "timestamp": "2026-05-06T13:45:00+00:00"
+    },
+    {
+      "signal": "1470",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(20.00<28.24)"
+      ],
+      "timestamp": "2026-05-06T15:15:00+00:00"
+    },
+    {
+      "signal": "48467",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(13.00<26.50)"
+      ],
+      "timestamp": "2026-05-06T15:30:00+00:00"
+    },
+    {
+      "signal": "1482",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(20.00<22.04)"
+      ],
+      "timestamp": "2026-05-07T11:00:00+00:00"
+    },
+    {
+      "signal": "48481",
+      "reason": "trend_filter",
+      "timestamp": "2026-05-07T12:15:00+00:00"
+    },
+    {
+      "signal": "48490",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(13.00<28.70)"
+      ],
+      "timestamp": "2026-05-07T19:15:00+00:00"
+    },
+    {
+      "signal": "48510",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(13.00<22.44)"
+      ],
+      "timestamp": "2026-05-08T02:30:00+00:00"
+    },
+    {
+      "signal": "48524",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(13.00<17.34)"
+      ],
+      "timestamp": "2026-05-08T09:00:00+00:00"
+    },
+    {
+      "signal": "1500",
+      "reason": "guard",
+      "verdict": [
+        "stop_too_tight(20.00<20.56)"
+      ],
+      "timestamp": "2026-05-08T10:30:00+00:00"
+    }
+  ]
+}

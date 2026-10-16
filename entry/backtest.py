@@ -146,9 +146,10 @@ class Backtester:
 
             # سیگنال‌های رسیده تا این کندل
             ready = [s for s in signals
-                     if self._signal_ts(s) <= now_ts and s not in self._processed]
+                     if self._signal_ts(s) <= now_ts
+                     and s.signal_id not in self._processed]
             for s in ready:
-                self._processed.add(id(s))
+                self._processed.add(s.signal_id)
 
             if not ready:
                 continue
@@ -207,8 +208,8 @@ class Backtester:
         cur = candles[i]
 
         # ۱) برخورد SL / TP توسط قیمت کندل (سقف/کف کندل)
-        exit_reason, exit_price = self._check_sl_tp(cur)
-        if exit_reason is None:
+        hit = self._check_sl_tp(cur)
+        if hit is None:
             # ۲) ExitManager — time-exit / breakeven / trailing (همان کد دیمن)
             pos = ot.to_broker_position(cur.close)
             decision = self.exits.manage(pos, now_ts)
@@ -219,6 +220,8 @@ class Backtester:
             else:
                 ot.sl = pos.sl  # breakeven/trailing اعمال شد
                 return False
+        else:
+            exit_reason, exit_price = hit
 
         # ── ثبت ترید بسته‌شده ──
         direction = 1.0 if ot.side == Side.BUY else -1.0
@@ -346,9 +349,10 @@ class Backtester:
 
     @property
     def _processed(self) -> set:
-        if not hasattr(self, "__processed"):
-            self.__processed = set()
-        return self.__processed
+        """شناسه سیگنال‌های پردازش‌شده (signal_id، نه id object)."""
+        if not hasattr(self, "_processed_set"):
+            self._processed_set = set()
+        return self._processed_set
 
 
 # ════════════════════ CLI ════════════════════
