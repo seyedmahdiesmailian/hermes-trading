@@ -91,6 +91,9 @@ class OpenTrade:
 class Backtester:
     """شبیه‌ساز دقیق مسیر زنده هرمس — برای ارزیابی استراتژی."""
 
+    # زمان حیات یک سفارش limit در صف ورود (ثانیه) — ۲۴ ساعت
+    ENTRY_WAIT_S = 24 * 3600
+
     def __init__(self, config_path: Path | None = None):
         self.cfg = load_config(config_path or DEFAULT_CONFIG_PATH, bridge_token="")
         self.eng = Engine()
@@ -122,6 +125,7 @@ class Backtester:
 
         n_processed_signals = 0
         n_entry_cycles = 0
+        entry_queue: list[Signal] = []   # صف ورود: سیگنال‌هایی که منتظر رسیدن بازار به entry هستند
 
         for i in range(60, len(candles)):
             cur = candles[i]
@@ -144,17 +148,33 @@ class Backtester:
             if self._open is not None:
                 continue
 
-            # سیگنال‌های رسیده تا این کندل
+            # سیگنال‌های رسیده تا این کندل → صف ورود
             ready = [s for s in signals
                      if self._signal_ts(s) <= now_ts
                      and s.signal_id not in self._processed]
             for s in ready:
                 self._processed.add(s.signal_id)
+                entry_queue.append(s)
+                n_processed_signals += 1
 
-            if not ready:
+            # صف ورود: حذف سیگنال‌های منقضی‌شده (بازار به entry نرسید)
+            entry_queue = [s for s in entry_queue
+                           if now_ts - self._signal_ts(s) < self.ENTRY_WAIT_S]
+
+            # پوزیشن باز داریم → ورود ممنوع (معادل _entry_loop دیمن)
+            if self._open is not None:
                 continue
 
-            sig = ready[0]
+            if not entry_queue:
+                continue
+
+            # ── ۲) fulfillment: بازار باید به entry سیگنال رسیده باشد ──
+            touched = [s for s in entry_queue
+                       if cur.low <= s.entry <= cur.high]
+            if not touched:
+                continue
+            sig = touched[0]
+            entry_queue.remove(sig)
             view = self.eng.analyze(past, tick)
             plan = self.eng.plan_from_signal(sig, view, self.cfg.analysis.timeframe)
             if plan is None:
@@ -185,10 +205,10 @@ class Backtester:
                 })
                 continue
 
-            # ── ۳) باز کردن پوزیشن ──
+            # ── ۳) باز کردن پوزیشن — در entry سیگنال (limit-fill) ──
             self._open = OpenTrade(
                 ticket=self._ticket_seq, symbol=plan.symbol, side=plan.side,
-                volume=outcome.volume, open_price=cur.close,
+                volume=outcome.volume, open_price=plan.entry_price,
                 sl=plan.stop_loss, tp=plan.take_profit,
                 open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
             )
@@ -342,6 +362,19 @@ class Backtester:
             "avg_r": round(avg(self.trades), 3),
             "avg_r_wins": round(avg(wins), 3),
             "avg_r_losses": round(avg(losses), 3),
+            "trades": [
+                {
+                    "signal": t.plan_id,
+                    "side": t.side.value if hasattr(t.side, "value") else str(t.side),
+                    "entry": t.entry_price, "sl": t.sl, "tp": t.tp,
+                    "exit_price": t.exit_price, "pnl": round(t.pnl, 2),
+                    "r_multiple": round(t.r_multiple, 3),
+                    "exit_reason": t.exit_reason.value if hasattr(t.exit_reason, "value") else str(t.exit_reason),
+                    "opened_at": t.opened_at, "closed_at": t.closed_at,
+                    "volume": t.volume,
+                }
+                for t in self.trades
+            ],
             "denied_count": len(self.denied),
             "denied": self.denied[:30],
         }
