@@ -28,6 +28,7 @@ class Gates:
     min_grade: str
     min_atr_stop_mult: float
     max_spread_points: float
+    min_atr_stop_mult_analysis: float = 1.4   # ستاپ تحلیلی = ۱.۵×ATR → کف ۱.۴
 
 
 @dataclass(frozen=True)

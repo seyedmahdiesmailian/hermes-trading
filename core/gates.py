@@ -95,9 +95,15 @@ class GatesEngine:
             reasons.append(f"grade({plan.grade.value}<{eff_min_grade.value})")
 
         # ۶) فاصله استاپ ≥ ATR × k
+        #    پلن‌های تحلیلی (source=analysis) ضریب جداگانه دارند:
+        #    ستاپ روند-EMA با SL=۱.۵×ATR تایید شده (بک‌تست EV=+۰.۱۶۳).
         if atr > 0:
             sl_dist = abs(plan.entry_price - plan.stop_loss)
-            min_dist = atr * self._g.min_atr_stop_mult
+            mult = self._g.min_atr_stop_mult
+            if plan.source == "analysis":
+                mult = getattr(self._g, "min_atr_stop_mult_analysis",
+                               self._g.min_atr_stop_mult)
+            min_dist = atr * mult
             if sl_dist < min_dist:
                 reasons.append(f"stop_too_tight({sl_dist:.2f}<{min_dist:.2f})")
 

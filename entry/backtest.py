@@ -110,6 +110,13 @@ class Backtester:
             on_modify=self._sim_modify,
         )
         self._entry_idx = 0  # جدیدترین اندیس سیگنال پردازش‌شده
+        self._last_exit_ts = 0.0  # زمان آخرین خروج — cooldown ورود
+        COOLDOWN_S = 4 * 3600   # ۴ ساعت بعد از هر خروج، ورود ممنوع
+
+        def _on_sim_close(ts: float) -> None:
+            self._last_exit_ts = ts
+
+        self._on_sim_close = _on_sim_close
 
     # ── پیش‌پردازش state ═══════════════════════════════
 
@@ -166,6 +173,41 @@ class Backtester:
                 continue
 
             if not entry_queue:
+                # ─ـ ۲‌ب) مسیر تحلیل خودکار — بدون سیگنال کانال ──
+                view = self.eng.analyze(past, tick)
+                plan = self.eng.plan_from_analysis(candles[:i+1], view,
+                                                   self.cfg.analysis.timeframe)
+                if plan is None:
+                    continue
+                account = AccountState(
+                    balance=self.state.balance, equity=self.state.equity,
+                    margin=0.0, margin_free=self.state.equity,
+                )
+                trades_today = self._trades_today(now_ts)
+                today_pnl = self._pnl_today(now_ts)
+                outcome = self.gates.evaluate(
+                    plan, account, [], trades_today, today_pnl,
+                    atr=view.atr, spread=view.spread,
+                )
+                if not outcome.allowed:
+                    self.denied.append({
+                        "signal": plan.plan_id, "reason": "guard",
+                        "verdict": outcome.reasons,
+                        "timestamp": datetime.fromtimestamp(now_ts, timezone.utc).isoformat(),
+                    })
+                    continue
+                # باز کردن پوزیشن در قیمت بازار (تحلیل همون لحظه معتبر است)
+                fill = cur.close
+                self._open = OpenTrade(
+                    ticket=self._ticket_seq, symbol=plan.symbol, side=plan.side,
+                    volume=outcome.volume, open_price=fill,
+                    sl=plan.stop_loss, tp=plan.take_profit,
+                    open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
+                )
+                self._ticket_seq += 1
+                log.info("OPEN-AUTO #%d %s vol=%.2f entry=%.2f sl=%.2f atr=%.2f",
+                         self._open.ticket, self._open.side.value, self._open.volume,
+                         fill, plan.stop_loss, view.atr)
                 continue
 
             # ── ۲) fulfillment: بازار باید به entry سیگنال رسیده باشد ──
@@ -232,7 +274,12 @@ class Backtester:
         if hit is None:
             # ۲) ExitManager — time-exit / breakeven / trailing (همان کد دیمن)
             pos = ot.to_broker_position(cur.close)
-            decision = self.exits.manage(pos, now_ts)
+            # ATR زنده برای مسیر trailing تحلیلی (پلن‌های بدون TP)
+            past = candles[max(0, i - 200):i + 1]
+            tick = Tick(symbol=self.cfg.symbol, bid=cur.close, ask=cur.close,
+                        time=cur.time)
+            view = self.eng.analyze(past, tick)
+            decision = self.exits.manage(pos, now_ts, atr=view.atr)
             if decision is not None:
                 exit_reason, exit_price = decision
                 # اعمال SL تغییر کرده را بازگردان (state محلی)
@@ -254,10 +301,12 @@ class Backtester:
             entry_price=ot.open_price, exit_price=exit_price,
             sl=ot.sl, tp=ot.tp, pnl=pnl, exit_reason=exit_reason,
             opened_at=ot.open_time, closed_at=now_ts,
-            source="signal", r_multiple=self._r_multiple(ot, exit_price),
+            source="analysis" if ot.plan_id.startswith("auto-") else "signal",
+            r_multiple=self._r_multiple(ot, exit_price),
         )
         self.trades.append(trade)
         self._open = None
+        self._last_exit_ts = now_ts
         log.info("CLOSE #%d pnl=%+.2f reason=%s",
                  trade.ticket, pnl, exit_reason.value)
         return True
@@ -270,12 +319,12 @@ class Backtester:
         if ot.side == Side.BUY:
             if cur.low <= ot.sl:
                 return ExitReason.STOP_LOSS, ot.sl
-            if cur.high >= ot.tp:
+            if ot.tp > 0 and cur.high >= ot.tp:
                 return ExitReason.TAKE_PROFIT, ot.tp
         else:
             if cur.high >= ot.sl:
                 return ExitReason.STOP_LOSS, ot.sl
-            if cur.low <= ot.tp:
+            if ot.tp > 0 and cur.low <= ot.tp:
                 return ExitReason.TAKE_PROFIT, ot.tp
         return None
 

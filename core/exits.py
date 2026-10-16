@@ -28,8 +28,16 @@ class ExitManager:
 
     # ── API ─────────────────────────────────────────────
 
-    def manage(self, pos: BrokerPosition, now_ts: float) -> Optional[tuple[ExitReason, float]]:
+    def manage(self, pos: BrokerPosition, now_ts: float,
+               atr: float = 0.0,
+               atr_sl_mult: float = 1.5,
+               atr_trail_mult: float = 3.0) -> Optional[tuple[ExitReason, float]]:
         """تصمیم مدیریت یک پوزیشن.
+
+        پارامترهای ATR برای پلن‌های بدون TP (تحلیل خودکار):
+          atr            ATR لحظه تصمیم
+          atr_sl_mult    فاصله استاپ اولیه (در پلن استفاده شد)
+          atr_trail_mult فاصله trailing
 
         بازگشت:
           (reason, exit_price) → بستن پوزیشن
@@ -41,6 +49,20 @@ class ExitManager:
             return ExitReason.TIME_EXIT, pos.current_price
 
         rr = pos.rr_progress  # 0=استاپ، 1=TP
+
+        # ۱‌ب) مسیر ATR برای پوزیشن‌های بدون TP (تحلیل خودکار)
+        #     rr_progress با tp=0 همیشه 0 است → مسیرها جدا اجرا می‌شوند.
+        if pos.tp <= 0 and atr > 0:
+            trail_dist = atr * atr_trail_mult
+            if pos.is_buy:
+                new_sl = pos.current_price - trail_dist
+                if new_sl > pos.sl:
+                    self._modify(pos, new_sl)
+            else:
+                new_sl = pos.current_price + trail_dist
+                if pos.sl == 0 or new_sl < pos.sl:
+                    self._modify(pos, new_sl)
+            return None  # مدیریت کامل شد — خروج فقط با SL زنده
 
         # ۲) breakeven — جابجایی SL به نقطه ورود
         if rr >= self._cfg.breakeven_rr and pos.sl != pos.open_price:
@@ -72,11 +94,26 @@ class ExitManager:
     def _trail_sl(pos: BrokerPosition) -> float | None:
         """محاسبه SL جدید برای trailing — فقط در جهت سود.
 
-        فاصله: نیمی از فاصله فعلی تا TP.
+        حالت ATR (پلن‌های تحلیلی بدون TP): فاصله ثابت ATR-مبنای
+        `atr_mult` × ATR لحظه ورود (از پارامتر پلن، در dataclass ذخیره
+        نمی‌شود — از رویداد ترید خوانده می‌شود).
+        حالت TP: فاصله نصف فاصله فعلی تا TP.
         """
+        # حالت ATR-trail: پلن بدون TP (تحلیل خودکار) — فاصله ثابت
         if pos.tp <= 0:
+            atr_dist = getattr(pos, "trail_atr_dist", None)
+            if atr_dist and atr_dist > 0:
+                if pos.is_buy:
+                    new_sl = pos.current_price - atr_dist
+                    if new_sl > pos.sl:
+                        return new_sl
+                else:
+                    new_sl = pos.current_price + atr_dist
+                    if pos.sl == 0 or new_sl < pos.sl:
+                        return new_sl
             return None
-        dist = abs(pos.tp -  pos.current_price) * 0.5
+        # حالت TP-based: نصف فاصله تا TP
+        dist = abs(pos.tp - pos.current_price) * 0.5
         if dist <= 0:
             return None
         if pos.is_buy:

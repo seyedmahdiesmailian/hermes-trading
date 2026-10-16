@@ -80,6 +80,7 @@ class HermesDaemon:
 
         self._running = True
         self._last_entry_loop = 0.0
+        self._last_atr = 0.0  # آخرین ATR زنده — trailing تحلیلی
 
     # ───────────────────────────────────────────────────
     # چرخه حیات
@@ -157,20 +158,27 @@ class HermesDaemon:
 
         # ۵) تحلیل بازار
         view = self.eng.analyze(candles, tick)
+        self._last_atr = view.atr  # برای trailing تحلیلی در exit loop
         log.info(
             "بازار: %s strength=%.2f atr=%.2f spread=%.2f signals=%d",
             view.trend, view.trend_strength, view.atr, view.spread, len(new_signals),
         )
 
-        # ۶) ساخت plan — اولویت با سیگنال کانال
+        # ۶) ساخت plan — اولویت با سیگنال کانال، سپس تحلیل خودکار
         plan = None
         for sig in new_signals:
             plan = self.eng.plan_from_signal(sig, view, self.cfg.analysis.timeframe)
             if plan is not None:
                 break
 
+        if plan is None and not positions:
+            # تحلیل خودکار: ستاپ روند-EMA (تاییدشده با بک‌تست)
+            plan = self.eng.plan_from_analysis(candles, view, self.cfg.analysis.timeframe)
+            if plan is not None:
+                log.info("تحلیل خودکار: ستاپ روند-EMA %s تشخیص داده شد", plan.side.value)
+
         if plan is None:
-            return  # سیگنال جدیدی نیست → منتظر می‌مانیم
+            return  # ستاپی وجود ندارد → منتظر می‌مانیم
 
         # ۷) داده زنده برای دروازه
         trades_today = len(self.led.get_today_trades())
@@ -228,13 +236,26 @@ class HermesDaemon:
 
         now = time.time()
 
+        # ATR زنده برای مسیر trailing تحلیلی (پلن‌های بدون TP)
+        # وقتی پوزیشن باز است entry loop رد می‌شود → اینجا تازه‌سازی می‌کنیم
+        try:
+            candles = self.mt5.get_candles(
+                self.cfg.symbol, self.cfg.analysis.timeframe, self.cfg.analysis.candle_count
+            )
+            tick = self.mt5.get_tick(self.cfg.symbol)
+            view_now = self.eng.analyze(candles, tick)
+            self._last_atr = view_now.atr
+        except Exception:
+            log.warning("exit loop: ATR تازه‌سازی نشد — از مقدار قبلی استفاده می‌شود")
+
         for pos in positions:
             # فقط پوزیشن‌های خودمان (magic comment hms-)
             if pos.comment and not pos.comment.startswith("hms"):
                 continue
 
+            # ATR زنده برای مسیر trailing تحلیلی (پلن‌های بدون TP)
             # منطق خروج مشترک — همان کدی که بک‌تستر اجرا می‌کند
-            decision = self.exits.manage(pos, now)
+            decision = self.exits.manage(pos, now, atr=self._last_atr)
             if decision is not None:
                 exit_reason, exit_price = decision
                 self._close_position(pos, exit_reason, exit_price)
