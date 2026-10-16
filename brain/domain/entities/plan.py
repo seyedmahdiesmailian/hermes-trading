@@ -57,12 +57,13 @@ class TradingPlan:
     stop_loss: float
     take_profit: float
     position_size: float
-    
+
     # Quality and reasoning
     setup_grade: SetupGrade
     reasoning: dict  # Detailed analysis and rationale
-    
+
     # Metadata
+    timeframe: str = "M15"
     created_at: datetime = field(default_factory=lambda: datetime.now())
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     stage: PlanStage = PlanStage.ANALYSIS

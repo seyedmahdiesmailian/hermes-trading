@@ -108,12 +108,18 @@ class AutonomousTradingUseCase:
             
             # 5. Act on decision
             if decision_result.decision == Decision.ENTER_TRADE:
-                # Would execute trade here via execution port
-                # For now, just save the plan
-                
                 from brain.domain.entities.plan import TradingPlan, SetupGrade, PlanStage
+                from brain.domain.services.execution_guard import (
+                    ExecutionGuard,
+                    PerformanceState,
+                    ProposalInput,
+)
+                from brain.domain.services.execution_guard import (
+                    AccountState as GuardAccountState,
+)
                 from datetime import datetime
-                
+                from decimal import Decimal
+
                 # Build plan from decision
                 params = decision_result.action_params
                 if not params:
@@ -123,22 +129,88 @@ class AutonomousTradingUseCase:
                         details={},
                         error="No action params from decision"
                     )
-                
+
+                # -- ExecutionGuard: fail-closed safety gate ------------------
+                # Until now the plan went straight to save_plan() with zero
+                # gates. Every entry must pass the guard first.
+                try:
+                    open_positions = len(
+                        self.trade_repo.get_open_positions(symbol=request.symbol)
+                    )
+                except Exception:
+                    # fail-closed: unreadable positions -> no trade
+                    return AutonomousTradingResponse(
+                        success=False,
+                        action_taken="blocked",
+                        details={},
+                        error="Open positions unreadable — refusing to trade"
+                    )
+
+                guard = ExecutionGuard()
+                proposal = ProposalInput(
+                    side=str(params['direction']).upper(),
+                    entry=Decimal(str(params['entry_price'])),
+                    sl=Decimal(str(params['stop_loss'])),
+                    tp=Decimal(str(params['take_profit'])),
+                    symbol=params['symbol'],
+                    grade=SetupGrade.B.value,
+                    execution_style="",
+                    blocked_by_macro=False,
+                    contract_size=Decimal("100"),  # XAUUSD: 1 lot = 100 oz
+                )
+                guard_account = GuardAccountState(
+                    balance=Decimal(str(account_state.balance or 0)),
+                    regime="normal",
+                    trade_allowed=True,
+                    open_positions=open_positions,
+                    positions_unreadable=False,
+                    history_ok=True,
+                )
+                guard_performance = PerformanceState(
+                    daily_pnl=Decimal(str(account_state.daily_pnl or 0)),
+                    trades_today=int(account_state.daily_trades or 0),
+                    loss_streak=0,
+                    recent_closed=[],
+                )
+                verdict = guard.evaluate(
+                    proposal=proposal,
+                    account=guard_account,
+                    performance=guard_performance,
+                )
+
+                if not verdict.allowed:
+                    # fail-closed: gate error blocks entry, never allows through
+                    return AutonomousTradingResponse(
+                        success=True,
+                        action_taken="blocked",
+                        details={
+                            'guard': {
+                                'reason': verdict.reason,
+                                'reasons': list(verdict.all_reasons),
+                                'gate_errors': verdict.gate_errors,
+                            },
+                            'decision': {
+                                'confidence': decision_result.confidence,
+                                'reasoning': decision_result.reasoning
+                            }
+                        }
+                    )
+
                 plan = TradingPlan(
                     symbol=params['symbol'],
                     direction=params['direction'],
                     entry_price=params['entry_price'],
                     stop_loss=params['stop_loss'],
                     take_profit=params['take_profit'],
-                    position_size=params['position_size'],
+                    position_size=float(verdict.volume),
                     setup_grade=SetupGrade.B,  # From analysis
                     reasoning=decision_result.reasoning,
                     stage=PlanStage.READY
                 )
-                
+
                 # Save plan
                 self.trade_repo.save_plan(plan)
-                
+
                 return AutonomousTradingResponse(
                     success=True,
                     action_taken="trade_ready",
@@ -151,6 +223,10 @@ class AutonomousTradingUseCase:
                         'decision': {
                             'confidence': decision_result.confidence,
                             'reasoning': decision_result.reasoning
+                        },
+                        'guard': {
+                            'risk_pct': float(verdict.risk_pct),
+                            'volume': float(verdict.volume),
                         },
                         'plan_id': plan.id
                     }

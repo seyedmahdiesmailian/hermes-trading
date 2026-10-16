@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -182,6 +183,9 @@ def ensure_entity_schema(conn) -> None:
         );
         """
     )
+    # NOT NULL columns in schema.sql that the entity layer must also supply
+    _add_column(conn, "plans", "timeframe", "TEXT NOT NULL DEFAULT 'M15'")
+    _add_column(conn, "plans", "expires_at", "INTEGER NOT NULL DEFAULT 0")
     _add_column(conn, "plans", _PACK_PLAN, "TEXT")
     _add_column(conn, "signals", _PACK_SIGNAL, "TEXT")
     _add_column(conn, "trades", _PACK_TRADE, "TEXT")
@@ -250,22 +254,30 @@ class SqliteEntityTradeRepository(_EntityBase, ITradeRepository):
             "exit_price": plan.exit_price,
             "profit": plan.profit,
         }
+        created_ts = _dt_to_ts(plan.created_at) or int(time.time())
+        # schema.sql: plans.timeframe + expires_at are NOT NULL but the entity
+        # has no expires_at field — default to created_at + 24h (mapping doc §5).
+        expires_ts = created_ts + 24 * 3600
         self.conn.execute(
             """
-            INSERT INTO plans (plan_id, symbol, grade, created_at, status, bias,
+            INSERT INTO plans (plan_id, symbol, timeframe, grade, created_at,
+                               expires_at, status, bias,
                                analysis_json, plan_payload)
-            VALUES (?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(plan_id) DO UPDATE SET
-                symbol=excluded.symbol, grade=excluded.grade,
-                created_at=excluded.created_at, status=excluded.status,
+                symbol=excluded.symbol, timeframe=excluded.timeframe,
+                grade=excluded.grade, created_at=excluded.created_at,
+                expires_at=excluded.expires_at, status=excluded.status,
                 bias=excluded.bias, analysis_json=excluded.analysis_json,
                 plan_payload=excluded.plan_payload
             """,
             (
                 plan.id,
                 plan.symbol,
+                getattr(plan, "timeframe", "M15"),
                 _enum_text(plan.setup_grade),
-                _dt_to_ts(plan.created_at) or 0,
+                created_ts,
+                expires_ts,
                 "archived" if plan.stage == PlanStage.CLOSED else "active",
                 plan.direction,
                 json.dumps(plan.reasoning, default=str, ensure_ascii=False),

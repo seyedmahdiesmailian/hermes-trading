@@ -81,7 +81,11 @@ class TestPlanRepository:
         assert len(plans.list_plans()) == 1
 
     def test_new_active_plan_supersedes_current(self, plans):
-        plans.save_plan(_SAMPLE_PLAN)
+        # IMPORTANT: get_current_plan orders by created_at DESC. _SAMPLE_PLAN
+        # has no created_at so the repo stamps it with _utcnow() — the second
+        # plan must therefore use an explicit, provably-newer timestamp or the
+        # test becomes date-dependent.
+        plans.save_plan(dict(_SAMPLE_PLAN, created_at="2020-01-01T00:00:00+00:00"))
         second = dict(_SAMPLE_PLAN, plan_id="plan-002",
                       created_at="2026-10-15T23:59:59+00:00")
         plans.save_plan(second)
