@@ -160,7 +160,20 @@ class HermesDaemon:
         if positions:
             return
 
-        # ۵) تحلیل بازار
+        # ۵) سشن معاملاتی برای تحلیل خودکار — فقط در session_hours (UTC).
+        #    خارج از سشن نقدینگی کم است و اسپرد/اسلیپیج بالا.
+        #    بک‌تست: بازه ۰۰-۰۴ UTC با EV منفی. fail-closed.
+        #    سیگنال‌های کانال معاف هستند — صادرکننده زمانشان را تعیین کرده.
+        h_utc = time.gmtime().tm_hour
+        h0, h1 = self.cfg.analysis.session_hours
+        auto_allowed = h0 <= h_utc < h1
+        if not auto_allowed:
+            log.info(
+                "سشن بسته: %02d UTC خارج بازه [%d,%d) — تحلیل خودکار ممنوع",
+                h_utc, h0, h1,
+            )
+
+        # ۶) تحلیل بازار
         view = self.eng.analyze(candles, tick)
         self._last_atr = view.atr  # برای trailing تحلیلی در exit loop
         log.info(
@@ -175,7 +188,7 @@ class HermesDaemon:
             if plan is not None:
                 break
 
-        if plan is None and not positions:
+        if plan is None and not positions and auto_allowed:
             # تحلیل خودکار: ستاپ روند-EMA (تاییدشده با بک‌تست)
             plan = self.eng.plan_from_analysis(candles, view, self.cfg.analysis.timeframe)
             if plan is not None:
