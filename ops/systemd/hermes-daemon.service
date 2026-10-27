@@ -1,0 +1,19 @@
+[Unit]
+Description=Hermes Trading Daemon (one process, one loop, one source of truth)
+After=network-online.target
+Wants=network-online.target
+# fail-closed: اگر دیمن کرش کرد، با تأخیر دوباره بیاید
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai/hermes-trading
+ExecStart=/home/ai/hermes-trading/.venv/bin/python /home/ai/hermes-trading/entry/hermes.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
