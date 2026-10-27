@@ -98,33 +98,39 @@ def _save_state(s: dict):
 
 
 def _daemon_check() -> str | None:
-    """b31: who watches the watchdog? Returns alert text if a critical daemon
-    is dead or its heartbeat is stale (>120s) while the market is open."""
+    """b31: who watches the watchdog? Returns alert text if the real trading
+    daemon (hermes-daemon.service — one process, one loop) is not active."""
     import os
     import subprocess
     env = dict(os.environ)
-    if not env.get('XDG_RUNTIME_DIR'):
+    if not os.environ.get('XDG_RUNTIME_DIR'):
         env['XDG_RUNTIME_DIR'] = f"/run/user/{os.getuid()}"
     try:
-        r = subprocess.run(['systemctl', '--user', 'is-active',
-                            'hermes-position', 'hermes-signal'],
+        r = subprocess.run(['systemctl', '--user', 'is-active', 'hermes-daemon'],
                            capture_output=True, text=True, timeout=10, env=env)
-        states = r.stdout.split()
-        if states != ['active', 'active']:
-            return f'دمون‌ها: position={states[0] if states else "?"} signal={states[1] if len(states) > 1 else "?"}'
+        state = r.stdout.strip()
+        if state != 'active':
+            return f'hermes-daemon.service = {state or "?"} (دایمون تریدینگ بالا نیست)'
     except Exception as e:
         return f'بررسی systemctl ناموفق: {e}'
-    # heartbeat freshness (position daemon writes every ~5s when alive)
-    try:
-        from datetime import datetime, timezone
-        hb = BASE / 'data' / 'xau_plan' / 'watchdog_heartbeat'
-        if hb.exists():
-            age = (datetime.now(timezone.utc) - datetime.fromisoformat(hb.read_text().strip())).total_seconds()
-            if age > 120:
-                return f'heartbeat دایمون موقعیت {int(age)}s قدیمی است'
-    except Exception:
-        pass  # unreadable heartbeat file: systemctl already passed, don't false-alarm
     return None
+
+
+def _market_open() -> bool:
+    """True when UTC hour is inside config.yaml session_hours. Fail-open on
+    config error (dedup already caps alert spam at once/6h)."""
+    yaml = None
+    try:
+        import yaml
+    except ImportError:
+        return True
+    try:
+        cfg = yaml.safe_load((BASE / 'config.yaml').read_text()) or {}
+        sh = (cfg.get('analysis', {}) or {}).get('session_hours', [7, 17])
+        h = datetime.now(timezone.utc).hour
+        return sh[0] <= h < sh[1]
+    except Exception:
+        return True
 
 
 def main():
@@ -152,22 +158,16 @@ def main():
             st['alerted'] = True
         _save_state(st)
 
-    # b31: daemon liveness + heartbeat (market-hours only, deduped 6h)
-    try:
-        import sys
-        sys.path.insert(0, str(BASE))
-        from engines.market_hours import is_market_open
-        if is_market_open():
-            problem = _daemon_check()
-            now_ts = datetime.now(timezone.utc).timestamp()
-            last_alert = float(st.get('daemon_alerted_at', 0) or 0)
-            if problem and (now_ts - last_alert) > 6 * 3600:
-                send_telegram(f'🔴 دایمون هرمس: {problem}\n{datetime.now(timezone.utc).strftime("%H:%M UTC")}')
-                st['daemon_alerted_at'] = now_ts
-                _save_state(st)
-                log(f'Daemon alert: {problem}')
-    except Exception as e:
-        log(f'daemon check skipped: {e}')
+    # b31: daemon liveness (market-hours only, deduped 6h)
+    if _market_open():
+        problem = _daemon_check()
+        now_ts = datetime.now(timezone.utc).timestamp()
+        last_alert = float(st.get('daemon_alerted_at', 0) or 0)
+        if problem and (now_ts - last_alert) > 6 * 3600:
+            send_telegram(f'🔴 دایمون هرمس: {problem}\n{datetime.now(timezone.utc).strftime("%H:%M UTC")}')
+            st['daemon_alerted_at'] = now_ts
+            _save_state(st)
+            log(f'Daemon alert: {problem}')
 
     return 0 if healthy else 1
 
