@@ -36,11 +36,33 @@ load_dotenv(BASE / '.env')
 # trading path but the daily backup silently kept pushing to the OLD IP (the
 # default won, no error anywhere). Precedence now: explicit WIN_HOST override
 # > documented HERMES_WIN_IP > last-known default.
-from engines.config import win_host as _win_host  # WP2: canonical (noqa: E402)
-from engines.config import win_user as _win_user  # noqa: E402
-from engines.config import win_pass as _win_pass  # noqa: E402
-from engines.config import win_backup_dir as _win_backup_dir  # noqa: E402
-from engines.config import lan_ip as _lan_ip  # noqa: E402
+# engines/config.py moved to legacy_v1 (dead tree) — live scripts must NOT
+# import it. Same canonical precedence, self-contained .env readers:
+def _env(name: str, default: str = "") -> str:
+    val = os.getenv(name)
+    return val if val is not None else default
+
+
+def _win_host() -> str:
+    return _env("WIN_HOST") or _env("HERMES_WIN_IP", "192.168.10.51")
+
+
+def _win_user() -> str:
+    return _env("WIN_USER", "Administrator")
+
+
+def _win_pass() -> str:
+    return _env("WIN_PASS")
+
+
+def _win_backup_dir() -> str:
+    return _env("WIN_BACKUP_DIR", "C:\\\\HermesBackups")
+
+
+def _lan_ip() -> str:
+    return _env("HERMES_LAN_IP", "192.168.10.18")
+
+
 WIN_HOST = _win_host()
 WIN_USER = _win_user()
 WIN_PASS = _win_pass()
