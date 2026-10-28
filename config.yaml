@@ -30,8 +30,8 @@ position:
   trailing_start_rr: 1.0        # فعال‌سازی trailing بعد از ۱R سود
   breakeven_rr: 0.8             # جابجایی SL به نقطه ورود بعد از ۰.۸R
   max_hold_hours: 24            # خروج زمانی
-  partial_tp_rr: 2.0            # بستن نیمی از حجم (در صورت فعال بودن)
-  partial_enabled: false
+  partial_tp_rr: 1.5            # بستن نیمی از حجم در سود ۱.۵R (سیو سود پله‌ای)
+  partial_enabled: true         # فعال‌سازی بستن پله‌ای
 
 # ─ـ یادگیری ───────────────────────────────────────────
 learning:

@@ -289,7 +289,36 @@ class TestExitManager:
         decision = manager.manage(pos, now_ts=time.time())
         assert decision is None  # Does not close, modifies SL
         assert len(modified) == 1
-        assert modified[0] == (777, 2000.0)  # SL moved to open_price
+        assert modified[0] == (777, 2000.15)  # SL moved to open_price + 0.15 buffer
+
+    def test_partial_close_trigger(self):
+        partials = []
+        def _on_partial(ticket, pct):
+            partials.append((ticket, pct))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=1.5,
+            partial_enabled=True
+        )
+        manager = ExitManager(cfg, on_partial=_on_partial)
+
+        # Auto-analysis position without TP (tp=0), ATR=5.0, sl_mult=1.5 -> sl_dist=7.5
+        # Open=2000, Current=2012 -> profit=+12.0 points. r_achieved = 12.0 / 7.5 = 1.6R >= 1.5R
+        pos = BrokerPosition(
+            ticket=888, symbol="XAUUSD", side=Side.BUY, volume=0.2,
+            open_price=2000.0, current_price=2012.0, sl=1992.5, tp=0.0,
+            profit=240.0, swap=0.0, open_time=int(time.time()), comment="hms-auto"
+        )
+        decision = manager.manage(pos, now_ts=time.time(), atr=5.0, atr_sl_mult=1.5)
+        assert decision is None
+        assert len(partials) == 1
+        assert partials[0] == (888, 50.0)
+        # Should not fire a second time for same ticket
+        manager.manage(pos, now_ts=time.time(), atr=5.0, atr_sl_mult=1.5)
+        assert len(partials) == 1
 
 
 # ══════════════════════════════════════════════════════════════════

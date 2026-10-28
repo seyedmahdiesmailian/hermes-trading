@@ -74,7 +74,13 @@ class HermesDaemon:
             self.mt5.modify_position(ticket, new_sl, 0.0)
             log.info("SL modified: ticket=%s sl=%.2f", ticket, new_sl)
 
-        self.exits = ExitManager(self.cfg.position, on_modify=_on_modify)
+        def _on_partial(ticket: int, percent: float) -> None:
+            ok = self.mt5.partial_close(ticket, percent)
+            if ok:
+                log.info("Partial close: ticket=%s percent=%.1f%% executed", ticket, percent)
+                self.notify.status(f"🎯 بستن پله‌ای: {percent}% حجم پوزیشن #{ticket} سیو سود شد.")
+
+        self.exits = ExitManager(self.cfg.position, on_modify=_on_modify, on_partial=_on_partial)
 
         # سیگنال‌های قدیمی را رد کن — فقط آینده پردازش می‌شود
         self.signals.skip_backlog()

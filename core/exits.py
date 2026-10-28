@@ -1,127 +1,178 @@
-""" core/exits — منطق مدیریت پوزیشن (مشترک بین دیمن زنده و بک‌تستر)
+""" core/exits — سیستم پیشرفته و هوشمند مدیریت پوزیشن و خروج (Dynamic Position Management)
 
-پس از step 2: این فایل جایگزین _manage_position/_trail_sl در entry/hermes.py می‌شود.
-دیمن زنده و بک‌تستر دقیقاً یک منطق خروج اجرا می‌کنند.
+منطق یکپارچه خروج مشترک بین دیمن زنده و بک‌تستر:
+۱. خروج زمانی (Time Exit): بستن پوزیشن‌های راکد پس از ۲۴ ساعت
+۲. سیو سود پله‌ای (Partial Take-Profit): بستن ۵۰٪ حجم در تارگت اولیه (مثلاً ۱.۵R یا ۲R)
+۳. نقطه ورود محافظت‌شده (Breakeven + Buffer): جابجایی استاپ به ورود + بافر اسپرد و کمیسیون (+0.15 پیپ)
+۴. ترلینگ استاپ چندمرحله‌ای (Multi-Stage ATR Trailing):
+   - مرحله ۱ (۰ تا ۱.۵R): ترلینگ ملایم (۲.۵ × ATR) جهت تنفس مارکت در پولبک‌ها
+   - مرحله ۲ (۱.۵R تا ۳.۰R): قفل سود بالای ورود + ترلینگ استاندارد (۲.۰ × ATR)
+   - مرحله ۳ (بالای ۳.۰R): ترلینگ فشرده (۱.۵ × ATR) جهت صید حداکثر رالی‌های پرقدرت طلا
 """
 from __future__ import annotations
 
 import logging
-from typing import Callable, Optional
+from typing import Callable, Optional, Set
 
 from core.entities import BrokerPosition, ExitReason
 from core.params import PositionCfg
 
 log = logging.getLogger(__name__)
 
+# بافر اسپرد و کمیسیون برای خروج در نقطه سر‌به‌سر (دلار بر اونس)
+BREAKEVEN_BUFFER_POINTS = 0.15
+
 
 class ExitManager:
-    """مدیریت خروج پوزیشن — منطق مشترک دیمن زنده و بک‌تستر.
+    """مدیریت هوشمند و چندمرحله‌ای پوزیشن‌های باز."""
 
-    این کلاس state‌ای ندارد. تصمیم می‌گیرد، اعمال را به caller می‌سپارد:
-      - در دیمن زنده: on_modify → bridge.modify_position(ticket, new_sl)
-      - در بک‌تستر:    on_modify → به‌روزرسانی SL در state شبیه‌ساز
-    """
-
-    def __init__(self, pos_cfg: PositionCfg, on_modify: Callable[[int, float], None] | None = None):
+    def __init__(
+        self,
+        pos_cfg: PositionCfg,
+        on_modify: Optional[Callable[[int, float], None]] = None,
+        on_partial: Optional[Callable[[int, float], None]] = None,
+    ):
         self._cfg = pos_cfg
         self._on_modify = on_modify
+        self._on_partial = on_partial
+        # ثبت تیکت‌هایی که بستن پله‌ای روی آنها انجام شده
+        self._partial_executed: Set[int] = set()
 
-    # ── API ─────────────────────────────────────────────
+    # ── API مدیریت پوزیشن ─────────────────────────────────
 
-    def manage(self, pos: BrokerPosition, now_ts: float,
-               atr: float = 0.0,
-               atr_sl_mult: float = 1.5,
-               atr_trail_mult: float = 3.0) -> Optional[tuple[ExitReason, float]]:
-        """تصمیم مدیریت یک پوزیشن.
+    def manage(
+        self,
+        pos: BrokerPosition,
+        now_ts: float,
+        atr: float = 0.0,
+        atr_sl_mult: float = 1.5,
+        atr_trail_mult: float = 2.5,
+    ) -> Optional[tuple[ExitReason, float]]:
+        """ارزیابی گام‌به‌گام پوزیشن باز جهت بستن کامل، بستن پله‌ای یا تعدیل استاپ.
 
-        پارامترهای ATR برای پلن‌های بدون TP (تحلیل خودکار):
-          atr            ATR لحظه تصمیم
-          atr_sl_mult    فاصله استاپ اولیه (در پلن استفاده شد)
-          atr_trail_mult فاصله trailing
-
-        بازگشت:
-          (reason, exit_price) → بستن پوزیشن
-          None                 → نگه‌داشتن
+        خروجی:
+          (ExitReason, exit_price) -> بستن کامل پوزیشن
+          None -> پوزیشن حفظ یا اصلاح شد
         """
-        # ۱) خروج زمانی — قدیمی‌تر از max_hold_hours
-        age_h = (now_ts - pos.open_time) / 3600.0
-        if age_h >= self._cfg.max_hold_hours:
+        # ۱) خروج زمانی (Time-Based Exit)
+        age_hours = (now_ts - pos.open_time) / 3600.0
+        if age_hours >= self._cfg.max_hold_hours:
+            log.info("time exit triggered: ticket=%d age=%.1fh", pos.ticket, age_hours)
             return ExitReason.TIME_EXIT, pos.current_price
 
-        rr = pos.rr_progress  # 0=استاپ، 1=TP
+        # محاسبه میزان پیشرفت R سود
+        rr_progress = pos.rr_progress
 
-        # ۱‌ب) مسیر ATR برای پوزیشن‌های بدون TP (تحلیل خودکار)
-        #     rr_progress با tp=0 همیشه 0 است → مسیرها جدا اجرا می‌شوند.
+        # اگر پلن بدون TP باشد (تحلیل خودکار با ترلینگ استاپ)
         if pos.tp <= 0 and atr > 0:
-            trail_dist = atr * atr_trail_mult
-            if pos.is_buy:
-                new_sl = pos.current_price - trail_dist
-                if new_sl > pos.sl:
-                    self._modify(pos, new_sl)
+            sl_dist = atr * atr_sl_mult
+            if sl_dist > 0:
+                direction = 1.0 if pos.is_buy else -1.0
+                r_achieved = (direction * (pos.current_price - pos.open_price)) / sl_dist
             else:
-                new_sl = pos.current_price + trail_dist
-                if pos.sl == 0 or new_sl < pos.sl:
-                    self._modify(pos, new_sl)
-            return None  # مدیریت کامل شد — خروج فقط با SL زنده
+                r_achieved = 0.0
 
-        # ۲) breakeven — جابجایی SL به نقطه ورود
-        if rr >= self._cfg.breakeven_rr and pos.sl != pos.open_price:
-            new_sl = pos.open_price
-            if pos.is_buy and new_sl > pos.sl:
-                self._modify(pos, new_sl)
-            elif not pos.is_buy and (pos.sl == 0 or new_sl < pos.sl):
-                # update via caller
-                self._modify(pos, new_sl)
+            # ۱.الف) بستن پله‌ای در پلن‌های بدون TP
+            if self._cfg.partial_enabled and r_achieved >= self._cfg.partial_tp_rr:
+                self._trigger_partial_if_needed(pos)
 
-        # ۳) trailing stop — SL را دنبال قیمت می‌کند
-        if rr >= self._cfg.trailing_start_rr and pos.sl > 0:
-            new_sl = self._trail_sl(pos)
-            if new_sl is None:
-                log.debug("trailing: nothing to do")
-            else:
+            # ۱.ب) ترلینگ چندمرحله‌ای بر مبنای ATR
+            self._manage_dynamic_atr_trail(pos, r_achieved, atr)
+            return None
+
+        # ۲) بستن پله‌ای برای پلن‌های دارای TP
+        if self._cfg.partial_enabled and rr_progress >= (self._cfg.partial_tp_rr / max(2.0, self._cfg.partial_tp_rr)):
+            self._trigger_partial_if_needed(pos)
+
+        # ۳) Breakeven هوشمند با بافر پوشش اسپرد و کارمزد
+        if rr_progress >= self._cfg.breakeven_rr:
+            self._apply_breakeven_with_buffer(pos)
+
+        # ۴) ترلینگ استاپ سنتی برای پلن‌های دارای TP
+        if rr_progress >= self._cfg.trailing_start_rr and pos.sl > 0:
+            new_sl = self._trail_sl_with_tp(pos)
+            if new_sl is not None:
                 self._modify(pos, new_sl)
 
         return None
 
-    # ── private ─────────────────────────────────────────
+    # ── ترلینگ چندمرحله‌ای ATR (Multi-Stage Trailing) ───────
+
+    def _manage_dynamic_atr_trail(self, pos: BrokerPosition, r_achieved: float, atr: float) -> None:
+        """ترلینگ داینامیک و پلکانی در رالی‌های بزرگ طلا."""
+        if r_achieved < 0.8:
+            return  # هنوز در مرحله ابتدایی شکل‌گیری روند هستیم
+
+        # مرحله اول سود (0.8R تا 1.5R): Breakeven + ترلینگ فاصله باز (2.5 ATR)
+        if 0.8 <= r_achieved < 1.5:
+            self._apply_breakeven_with_buffer(pos)
+            trail_dist = atr * 2.5
+        # مرحله دوم سود (1.5R تا 3.0R): ترلینگ استاندارد (2.0 ATR)
+        elif 1.5 <= r_achieved < 3.0:
+            trail_dist = atr * 2.0
+        # مرحله سوم سود (بیش از 3.0R): ترلینگ فشرده (1.5 ATR) برای صید سقف/کف
+        else:
+            trail_dist = atr * 1.5
+
+        if pos.is_buy:
+            new_sl = pos.current_price - trail_dist
+            if new_sl > pos.sl:
+                self._modify(pos, round(new_sl, 2))
+        else:
+            new_sl = pos.current_price + trail_dist
+            if pos.sl == 0 or new_sl < pos.sl:
+                self._modify(pos, round(new_sl, 2))
+
+    # ── جابجایی استاپ به نقطه ورود + بافر ──────────────────
+
+    def _apply_breakeven_with_buffer(self, pos: BrokerPosition) -> None:
+        """انتقال استاپ به نقطه ورود به علاوه بافر پوشش کمیسیون."""
+        buffer = BREAKEVEN_BUFFER_POINTS
+        if pos.is_buy:
+            target_be = pos.open_price + buffer
+            # استاپ فقط به سمت سود می‌تواند حرکت کند و نباید از قیمت جاری بالاتر برود
+            if target_be > pos.sl and target_be < pos.current_price:
+                self._modify(pos, round(target_be, 2))
+        else:
+            target_be = pos.open_price - buffer
+            if (pos.sl == 0 or target_be < pos.sl) and target_be > pos.current_price:
+                self._modify(pos, round(target_be, 2))
+
+    # ── بستن پله‌ای (Partial Close Execution) ─────────────
+
+    def _trigger_partial_if_needed(self, pos: BrokerPosition) -> None:
+        """اجرای سیو سود پله‌ای دقیقا یک‌بار برای هر پوزیشن."""
+        if pos.ticket in self._partial_executed:
+            return
+
+        if self._on_partial is not None:
+            log.info("partial close triggered for ticket=%d (50%% volume)", pos.ticket)
+            self._on_partial(pos.ticket, 50.0)
+            self._partial_executed.add(pos.ticket)
+            # بلافاصله پس از سیو سود پله‌ای، معامله ریسک‌فری می‌شود
+            self._apply_breakeven_with_buffer(pos)
+
+    # ── متدهای کمکی ──────────────────────────────────────
 
     def _modify(self, pos: BrokerPosition, new_sl: float) -> None:
-        """اعمال SL جدید — از callback استفاده می‌کند (bridge یا state)."""
+        """اعمال SL جدید با استفاده از کال‌بک ثبت‌شده."""
         if self._on_modify is not None:
             self._on_modify(pos.ticket, new_sl)
 
     @staticmethod
-    def _trail_sl(pos: BrokerPosition) -> float | None:
-        """محاسبه SL جدید برای trailing — فقط در جهت سود.
-
-        حالت ATR (پلن‌های تحلیلی بدون TP): فاصله ثابت ATR-مبنای
-        `atr_mult` × ATR لحظه ورود (از پارامتر پلن، در dataclass ذخیره
-        نمی‌شود — از رویداد ترید خوانده می‌شود).
-        حالت TP: فاصله نصف فاصله فعلی تا TP.
-        """
-        # حالت ATR-trail: پلن بدون TP (تحلیل خودکار) — فاصله ثابت
-        if pos.tp <= 0:
-            atr_dist = getattr(pos, "trail_atr_dist", None)
-            if atr_dist and atr_dist > 0:
-                if pos.is_buy:
-                    new_sl = pos.current_price - atr_dist
-                    if new_sl > pos.sl:
-                        return new_sl
-                else:
-                    new_sl = pos.current_price + atr_dist
-                    if pos.sl == 0 or new_sl < pos.sl:
-                        return new_sl
-            return None
-        # حالت TP-based: نصف فاصله تا TP
+    def _trail_sl_with_tp(pos: BrokerPosition) -> float | None:
+        """محاسبه ترلینگ استاپ برای پلن‌های تارگت‌دار."""
         dist = abs(pos.tp - pos.current_price) * 0.5
         if dist <= 0:
             return None
+
         if pos.is_buy:
             new_sl = pos.current_price - dist
             if new_sl > pos.sl:
-                return new_sl
+                return round(new_sl, 2)
         else:
             new_sl = pos.current_price + dist
             if pos.sl == 0 or new_sl < pos.sl:
-                return new_sl
+                return round(new_sl, 2)
+
         return None
