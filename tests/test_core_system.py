@@ -307,16 +307,100 @@ class TestExitManager:
         )
         manager = ExitManager(cfg, on_modify=_on_modify)
 
-        # Open=2000, SL=1990, TP=2020 (Risk=10, Reward=20). Current=2017 (Profit=17, RR progress=17/20=0.85 >= 0.8)
+        # Open=2000, SL=1990, TP=2020 (Risk=10, Reward=20). Current=2010 (Profit=10, r_mult=1.0R >= 0.8 BE, < 1.5 Trail)
+        pos = BrokerPosition(
+            ticket=777, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2010.0, sl=1990.0, tp=2020.0,
+            profit=100.0, swap=0.0, open_time=int(time.time()), comment="hms"
+        )
+        decision = manager.manage(pos, now_ts=time.time())
+        assert decision is None  # Does not close, modifies SL
+        assert len(modified) == 1
+        assert modified[0] == (777, 2000.15)  # SL moved to open_price + 0.15 buffer
+
+    def test_trailing_stop_with_tp_trigger(self):
+        """b223: ترلینگ استاپ برای پلن‌های دارای TP باید بر مبنای r_multiple فعال شود."""
+        modified = []
+        def _on_modify(ticket, new_sl):
+            modified.append((ticket, new_sl))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=2.0,
+            partial_enabled=False
+        )
+        manager = ExitManager(cfg, on_modify=_on_modify)
+
+        # BUY: Open=2000, SL=1990, TP=2020 (Risk=10). Current=2017 (r_mult=1.7 >= 1.5 trailing_start_rr)
         pos = BrokerPosition(
             ticket=777, symbol="XAUUSD", side=Side.BUY, volume=0.1,
             open_price=2000.0, current_price=2017.0, sl=1990.0, tp=2020.0,
             profit=170.0, swap=0.0, open_time=int(time.time()), comment="hms"
         )
         decision = manager.manage(pos, now_ts=time.time())
-        assert decision is None  # Does not close, modifies SL
+        assert decision is None
         assert len(modified) == 1
-        assert modified[0] == (777, 2000.15)  # SL moved to open_price + 0.15 buffer
+        # dist = (2020 - 2017) * 0.5 = 1.5 -> new_sl = 2017 - 1.5 = 2015.5
+        assert modified[0] == (777, 2015.5)
+
+    def test_trailing_stop_ratchet_tightens_only(self):
+        """b223: استاپ ترلینگ هرگز در پولبک‌ها به عقب برنمی‌گردد."""
+        modified = []
+        def _on_modify(ticket, new_sl):
+            modified.append((ticket, new_sl))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=2.0,
+            partial_enabled=False
+        )
+        manager = ExitManager(cfg, on_modify=_on_modify)
+
+        # SL is already tight at 2016.0. Price drops to 2017 -> candidate new_sl=2015.5 <= 2016.0
+        pos = BrokerPosition(
+            ticket=777, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2017.0, sl=2016.0, tp=2020.0,
+            profit=170.0, swap=0.0, open_time=int(time.time()), comment="hms"
+        )
+        decision = manager.manage(pos, now_ts=time.time())
+        assert decision is None
+        assert len(modified) == 0  # No modification because new_sl would loosen
+
+    def test_partial_close_with_tp_trigger(self):
+        """b223: سیو سود پله‌ای برای پلن‌های دارای TP بر مبنای r_multiple واقعی اجرا می‌شود."""
+        partials = []
+        modifies = []
+        def _on_partial(ticket, pct):
+            partials.append((ticket, pct))
+        def _on_modify(ticket, new_sl):
+            modifies.append((ticket, new_sl))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.8,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=1.5,
+            partial_enabled=True
+        )
+        manager = ExitManager(cfg, on_modify=_on_modify, on_partial=_on_partial)
+
+        # BUY: Open=2000, SL=1990, TP=2030 (Risk=10). Current=2015 -> r_mult=1.5 >= partial_tp_rr (1.5)
+        pos = BrokerPosition(
+            ticket=999, symbol="XAUUSD", side=Side.BUY, volume=0.2,
+            open_price=2000.0, current_price=2015.0, sl=1990.0, tp=2030.0,
+            profit=300.0, swap=0.0, open_time=int(time.time()), comment="sig"
+        )
+        decision = manager.manage(pos, now_ts=time.time())
+        assert decision is None
+        assert len(partials) == 1
+        assert partials[0] == (999, 50.0)
+        # Breakeven applied after partial close
+        assert len(modifies) == 1
+        assert modifies[0] == (999, 2000.15)
 
     def test_partial_close_trigger(self):
         partials = []

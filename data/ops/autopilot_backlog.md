@@ -65,6 +65,12 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       against None (account, positions) to return explicit fail-closed DENY reasons
       (positions_unreadable, equity_invalid) instead of crashing with unhandled
       exceptions on disconnected or unreadable external broker states.
+- [x] b223 TRADER EXIT PARITY: DONE 2026-10-28: ExitManager evaluates trailing stop and partial take-profit for TP positions on true risk multiple (r_multiple) instead of [0, 1]-bounded rr_progress (which rendered trailing_start_rr>=1.0 dead code and distorted partial TP), with ratchet guarantee ensuring stop moves tighten-only and never regress below breakeven+buffer; verified with 52/52 tests green including dedicated unit and regression tests.
+- [ ] b224 REUSABLE PROCEDURE (learned 2026-10-28, b223): exit condition triggers (trailing_start_rr,
+      breakeven_rr, partial_tp_rr) expressed in R-multiples must compare against r_multiple
+      (actual realized gain in initial risk units), never against normalized progress ratios
+      like rr_progress ((current-sl)/(tp-sl)), which max out at 1.0 upon TP and silently
+      silence any gate or trigger set >= 1.0R.
 - [ ] b212 PROCEDURE (learned 2026-09-10, budget-boundary run): before opening
       ANY trader item, read autopilot_state.json's last_run_utc against
       `date -u` — the 55-min wall is measured from the KICKOFF, and a run whose

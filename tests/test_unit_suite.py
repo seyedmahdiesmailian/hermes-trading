@@ -12,7 +12,8 @@ from core.entities import (
     Signal,
 )
 from core.gates import GatesEngine
-from core.params import Gates
+from core.exits import ExitManager
+from core.params import Gates, PositionCfg
 
 
 class TestTradingCore(unittest.TestCase):
@@ -339,6 +340,51 @@ class TestTradingCore(unittest.TestCase):
             spread=0.3,
         )
         self.assertTrue(outcome_ana.allowed)
+
+    def test_b223_exit_manager_r_multiple_trailing_and_partial(self):
+        """b223: Trailing stop and partial take-profit evaluate r_multiple, enabling trailing for TP positions."""
+        modifies = []
+        partials = []
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=1.0,
+            max_hold_hours=24,
+            partial_tp_rr=1.5,
+            partial_enabled=True,
+        )
+        mgr = ExitManager(
+            cfg,
+            on_modify=lambda t, sl: modifies.append((t, sl)),
+            on_partial=lambda t, p: partials.append((t, p)),
+        )
+
+        # BUY with TP: Open=2000, SL=1990, TP=2030 (Risk=10, Reward=30)
+        # Price at 2018.0 -> r_mult=1.8 >= 1.5. Trailing must activate!
+        pos = BrokerPosition(
+            ticket=223,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.2,
+            open_price=2000.0,
+            current_price=2018.0,
+            sl=1990.0,
+            tp=2030.0,
+            profit=360.0,
+            swap=0.0,
+            commission=-2.0,
+            open_time=1700000000,
+        )
+        self.assertEqual(pos.r_multiple, 1.8)
+        self.assertEqual(round(pos.rr_progress, 2), 0.7)  # rr_progress is 0.7, which would have failed >= 1.5!
+
+        res = mgr.manage(pos, now_ts=1700001000)
+        self.assertIsNone(res)
+        # 1. Partial close triggered (50%)
+        self.assertEqual(len(partials), 1)
+        self.assertEqual(partials[0], (223, 50.0))
+        # 2. Trailing stop modified to 2012.0 (2018 - 0.5 * 12)
+        self.assertEqual(len(modifies), 1)
+        self.assertEqual(modifies[0], (223, 2012.0))
 
 
 if __name__ == "__main__":

@@ -60,8 +60,8 @@ class ExitManager:
             log.info("time exit triggered: ticket=%d age=%.1fh", pos.ticket, age_hours)
             return ExitReason.TIME_EXIT, pos.current_price
 
-        # محاسبه میزان پیشرفت R سود
-        rr_progress = pos.rr_progress
+        # محاسبه میزان سود/زیان فعلی بر مبنای ضریب ریسک (R-Multiple)
+        r_mult = pos.r_multiple
 
         # اگر پلن بدون TP باشد (تحلیل خودکار با ترلینگ استاپ)
         if pos.tp <= 0 and atr > 0:
@@ -80,21 +80,18 @@ class ExitManager:
             self._manage_dynamic_atr_trail(pos, r_achieved, atr)
             return None
 
-        # ۲) بستن پله‌ای برای پلن‌های دارای TP
-        if self._cfg.partial_enabled and rr_progress >= (self._cfg.partial_tp_rr / max(2.0, self._cfg.partial_tp_rr)):
+        # ── پلن‌های دارای TP و SL (سیگنال کانال / واچ‌لیست) ──
+        # ۲) بستن پله‌ای (Partial Take-Profit) بر مبنای R-Multiple واقعی
+        if self._cfg.partial_enabled and r_mult >= self._cfg.partial_tp_rr:
             self._trigger_partial_if_needed(pos)
 
-        # ۳) Breakeven هوشمند با بافر پوشش اسپرد و کارمزد
-        # ارزیابی بر مبنای r_multiple (یا rr_progress در صورت سازگاری با ستاپ‌های دارای TP)
-        r_mult = pos.r_multiple
-        if r_mult >= self._cfg.breakeven_rr or rr_progress >= self._cfg.breakeven_rr:
-            self._apply_breakeven_with_buffer(pos)
-
-        # ۴) ترلینگ استاپ سنتی برای پلن‌های دارای TP
-        if rr_progress >= self._cfg.trailing_start_rr and pos.sl > 0:
+        # ۳ و ۴) مدیریت استاپ: ترلینگ استاپ یا انتقال به نقطه ورود (Breakeven)
+        if pos.tp > 0 and pos.sl > 0 and r_mult >= self._cfg.trailing_start_rr:
             new_sl = self._trail_sl_with_tp(pos)
             if new_sl is not None:
                 self._modify(pos, new_sl)
+        elif r_mult >= self._cfg.breakeven_rr:
+            self._apply_breakeven_with_buffer(pos)
 
         return None
 
@@ -151,8 +148,6 @@ class ExitManager:
             log.info("partial close triggered for ticket=%d (50%% volume)", pos.ticket)
             self._on_partial(pos.ticket, 50.0)
             self._partial_executed.add(pos.ticket)
-            # بلافاصله پس از سیو سود پله‌ای، معامله ریسک‌فری می‌شود
-            self._apply_breakeven_with_buffer(pos)
 
     # ── متدهای کمکی ──────────────────────────────────────
 
@@ -168,13 +163,21 @@ class ExitManager:
         if dist <= 0:
             return None
 
+        buffer = BREAKEVEN_BUFFER_POINTS
         if pos.is_buy:
             new_sl = pos.current_price - dist
-            if new_sl > pos.sl:
+            # تضمین اینکه استاپ ترلینگ هرگز عقب‌تر از Breakeven+buffer نرود
+            target_be = pos.open_price + buffer
+            if new_sl < target_be and target_be < pos.current_price:
+                new_sl = target_be
+            if new_sl > pos.sl and new_sl < pos.current_price:
                 return round(new_sl, 2)
         else:
             new_sl = pos.current_price + dist
-            if pos.sl == 0 or new_sl < pos.sl:
+            target_be = pos.open_price - buffer
+            if new_sl > target_be and target_be > pos.current_price:
+                new_sl = target_be
+            if (pos.sl == 0 or new_sl < pos.sl) and new_sl > pos.current_price:
                 return round(new_sl, 2)
 
         return None

@@ -384,7 +384,8 @@ class Engine:
         """گریدبندی کیفیت سیگنال تلگرام."""
         score = 0.0
         score += min(1.0, sig.confidence) * 0.40
-        score += min(1.0, sig.rr / 2.0) * 0.30
+        sig_rr = sig.rr if sig.rr > 0 else _calc_rr(sig)
+        score += min(1.0, sig_rr / 2.0) * 0.30
 
         if view.is_trending:
             aligned = (sig.side == Side.BUY and view.trend == "bullish") or \
