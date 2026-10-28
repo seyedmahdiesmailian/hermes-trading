@@ -16,9 +16,11 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import subprocess
 import sys
 import time
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -180,9 +182,8 @@ def _market_state():
 # + hermes-trading.timer). The old list of 4 made "همه‌چیز روال است"
 # while forwarder/webui/omniroute were down.
 _SVC_NAMES = [
-    'hermes-signal-v2', 'hermes-position-v2', 'hermes-dashboard',
-    'hermes-gateway', 'hermes-forwarder', 'hermes-trading',
-    'hermes-trading.timer', 'hermes-webui', 'omniroute',
+    'hermes-daemon', 'hermes-forwarder', 'hermes-command-bot',
+    'hermes-dashboard', 'hermes-gateway', 'hermes-webui', 'omniroute',
 ]
 
 
@@ -197,13 +198,11 @@ def _services() -> dict:
 
 
 _SVC_LABEL = {
-    'hermes-signal-v2': '📡 سیگنال',
-    'hermes-position-v2': '📌 پوزیشن',
+    'hermes-daemon': '🧠 دیمن اصلی',
+    'hermes-forwarder': '📨 فورواردر',
+    'hermes-command-bot': '🤖 ربات دستورات',
     'hermes-dashboard': '🛰 داشبورد',
     'hermes-gateway': '🖥 گیت‌وی',
-    'hermes-forwarder': '📨 فورواردر',
-    'hermes-trading': '⏱ کرون ترید',
-    'hermes-trading.timer': '⏲ تایمر ترید',
     'hermes-webui': '🌐 وب',
     'omniroute': '🔀 omniroute',
 }
@@ -248,24 +247,72 @@ def _svc_log(name: str, n: int = 5) -> str:
         return '—'
 
 
+class _DashboardBridgeWrapper:
+    def __init__(self, url: str, token: str):
+        self._url = url.rstrip('/')
+        self._token = token
+
+    def _req(self, path: str) -> dict:
+        try:
+            req = urllib.request.Request(f"{self._url}{path}")
+            if self._token:
+                req.add_header("Authorization", f"Bearer {self._token}")
+            with urllib.request.urlopen(req, timeout=5) as r:
+                return json.loads(r.read().decode('utf-8'))
+        except Exception:
+            return {"ok": False}
+
+    def get_account(self) -> dict:
+        res = self._req("/api/account")
+        if res.get("balance") is not None:
+            res["ok"] = True
+        return res
+
+    def get_positions(self) -> dict:
+        return self._req("/api/positions")
+
+    def get_tick(self, symbol: str) -> dict:
+        return self._req(f"/api/tick/{symbol}")
+
+
 def _bridge():
     try:
-        import sys
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
         from env_loader import load_dotenv
         load_dotenv(ROOT / '.env')
-        from bridge_client import BridgeClient
-        b = BridgeClient()
-        return b, b.get_account(), b.get_positions()
+        url = os.getenv("HERMES_BRIDGE_URL", "http://192.168.10.51:5050")
+        token = os.getenv("HERMES_BRIDGE_TOKEN", "")
+        b = _DashboardBridgeWrapper(url, token)
+        acct = b.get_account()
+        pos = b.get_positions()
+        if acct.get("ok"):
+            return b, acct, pos
+        return None, {}, {}
     except Exception:
         return None, {}, {}
 
 
 def _journal_rows() -> list:
+    import sqlite3
+    db_file = DATA / 'hermes.db'
+    if not db_file.exists():
+        return []
     try:
-        with (DATA / 'xau_plan/trade_journal.csv').open(encoding='utf-8-sig') as f:
-            return list(csv.DictReader(f))
+        conn = sqlite3.connect(f"file:{db_file}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        rows = cur.execute("SELECT * FROM trades ORDER BY closed_at ASC").fetchall()
+        conn.close()
+        out = []
+        for r in rows:
+            out.append({
+                'profit': float(r['pnl'] or 0.0),
+                'net': float(r['pnl'] or 0.0),
+                'close_time': float(r['closed_at'] or 0.0),
+                'side': str(r['side']),
+                'symbol': str(r['symbol']),
+                'legs': 1,
+            })
+        return out
     except Exception:
         return []
 
@@ -584,12 +631,24 @@ def ops_home() -> tuple[str, list]:
     lines.append(_row('Gold Market', '🟢 باز' if open_now else '🔴 بسته'))
     if flip and flip[1]:
         lines.append(_row('Reopens', f'ساعت {flip[0]} تهران'))
-    lines.append(_sec('🤖 اتوپایلوت'))
-    if paused:
-        lines.append(f'⏸ <b>متوقف است</b> — {paused}')
-    else:
-        lines.append(_row('Last Run', _ago(ap.get('last_run_utc'))))
-    lines.append(_row('Backlog', f'{_bar(done_n / all_n if all_n else 0)} {done_n}/{all_n}'))
+    # وضعیت دیمن اصلی هرمس
+    try:
+        from core.params import load_config
+        cfg = load_config(ROOT / 'config.yaml')
+        dry_run = cfg.dry_run
+        symbol = cfg.symbol
+    except Exception:
+        dry_run = True
+        symbol = "XAUUSD"
+
+    mode_text = "DRY-RUN (شبیه‌ساز)" if dry_run else "LIVE (واقعی)"
+    daemon_active = svcs.get("hermes-daemon") == "active"
+    daemon_status = "🟢 فعال و در حال تحلیل" if daemon_active else "🔴 غیرفعال"
+
+    lines.append(_sec('🧠 هسته هوشمند هرمس'))
+    lines.append(_row('وضعیت سیستم', daemon_status))
+    lines.append(_row('حالت معامله', mode_text))
+    lines.append(_row('نماد معاملاتی', symbol))
     lines.append(_sec('🖥 سرویس‌ها'))
     lines.append(' · '.join(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k)}'
                             for k, v in svcs.items()))
@@ -992,17 +1051,12 @@ _MODE_FA = {
 def _plan_price():
     """Live bid/ask from the bridge; None if unreachable (panel stays useful)."""
     try:
-        import sys
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
-        from env_loader import load_dotenv
-        load_dotenv(ROOT / '.env')
-        from bridge_client import BridgeClient
-        t = BridgeClient().get_tick('XAUUSD') or {}
-        bid = t.get('data', {}).get('bid') if isinstance(t.get('data'), dict) else t.get('bid')
-        if bid is None:
-            bid = t.get('last')
-        return float(bid) if bid is not None else None
+        b, _, _ = _bridge()
+        if b is not None:
+            t = b.get_tick('XAUUSD')
+            bid = t.get('bid')
+            return float(bid) if bid is not None else None
+        return None
     except Exception:
         return None
 
