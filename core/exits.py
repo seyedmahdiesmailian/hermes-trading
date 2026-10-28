@@ -85,7 +85,9 @@ class ExitManager:
             self._trigger_partial_if_needed(pos)
 
         # ۳) Breakeven هوشمند با بافر پوشش اسپرد و کارمزد
-        if rr_progress >= self._cfg.breakeven_rr:
+        # ارزیابی بر مبنای r_multiple (یا rr_progress در صورت سازگاری با ستاپ‌های دارای TP)
+        r_mult = pos.r_multiple
+        if r_mult >= self._cfg.breakeven_rr or rr_progress >= self._cfg.breakeven_rr:
             self._apply_breakeven_with_buffer(pos)
 
         # ۴) ترلینگ استاپ سنتی برای پلن‌های دارای TP

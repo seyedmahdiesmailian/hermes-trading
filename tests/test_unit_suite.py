@@ -118,5 +118,112 @@ class TestTradingCore(unittest.TestCase):
         self.assertIn("equity_invalid", outcome.reasons)
 
 
+    def test_b210_broker_position_r_multiple(self):
+        """b210: BrokerPosition.r_multiple calculates true R profit based on initial risk."""
+        # BUY: Entry 2000, SL 1990 (Risk=10)
+        pos_buy = BrokerPosition(
+            ticket=101, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2008.0, sl=1990.0, tp=2020.0,
+            profit=80.0, swap=0.0, commission=-1.0, open_time=1700000000
+        )
+        self.assertEqual(pos_buy.r_multiple, 0.8)
+
+        # SELL: Entry 2000, SL 2010 (Risk=10)
+        pos_sell = BrokerPosition(
+            ticket=102, symbol="XAUUSD", side=Side.SELL, volume=0.1,
+            open_price=2000.0, current_price=1985.0, sl=2010.0, tp=1970.0,
+            profit=150.0, swap=0.0, commission=-1.0, open_time=1700000000
+        )
+        self.assertEqual(pos_sell.r_multiple, 1.5)
+
+    def test_b210_daemon_today_pnl_net_of_cost(self):
+        """b210: HermesDaemon._today_pnl sums profit, swap and commission from broker deals."""
+        from unittest.mock import MagicMock
+        from entry.hermes import HermesDaemon
+        import time
+
+        daemon = MagicMock(spec=HermesDaemon)
+        daemon.dry_run = False
+        daemon.cfg = MagicMock()
+        daemon.cfg.symbol = "XAUUSD"
+        
+        now = time.time()
+        # Mock broker deals: profit -200, commission -15, swap -5 -> true net -220
+        mock_deals = [
+            {"ticket": 1, "time": now - 3600, "entry": 0, "profit": 0.0, "commission": -7.5, "swap": 0.0},
+            {"ticket": 2, "time": now - 1800, "entry": 1, "profit": -200.0, "commission": -7.5, "swap": -5.0},
+        ]
+        daemon.mt5 = MagicMock()
+        daemon.mt5.get_history_deals.return_value = mock_deals
+        
+        net_pnl = HermesDaemon._today_pnl(daemon)
+        self.assertEqual(net_pnl, -220.0)
+
+    def test_b210_daemon_today_trades_count_counts_broker_exits(self):
+        """b210: HermesDaemon._today_trades_count counts broker exit deals (entry==1)."""
+        from unittest.mock import MagicMock
+        from entry.hermes import HermesDaemon
+        import time
+
+        daemon = MagicMock(spec=HermesDaemon)
+        daemon.dry_run = False
+        daemon.cfg = MagicMock()
+        daemon.cfg.symbol = "XAUUSD"
+        daemon.led = MagicMock()
+        daemon.led.get_today_trades.return_value = []
+
+        now = time.time()
+        # 2 entry deals (entry=0), 2 exit deals (entry=1)
+        mock_deals = [
+            {"ticket": 1, "time": now - 3600, "entry": 0, "profit": 0.0},
+            {"ticket": 2, "time": now - 3500, "entry": 1, "profit": 50.0},
+            {"ticket": 3, "time": now - 1800, "entry": 0, "profit": 0.0},
+            {"ticket": 4, "time": now - 1700, "entry": 1, "profit": -30.0},
+        ]
+        daemon.mt5 = MagicMock()
+        daemon.mt5.get_history_deals.return_value = mock_deals
+
+        count = HermesDaemon._today_trades_count(daemon)
+        self.assertEqual(count, 2)
+
+    def test_b211_news_guard_null_currency_and_country(self):
+        """b211: NewsGuard._parse_cache_file correctly handles null currency and country."""
+        import json
+        import tempfile
+        from pathlib import Path
+        from core.news import NewsGuard
+
+        with tempfile.NamedTemporaryFile("w+", suffix=".json", delete=False) as f:
+            data = {
+                "events": [
+                    {
+                        "title": "High Impact Event Null Cur",
+                        "country": "USD",
+                        "currency": None,
+                        "impact": "High",
+                        "date": "2026-10-28T12:00:00+00:00"
+                    },
+                    {
+                        "title": "High Impact Event Both Null",
+                        "country": None,
+                        "currency": None,
+                        "impact": "High",
+                        "date": "2026-10-28T14:00:00+00:00"
+                    }
+                ]
+            }
+            json.dump(data, f)
+            temp_path = Path(f.name)
+
+        try:
+            guard = NewsGuard(cache_file=temp_path)
+            guard._parse_cache_file()
+            self.assertEqual(len(guard._events), 2)
+            self.assertEqual(guard._events[0].currency, "USD")
+            self.assertEqual(guard._events[1].currency, "")
+        finally:
+            temp_path.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     unittest.main()

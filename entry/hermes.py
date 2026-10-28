@@ -220,7 +220,7 @@ class HermesDaemon:
             return  # ستاپی وجود ندارد → منتظر می‌مانیم
 
         # ۷) داده زنده برای دروازه
-        trades_today = len(self.led.get_today_trades())
+        trades_today = self._today_trades_count()
         today_pnl = self._today_pnl()
 
         # ۸) دروازه — fail-closed
@@ -331,10 +331,12 @@ class HermesDaemon:
         # b240: در dry_run سود را از قیمت خروج واقعی محاسبه می‌کنیم
         if self.dry_run and exit_price > 0:
             if pos.is_buy:
-                pnl = (exit_price - pos.open_price) * pos.volume * 100.0
+                gross = (exit_price - pos.open_price) * pos.volume * 100.0
             else:
-                pnl = (pos.open_price - exit_price) * pos.volume * 100.0
-            pnl = round(pnl, 2)
+                gross = (pos.open_price - exit_price) * pos.volume * 100.0
+            # b210: کسر کمیسیون استاندارد و سواپ جهت احتساب سود خالص
+            comm = pos.commission if pos.commission != 0.0 else -7.0 * pos.volume
+            pnl = round(gross + comm + pos.swap, 2)
         else:
             pnl = pos.net_profit
         trade = Trade(
@@ -363,8 +365,40 @@ class HermesDaemon:
     # ───────────────────────────────────────────────────
 
     def _today_pnl(self) -> float:
-        """مجموع PnL معاملات بسته‌شده امروز."""
-        return sum(t.pnl for t in self.led.get_today_trades())
+        """مجموع PnL خالص معاملات بسته‌شده امروز (b210: شامل سود، کمیسیون و سواپ)."""
+        if not self.dry_run:
+            try:
+                deals = self.mt5.get_history_deals(days=1, symbol=self.cfg.symbol)
+                today_start = datetime.now(timezone.utc).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                ).timestamp()
+                net_pnl = 0.0
+                has_deals = False
+                for d in deals:
+                    if d.get("time", 0) >= today_start:
+                        net_pnl += float(d.get("profit", 0.0)) + float(d.get("swap", 0.0)) + float(d.get("commission", 0.0))
+                        has_deals = True
+                if has_deals:
+                    return round(net_pnl, 2)
+            except Exception as e:
+                log.warning("عدم دسترسی به تاریخچه معاملات بروکر برای daily_pnl: %s", e)
+
+        return round(sum(t.pnl for t in self.led.get_today_trades()), 2)
+
+    def _today_trades_count(self) -> int:
+        """تعداد معاملات بسته‌شده امروز جهت ارزیابی گیت max_daily_trades."""
+        local_count = len(self.led.get_today_trades())
+        if not self.dry_run:
+            try:
+                deals = self.mt5.get_history_deals(days=1, symbol=self.cfg.symbol)
+                today_start = datetime.now(timezone.utc).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                ).timestamp()
+                exit_deals = [d for d in deals if d.get("time", 0) >= today_start and d.get("entry") == 1]
+                return max(local_count, len(exit_deals))
+            except Exception as e:
+                log.warning("عدم دسترسی به تاریخچه معاملات بروکر برای شمارش: %s", e)
+        return local_count
 
     def _build_notify(self) -> NotifyAdapter:
         """خواندن توکن تلگرام از .env — اختیاری."""

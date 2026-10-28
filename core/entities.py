@@ -140,6 +140,20 @@ class BrokerPosition:
         return round(self.profit + self.swap + self.commission, 2)
 
     @property
+    def r_multiple(self) -> float:
+        """میزان سود/زیان فعلی بر حسب ضریبی از ریسک اولیه (R-Multiple).
+
+        اگر SL تنظیم نشده باشد، مقدار 0.0 بازگردانده می‌شود.
+        """
+        if self.sl <= 0:
+            return 0.0
+        if self.is_buy:
+            risk = self.open_price - self.sl
+            return round((self.current_price - self.open_price) / risk, 3) if risk > 0 else 0.0
+        risk = self.sl - self.open_price
+        return round((self.open_price - self.current_price) / risk, 3) if risk > 0 else 0.0
+
+    @property
     def is_buy(self) -> bool:
         return self.side == Side.BUY
 

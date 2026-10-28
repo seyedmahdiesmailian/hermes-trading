@@ -47,59 +47,8 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
    do them ONLY when no trader item applies. Tag such todos [META].
 
 ## Active
-- [ ] b210 TRADER GATE INPUT — daily_pnl IS GROSS-OF-COST: the regime, DEFCON and
-      daily-loss kill-switch legs all read compute_performance_state's daily_pnl,
-      which sums deal `profit` ONLY (engines/risk.py). MEASURED read-only on the
-      live 7-day feed (26 deals): profit -220.07 vs true net (profit+commission+
-      swap) -226.01 — commission -5.94 is 2.7% of the loss, so every money gate
-      sees a slightly SMALLER loss than the account actually took. Worst live day
-      (2026-09-09): gate sees -139.95 (-2.86% of ~4900), true -141.15 (-2.88%) —
-      7.05$ BELOW the -3% daily-loss kill leg (-147.00), i.e. today the gap is
-      not decision-changing, but the direction is always the loose way and near
-      a threshold a $6 swing flips a halt. engines/learning.group_positions
-      ALREADY has the right rule ('net' = profit+commission+swap+entry_commission,
-      b152), so this is a wiring/consistency fix, not a new idea. NOT shipped this
-      run: engines/risk.py's sha256 is stamped by BOTH b88 and b89 ledgers, so any
-      edit REQUIRES re-running scripts/b88_defcon_books.py (~50 min) and
-      scripts/b89_window_contract.py in the same change or those tests go red —
-      the same budget wall b141 hit. NEXT RUN: budget a full run, change the
-      accumulation to the b152 net formula, edit-not-delete the b88/b89 pins, and
-      census all three consumers on one state (b141's census script is the
-      template). Rule learned: a money gate's input must include every cash leg
-      the broker charges, or the gate is systematically biased toward trading.
-      PROGRESS 2026-09-10 12:18 UTC (fresh-trader-review run, reading only):
-      re-reviewed signal_decision, signal_listener.run_signal_check,
-      auto_executor.evaluate_proposal+execute_trade+evaluate_management_action,
-      defcon, risk, legacy_guards, trade_management, plan.apply_smc_merge,
-      signal_pending, macro_filter, kill_switch, market_hours, learning.
-      NO new shipping defect found; b210 stays the top trader item (b188a/b/c
-      verified already fixed/pinned: stale_at_birth shipped+b193 parity,
-      reassess closed by b198, bias-momentum awaits the human 60-trade bar).
-      Two cosmetic observations filed as b211 below. b210 NOT attempted again:
-      same 50-min b88/b89 re-derivation wall vs 55-min run.
-- [~] b211 TRADER OBSERVABILITY/ROBUSTNESS (found by the 2026-09-10 code
-      re-review; (b) DONE 2026-10-02 as part of b219 — see below; (a) still
-      open and quick):
-      (a) STILL TODO engines/legacy_guards.evaluate_news_lock: `cur = str(ev.get(
-      "currency", ev.get("country", ""))).upper()` — when the key EXISTS but is
-      null, str(None)="NONE" and the event is silently skipped, so a real
-      high-impact event with a null currency field never fires the lock.
-      `ev.get("currency") or ev.get("country") or ""` is strictly MORE
-      protective (only ever fires more locks, never fewer). Add the RED test
-      first (probe with {'currency': None, 'impact': 'high', ...}).
-      (b) DONE 2026-10-02 (b219, same root cause class — an observability hole
-      on a correct block): the signal lane's fail-closed position read already
-      blocked correctly, but it was indistinguishable from a real open
-      position in the report (both rendered max_positions_1). The cause is now
-      published as `positions_unreadable` and surfaces as the executor reason
-      `bridge_dark_positions_unreadable`, which fires ONLY on a dark bridge —
-      never on a real position or a drawdown lock. See the b219 entry below.
-      The duplicate-bridge-call half is still open:
-      (c) STILL TODO engines/signal_listener.run_signal_check calls
-      bridge.get_account() TWICE per signal (line ~475 for the open-positions
-      overlay, and again inside _performance_and_policy) — one extra bridge
-      round-trip per decision, harmless but the b207 "ONE read per cycle"
-      lesson applies.
+- [x] b210 TRADER GATE INPUT — daily_pnl IS GROSS-OF-COST: DONE 2026-10-28: daily_pnl is strictly net-of-cost (profit + swap + commission) via BrokerPosition.net_profit and HermesDaemon._today_pnl syncing MT5 history deals live with dry-run commission/swap fallback; GatesEngine and ExitManager evaluate true net PnL and BrokerPosition.r_multiple.
+- [x] b211 TRADER OBSERVABILITY/ROBUSTNESS: DONE 2026-10-28: (a) NewsGuard._parse_cache_file uses country/currency fallback chain avoiding str(None) skipping, verified with test_b211_news_guard_null_currency_and_country. (b) Done in b219. (c) Unified single-daemon architecture calls bridge.get_account() once per loop, eliminating duplicate round-trips.
 - [ ] b220 NEW (learned 2026-10-02, b219): before trusting ANY suite verdict
       in this repo, run it with `.venv/bin/python`, not the ambient
       `python3`. The ambient interpreter is Hermes' own 3.14 (no `requests`),
