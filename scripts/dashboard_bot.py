@@ -23,11 +23,8 @@ from env_loader import load_dotenv  # noqa: E402
 load_dotenv(ROOT / '.env')
 
 from notifier import dashboards  # noqa: E402
-# V2: Use legacy_v1 path for engines (temporary compatibility)
-legacy_path = ROOT / 'legacy_v1'
-if legacy_path.exists():
-    sys.path.insert(0, str(legacy_path))
-from engines import paths  # noqa: E402
+
+LOGS_DIR = ROOT / 'logs'
 
 # V2: Get ops_chat from env directly
 def _ops_chat():
@@ -40,10 +37,10 @@ PANELS = {'sys': '🖥 سیستم', 'auto': '🤖 اتوپایلوت', 'ops': '�
 
 def log(msg: str):
     try:
-        paths.logs_dir().mkdir(parents=True, exist_ok=True)
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
         line = f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] {msg}'
         print(line, flush=True)
-        with (paths.logs_dir() / 'dashboard.log').open('a', encoding='utf-8') as f:
+        with (LOGS_DIR / 'dashboard.log').open('a', encoding='utf-8') as f:
             f.write(line + '\n')
     except Exception:
         pass

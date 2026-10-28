@@ -112,7 +112,7 @@ class GatesEngine:
             reasons.append(f"spread({spread:.2f}>{self._g.max_spread_points})")
 
         # ۸) حساب
-        if account.equity <= 0:
+        if account.equity <= 0 or account.balance <= 0:
             reasons.append("equity_invalid")
 
         if reasons:
@@ -143,6 +143,10 @@ class GatesEngine:
             vol_dec = risk_amount / (sl_distance * CONTRACT_SIZE)
             # گرد کردن به ۰.۰۱ (حداقل حجم بروکر)
             vol = float(vol_dec.quantize(Decimal("0.01")))
+            max_vol = self._g.max_volume_lots
+            if vol > max_vol:
+                log.warning("volume %.2f exceeds max_volume_lots %.2f — capping to max", vol, max_vol)
+                vol = max_vol
             return max(vol, 0.0)
         except Exception:
             log.exception("size_position failed")

@@ -336,7 +336,7 @@ class HermesDaemon:
                 pnl = (pos.open_price - exit_price) * pos.volume * 100.0
             pnl = round(pnl, 2)
         else:
-            pnl = pos.profit
+            pnl = pos.net_profit
         trade = Trade(
             trade_id=f"trade-{pos.ticket}",
             plan_id=pos.comment or "",

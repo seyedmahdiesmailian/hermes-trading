@@ -35,28 +35,30 @@ DATA = ROOT / 'data'   # READ-ONLY by design (an operator panel must show the
 # sys.path) and lazily from signal_listener, so guard the path here.
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-# V2: Add legacy_v1 to path for engines
-legacy = ROOT / 'legacy_v1'
-if legacy.exists() and str(legacy) not in sys.path:
-    sys.path.insert(0, str(legacy))
-from engines.bridge_payload import positions_list, position_count  # noqa: E402
+def positions_list(payload: dict | list | None) -> list[dict]:
+    if not payload:
+        return []
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        return payload.get("data") or payload.get("positions") or []
+    return []
+
+
+def position_count(payload: dict | list | None) -> int:
+    return len(positions_list(payload))
+
+
 TEHRAN = timezone(timedelta(hours=3, minutes=30))
 WEEK_FA = ['دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه', 'یکشنبه']
 
 
-# b39: PAUSE_FLAG / AUDIT_LOG were import-time constants under the production
-# root. They are WRITTEN by handle_control()/_audit(), so a test (or a
-# staging run) that exercised an operator action would toggle the REAL
-# autopilot pause flag and append to the REAL audit log. Resolved at call
-# time through engines.paths, like every other state writer.
 def _pause_flag() -> Path:
-    from engines import paths as _paths
-    return _paths.data_dir() / 'ops' / 'autopilot_paused'
+    return DATA / 'ops' / 'autopilot_paused'
 
 
 def _audit_log() -> Path:
-    from engines import paths as _paths
-    return _paths.logs_dir() / 'control_audit.log'
+    return ROOT / 'logs' / 'control_audit.log'
 
 RESTARTABLE = {'hermes-signal-v2': 'سرویس سیگنال V2', 'hermes-position-v2': 'سرویس پوزیشن V2',
                'hermes-dashboard': 'سرویس داشبورد'}
@@ -150,29 +152,30 @@ def _nav(prefix: str, back: str | None, home: str = 'home') -> list:
 
 # ─────────────────────────── shared sources ───────────────────────────
 
+def _is_gold_market_open(dt: datetime) -> tuple[bool, str]:
+    wd = dt.weekday()
+    h = dt.hour
+    if wd == 5:
+        return False, "تعطیلی آخر هفته"
+    if wd == 6 and h < 23:
+        return False, "تعطیلی آخر هفته"
+    if wd == 4 and h >= 22:
+        return False, "تعطیلی آخر هفته"
+    return True, ""
+
+
 def _market_state():
     try:
-        import sys
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
-        from engines.market_hours import is_market_open, closed_reason
         now = datetime.now(timezone.utc)
-        open_now = bool(is_market_open(now))
+        open_now, reason = _is_gold_market_open(now)
         flip, flip_open = None, None
         for i in range(1, 385):
             t = now + timedelta(minutes=15 * i)
-            if bool(is_market_open(t)) != open_now:
-                flip_open = bool(is_market_open(t))
-                lo = t - timedelta(minutes=15)
-                for m in range(1, 16):
-                    c = lo + timedelta(minutes=m)
-                    if bool(is_market_open(c)) == flip_open:
-                        flip = c.astimezone(TEHRAN).strftime('%H:%M')
-                        break
+            is_open, _ = _is_gold_market_open(t)
+            if is_open != open_now:
+                flip_open = is_open
+                flip = t.astimezone(TEHRAN).strftime('%H:%M')
                 break
-        reason = '' if open_now else (closed_reason(now) or '')
-        if reason == 'market_closed':
-            reason = 'تعطیلی آخر هفته'
         return open_now, reason, (flip, flip_open)
     except Exception:
         return False, '', (None, None)

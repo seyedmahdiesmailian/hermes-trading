@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import yaml
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
@@ -29,6 +29,15 @@ class Gates:
     min_atr_stop_mult: float
     max_spread_points: float
     min_atr_stop_mult_analysis: float = 1.4   # ستاپ تحلیلی = ۱.۵×ATR → کف ۱.۴
+    max_volume_lots: float = 2.0              # حداکثر سقف حجم مجاز هر معامله
+
+
+@dataclass(frozen=True)
+class LearningCfg:
+    enabled: bool = True
+    min_trades_to_adapt: int = 20
+    floor_min_rr: float = 1.0
+    floor_min_grade: str = "B"
 
 
 @dataclass(frozen=True)
@@ -73,6 +82,7 @@ class Config:
     signals_log_path: str
     signals_state_path: str
     notify_enabled: bool
+    learning: LearningCfg = field(default_factory=LearningCfg)
     backtest_start_balance: float = 4931.58
 
     def with_bridge_token(self, token: str) -> "Config":
@@ -88,6 +98,7 @@ class Config:
             signals_log_path=self.signals_log_path,
             signals_state_path=self.signals_state_path,
             notify_enabled=self.notify_enabled,
+            learning=self.learning,
             backtest_start_balance=self.backtest_start_balance,
         )
 
@@ -115,7 +126,8 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
             min_grade=_str(g, "min_grade"),
             min_atr_stop_mult=_float(g, "min_atr_stop_mult"),
             max_spread_points=_float(g, "max_spread_points"),
-        )
+            max_volume_lots=_float(g, "max_volume_lots") if "max_volume_lots" in g else 2.0,
+            )
 
         pos = raw["position"]
         position = PositionCfg(
@@ -148,6 +160,15 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
         )
 
         sig = raw.get("signals", {})
+        learn = raw.get("learning", {})
+        floor = learn.get("floor", {})
+        learning = LearningCfg(
+            enabled=bool(learn.get("enabled", True)),
+            min_trades_to_adapt=_int(learn, "min_trades_to_adapt") if "min_trades_to_adapt" in learn else 20,
+            floor_min_rr=_float(floor, "min_rr") if "min_rr" in floor else 1.0,
+            floor_min_grade=_str(floor, "min_grade") if "min_grade" in floor else "B",
+        )
+
         return Config(
             symbol=_str(raw, "symbol"),
             dry_run=bool(raw.get("dry_run", True)),
@@ -159,6 +180,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
             signals_log_path=sig.get("log_path", "data/signals/signals_log.json"),
             signals_state_path=sig.get("state_path", "data/signals/listener_state.json"),
             notify_enabled=bool(raw.get("notify", {}).get("enabled", True)),
+            learning=learning,
             backtest_start_balance=float(raw.get("backtest", {}).get("start_balance", 4931.58)),
         )
     except KeyError as e:

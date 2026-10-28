@@ -85,9 +85,11 @@ class SMCView:
     zone: ZoneType
     fib_level: float               # 0.0 .. 1.0
     killzone: str                  # "london" | "newyork" | "london_close" | "asia" | "dead"
+    is_ote: bool = False           # Optimal Trade Entry (Fib 0.618 - 0.786)
     unmitigated_obs: list[OrderBlock] = field(default_factory=list)
     unfilled_fvgs: list[FairValueGap] = field(default_factory=list)
     sweep: Optional[LiquiditySweep] = None
+    judas_swing: Optional[str] = None  # "BEARISH_JUDAS" | "BULLISH_JUDAS"
     swing_high: float = 0.0
     swing_low: float = 0.0
 
@@ -128,12 +130,16 @@ class SMCAnalyzer:
         # ۴. هانت نقدینگی (Liquidity Sweep)
         sweep = self.detect_liquidity_sweep(candles)
 
-        # ۵. محدوده Premium / Discount
+        # ۵. محدوده Premium / Discount و OTE
         zone, fib, swing_high, swing_low = self.detect_premium_discount(candles, h1_candles)
+        is_ote = (0.618 <= fib <= 0.786) or (0.214 <= fib <= 0.382)
+
+        # ۵.ب شکار نقدینگی سشن آسیا (Judas Swing)
+        judas = self.detect_judas_swing(candles, killzone)
 
         # ۶. تلفیق جهت و امتیازدهی اعتماد (Bias & Confidence)
         bias, conf = self._compute_bias_and_confidence(
-            phase_bias, unmitigated_obs, unfilled_fvgs, sweep, zone, killzone
+            phase_bias, unmitigated_obs, unfilled_fvgs, sweep, zone, killzone, judas
         )
 
         return SMCView(
@@ -143,9 +149,11 @@ class SMCAnalyzer:
             zone=zone,
             fib_level=round(fib, 3),
             killzone=killzone,
+            is_ote=is_ote,
             unmitigated_obs=unmitigated_obs,
             unfilled_fvgs=unfilled_fvgs,
             sweep=sweep if sweep.swept else None,
+            judas_swing=judas,
             swing_high=swing_high,
             swing_low=swing_low,
         )
@@ -362,6 +370,32 @@ class SMCAnalyzer:
 
         return zone, fib, round(swing_high, 2), round(swing_low, 2)
 
+    # ── شکار نقدینگی سشن آسیا (Judas Swing) ──────────────
+
+    @staticmethod
+    def detect_judas_swing(candles: list[Candle], killzone: str) -> Optional[str]:
+        """تشخیص شکار نقدینگی سشن آسیا در آغاز سشن لندن (Judas Swing)."""
+        if killzone != "london" or len(candles) < 30:
+            return None
+        asia_candles = []
+        for c in candles[-40:]:
+            h = (c.time % 86400) // 3600
+            if 0 <= h < 6:
+                asia_candles.append(c)
+        if len(asia_candles) < 4:
+            return None
+        asia_high = max(c.high for c in asia_candles)
+        asia_low = min(c.low for c in asia_candles)
+
+        last = candles[-1]
+        # شکار سقف آسیا و بازگشت به زیر آن
+        if last.high > asia_high and last.close < asia_high:
+            return "BEARISH_JUDAS"
+        # شکار کف آسیا و بازگشت به بالای آن
+        if last.low < asia_low and last.close > asia_low:
+            return "BULLISH_JUDAS"
+        return None
+
     # ── محاسبه دیدگاه و درجه اطمینان ─────────────────────
 
     @staticmethod
@@ -372,6 +406,7 @@ class SMCAnalyzer:
         sweep: LiquiditySweep,
         zone: ZoneType,
         killzone: str,
+        judas: Optional[str] = None,
     ) -> tuple[str, float]:
         bull_score = 0.0
         bear_score = 0.0
@@ -409,6 +444,12 @@ class SMCAnalyzer:
             bull_score += 0.20
         elif zone == ZoneType.PREMIUM:
             bear_score += 0.20
+
+        # فاکتور شکار نقدینگی سشن آسیا (Judas Swing) — وزن ۰.۳۰ بسیار قدرتمند
+        if judas == "BULLISH_JUDAS":
+            bull_score += 0.30
+        elif judas == "BEARISH_JUDAS":
+            bear_score += 0.30
 
         # پاداش سشن نقدینگی فعال
         kz_mult = 1.0 if killzone in ("london", "newyork", "london_close") else 0.8

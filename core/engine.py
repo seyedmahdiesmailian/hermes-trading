@@ -278,6 +278,12 @@ class Engine:
                (side == Side.SELL and view.smc.zone == ZoneType.PREMIUM):
                 score += 0.15
 
+            # پاداش ستاپ شکار نقدینگی آسیا (Judas Swing) یا OTE
+            if view.smc.judas_swing is not None:
+                score += 0.20
+            if view.smc.is_ote:
+                score += 0.15
+
             # پاداش سشن نقدینگی فعال
             if view.smc.killzone in ("london", "newyork"):
                 score += 0.10

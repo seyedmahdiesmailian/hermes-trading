@@ -302,6 +302,7 @@ class Mt5Adapter:
                     tp=float(p.get("tp") or 0.0),
                     profit=float(p.get("profit", 0.0)),
                     swap=float(p.get("swap", 0.0)),
+                    commission=float(p.get("commission", 0.0)),
                     open_time=int(p["time"]),
                     comment=str(p.get("comment", "") or ""),
                 )

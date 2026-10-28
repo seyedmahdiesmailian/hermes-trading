@@ -75,6 +75,15 @@ class TestCoreEntities:
         # span = 30.0, progress = (2030 - 2015) / 30 = 15/30 = 0.5
         assert pytest.approx(pos_sell.rr_progress, 0.01) == 0.5
 
+    def test_broker_position_net_profit(self):
+        """b210: سود/زیان خالص باید شامل سواپ و کمیسیون باشد."""
+        pos = BrokerPosition(
+            ticket=103, symbol="XAUUSD", side=Side.SELL, volume=0.05,
+            open_price=2600.0, current_price=2610.0, sl=2620.0, tp=2550.0,
+            profit=-50.0, swap=-2.5, commission=-3.5, open_time=1700000000,
+        )
+        assert pos.net_profit == -56.0
+
     def test_signal_validity(self):
         valid_sig = Signal(
             signal_id="sig-1", raw_text="BUY XAUUSD 2050 SL 2040 TP 2070",
