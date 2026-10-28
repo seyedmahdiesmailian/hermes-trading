@@ -132,6 +132,12 @@ class BrokerPosition:
     swap: float
     open_time: int
     comment: str = ""
+    commission: float = 0.0
+
+    @property
+    def net_profit(self) -> float:
+        """سود/زیان خالص شامل سواپ و کمیسیون."""
+        return round(self.profit + self.swap + self.commission, 2)
 
     @property
     def is_buy(self) -> bool:
