@@ -224,6 +224,122 @@ class TestTradingCore(unittest.TestCase):
         finally:
             temp_path.unlink(missing_ok=True)
 
+    def test_b221_contract_unreadable_positions_denied_both_lanes(self):
+        """b221: Dark bridge with positions=None must fail closed on both signal and analysis lanes."""
+        signal_plan = Plan(
+            plan_id="p-sig-b221",
+            symbol="XAUUSD",
+            side=Side.BUY,
+            entry_price=2600.0,
+            stop_loss=2590.0,
+            take_profit=2620.0,
+            volume=0.0,
+            grade=SetupGrade.A,
+            source="telegram",
+            rr=2.0,
+        )
+        analysis_plan = self.plan  # source="analysis"
+
+        # Signal lane plan on dark bridge
+        outcome_sig = self.engine.evaluate(
+            plan=signal_plan,
+            account=self.account,
+            positions=None,  # unreadable positions
+            trades_today=0,
+            daily_pnl=0.0,
+            atr=4.0,
+            spread=0.3,
+        )
+        self.assertFalse(outcome_sig.allowed)
+        self.assertIn("positions_unreadable", outcome_sig.reasons)
+
+        # Analysis lane plan on dark bridge
+        outcome_ana = self.engine.evaluate(
+            plan=analysis_plan,
+            account=self.account,
+            positions=None,  # unreadable positions
+            trades_today=0,
+            daily_pnl=0.0,
+            atr=4.0,
+            spread=0.3,
+        )
+        self.assertFalse(outcome_ana.allowed)
+        self.assertIn("positions_unreadable", outcome_ana.reasons)
+
+    def test_b221_contract_unreadable_account_denied_both_lanes(self):
+        """b221: Dark bridge with account=None must fail closed on both lanes."""
+        signal_plan = Plan(
+            plan_id="p-sig-b221-acc",
+            symbol="XAUUSD",
+            side=Side.SELL,
+            entry_price=2600.0,
+            stop_loss=2610.0,
+            take_profit=2580.0,
+            volume=0.0,
+            grade=SetupGrade.A,
+            source="telegram",
+            rr=2.0,
+        )
+        outcome_sig = self.engine.evaluate(
+            plan=signal_plan,
+            account=None,  # unreadable account
+            positions=[],
+            trades_today=0,
+            daily_pnl=0.0,
+            atr=4.0,
+            spread=0.3,
+        )
+        self.assertFalse(outcome_sig.allowed)
+        self.assertIn("equity_invalid", outcome_sig.reasons)
+
+        outcome_ana = self.engine.evaluate(
+            plan=self.plan,
+            account=None,  # unreadable account
+            positions=[],
+            trades_today=0,
+            daily_pnl=0.0,
+            atr=4.0,
+            spread=0.3,
+        )
+        self.assertFalse(outcome_ana.allowed)
+        self.assertIn("equity_invalid", outcome_ana.reasons)
+
+    def test_b221_contract_healthy_bridge_allowed(self):
+        """b221: Healthy bridge (positions=[], valid account) allows entry on both lanes."""
+        signal_plan = Plan(
+            plan_id="p-sig-b221-ok",
+            symbol="XAUUSD",
+            side=Side.BUY,
+            entry_price=2600.0,
+            stop_loss=2590.0,
+            take_profit=2620.0,
+            volume=0.0,
+            grade=SetupGrade.A,
+            source="telegram",
+            rr=2.0,
+        )
+        outcome_sig = self.engine.evaluate(
+            plan=signal_plan,
+            account=self.account,
+            positions=[],
+            trades_today=0,
+            daily_pnl=0.0,
+            atr=4.0,
+            spread=0.3,
+        )
+        self.assertTrue(outcome_sig.allowed)
+
+        outcome_ana = self.engine.evaluate(
+            plan=self.plan,
+            account=self.account,
+            positions=[],
+            trades_today=0,
+            daily_pnl=0.0,
+            atr=4.0,
+            spread=0.3,
+        )
+        self.assertTrue(outcome_ana.allowed)
+
 
 if __name__ == "__main__":
     unittest.main()

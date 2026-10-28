@@ -217,6 +217,24 @@ class TestGatesEngine:
         assert res.allowed is False
         assert any("stop_too_tight" in r for r in res.reasons)
 
+    def test_b221_dark_bridge_positions_none(self, default_gates, healthy_account, standard_plan):
+        res = default_gates.evaluate(
+            plan=standard_plan, account=healthy_account,
+            positions=None, trades_today=0, daily_pnl=0.0,
+            atr=5.0, spread=0.5
+        )
+        assert res.allowed is False
+        assert "positions_unreadable" in res.reasons
+
+    def test_b221_dark_bridge_account_none(self, default_gates, standard_plan):
+        res = default_gates.evaluate(
+            plan=standard_plan, account=None,
+            positions=[], trades_today=0, daily_pnl=0.0,
+            atr=5.0, spread=0.5
+        )
+        assert res.allowed is False
+        assert "equity_invalid" in res.reasons
+
 
 # ══════════════════════════════════════════════════════════════════
 # ۳. تست‌های موتور تحلیل (Engine)

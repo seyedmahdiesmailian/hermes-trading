@@ -14,6 +14,7 @@ _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from adapters.mt5 import BridgeError
 from entry.hermes import HermesDaemon
 
 
@@ -34,6 +35,9 @@ def run_cycle() -> int:
     try:
         daemon._entry_loop()
         daemon._exit_loop()
+        return 0
+    except BridgeError as e:
+        logging.warning("hermes_master: bridge unavailable: %s", e)
         return 0
     finally:
         daemon.close()

@@ -270,7 +270,9 @@ class HermesDaemon:
         trades_today = self._today_trades_count()
         today_pnl = self._today_pnl()
 
-        # ۸) دروازه — fail-closed
+        # ۸) دروازه — fail-closed (قرارداد b221)
+        # هر دو مسیر ورود (سیگنال کانال/واچ‌لیست و تحلیل خودکار) منحصراً از این گیت زنده ارزیابی می‌شوند.
+        # بریج خاموش یا اطلاعات ناقص به هیچ وجه چراغ سبز دریافت نمی‌کند (رد fail-closed).
         outcome = self.gates.evaluate(
             plan, account, positions, trades_today, today_pnl,
             atr=view.atr, spread=view.spread,

@@ -60,19 +60,11 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       the venv before concluding the code is broken. scripts/verify_head.sh
       already uses the right interpreter, so the push gate was never at risk —
       only an autopilot eyeballing its own pre-commit result could be fooled.
-- [ ] b221 TRADER OBSERVABILITY (found while shipping b219, 2026-10-02): the
-      plan lane's position read (`_performance_and_policy` in hermes_runtime)
-      can still return `trade_allowed=True` WITH `positions_unreadable=True`
-      and open_positions=cap — by design, the block is deferred to the
-      executor's max_positions gate. But the SAME flag in the signal lane
-      flips trade_allowed directly, so the two entry lanes disagree about who
-      owns that decision, and any future caller that reads `trade_allowed`
-      alone (without the executor's 13 gates) inherits a green light on a dark
-      bridge. Neither lane is wrong; the contract should be stated once. Fix
-      is DOCUMENTATION-ONLY or a single assert/comment, no behaviour change:
-      name the invariant ("an unreadable bridge is refused at the entry gate,
-      never by the policy itself") and pin it with a test that both lanes
-      satisfy. Budget ~20 min.
+- [x] b221 TRADER OBSERVABILITY: DONE 2026-10-28: Invariant pinned ("an unreadable bridge is refused at the entry gate, never by policy itself"). In unified single-daemon architecture, both signal and analysis lanes funnel through GatesEngine.evaluate; positions=None / account=None fail closed with positions_unreadable / equity_invalid, verified by test_b221_contract_* in test_unit_suite and test_core_system.
+- [ ] b222 REUSABLE PROCEDURE (learned 2026-10-28, b221): risk gate inputs must guard
+      against None (account, positions) to return explicit fail-closed DENY reasons
+      (positions_unreadable, equity_invalid) instead of crashing with unhandled
+      exceptions on disconnected or unreadable external broker states.
 - [ ] b212 PROCEDURE (learned 2026-09-10, budget-boundary run): before opening
       ANY trader item, read autopilot_state.json's last_run_utc against
       `date -u` — the 55-min wall is measured from the KICKOFF, and a run whose

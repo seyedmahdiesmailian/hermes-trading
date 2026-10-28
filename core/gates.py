@@ -8,6 +8,12 @@
 
 نکته کلیدی: پوزیشن‌های باز از خود بروکر خوانده می‌شوند (زنده)،
 نه از دیتابیس. دیتابیس فقط دفتر کل است.
+
+قرارداد پایدار b221 (Invariant Contract):
+«بریج ناخوانا یا خاموش در دروازه ورود رد می‌شود، هرگز توسط یک سیاست مجزای بالادستی تایید نمی‌شود.»
+هر دو کانال ورود (سیگنال کانال تلگرام و تحلیل ساختار بازار) منحصراً از GatesEngine عبور می‌کنند.
+اگر اطلاعات حساب یا پوزیشن‌ها ناخوانا یا None باشد، با دلایل positions_unreadable یا equity_invalid
+به صورت fail-closed مسدود می‌شود تا هیچ تریدی در وضعیت تاریک بروکر باز نشود.
 """
 from __future__ import annotations
 
@@ -56,8 +62,8 @@ class GatesEngine:
     def evaluate(
         self,
         plan: Plan,
-        account: AccountState,
-        positions: list[BrokerPosition],
+        account: AccountState | None,
+        positions: list[BrokerPosition] | None,
         trades_today: int,
         daily_pnl: float,
         atr: float,
@@ -71,8 +77,10 @@ class GatesEngine:
         """
         reasons: list[str] = []
 
-        # ۱) پوزیشن‌های باز — حقیقت زنده bridge
-        if len(positions) >= self._g.max_open_positions:
+        # ۱) پوزیشن‌های باز — حقیقت زنده bridge (قرارداد b221: fail-closed)
+        if positions is None:
+            reasons.append("positions_unreadable")
+        elif len(positions) >= self._g.max_open_positions:
             reasons.append(f"position_limit({len(positions)}/{self._g.max_open_positions})")
 
         # ۲) سقف ترید روزانه
@@ -80,9 +88,10 @@ class GatesEngine:
             reasons.append(f"daily_trades({trades_today}/{self._g.max_daily_trades})")
 
         # ۳) ضرر روزانه → توقف کامل
-        max_loss = account.balance * (self._g.max_daily_loss_pct / 100.0)
-        if daily_pnl <= -max_loss:
-            reasons.append(f"daily_loss({daily_pnl:.2f}<=-{max_loss:.2f})")
+        if account is not None and account.balance > 0:
+            max_loss = account.balance * (self._g.max_daily_loss_pct / 100.0)
+            if daily_pnl <= -max_loss:
+                reasons.append(f"daily_loss({daily_pnl:.2f}<=-{max_loss:.2f})")
 
         # ۴) حداقل RR (سخت‌ترین: config یا یادگیری)
         eff_min_rr = max(self._g.min_rr, learning_min_rr or 0.0)
@@ -111,8 +120,8 @@ class GatesEngine:
         if spread > self._g.max_spread_points:
             reasons.append(f"spread({spread:.2f}>{self._g.max_spread_points})")
 
-        # ۸) حساب
-        if account.equity <= 0 or account.balance <= 0:
+        # ۸) حساب معتبر (قرارداد b221: fail-closed در حساب نامعتبر یا bridge خاموش)
+        if account is None or account.equity <= 0 or account.balance <= 0:
             reasons.append("equity_invalid")
 
         if reasons:
@@ -129,12 +138,14 @@ class GatesEngine:
 
     # ── private ───────────────────────────────────────
 
-    def _size_position(self, plan: Plan, account: AccountState) -> float:
+    def _size_position(self, plan: Plan, account: AccountState | None) -> float:
         """حجم بر اساس درصد ریسک: risk = equity × risk% / فاصله SL.
 
         volume_lots = risk_amount / (sl_distance × contract_size)
         """
         try:
+            if account is None or account.equity <= 0:
+                return 0.0
             risk_pct = Decimal(str(self._g.risk_per_trade_pct)) / Decimal("100")
             risk_amount = Decimal(str(account.equity)) * risk_pct
             sl_distance = Decimal(str(abs(plan.entry_price - plan.stop_loss)))
