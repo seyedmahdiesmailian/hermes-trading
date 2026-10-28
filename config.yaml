@@ -27,8 +27,8 @@ gates:
 
 # ─ـ مدیریت پوزیشن ─────────────────────────────────────
 position:
-  trailing_start_rr: 1.0        # فعال‌سازی trailing بعد از ۱R سود
-  breakeven_rr: 0.8             # جابجایی SL به نقطه ورود بعد از ۰.۸R
+  trailing_start_rr: 1.5        # فعال‌سازی trailing بعد از ۱.۵R سود
+  breakeven_rr: 1.0             # جابجایی SL به نقطه ورود بعد از ۱.۰R (فضای تنفس برای نوسان طبیعی طلا)
   max_hold_hours: 24            # خروج زمانی
   partial_tp_rr: 1.5            # بستن نیمی از حجم در سود ۱.۵R (سیو سود پله‌ای)
   partial_enabled: true         # فعال‌سازی بستن پله‌ای
