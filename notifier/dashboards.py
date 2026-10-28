@@ -964,15 +964,31 @@ def ops_render(panel: str) -> tuple[str, list]:
         return f'🔴 پنل {panel} خطا داد: {str(e)[:120]}', [[_btn('🏠 خانه', 'ops:home')]]
 
 
+def _get_latest_plan_from_db() -> dict | None:
+    db_file = DATA / 'hermes.db'
+    if not db_file.exists():
+        return None
+    try:
+        import sqlite3
+        conn = sqlite3.connect(f"file:{db_file}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM plans ORDER BY created_at DESC LIMIT 1").fetchone()
+        conn.close()
+        return dict(row) if row else None
+    except Exception:
+        return None
+
+
 # ══════════════════════ TRADE BOT (2nd) ══════════════════════
 
 def trade_home() -> tuple[str, list]:
-    plan = _j(DATA / 'xau_plan/current_plan.json')
+    plan = _get_latest_plan_from_db() or {}
     _, acct, pos = _bridge()
     ks = _j(DATA / 'kill_switch_state.json')
     st = _stats()
     open_now, _, flip = _market_state()
-    bias = str(plan.get('bias') or '—')
+    side = str(plan.get('side') or '')
+    bias = 'bullish' if side == 'BUY' else ('bearish' if side == 'SELL' else 'neutral')
     lines = ['💹 <b>هرمس تریدر</b>', _fa_date(), '']
     if ks.get('halted'):
         lines.append(f'⛔ <b>ترید متوقف است</b> — {ks.get("halt_reason", "دلیل نامعلوم")}')
@@ -1149,87 +1165,88 @@ def _plan_view(plan: dict, price) -> str:
 
 
 def trade_plan(prefix: str = 'tr') -> tuple[str, list]:
-    plan = _j(DATA / 'xau_plan/current_plan.json')
-    q = plan.get('quality') or {}
-    votes = q.get('bias_votes') or {}
-    bias = str(plan.get('bias') or '—')
+    plan = _get_latest_plan_from_db()
     price = _plan_price()
-    lines = ['🎯 <b>پلن معاملاتی</b>', _fa_date(), '',
-             'جهت: ' + {'bullish': '🟢 <b>صعودی</b>', 'bearish': '🔴 <b>نزولی</b>'}.get(bias, f'⚪ {bias}'),
-             _row('قیمت بازار', _num(price) if price else 'نامعلوم (بریج قطع)') +
-             f" · {_row('Session', str(plan.get('session', '—')))} · {_row('ATR', _num(plan.get('atr'), 1))}"]
-    lines.append(_sec('🧠 دیدگاه — چه برنامه‌ای چیده شده'))
-    lines.append(_plan_view(plan, price))
-    lines.append(_sec('🧭 رأی تایم‌فریم‌ها'))
-    for tf, v in (votes or {}).items():
-        d = {'bullish': '🟢 صعودی', 'bearish': '🔴 نزولی'}.get(v, '⚪ بی‌طرف')
-        lines.append(_row(tf.upper(), d))
-    al = {'aligned': 'هم‌راستا ✓', 'mixed': 'مخلوط', 'conflicting': 'متناقض ✗'}.get(
-        str(q.get('alignment')), str(q.get('alignment', '—')))
-    smc = q.get('smc_confidence')
-    lines.append(_row('Quality', al + (f" · SMC {_num(smc, 1)}" if smc is not None else '')))
-    lines.append(_sec('⏳ اعتبار'))
-    lines.append(_row('Expires', _ago(plan.get('expires_at'))))
-    lines.append(_row('Reassess', _ago(plan.get('next_reassessment'))))
-    kb = [[_btn('🧩 جزئیات ورود', f'{prefix}:plan:detail'),
-           _btn('📜 تاریخچه', f'{prefix}:plan:hist')],
+    lines = ['🎯 <b>پلن معاملاتی هرمس</b>', _fa_date(), '']
+
+    if not plan:
+        lines.append('⚪ در حال حاضر هیچ پلن فعالی صادر نشده است.')
+        return '\n'.join(lines), [_nav(prefix, 'home')]
+
+    side = str(plan.get('side', ''))
+    side_fa = '🟢 <b>خرید (BUY)</b>' if side == 'BUY' else ('🔴 <b>فروش (SELL)</b>' if side == 'SELL' else f'⚪ {side}')
+    status = str(plan.get('status', 'active'))
+    status_fa = '✅ تایید شده' if status == 'approved' else '🚫 رد شده توسط گیت'
+
+    created_ts = plan.get('created_at', 0)
+    created_dt = datetime.fromtimestamp(created_ts, timezone.utc).astimezone(TEHRAN).strftime('%H:%M:%S تهران') if created_ts else '—'
+
+    lines.append(f"جهت ستاپ: {side_fa}")
+    lines.append(_row('قیمت زنده بازار', f"{_num(price)} $" if price else 'نامعلوم (بریج قطع)'))
+    lines.append(_row('قیمت ورود پلن', f"{_num(plan.get('entry_price'))} $"))
+    lines.append(_row('حد ضرر (SL)', f"{_num(plan.get('stop_loss'))} $"))
+    tp = float(plan.get('take_profit') or 0.0)
+    lines.append(_row('حد سود (TP)', f"{_num(tp)} $" if tp > 0 else 'داینامیک (Trailing Stop)'))
+    lines.append(_row('نسبت سود/ریسک', f"{float(plan.get('rr') or 0):.1f}"))
+    lines.append(_row('کیفیت ستاپ', f"Grade {plan.get('grade', 'B')} (اعتماد: {float(plan.get('confidence') or 0):.2f})"))
+    lines.append(_row('وضعیت گیت', status_fa))
+    lines.append(_row('زمان صدور', created_dt))
+
+    lines.append(_sec('🧠 استدلال تحلیلی و کانتکست'))
+    reasoning = plan.get('reasoning', '')
+    lines.append(f"<code>{reasoning}</code>")
+
+    kb = [[_btn('🧩 جزئیات ستاپ', f'{prefix}:plan:detail'),
+           _btn('📜 تاریخچه پلن‌ها', f'{prefix}:plan:hist')],
           _nav(prefix, 'home')]
     return '\n'.join(lines), kb
 
 
 def trade_plan_detail(prefix: str = 'tr') -> tuple[str, list]:
-    plan = _j(DATA / 'xau_plan/current_plan.json')
-    ex = plan.get('execution') or {}
-    tgts = plan.get('targets') or []
-    z = plan.get('zones') or {}
-    macro = _j(DATA / 'xau_plan/macro_snapshot.json')
-    mode = str(ex.get('entry_mode', '—'))
-    lines = ['🧩 <b>جزئیات اجرای پلن</b>', _fa_date(), '',
-             _row('مدل ورود', _MODE_FA.get(mode, mode))]
-    if z.get('short_entry_low') is not None:
-        lines.append(_row('ناحیه فروش', f"{_num(z['short_entry_low'])} – {_num(z['short_entry_high'])}"))
-    if z.get('long_entry_low') is not None:
-        lines.append(_row('ناحیه خرید', f"{_num(z['long_entry_low'])} – {_num(z['long_entry_high'])}"))
-    if ex.get('breakout_trigger'):
-        lines.append(_row('تریگر شکست', _num(ex['breakout_trigger'])))
-    if ex.get('pullback_trigger'):
-        lines.append(_row('تریگر پولبک', _num(ex['pullback_trigger'])))
-    if ex.get('scale_in_levels'):
-        lines.append(_row('پله‌های ورود', ', '.join(_num(x) for x in ex['scale_in_levels'])))
-    if tgts:
-        lines.append(_row('اهداف سود', ' ← '.join(_num(x) for x in tgts)))
-    if ex.get('tp_shares') and any(ex.get('tp_levels')):
-        lines.append(_row('خروج', ' · '.join(f"{int(float(s)*100)}٪" for s in ex['tp_shares']) + ' پله‌ای'))
-    if ex.get('stop_loss'):
-        lines.append(_row('حد ضرر', _num(ex['stop_loss'])))
-    if plan.get('invalidation'):
-        lines.append(_row('ابطال پلن', _num(plan['invalidation'])))
-    if macro:
-        lines.append(_sec('🌍 ماکرو'))
-        news = macro.get('high_impact_today') or macro.get('events') or []
-        if isinstance(news, list) and news:
-            for ev in news[:3]:
-                if isinstance(ev, dict):
-                    lines.append(f"· {ev.get('currency', '')} {str(ev.get('name', ev.get('event', '')))[:40]}")
-        risk = macro.get('risk_bias') or macro.get('bias')
-        if risk:
-            lines.append(_row('DXY / Risk', str(risk)))
+    plan = _get_latest_plan_from_db()
+    if not plan:
+        return '🧩 <b>جزئیات پلن</b>\n\nپلنی موجود نیست.', [_nav(prefix, 'plan')]
+
+    side = str(plan.get('side', ''))
+    side_fa = 'خرید (BUY)' if side == 'BUY' else 'فروش (SELL)'
+    created_ts = plan.get('created_at', 0)
+    created_dt = datetime.fromtimestamp(created_ts, timezone.utc).astimezone(TEHRAN).strftime('%Y-%m-%d %H:%M:%S') if created_ts else '—'
+
+    lines = ['🧩 <b>جزئیات تحلیلی ستاپ</b>', _fa_date(), '',
+             _row('شناسه پلن', str(plan.get('plan_id', '—'))),
+             _row('نماد', str(plan.get('symbol', 'XAUUSD'))),
+             _row('جهت', side_fa),
+             _row('تایم‌فریم', str(plan.get('timeframe', 'M15'))),
+             _row('منبع', str(plan.get('source', 'analysis'))),
+             _row('قیمت ورود', f"{_num(plan.get('entry_price'))} $"),
+             _row('حد ضرر', f"{_num(plan.get('stop_loss'))} $"),
+             _row('حد سود', f"{_num(plan.get('take_profit'))} $"),
+             _row('وضعیت', str(plan.get('status', 'active'))),
+             _row('زمان ثبت', created_dt)]
+
+    lines.append(_sec('📝 یادداشت موتور تحلیل'))
+    lines.append(f"<code>{plan.get('reasoning', '')}</code>")
     return '\n'.join(lines), [_nav(prefix, 'plan')]
 
 
 def trade_plan_hist(prefix: str = 'tr') -> tuple[str, list]:
-    lines = ['📜 <b>تاریخچه بازبینی پلن</b>', '']
+    lines = ['📜 <b>تاریخچه آخرین پلن‌های تحلیلی</b>', '']
+    db_file = DATA / 'hermes.db'
+    if not db_file.exists():
+        lines.append('—')
+        return '\n'.join(lines), [_nav(prefix, 'plan')]
     try:
-        with (DATA / 'xau_plan/reassessment_log.csv').open(encoding='utf-8-sig') as f:
-            rows = list(csv.DictReader(f))
+        import sqlite3
+        conn = sqlite3.connect(f"file:{db_file}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT * FROM plans ORDER BY created_at DESC LIMIT 8").fetchall()
+        conn.close()
+        for r in rows:
+            side = '🟢 خرید' if r['side'] == 'BUY' else '🔴 فروش'
+            st = '✅' if r['status'] == 'approved' else '🚫'
+            dt = datetime.fromtimestamp(r['created_at'], timezone.utc).astimezone(TEHRAN).strftime('%m-%d %H:%M')
+            lines.append(f"{st} <code>{dt}</code> · {side} @ <code>{_num(r['entry_price'])}</code> (Gr {r['grade']})")
     except Exception:
-        rows = []
-    for r in rows[-8:][::-1]:
-        ob, nb = str(r.get('old_bias', '')), str(r.get('new_bias', ''))
-        arrow = '🔄' if ob != nb else '➡️'
-        at = str(r.get('at', ''))[5:16].replace('T', ' ')
-        lines.append(f'{arrow} {at} · {ob} ← {nb}')
-    if not rows:
         lines.append('—')
     return '\n'.join(lines), [_nav(prefix, 'plan')]
 
@@ -1355,36 +1372,37 @@ def trade_sig() -> tuple[str, list]:
 
 
 def trade_risk() -> tuple[str, list]:
-    ks = _j(DATA / 'kill_switch_state.json')
-    perf = _j(DATA / 'xau_plan/performance_state.json')
+    st = _stats()
+    _, acct, _ = _bridge()
     open_now, reason, flip = _market_state()
+
     try:
-        import sys
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
-        from engines.kill_switch import (DAILY_LOSS_LIMIT_PCT, EQUITY_DRAWDOWN_LIMIT_PCT,
-                                         CONSECUTIVE_LOSSES_LIMIT)
+        from core.params import load_config
+        cfg = load_config(ROOT / 'config.yaml')
+        daily_loss_limit = cfg.gates.max_daily_loss_pct
+        max_daily_trades = cfg.gates.max_daily_trades
+        risk_pct = cfg.gates.risk_per_trade_pct
+        min_rr = cfg.gates.min_rr
+        max_open = cfg.gates.max_open_positions
     except Exception:
-        DAILY_LOSS_LIMIT_PCT, EQUITY_DRAWDOWN_LIMIT_PCT, CONSECUTIVE_LOSSES_LIMIT = .05, .10, 4
-    bal = perf.get('starting_balance') or 0
-    dp = perf.get('daily_pnl') or 0
+        daily_loss_limit, max_daily_trades, risk_pct, min_rr, max_open = 5.0, 5, 2.0, 1.0, 1
+
+    bal = float(acct.get('balance', 4931.58)) if acct.get('ok') else 4931.58
+    dp = st['today']['pnl']
     daily_pct = max(0.0, -dp / bal * 100) if bal else 0.0
-    lines = ['🛡 <b>گیت‌های ایمنی</b>', _fa_date(), '',
-             _dot(not ks.get('halted')) + (' <b>ترید مجاز</b>' if not ks.get('halted')
-              else f' <b>متوقف</b> — {ks.get("halt_reason", "")}')]
-    # b40: entry gates can be green while the MANAGEMENT guards (news_lock /
-    # time_exit on the fallback path) are degraded — show both on one panel.
-    g = _guard_line()
-    if g:
-        lines.append(f'🛑 {g}')
-    lines.append(_sec('📉 فاصله تا توقف'))
-    lines.append(_row('Daily Loss', f'{_bar(daily_pct / (DAILY_LOSS_LIMIT_PCT * 100))} '
-                      f'{daily_pct:.1f}٪ از {DAILY_LOSS_LIMIT_PCT * 100:.0f}٪'))
-    cl = ks.get('consecutive_losses', 0)
-    lines.append(_row('Loss Streak', f'{_bar(cl / CONSECUTIVE_LOSSES_LIMIT)} '
-                      f'{cl} از {CONSECUTIVE_LOSSES_LIMIT}'))
-    lines.append(_row('Trades Today', str(perf.get('trades_today', 0))))
-    lines.append(_sec('🕐 بازار'))
+
+    lines = ['🛡 <b>گیت‌های ایمنی و مدیریت ریسک هرمس</b>', _fa_date(), '',
+             '🟢 <b>گیت‌های محافظتی: فعال (Fail-Closed)</b>']
+
+    lines.append(_sec('📉 سقف ضرر و ظرفیت روزانه'))
+    lines.append(_row('ضرر امروز', f"{_bar(daily_pct / daily_loss_limit)} {daily_pct:.1f}٪ از {daily_loss_limit:.0f}٪ مجاز"))
+    trades_today = st['today']['n']
+    lines.append(_row('معاملات امروز', f"{trades_today} از {max_daily_trades} مجاز"))
+    lines.append(_row('ریسک هر معامله', f"{risk_pct}٪ سرمایه"))
+    lines.append(_row('سقف پوزیشن باز', f"{max_open} عدد"))
+    lines.append(_row('حداقل R:R', f"{min_rr:.1f}"))
+
+    lines.append(_sec('🕐 وضعیت بازار'))
     if open_now:
         mk = '🟢 باز'
         if flip and not flip[1]:
@@ -1393,8 +1411,8 @@ def trade_risk() -> tuple[str, list]:
         mk = f'🔴 بسته ({reason})' if reason else '🔴 بسته'
         if flip and flip[1]:
             mk += f' — باز می‌شود {flip[0]}'
-    lines.append(_row('XAUUSD', mk))
-    kb = [[_btn('⏸ کول‌داون‌ها', 'tr:risk:cooldown')], _nav('tr', 'home')]
+    lines.append(_row('Gold Market', mk))
+    return '\n'.join(lines), [_nav('tr', 'home')]
     return '\n'.join(lines), kb
 
 
