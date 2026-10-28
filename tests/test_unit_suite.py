@@ -10,6 +10,7 @@ from core.entities import (
     AccountState,
     Plan,
     Signal,
+    ExitReason,
 )
 from core.gates import GatesEngine
 from core.exits import ExitManager
@@ -444,6 +445,122 @@ class TestTradingCore(unittest.TestCase):
         )
         self.assertFalse(outcome.allowed)
         self.assertIn("invalid_stops", outcome.reasons)
+
+    def test_b227_broker_position_r_multiple_with_initial_sl(self):
+        """b227: BrokerPosition retains true initial risk multiple even after stop moved to breakeven/profit."""
+        # BUY: open 2000, current 2015, initial_sl 1990. Current SL is moved to Breakeven (2000.15)
+        pos = BrokerPosition(
+            ticket=2271,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.1,
+            open_price=2000.0,
+            current_price=2015.0,
+            sl=2000.15,
+            tp=2030.0,
+            profit=150.0,
+            swap=0.0,
+            commission=0.0,
+            open_time=1700000000,
+            initial_sl=1990.0,
+        )
+        # Without initial_sl, (2000 - 2000.15) <= 0 would collapse r_multiple to 0.0.
+        # With initial_sl, (2015 - 2000) / (2000 - 1990) = 15 / 10 = 1.5R.
+        self.assertEqual(pos.r_multiple, 1.5)
+
+    def test_b227_exit_manager_preserves_initial_risk_across_breakeven(self):
+        """b227: ExitManager preserves initial SL across breakeven so trailing stop & partial TP fire at >=1.5R."""
+        modifies = []
+        partials = []
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=1.0,
+            max_hold_hours=24,
+            partial_tp_rr=1.5,
+            partial_enabled=True,
+        )
+        mgr = ExitManager(
+            cfg,
+            on_modify=lambda t, sl: modifies.append((t, sl)),
+            on_partial=lambda t, pct: partials.append((t, pct)),
+        )
+
+        # گام ۱: پوزیشن در 1.0R (قیمت 2010، استاپ اولیه 1990) -> انتقال به Breakeven + buffer (2000.15)
+        pos_step1 = BrokerPosition(
+            ticket=2272,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.1,
+            open_price=2000.0,
+            current_price=2010.0,
+            sl=1990.0,
+            tp=2030.0,
+            profit=100.0,
+            swap=0.0,
+            commission=0.0,
+            open_time=1700000000,
+        )
+        res1 = mgr.manage(pos_step1, now_ts=1700000100)
+        self.assertIsNone(res1)
+        self.assertEqual(len(modifies), 1)
+        self.assertEqual(modifies[0], (2272, 2000.15))
+        self.assertEqual(len(partials), 0)
+
+        # گام ۲: در سیکل بعد، قیمت به 2018 می‌رسد (1.8R). استاپ جاری بروکر 2000.15 است.
+        pos_step2 = BrokerPosition(
+            ticket=2272,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.1,
+            open_price=2000.0,
+            current_price=2018.0,
+            sl=2000.15,
+            tp=2030.0,
+            profit=180.0,
+            swap=0.0,
+            commission=0.0,
+            open_time=1700000000,
+        )
+        res2 = mgr.manage(pos_step2, now_ts=1700000200)
+        self.assertIsNone(res2)
+        # هر دو عملیات سیو سود پله‌ای و ترلینگ استاپ باید با موفقیت فعال شوند
+        self.assertEqual(len(partials), 1)
+        self.assertEqual(partials[0], (2272, 50.0))
+        self.assertEqual(len(modifies), 2)
+        # new_sl = 2018 - 0.5 * (2030 - 2018) = 2018 - 6.0 = 2012.0
+        self.assertEqual(modifies[1], (2272, 2012.0))
+
+    def test_b227_exit_reason_partial_tp_persistence(self):
+        """b227: ExitReason.PARTIAL_TP can be saved and loaded in Ledger without error."""
+        import tempfile
+        from pathlib import Path
+        from core.db import Ledger
+        from core.entities import Trade
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_trades.db"
+            ledger = Ledger(db_path)
+            t = Trade(
+                trade_id="trade-test-part",
+                plan_id="p-1",
+                ticket=777,
+                symbol="XAUUSD",
+                side=Side.BUY,
+                volume=0.05,
+                entry_price=2000.0,
+                exit_price=2015.0,
+                sl=1990.0,
+                tp=2030.0,
+                pnl=71.5,
+                exit_reason=ExitReason.PARTIAL_TP,
+                opened_at=1700000000.0,
+                closed_at=1700000100.0,
+            )
+            ledger.save_trade(t)
+            trades = ledger.get_trades(limit=10)
+            self.assertEqual(len(trades), 1)
+            self.assertEqual(trades[0].exit_reason, ExitReason.PARTIAL_TP)
+            self.assertEqual(trades[0].pnl, 71.5)
+            ledger.close()
 
 
 if __name__ == "__main__":

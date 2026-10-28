@@ -37,6 +37,8 @@ class ExitManager:
         self._on_partial = on_partial
         # ثبت تیکت‌هایی که بستن پله‌ای روی آنها انجام شده
         self._partial_executed: Set[int] = set()
+        # ثبت استاپ‌لاس اولیه برای هر تیکت جهت محاسبه دقیق R-Multiple بعد از بریک‌اون
+        self._initial_sl: dict[int, float] = {}
 
     # ── API مدیریت پوزیشن ─────────────────────────────────
 
@@ -60,8 +62,24 @@ class ExitManager:
             log.info("time exit triggered: ticket=%d age=%.1fh", pos.ticket, age_hours)
             return ExitReason.TIME_EXIT, pos.current_price
 
-        # محاسبه میزان سود/زیان فعلی بر مبنای ضریب ریسک (R-Multiple)
-        r_mult = pos.r_multiple
+        # ثبت استاپ‌لاس اولیه برای هر تیکت
+        if pos.ticket not in self._initial_sl:
+            if pos.initial_sl > 0:
+                self._initial_sl[pos.ticket] = pos.initial_sl
+            elif (pos.is_buy and 0 < pos.sl < pos.open_price) or (not pos.is_buy and pos.sl > pos.open_price):
+                self._initial_sl[pos.ticket] = pos.sl
+
+        # محاسبه میزان سود/زیان فعلی بر مبنای ضریب ریسک اولیه (R-Multiple)
+        init_sl = self._initial_sl.get(pos.ticket, pos.initial_sl if pos.initial_sl > 0 else pos.sl)
+        if init_sl > 0:
+            if pos.is_buy:
+                risk = pos.open_price - init_sl
+                r_mult = round((pos.current_price - pos.open_price) / risk, 3) if risk > 0 else pos.r_multiple
+            else:
+                risk = init_sl - pos.open_price
+                r_mult = round((pos.open_price - pos.current_price) / risk, 3) if risk > 0 else pos.r_multiple
+        else:
+            r_mult = pos.r_multiple
 
         # اگر پلن بدون TP باشد (تحلیل خودکار با ترلینگ استاپ)
         if pos.tp <= 0 and atr > 0:

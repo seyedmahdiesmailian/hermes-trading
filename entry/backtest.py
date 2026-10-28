@@ -72,6 +72,7 @@ class OpenTrade:
     open_time: float        # epoch
     plan_id: str
     entry_rr: float
+    initial_sl: float = 0.0
 
     def to_broker_position(self, current_price: float) -> BrokerPosition:
         # pnl تقریبی برای لاگ (محاسبه دقیق در close انجام می‌شود)
@@ -82,7 +83,7 @@ class OpenTrade:
             volume=self.volume, open_price=self.open_price,
             current_price=current_price, sl=self.sl, tp=self.tp,
             profit=pnl, swap=0.0, open_time=self.open_time,
-            comment=self.plan_id,
+            comment=self.plan_id, initial_sl=self.initial_sl,
         )
 
 
@@ -103,11 +104,14 @@ class Backtester:
         self.denied: list[dict] = []
         self._ticket_seq = 1000
         self._open: OpenTrade | None = None
+        self._cur_candle_close: float = 0.0
+        self._cur_candle_ts: float = 0.0
 
-        # منطق خروج مشترک — on_modify SL را در state شبیه‌ساز به‌روزرسانی می‌کند
+        # منطق خروج مشترک — on_modify و on_partial در state شبیه‌ساز
         self.exits = ExitManager(
             self.cfg.position,
             on_modify=self._sim_modify,
+            on_partial=self._sim_partial,
         )
         self._entry_idx = 0  # جدیدترین اندیس سیگنال پردازش‌شده
         self._last_exit_ts = 0.0  # زمان آخرین خروج — cooldown ورود
@@ -203,6 +207,7 @@ class Backtester:
                     volume=outcome.volume, open_price=fill,
                     sl=plan.stop_loss, tp=plan.take_profit,
                     open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
+                    initial_sl=plan.stop_loss,
                 )
                 self._ticket_seq += 1
                 log.info("OPEN-AUTO #%d %s vol=%.2f entry=%.2f sl=%.2f atr=%.2f",
@@ -253,6 +258,7 @@ class Backtester:
                 volume=outcome.volume, open_price=plan.entry_price,
                 sl=plan.stop_loss, tp=plan.take_profit,
                 open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
+                initial_sl=plan.stop_loss,
             )
             self._ticket_seq += 1
             n_processed_signals += 1
@@ -268,6 +274,8 @@ class Backtester:
         """پردازش خروج پوزیشن باز — برخورد SL/TP توسط کندل + ExitManager."""
         ot = self._open
         cur = candles[i]
+        self._cur_candle_close = cur.close
+        self._cur_candle_ts = now_ts
 
         # ۱) برخورد SL / TP توسط قیمت کندل (سقف/کف کندل)
         hit = self._check_sl_tp(cur)
@@ -330,6 +338,32 @@ class Backtester:
         if self._open is not None and self._open.ticket == ticket:
             self._open.sl = new_sl
 
+    def _sim_partial(self, ticket: int, percent: float) -> None:
+        """callback بستن پله‌ای در شبیه‌ساز — ثبت سود ۵۰٪ حجم و نصف کردن حجم باز."""
+        ot = self._open
+        if ot is None or ot.ticket != ticket:
+            return
+        closed_vol = round(ot.volume * (percent / 100.0), 2)
+        if closed_vol <= 0:
+            return
+        cur_price = self._cur_candle_close if self._cur_candle_close > 0 else ot.open_price
+        direction = 1.0 if ot.side == Side.BUY else -1.0
+        pnl = direction * (cur_price - ot.open_price) * closed_vol * 100.0
+        self.state.apply_pnl(pnl)
+        trade = Trade(
+            trade_id=f"bt-{ot.ticket}-part", plan_id=ot.plan_id, ticket=ot.ticket,
+            symbol=ot.symbol, side=ot.side, volume=closed_vol,
+            entry_price=ot.open_price, exit_price=cur_price,
+            sl=ot.sl, tp=ot.tp, pnl=pnl, exit_reason=ExitReason.PARTIAL_TP,
+            opened_at=ot.open_time, closed_at=self._cur_candle_ts if self._cur_candle_ts > 0 else ot.open_time,
+            source="analysis" if ot.plan_id.startswith("auto-") else "signal",
+            r_multiple=self._r_multiple(ot, cur_price),
+        )
+        self.trades.append(trade)
+        ot.volume = round(ot.volume - closed_vol, 2)
+        log.info("PARTIAL #%d vol=%.2f pnl=%+.2f remaining_vol=%.2f",
+                 ot.ticket, closed_vol, pnl, ot.volume)
+
     # ── کمکی ══════════════════════════════════
 
     @staticmethod
@@ -366,7 +400,8 @@ class Backtester:
 
     @staticmethod
     def _r_multiple(ot: OpenTrade, exit_price: float) -> float:
-        risk = abs(ot.open_price - ot.sl)
+        ref_sl = ot.initial_sl if ot.initial_sl > 0 else ot.sl
+        risk = abs(ot.open_price - ref_sl)
         if risk <= 0:
             return 0.0
         direction = 1.0 if ot.side == Side.BUY else -1.0

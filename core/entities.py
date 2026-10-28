@@ -43,6 +43,7 @@ class ExitReason(str, Enum):
     MANUAL = "MANUAL"
     EMERGENCY = "EMERGENCY"
     SIGNAL_EXIT = "SIGNAL_EXIT"
+    PARTIAL_TP = "PARTIAL_TP"
 
 
 class SetupGrade(str, Enum):
@@ -133,6 +134,7 @@ class BrokerPosition:
     open_time: int
     comment: str = ""
     commission: float = 0.0
+    initial_sl: float = 0.0
 
     @property
     def net_profit(self) -> float:
@@ -145,12 +147,13 @@ class BrokerPosition:
 
         اگر SL تنظیم نشده باشد، مقدار 0.0 بازگردانده می‌شود.
         """
-        if self.sl <= 0:
+        ref_sl = self.initial_sl if self.initial_sl > 0 else self.sl
+        if ref_sl <= 0:
             return 0.0
         if self.is_buy:
-            risk = self.open_price - self.sl
+            risk = self.open_price - ref_sl
             return round((self.current_price - self.open_price) / risk, 3) if risk > 0 else 0.0
-        risk = self.sl - self.open_price
+        risk = ref_sl - self.open_price
         return round((self.open_price - self.current_price) / risk, 3) if risk > 0 else 0.0
 
     @property

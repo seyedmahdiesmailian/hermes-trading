@@ -896,4 +896,42 @@ class TestWatchlistEngine:
         assert dec_tp == "REJECT"
         assert plan_tp is None
 
+    def test_b227_backtester_simulates_partial_take_profit(self):
+        """b227: Backtester correctly halves open volume, realizes PnL, and records PARTIAL_TP."""
+        from entry.backtest import Backtester, OpenTrade
+        from core.entities import Side, ExitReason
+        bt = Backtester()
+        bt._open = OpenTrade(
+            ticket=555,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.10,
+            open_price=2000.0,
+            sl=1990.0,
+            tp=2030.0,
+            open_time=1700000000.0,
+            plan_id="p-bt-1",
+            entry_rr=2.0,
+            initial_sl=1990.0,
+        )
+        bt._cur_candle_close = 2015.0
+        bt._cur_candle_ts = 1700000500.0
+        initial_balance = bt.state.balance
+
+        # Trigger partial close for 50%
+        bt._sim_partial(ticket=555, percent=50.0)
+
+        # 1. Open volume halved from 0.10 to 0.05
+        assert bt._open.volume == 0.05
+        # 2. Realized PnL: (2015 - 2000) * 0.05 * 100 = 75.0
+        expected_pnl = (2015.0 - 2000.0) * 0.05 * 100.0
+        assert bt.state.balance == initial_balance + expected_pnl
+        # 3. Trade recorded with ExitReason.PARTIAL_TP
+        assert len(bt.trades) == 1
+        t = bt.trades[0]
+        assert t.exit_reason == ExitReason.PARTIAL_TP
+        assert t.volume == 0.05
+        assert t.pnl == expected_pnl
+
+
 

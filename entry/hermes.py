@@ -76,10 +76,48 @@ class HermesDaemon:
             log.info("SL modified: ticket=%s sl=%.2f", ticket, new_sl)
 
         def _on_partial(ticket: int, percent: float) -> None:
+            # جستجوی پوزیشن قبل از کاهش حجم جهت محاسبه دقیق سود پله‌ای
+            cur_pos = None
+            try:
+                positions = self.mt5.get_open_positions(self.cfg.symbol)
+                cur_pos = next((p for p in positions if p.ticket == ticket), None)
+            except Exception as e:
+                log.warning("خطا در خواندن پوزیشن قبل از partial: %s", e)
+
             ok = self.mt5.partial_close(ticket, percent)
-            if ok:
+            if ok and cur_pos:
+                closed_vol = round(cur_pos.volume * (percent / 100.0), 2)
+                if closed_vol > 0:
+                    exit_price = cur_pos.current_price
+                    direction = 1.0 if cur_pos.is_buy else -1.0
+                    gross = direction * (exit_price - cur_pos.open_price) * closed_vol * 100.0
+                    comm = -7.0 * closed_vol
+                    pnl = round(gross + comm, 2)
+                    trade = Trade(
+                        trade_id=f"trade-{ticket}-part",
+                        plan_id=cur_pos.comment or "",
+                        ticket=ticket,
+                        symbol=cur_pos.symbol,
+                        side=cur_pos.side,
+                        volume=closed_vol,
+                        entry_price=cur_pos.open_price,
+                        exit_price=exit_price,
+                        sl=cur_pos.sl,
+                        tp=cur_pos.tp,
+                        pnl=pnl,
+                        exit_reason=ExitReason.PARTIAL_TP,
+                        opened_at=cur_pos.open_time,
+                        closed_at=time.time(),
+                        source="analysis" if (cur_pos.comment or "").startswith("hms-auto") else "signal",
+                        r_multiple=cur_pos.r_multiple,
+                    )
+                    self.led.save_trade(trade)
+                    log.info("Partial close: ticket=%s percent=%.1f%% executed vol=%.2f pnl=%.2f",
+                             ticket, percent, closed_vol, pnl)
+                    self.notify.status(f"🎯 بستن پله‌ای: {percent}% حجم پوزیشن #{ticket} با سود ${pnl:+.2f} سیو شد.")
+            elif ok:
                 log.info("Partial close: ticket=%s percent=%.1f%% executed", ticket, percent)
-                self.notify.status(f"🎯 بستن پله‌ای: {percent}% حجم پوزیشن #{ticket} سیو سود شد.")
+                self.notify.status(f"🎯 بستن پله‌ای: {percent}% حجم پوزیشن #{ticket} سیو شد.")
 
         self.exits = ExitManager(self.cfg.position, on_modify=_on_modify, on_partial=_on_partial)
         self.learner = AdaptiveLearner()
@@ -345,6 +383,17 @@ class HermesDaemon:
             # فقط پوزیشن‌های خودمان (magic comment hms-)
             if pos.comment and not pos.comment.startswith("hms"):
                 continue
+
+            # بازیابی استاپ‌لاس اولیه از دیتابیس در صورت لزوم (حفظ سلامت محاسبات پس از ریستارت)
+            if pos.ticket not in self.exits._initial_sl:
+                plan_id = pos.comment.replace("hms-", "") if pos.comment else ""
+                if plan_id:
+                    try:
+                        row = self.led._con.execute("SELECT stop_loss FROM plans WHERE plan_id = ?", (plan_id,)).fetchone()
+                        if row and row["stop_loss"] > 0:
+                            self.exits._initial_sl[pos.ticket] = float(row["stop_loss"])
+                    except Exception:
+                        pass
 
             # b240: در dry_run بروکری وجود ندارد — خودمان SL/TP را اجرا می‌کنیم
             # (در حالت LIVE بروکر این کار را می‌کند)
