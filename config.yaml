@@ -4,7 +4,7 @@
 symbol: XAUUSD
 
 # ── اجرا ──────────────────────────────────────────────
-dry_run: true              # true = هیچ سفارش واقعی ارسال نمی‌شود (تا بک‌تست سبز)
+dry_run: false             # false = اجرای واقعی و ارسال سفارشات به MetaTrader 5
 bridge:
   url: http://192.168.10.51:5050
   timeout_s: 10
