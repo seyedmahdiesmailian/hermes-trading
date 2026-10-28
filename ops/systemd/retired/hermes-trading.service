@@ -1,0 +1,16 @@
+[Unit]
+Description=Hermes Trading Cron Timer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ai/hermes-trading
+EnvironmentFile=/home/ai/hermes-trading/.env
+Environment="PYTHONPATH=/home/ai/hermes-trading"
+ExecStart=/usr/bin/bash /home/ai/hermes-trading/scripts/hermes_cron.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

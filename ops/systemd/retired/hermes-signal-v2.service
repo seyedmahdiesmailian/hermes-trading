@@ -1,0 +1,15 @@
+[Unit]
+Description=Hermes Signal Daemon V2 (File-based signal processing)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ai/hermes-trading
+ExecStart=/home/ai/hermes-trading/.venv/bin/python3 /home/ai/hermes-trading/entry_points/signal_file_watcher.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
