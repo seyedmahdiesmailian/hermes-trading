@@ -1,67 +1,81 @@
-""" core/engine — موتور تحلیل و تصمیم هرمس
+""" core/engine — موتور جامع تحلیل و تصمیم هرمس (Hybrid Classical + SMC/ICT + News)
 
-تحلیل تکنیکال (روند، ATR، ساختار بازار) + ترکیب با سیگنال کانال → Plan.
-
-این موتور «مغز» است: داده بازار را می‌گیرد، تصمیم می‌سازد.
-نقش ورود به بازار را gates deciding می‌کند (اینجا نه).
+این موتور «مغز متفکر» سیستم معاملاتی است:
+۱. تحلیل روند و نوسان (EMA20/50 + ATR14 + Swings)
+۲. تحلیل پیشرفته سبک هوشمند (SMC/ICT: Order Blocks, FVG, Liquidity Sweeps, Premium/Discount)
+۳. فیلتر اخبار داغ اقتصادی (High-Impact News Blackout via NewsGuard)
+۴. تاییدیه سشن‌های نقدینگی فعال (London & New York Killzones)
+۵. گریدبندی دقیق ستاپ‌های تحلیلی و سیگنال‌های تلگرام (Grades A / B / C / D)
 """
 from __future__ import annotations
 
 import logging
 import math
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Optional
 
 from core.entities import Candle, Plan, SetupGrade, Side, Signal, Tick
+from core.news import NewsGuard
+from core.smc import SMCAnalyzer, SMCView, ZoneType
 
 log = logging.getLogger(__name__)
 
-# ── پارامترهای ستاپ تحلیلی (تاییدشده با بک‌تست روی ۱۲۱ ترید) ──
-SL_ATR_MULT = 1.5        # فاصله استاپ = ۱.۵ × ATR
-TRAIL_ATR_MULT = 3.0     # فاصله trailing = ۳ × ATR
+# ── پارامترهای هندسه استاپ و تارگت ────────────────────────
+SL_ATR_MULT = 1.5        # فاصله استاپ لاس = ۱.۵ × ATR
+TRAIL_ATR_MULT = 3.0     # فاصله ترلینگ استاپ = ۳.۰ × ATR
 
 
 @dataclass(frozen=True)
 class MarketView:
-    """تصویر فعلی بازار — خروجی تحلیل."""
-    trend: str               # "bullish" | "bearish" | "ranging"
-    trend_strength: float    # 0..1
-    atr: float               # نوسان فعلی
+    """تصویر جامع و چندبعدی از وضعیت فعلی بازار."""
+    trend: str                  # "bullish" | "bearish" | "ranging"
+    trend_strength: float       # 0.0 .. 1.0
+    atr: float                  # نوسان فعلی ATR(14)
     spread: float
     last_price: float
     support: float
     resistance: float
+    smc: Optional[SMCView] = None
+    news_blackout: bool = False
+    news_reason: str = ""
     notes: str = ""
 
     @property
     def is_trending(self) -> bool:
-        return self.trend != "ranging" and self.trend_strength >= 0.5
+        return self.trend != "ranging" and self.trend_strength >= 0.40
 
 
 class Engine:
-    """موتور تحلیل + ساخت Plan.
+    """موتور تحلیل تکنیکال، SMC و ساخت Plan معاملاتی."""
 
-    متدها pure هستند: ورودی زنده، خروجی تصمیم. هیچ state‌ای giữ نمی‌شود.
-    """
+    def __init__(self, news_guard: Optional[NewsGuard] = None):
+        self.smc = SMCAnalyzer()
+        self.news = news_guard or NewsGuard()
 
-    # ── تحلیل ───────────────────────────────────────────
+    # ── تحلیل جامع بازار ─────────────────────────────────
 
-    def analyze(self, candles: list[Candle], tick: Tick) -> MarketView:
-        """تحلیل بازار از کندل‌ها + تیک فعلی.
-
-        از EMA و ATR و ساختار سقف/کف استفاده می‌کند.
-        """
+    def analyze(
+        self,
+        candles: list[Candle],
+        tick: Tick,
+        h1_candles: Optional[list[Candle]] = None,
+        check_news: bool = True,
+    ) -> MarketView:
+        """تحلیل کامل بازار از داده‌های کندل، تیک و تقویم اقتصادی."""
         if len(candles) < 30:
-            return MarketView(trend="ranging", trend_strength=0.0, atr=0.0,
-                              spread=tick.spread, last_price=tick.mid,
-                              support=0.0, resistance=0.0,
-                              notes="insufficient_candles")
+            return MarketView(
+                trend="ranging", trend_strength=0.0, atr=0.0,
+                spread=tick.spread, last_price=tick.mid,
+                support=0.0, resistance=0.0,
+                notes="insufficient_candles",
+            )
 
         closes = [c.close for c in candles]
         highs = [c.high for c in candles]
         lows = [c.low for c in candles]
 
-        # روند: EMA سریع vs کند + شیب
+        # ۱. روند تکنیکال: شیب و تقاطع EMA سریع vs کند
         ema_fast = _ema(closes, 20)
         ema_slow = _ema(closes, 50)
         last_close = closes[-1]
@@ -73,16 +87,27 @@ class Engine:
         else:
             trend = "ranging"
 
-        # قدرت روند: فاصله نسبی EMAها
+        # قدرت روند
         span = max(ema_slow, 1.0)
         strength = min(1.0, abs(ema_fast - ema_slow) / (span * 0.005))
 
-        # ATR (14)
+        # نوسان ATR (14)
         atr = _atr(candles, 14)
 
-        # سطوح کلیدی: swing high/low اخیر
+        # سطوح حمایت و مقاومت کلاسیک
         support = min(lows[-50:]) if len(lows) >= 50 else min(lows)
         resistance = max(highs[-50:]) if len(highs) >= 50 else max(highs)
+
+        # ۲. تحلیل ساختار هوشمند SMC/ICT
+        smc_view = self.smc.analyze(candles, h1_candles)
+
+        # ۳. بررسی وضعیت اخبار داغ اقتصادی
+        news_blackout = False
+        news_reason = ""
+        if check_news:
+            news_blackout, news_reason = self.news.is_blackout()
+
+        notes = f"ema20={ema_fast:.2f} ema50={ema_slow:.2f} smc_bias={smc_view.bias} kz={smc_view.killzone}"
 
         return MarketView(
             trend=trend,
@@ -92,22 +117,26 @@ class Engine:
             last_price=tick.mid,
             support=round(support, 2),
             resistance=round(resistance, 2),
-            notes=f"ema_fast={ema_fast:.2f} ema_slow={ema_slow:.2f}",
+            smc=smc_view,
+            news_blackout=news_blackout,
+            news_reason=news_reason,
+            notes=notes,
         )
 
-    # ── تحلیل خودکار: ستاپ روند-EMA ──────────────────────
+    # ── ساخت Plan از تحلیل خودکار (Hybrid Trend + SMC) ───
 
-    def plan_from_analysis(self, candles: list[Candle], view: MarketView,
-                           timeframe: str = "M15") -> Optional[Plan]:
-        """ساخت Plan از تحلیل خالص بازار — بدون سیگنال کانال.
+    def plan_from_analysis(
+        self,
+        candles: list[Candle],
+        view: MarketView,
+        timeframe: str = "M15"
+    ) -> Optional[Plan]:
+        """ساخت پلن ورود بر مبنای تلفیق ستاپ روند-EMA و تاییدیه SMC/ICT."""
+        # فیلتر ۱: مسدود بودن در زمان اخبار داغ
+        if view.news_blackout:
+            log.info("تحلیل خودکار رد شد: %s", view.news_reason)
+            return None
 
-        ستاپ روند-EMA (تاییدشده با بک‌تست: ۱۲۱ ترید، EV=+۰.۱۶۳R):
-          ورود: کلوز > EMA20 > EMA50 (BUY) / کلوز < EMA20 < EMA50 (SELL)
-          SL:   ۱.۵ × ATR
-          TP:   ندارد — سود از trailing-stop گرفته می‌شود (W=+۲.۴R)
-
-        fail-closed: هر ابهامی → None.
-        """
         if len(candles) < 60 or view.atr <= 0:
             return None
 
@@ -116,17 +145,29 @@ class Engine:
         e50 = _ema(closes, 50)
         last = closes[-1]
 
+        # تشخیص جهت اولیه از EMA
         if last > e20 > e50:
             side = Side.BUY
         elif last < e20 < e50:
             side = Side.SELL
         else:
-            return None  # ترکیب EFA هم‌جهت نیست → بدون ستاپ
+            return None
+
+        # فیلتر ۲: تاییدیه نواحی ارزان‌فروشی/گران‌فروشی (SMC Zone Check)
+        if view.smc is not None:
+            # نباید در سقف رنج (Extreme Premium) خرید زد
+            if side == Side.BUY and view.smc.zone == ZoneType.PREMIUM and view.smc.fib_level > 0.70:
+                log.info("تحلیل رد شد: خرید در ناحیه گران (Premium fib=%.2f)", view.smc.fib_level)
+                return None
+            # نباید در کف رنج (Extreme Discount) فروش زد
+            if side == Side.SELL and view.smc.zone == ZoneType.DISCOUNT and view.smc.fib_level < 0.30:
+                log.info("تحلیل رد شد: فروش در ناحیه ارزان (Discount fib=%.2f)", view.smc.fib_level)
+                return None
 
         entry = view.last_price
         if side == Side.BUY:
             sl = entry - view.atr * SL_ATR_MULT
-            tp = 0.0  # TP ندارد — مدیریت سود با trailing
+            tp = 0.0  # مدیریت سود با تریلینگ داینامیک
         else:
             sl = entry + view.atr * SL_ATR_MULT
             tp = 0.0
@@ -134,11 +175,19 @@ class Engine:
         if entry <= 0 or sl <= 0:
             return None
 
-        grade = SetupGrade.B  # ستاپ تحلیلی استاندارد
-        # ستاپ TP ندارد → RR اسمی بی‌نهایت است. برای عبور از دروازه min_rr
-        # یک RR هدف فرضی بر اساس trailing distance ثبت می‌کنیم (حداقل حرکت
-        # مورد انتظار = فاصله trailing) — این عدد فقط جنبه نمایش/دروازه دارد.
-        rr = TRAIL_ATR_MULT / SL_ATR_MULT  # 3.0/1.5 = 2.0
+        # ارزیابی گرید کیفی ستاپ بر اساس همگرایی فاکتورها (Confluence)
+        grade = self._grade_analysis_setup(side, view)
+        if grade in (SetupGrade.C, SetupGrade.D):
+            # ستاپ‌های ضعیف اجازه عبور ندارند
+            return None
+
+        rr = TRAIL_ATR_MULT / SL_ATR_MULT  # 3.0 / 1.5 = 2.0
+
+        reasoning = (
+            f"trend={view.trend} str={view.trend_strength:.2f} atr={view.atr:.2f} "
+            f"zone={view.smc.zone.value if view.smc else 'N/A'} "
+            f"kz={view.smc.killzone if view.smc else 'N/A'}"
+        )
 
         return Plan(
             plan_id=f"auto-{int(candles[-1].time)}",
@@ -147,40 +196,52 @@ class Engine:
             entry_price=round(entry, 2),
             stop_loss=round(sl, 2),
             take_profit=tp,
-            volume=0.0,
+            volume=0.0,  # توسط دروازه ریسک تعیین می‌شود
             grade=grade,
             source="analysis",
             timeframe=timeframe,
             rr=rr,
-            confidence=0.5,
-            reasoning=f"ema_trend {view.trend} str={view.trend_strength:.2f} "
-                      f"atr={view.atr:.2f} e20={e20:.2f} e50={e50:.2f}",
+            confidence=view.smc.confidence if view.smc else 0.6,
+            reasoning=reasoning,
         )
 
-    # ── ساخت Plan ───────────────────────────────────────
+    # ── ساخت Plan از سیگنال تلگرام با فیلتر هوشمند ─────────
 
-    def plan_from_signal(self, sig: Signal, view: MarketView, timeframe: str = "M15") -> Optional[Plan]:
-        """ساخت Plan از سیگنال کانال + تایید روند بازار.
-
-        قوانین (fail-closed):
-        - سیگنال نامعتبر → None
-        - جهت سیگنال خلاف روند قوی بازار → None (فیلتتر)
-        """
+    def plan_from_signal(
+        self,
+        sig: Signal,
+        view: MarketView,
+        timeframe: str = "M15"
+    ) -> Optional[Plan]:
+        """اعتبارسنجی چندمرحله‌ای سیگنال تلگرام و تطبیق با واقعیت بازار."""
         if not sig.is_valid:
-            log.info("signal invalid: %s", sig.signal_id)
+            log.info("سیگنال نامعتبر متنی: %s", sig.signal_id)
             return None
 
-        # تایید روند: سیگنال خرید فقط در روند صعودی/رنج، فروش برعکس
+        # فیلتر ۱: وتوی اخبار داغ اقتصادی
+        if view.news_blackout:
+            log.warning("سیگنال رد شد به دلیل انتشار خبر داغ: %s", view.news_reason)
+            return None
+
+        # فیلتر ۲: وتوی سیگنال خلاف روند ماژور بازار
         if view.is_trending:
             if sig.side == Side.BUY and view.trend == "bearish":
-                log.info("signal vs trend (BUY in bearish)")
+                log.info("سیگنال خرید در روند نزولی قوی رد شد (Counter-trend)")
                 return None
             if sig.side == Side.SELL and view.trend == "bullish":
-                log.info("signal vs trend (SELL in bullish)")
+                log.info("سیگنال فروش در روند صعودی قوی رد شد (Counter-trend)")
+                return None
+
+        # فیلتر ۳: وتوی تله نقدینگی خرد (Retail Trap Protection)
+        if view.smc is not None:
+            if sig.side == Side.BUY and view.smc.zone == ZoneType.PREMIUM and view.smc.fib_level > 0.75:
+                log.info("سیگنال خرید در سقف قیمت (Extreme Premium) وتو شد")
+                return None
+            if sig.side == Side.SELL and view.smc.zone == ZoneType.DISCOUNT and view.smc.fib_level < 0.25:
+                log.info("سیگنال فروش در کف قیمت (Extreme Discount) وتو شد")
                 return None
 
         rr = sig.rr if sig.rr > 0 else _calc_rr(sig)
-
         grade = self._grade_signal(sig, view)
 
         return Plan(
@@ -190,46 +251,75 @@ class Engine:
             entry_price=sig.entry,
             stop_loss=sig.sl,
             take_profit=sig.tp,
-            volume=0.0,             # حجم را gates محاسبه می‌کند
+            volume=0.0,
             grade=grade,
             source="signal",
             timeframe=timeframe,
             rr=round(rr, 3),
             confidence=sig.confidence,
-            reasoning=f"trend={view.trend} atr={view.atr}",
+            reasoning=f"sig_conf={sig.confidence:.2f} trend={view.trend} zone={view.smc.zone.value if view.smc else 'N/A'}",
         )
 
-    # ── private ─────────────────────────────────────────
+    # ── سیستم نمره‌دهی ستاپ‌ها (Grading Matrix) ────────────
+
+    @staticmethod
+    def _grade_analysis_setup(side: Side, view: MarketView) -> SetupGrade:
+        """نمره‌دهی ستاپ تحلیلی بر مبنای همگرایی تکنیکال و SMC."""
+        score = 0.5  # پایه هماهنگی روند
+
+        if view.smc is not None:
+            # همگرایی با دیدگاه SMC
+            if (side == Side.BUY and view.smc.bias == "bullish") or \
+               (side == Side.SELL and view.smc.bias == "bearish"):
+                score += 0.25
+
+            # پاداش ناحیه بهینه ورود (Discount برای خرید / Premium برای فروش)
+            if (side == Side.BUY and view.smc.zone == ZoneType.DISCOUNT) or \
+               (side == Side.SELL and view.smc.zone == ZoneType.PREMIUM):
+                score += 0.15
+
+            # پاداش سشن نقدینگی فعال
+            if view.smc.killzone in ("london", "newyork"):
+                score += 0.10
+
+        if score >= 0.85:
+            return SetupGrade.A
+        if score >= 0.60:
+            return SetupGrade.B
+        if score >= 0.40:
+            return SetupGrade.C
+        return SetupGrade.D
 
     @staticmethod
     def _grade_signal(sig: Signal, view: MarketView) -> SetupGrade:
-        """گریدبندی کیفیت ستاپ — A بهترین."""
+        """گریدبندی کیفیت سیگنال تلگرام."""
         score = 0.0
-        # کیفیت خود سیگنال
-        score += min(1.0, sig.confidence) * 0.5
-        # RR
-        score += min(1.0, sig.rr / 2.0) * 0.3
-        # هماهنگی با روند
+        score += min(1.0, sig.confidence) * 0.40
+        score += min(1.0, sig.rr / 2.0) * 0.30
+
         if view.is_trending:
             aligned = (sig.side == Side.BUY and view.trend == "bullish") or \
                       (sig.side == Side.SELL and view.trend == "bearish")
-            score += 0.2 if aligned else 0.0
-        else:
-            score += 0.1
+            score += 0.20 if aligned else 0.0
 
-        if score >= 0.8:
+        if view.smc is not None:
+            if (sig.side == Side.BUY and view.smc.zone == ZoneType.DISCOUNT) or \
+               (sig.side == Side.SELL and view.smc.zone == ZoneType.PREMIUM):
+                score += 0.10
+
+        if score >= 0.80:
             return SetupGrade.A
-        if score >= 0.6:
+        if score >= 0.60:
             return SetupGrade.B
-        if score >= 0.4:
+        if score >= 0.40:
             return SetupGrade.C
         return SetupGrade.D
 
 
-# ── اندیکاتورها (pure functions) ────────────────────────
+# ── توابع کمکی محاسباتی (Pure Functions) ─────────────────
 
 def _ema(values: list[float], period: int) -> float:
-    """EMA ساده روی لیست قیمت."""
+    """محاسبه Exponential Moving Average روی سری داده."""
     if not values:
         return 0.0
     k = 2.0 / (period + 1)
@@ -240,7 +330,7 @@ def _ema(values: list[float], period: int) -> float:
 
 
 def _atr(candles: list[Candle], period: int = 14) -> float:
-    """Average True Range."""
+    """محاسبه نوسان واقعی بازار (Average True Range)."""
     if len(candles) < 2:
         return 0.0
     trs = []
@@ -257,7 +347,7 @@ def _atr(candles: list[Candle], period: int = 14) -> float:
 
 
 def _calc_rr(sig: Signal) -> float:
-    """محاسبه RR از روی entry/sl/tp."""
+    """محاسبه دقیق نسبت سود به زیان (Risk-to-Reward Ratio)."""
     sl_dist = abs(sig.entry - sig.sl)
     tp_dist = abs(sig.tp - sig.entry)
     return tp_dist / sl_dist if sl_dist > 0 else 0.0

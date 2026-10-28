@@ -144,6 +144,13 @@ class HermesDaemon:
         candles = self.mt5.get_candles(
             self.cfg.symbol, self.cfg.analysis.timeframe, self.cfg.analysis.candle_count
         )
+        h1_candles = []
+        if "H1" in self.cfg.analysis.higher_timeframes:
+            try:
+                h1_candles = self.mt5.get_candles(self.cfg.symbol, "H1", 50)
+            except Exception as e:
+                log.warning("H1 candles fetch failed: %s", e)
+
         tick = self.mt5.get_tick(self.cfg.symbol)
         account = self.mt5.get_account()
         positions = self.mt5.get_open_positions(self.cfg.symbol)
@@ -173,12 +180,16 @@ class HermesDaemon:
                 h_utc, h0, h1,
             )
 
-        # ۶) تحلیل بازار
-        view = self.eng.analyze(candles, tick)
+        # ۶) تحلیل چندبعدی بازار (Technical + SMC/ICT + News)
+        view = self.eng.analyze(candles, tick, h1_candles=h1_candles)
         self._last_atr = view.atr  # برای trailing تحلیلی در exit loop
         log.info(
-            "بازار: %s strength=%.2f atr=%.2f spread=%.2f signals=%d",
-            view.trend, view.trend_strength, view.atr, view.spread, len(new_signals),
+            "بازار: %s str=%.2f atr=%.2f spread=%.2f | SMC: %s (conf=%.2f zone=%s) | News: %s",
+            view.trend, view.trend_strength, view.atr, view.spread,
+            view.smc.bias if view.smc else "none",
+            view.smc.confidence if view.smc else 0.0,
+            view.smc.zone.value if view.smc else "none",
+            f"BLACKOUT ({view.news_reason})" if view.news_blackout else "CLEAR",
         )
 
         # ۶) ساخت plan — اولویت با سیگنال کانال، سپس تحلیل خودکار

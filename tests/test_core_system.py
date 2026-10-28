@@ -327,3 +327,124 @@ class TestLedger:
         assert c.execute("SELECT count(*) FROM equity_snapshots").fetchone()[0] == 1
         assert c.execute("SELECT count(*) FROM guard_log").fetchone()[0] == 1
         ledger.close()
+
+
+# ══════════════════════════════════════════════════════════════════
+# ۶. تست‌های فیلتر اخبار داغ (NewsGuard)
+# ══════════════════════════════════════════════════════════════════
+
+class TestNewsGuard:
+    def test_news_blackout_timing(self, tmp_path):
+        from core.news import NewsGuard, EconomicEvent
+        cache_file = tmp_path / "mock_calendar.json"
+        
+        guard = NewsGuard(cache_file=cache_file)
+        now = time.time()
+
+        # Add mock high-impact event in 15 minutes
+        ev_soon = EconomicEvent(
+            title="Fed Chair Powell Speaks",
+            currency="USD",
+            impact="High",
+            timestamp=int(now + 15 * 60)
+        )
+        guard._events = [ev_soon]
+
+        # Should be blocked because it's within 30 minutes
+        blocked, reason = guard.is_blackout(now_ts=now, before_minutes=30)
+        assert blocked is True
+        assert "Powell" in reason
+
+        # Should not be blocked if event is 3 hours away
+        ev_far = EconomicEvent(
+            title="CPI m/m",
+            currency="USD",
+            impact="High",
+            timestamp=int(now + 180 * 60)
+        )
+        guard._events = [ev_far]
+        blocked2, _ = guard.is_blackout(now_ts=now, before_minutes=30)
+        assert blocked2 is False
+
+
+# ══════════════════════════════════════════════════════════════════
+# ۷. تست‌های ماژول ساختار هوشمند (SMCAnalyzer)
+# ══════════════════════════════════════════════════════════════════
+
+class TestSMCAnalyzer:
+    def test_smc_killzones(self):
+        from core.smc import SMCAnalyzer
+        from datetime import datetime, timezone
+        
+        analyzer = SMCAnalyzer()
+        # 08:30 UTC -> London
+        dt_london = datetime(2026, 10, 28, 8, 30, tzinfo=timezone.utc)
+        assert analyzer.detect_killzone(dt_london) == "london"
+
+        # 13:30 UTC -> New York
+        dt_ny = datetime(2026, 10, 28, 13, 30, tzinfo=timezone.utc)
+        assert analyzer.detect_killzone(dt_ny) == "newyork"
+
+        # 21:00 UTC -> Dead
+        dt_dead = datetime(2026, 10, 28, 21, 0, tzinfo=timezone.utc)
+        assert analyzer.detect_killzone(dt_dead) == "dead"
+
+    def test_smc_order_block_and_fvg(self):
+        from core.smc import SMCAnalyzer
+        analyzer = SMCAnalyzer()
+        # Build 10 candles with a clear bullish expansion creating FVG
+        candles = [
+            Candle(time=i*900, open=2000.0, high=2002.0, low=1998.0, close=1999.0, volume=100)
+            for i in range(5)
+        ]
+        # Strong impulsive up move at candle 5 & 6
+        candles.append(Candle(time=5*900, open=1999.0, high=2020.0, low=1998.0, close=2018.0, volume=500))
+        candles.append(Candle(time=6*900, open=2018.0, high=2035.0, low=2015.0, close=2032.0, volume=600))
+        candles.append(Candle(time=7*900, open=2032.0, high=2038.0, low=2030.0, close=2036.0, volume=300))
+
+        obs = analyzer.detect_order_blocks(candles)
+        assert len(obs) > 0
+        fvgs = analyzer.detect_fvgs(candles)
+        assert len(fvgs) > 0
+
+    def test_smc_premium_discount(self):
+        from core.smc import SMCAnalyzer, ZoneType
+        analyzer = SMCAnalyzer()
+        candles = [
+            Candle(time=i*900, open=2000.0, high=2050.0, low=1950.0, close=1960.0, volume=100)
+            for i in range(25)
+        ]
+        zone, fib, high, low = analyzer.detect_premium_discount(candles)
+        assert high == 2050.0
+        assert low == 1950.0
+        # price 1960 is in DISCOUNT (fib = 0.10)
+        assert zone == ZoneType.DISCOUNT
+        assert fib < 0.20
+
+
+# ══════════════════════════════════════════════════════════════════
+# ۸. تست‌های موتور جامع (Engine Hybrid)
+# ══════════════════════════════════════════════════════════════════
+
+class TestEngineHybrid:
+    def test_engine_rejects_plan_during_news_blackout(self):
+        from core.news import NewsGuard, EconomicEvent
+        news_guard = NewsGuard()
+        now = time.time()
+        # Set high-impact event in 5 mins
+        news_guard._events = [EconomicEvent(
+            title="Non-Farm Payrolls", currency="USD", impact="High", timestamp=int(now + 300)
+        )]
+        engine = Engine(news_guard=news_guard)
+
+        candles = [
+            Candle(time=int(now - (60-i)*900), open=2000.0+i, high=2002.0+i, low=1998.0+i, close=2001.0+i, volume=100)
+            for i in range(65)
+        ]
+        tick = Tick(symbol="XAUUSD", bid=2065.0, ask=2065.3, time=int(now))
+        view = engine.analyze(candles, tick, check_news=True)
+        assert view.news_blackout is True
+
+        plan = engine.plan_from_analysis(candles, view)
+        assert plan is None  # Blocked by news blackout!
+
