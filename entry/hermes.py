@@ -103,9 +103,11 @@ class HermesDaemon:
             self.cfg.symbol, self.dry_run,
             self.cfg.loop.entry_interval_s, self.cfg.loop.exit_interval_s,
         )
+        mode_str = "DRY-RUN (شبیه‌ساز)" if self.dry_run else "LIVE (واقعی)"
         self.notify.status(
-            f"هرمس روشن شد\nسymbol: {self.cfg.symbol}\n"
-            f"حالت: {'DRY-RUN (آموزشی)' if self.dry_run else 'LIVE'}"
+            f"🟢 *هرمس فعال شد*\n"
+            f"• نماد: `{self.cfg.symbol}`\n"
+            f"• وضعیت: `{mode_str}`"
         )
 
         signal.signal(signal.SIGINT, self._stop)
