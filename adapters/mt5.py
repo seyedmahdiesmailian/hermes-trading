@@ -1,7 +1,11 @@
-""" adapters/mt5 — bridge HTTP client
+""" adapters/mt5 — Enterprise MT5 HTTP Client & Bridge Adapter
 
-تمام دسترسی به MT5 از این یک نقطه می‌گذرد.
-بروکر = حقیقت نهایی. هر خطا = fail-closed (ترید نمی‌کنیم).
+ارتباط با سرور ویندوز و نرم‌افزار MetaTrader 5:
+- استفاده از requests.Session و Connection Pooling جهت کاهش تاخیر (Latency)
+- استراتژی Retry خودکار روی درخواست‌های خواندنی (Idempotent GET) در زمان نوسان شبکه
+- مدیریت دقیق کدهای خطای متاتریدر (Retcodes) و ترجمه به پیام‌های تجاری معنادار
+- پشتیبانی کامل از ثبت سفارش، اصلاح، بستن کامل، بستن پله‌ای (Partial Close)، و تاریخچه معاملات (Deals)
+- پشتیبانی کامل از حالت شبیه‌سازی پایدار (dry_run: true) بر مبنای دیسک (sim_book.json)
 """
 from __future__ import annotations
 
@@ -13,6 +17,8 @@ from pathlib import Path
 from typing import Optional
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from core.entities import (
     AccountState,
@@ -29,39 +35,82 @@ log = logging.getLogger(__name__)
 
 class BridgeError(Exception):
     """خطای ارتباط با bridge — fail-closed."""
+    def __init__(self, message: str, retcode: int | None = None):
+        super().__init__(message)
+        self.retcode = retcode
+
+
+# نگاشت کدهای خطای رایج متاتریدر ۵ به مفاهیم تجاری
+RETCODE_DESCRIPTIONS: dict[int, str] = {
+    10004: "REQUOTE — تغییر مظنه قیمت",
+    10006: "REJECTED — درخواست توسط بروکر رد شد",
+    10007: "CANCELLED — سفارش لغو شد",
+    10008: "PLACED — سفارش ثبت شد",
+    10009: "DONE — معامله با موفقیت انجام شد",
+    10010: "DONE_PARTIAL — سفارش به صورت جزئی انجام شد",
+    10011: "ERROR — خطای عمومی پردازش سفارش",
+    10012: "TIMEOUT — مهلت زمانی پردازش سپری شد",
+    10013: "INVALID_REQUEST — ساختار درخواست نامعتبر است",
+    10014: "INVALID_VOLUME — حجم سفارش نامعتبر است",
+    10015: "INVALID_PRICE — قیمت سفارش نامعتبر است",
+    10016: "INVALID_STOPS — استاپ‌لاس یا تیک‌پرافیت نامعتبر است",
+    10017: "TRADE_DISABLED — معاملات برای این حساب یا نماد غیرفعال است",
+    10018: "MARKET_CLOSED — بازار در حال حاضر بسته است",
+    10019: "NO_MONEY — موجودی مارجین برای باز کردن این حجم کافی نیست",
+    10020: "PRICE_CHANGED — قیمت تغییر کرده است",
+    10021: "PRICE_OFF — مظنه قیمتی از سمت بروکر وجود ندارد",
+    10022: "INVALID_EXPIRATION — تاریخ انقضای سفارش نامعتبر است",
+    10023: "ORDER_CHANGED — وضعیت سفارش تغییر کرده است",
+    10024: "TOO_MANY_REQUESTS — تعداد درخواست‌ها بیش از حد مجاز است",
+    10025: "NO_CHANGES — هیچ تغییری در سطوح استاپ یا قیمت داده نشد",
+    10026: "AUTOTRADING_DISABLED_SERVER — اتوتریدینگ در سرور بروکر غیرفعال است",
+    10027: "AUTOTRADING_DISABLED_CLIENT — دکمه اتوتریدینگ در متاتریدر خاموش است",
+    10028: "CONNECTION_LOST — اتصال ترمینال به سرور بروکر قطع است",
+}
 
 
 class Mt5Adapter:
-    """یک کلاینت HTTP به bridge روی ویندوز.
+    """کلاینت HTTP پرسرعت و پایدار برای ارتباط با پل متاتریدر ۵ در ویندوز."""
 
-    همه متدها یا داده برمی‌گردانند یا BridgeError می‌دهند.
-    هیچ‌گاه None خام برمی‌گردانند (جلوگیری از NPE در مغز).
-    """
-
-    def __init__(self, url: str, token: str, timeout_s: int = 10, dry_run: bool = True,
-                 sim_state_path: str | None = None):
+    def __init__(
+        self,
+        url: str,
+        token: str,
+        timeout_s: int = 10,
+        dry_run: bool = True,
+        sim_state_path: str | None = None,
+    ):
         self._url = url.rstrip("/")
-        self._headers = {"Authorization": f"Bearer {token}"}
+        self._token = token
         self._timeout = timeout_s
         self._dry_run = dry_run
-        # b241: دفتر پوزیشن‌های شبیه‌سازی‌شده در dry_run.
-        # bridge واقعی در dry_run سفارشی نمی‌بیند → این دفتر جایگزین
-        # حقیقت بروکر می‌شود تا حلقه ورود/خروج مثل حالت LIVE کار کند.
-        # دفتر روی دیسک persist می‌شود — ریاستارت دیمن پوزیشن‌ها را گم نمی‌کند.
+
+        # پیکربندی Session با Connection Pooling و Keep-Alive
+        self._session = requests.Session()
+        self._session.headers.update({
+            "Authorization": f"Bearer {token}",
+            "User-Agent": "Hermes-Trading-Core/3.0",
+            "Content-Type": "application/json",
+        })
+        adapter = HTTPAdapter(pool_connections=10, pool_maxsize=10, max_retries=Retry(total=0))
+        self._session.mount("http://", adapter)
+        self._session.mount("https://", adapter)
+
+        # دفتر پوزیشن‌های شبیه‌سازی‌شده در dry_run
         self._sim_state_path = Path(sim_state_path) if sim_state_path else None
         self._sim_ticket = 0
         self._sim_book: dict[int, BrokerPosition] = {}
         if self._dry_run:
             self._sim_load()
 
-    # ── دیسک (dry_run) ────────────────────────────────────
+    # ── مدیریت دفتر شبیه‌سازی (Dry Run) ───────────────────
 
     def _sim_load(self) -> None:
-        """بارگذاری دفتر شبیه‌سازی از دیسک — باز کردن دیمن پس از ریاستارت."""
+        """بارگذاری دفتر شبیه‌سازی از دیسک — بازیابی پوزیشن‌ها پس از ری‌استارت."""
         if self._sim_state_path is None or not self._sim_state_path.exists():
             return
         try:
-            doc = json.loads(self._sim_state_path.read_text())
+            doc = json.loads(self._sim_state_path.read_text(encoding="utf-8"))
             self._sim_ticket = int(doc.get("next_ticket", 1))
             for row in doc.get("positions", []):
                 p = BrokerPosition(
@@ -87,7 +136,7 @@ class Mt5Adapter:
             self._sim_ticket = 0
 
     def _sim_save(self) -> None:
-        """ذخیره دفتر شبیه‌سازی روی دیسک — هر تغییر."""
+        """ذخیره اتمیک دفتر شبیه‌سازی روی دیسک."""
         if self._sim_state_path is None:
             return
         try:
@@ -96,90 +145,124 @@ class Mt5Adapter:
                 "positions": [dataclasses.asdict(p) for p in self._sim_book.values()],
             }
             tmp = self._sim_state_path.with_suffix(".tmp")
-            tmp.write_text(json.dumps(doc, ensure_ascii=False))
+            tmp.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
             tmp.replace(self._sim_state_path)
         except Exception as e:
             log.warning("sim book save failed: %s", e)
 
-    # ── private ─────────────────────────────────────────
+    # ── شبکه و درخواست‌ها ────────────────────────────────
 
-    def _get(self, path: str, **params) -> dict:
-        try:
-            r = requests.get(
-                f"{self._url}{path}", headers=self._headers,
-                params=params, timeout=self._timeout,
-            )
-        except requests.RequestException as e:
-            raise BridgeError(f"GET {path}: {e}") from e
-        if r.status_code != 200:
-            raise BridgeError(f"GET {path} → {r.status_code}")
-        return r.json()
+    def _get(self, path: str, params: Optional[dict] = None, retries: int = 2) -> dict:
+        """ارسال درخواست GET همراه با Retry هوشمند برای داده‌های خواندنی."""
+        last_exc: Exception | None = None
+        for attempt in range(retries + 1):
+            try:
+                r = self._session.get(
+                    f"{self._url}{path}",
+                    params=params,
+                    timeout=self._timeout,
+                )
+                if r.status_code == 200:
+                    return r.json()
+                if r.status_code in (401, 403):
+                    raise BridgeError(f"GET {path} Auth failed: HTTP {r.status_code}")
+                raise BridgeError(f"GET {path} HTTP error: {r.status_code}")
+            except (requests.ConnectionError, requests.Timeout) as e:
+                last_exc = e
+                if attempt < retries:
+                    sleep_s = 0.2 * (attempt + 1)
+                    log.warning("GET %s connection blip (%s), retrying in %.1fs...", path, e, sleep_s)
+                    time.sleep(sleep_s)
+            except Exception as e:
+                raise BridgeError(f"GET {path}: {e}") from e
+
+        raise BridgeError(f"GET {path} failed after {retries+1} attempts: {last_exc}") from last_exc
 
     def _post(self, path: str, body: dict) -> dict:
+        """ارسال درخواست POST به بریج بدون بازتکرار کورکورانه (Fail-Closed)."""
         try:
-            r = requests.post(
-                f"{self._url}{path}", headers=self._headers,
-                json=body, timeout=self._timeout,
+            r = self._session.post(
+                f"{self._url}{path}",
+                json=body,
+                timeout=self._timeout,
             )
         except requests.RequestException as e:
             raise BridgeError(f"POST {path}: {e}") from e
-        if r.status_code != 200:
-            raise BridgeError(f"POST {path} → {r.status_code}")
-        return r.json()
+
+        if r.status_code == 200:
+            return r.json()
+
+        try:
+            data = r.json()
+            retcode_val = data.get("retcode")
+            retcode = int(retcode_val) if retcode_val is not None else None
+            desc = RETCODE_DESCRIPTIONS.get(retcode, "") if retcode is not None else ""
+            msg = f"POST {path} HTTP {r.status_code}: retcode={retcode} ({desc}) err={data.get('error')}"
+            raise BridgeError(msg, retcode=retcode)
+        except Exception:
+            raise BridgeError(f"POST {path} HTTP {r.status_code}")
 
     @staticmethod
-    def _requireOk(doc: dict, path: str):
+    def _requireOk(doc: dict, path: str) -> None:
         if not doc.get("ok", False):
-            raise BridgeError(f"{path}: bridge ok=false err={doc.get('error')}")
+            retcode_val = doc.get("retcode")
+            retcode = int(retcode_val) if retcode_val is not None else None
+            desc = RETCODE_DESCRIPTIONS.get(retcode, "") if retcode is not None else ""
+            err = doc.get("error")
+            msg = f"{path} bridge ok=false: retcode={retcode} ({desc}) error={err}"
+            raise BridgeError(msg, retcode=retcode)
 
-    # ── حساب و قیمت ────────────────────────────────────
+    # ── حساب و بازار ────────────────────────────────────
 
     def get_account(self) -> AccountState:
+        """استعلام وضعیت لحظه‌ای حساب از بروکر."""
         d = self._get("/api/account")
         self._requireOk(d, "/api/account")
-        # bridge ممکن است margin/currency را نفرستد → پیش‌فرض امن
         return AccountState(
             balance=float(d["balance"]),
             equity=float(d["equity"]),
             margin=float(d.get("margin", d.get("margin_free", 0.0)) or 0.0),
             margin_free=float(d.get("margin_free", d["balance"])),
-            currency=d.get("currency", "USD"),
+            currency=str(d.get("currency", "USD")),
             login=int(d.get("login", 0)),
         )
 
     def get_tick(self, symbol: str) -> Tick:
+        """استعلام تیک زنده (Bid/Ask) برای نماد معاملاتی."""
         d = self._get(f"/api/tick/{symbol}")
-        self._requireOk(d, "/api/tick")
+        self._requireOk(d, f"/api/tick/{symbol}")
         return Tick(
             symbol=d.get("symbol", symbol),
             bid=float(d["bid"]),
             ask=float(d["ask"]),
-            time=int(d["time"]),
+            time=int(d.get("time", time.time())),
         )
 
     def get_candles(self, symbol: str, timeframe: str, count: int) -> list[Candle]:
-        d = self._get(f"/api/ohlc/{symbol}", timeframe=timeframe, count=count)
-        self._requireOk(d, "/api/ohlc")
-        return [
-            Candle(
-                time=int(r["time"]),
-                open=float(r["open"]),
-                high=float(r["high"]),
-                low=float(r["low"]),
-                close=float(r["close"]),
-                volume=int(r["tick_volume"]),
+        """دریافت کندل‌های تاریخی OHLCV."""
+        d = self._get(f"/api/ohlc/{symbol}", params={"timeframe": timeframe, "count": count})
+        self._requireOk(d, f"/api/ohlc/{symbol}")
+        candles = []
+        for r in d.get("data", []):
+            candles.append(
+                Candle(
+                    time=int(r["time"]),
+                    open=float(r["open"]),
+                    high=float(r["high"]),
+                    low=float(r["low"]),
+                    close=float(r["close"]),
+                    volume=int(r.get("tick_volume", r.get("volume", 0))),
+                )
             )
-            for r in d["data"]
-        ]
+        return candles
 
     def get_open_positions(self, symbol: Optional[str] = None) -> list[BrokerPosition]:
-        """پوزیشن‌های باز — حقیقت نهایی، همیشه زنده."""
-        # b240: در dry_run دفتر شبیه‌سازی حقیقت بروکر است
+        """دریافت پوزیشن‌های باز — حقیقت قطعی از خود بروکر."""
         if self._dry_run:
             out = list(self._sim_book.values())
             if symbol:
                 out = [p for p in out if p.symbol == symbol]
-            # به‌روزرسانی قیمت جاری و سود برای همه پوزیشن‌های شبیه‌سازی‌شده
+            # تازه‌سازی قیمت لحظه‌ای و شناوری سود
             upd = []
             for p in out:
                 try:
@@ -193,14 +276,15 @@ class Mt5Adapter:
                     p, current_price=mid,
                     profit=round(profit, 2),
                 ))
-            # بازنویسی دفتر با قیمت تازه (حقیقت زنده)
             for p in upd:
                 self._sim_book[p.ticket] = p
             return upd
-        d = self._get("/api/positions", symbol=symbol) if symbol else self._get("/api/positions")
+
+        params = {"symbol": symbol} if symbol else None
+        d = self._get("/api/positions", params=params)
         self._requireOk(d, "/api/positions")
         out = []
-        for p in d["data"]:
+        for p in d.get("data", []):
             t = p.get("type")
             if isinstance(t, str):
                 side = Side.BUY if t.upper() == "BUY" else Side.SELL
@@ -219,12 +303,21 @@ class Mt5Adapter:
                     profit=float(p.get("profit", 0.0)),
                     swap=float(p.get("swap", 0.0)),
                     open_time=int(p["time"]),
-                    comment=p.get("comment", "") or "",
+                    comment=str(p.get("comment", "") or ""),
                 )
             )
         return out
 
-    # ── اجرا ───────────────────────────────────────────
+    def get_history_deals(self, days: int = 7, symbol: Optional[str] = None) -> list[dict]:
+        """دریافت معاملات انجام‌شده گذشته جهت یادگیری و ممیزی ژورنال."""
+        params: dict = {"days": days}
+        if symbol:
+            params["symbol"] = symbol
+        d = self._get("/api/history/deals", params=params)
+        self._requireOk(d, "/api/history/deals")
+        return d.get("data", [])
+
+    # ── اجرای سفارشات و مدیریت پوزیشن ───────────────────
 
     def place_order(
         self,
@@ -235,15 +328,12 @@ class Mt5Adapter:
         sl: float,
         tp: float,
     ) -> Order:
-        """ثبت سفارش — comment = order_id (کلید idempotency bridge).
-
-        در dry_run=False سفارش واقعی ارسال می‌شود.
-        """
+        """ارسال سفارش به بازار همراه با Idempotency Key."""
         body = {
             "symbol": symbol,
             "type": side.value,
             "volume": volume,
-            "comment": order_id,   # کلید Idempotency bridge (شروع با hms)
+            "comment": order_id,
             "magic": 20260901,
         }
         if sl > 0:
@@ -251,11 +341,9 @@ class Mt5Adapter:
         if tp > 0:
             body["tp"] = tp
 
-        # b240: قیمت ورود مرجع — در dry_run از tick زنده خوانده می‌شود
         price_ref = self.get_tick(symbol).mid
 
         if self._dry_run:
-            # b240: ثبت در دفتر شبیه‌سازی — حقیقت بروکر در dry_run.
             self._sim_ticket += 1
             ticket = self._sim_ticket
             pos = BrokerPosition(
@@ -293,7 +381,7 @@ class Mt5Adapter:
         self._requireOk(d, "/api/order")
         ticket = int(d.get("ticket", 0))
         if ticket == 0:
-            raise BridgeError(f"/api/order: ticket=0 retcode={d.get('retcode')}")
+            raise BridgeError(f"/api/order: ticket=0 retcode={d.get('retcode')}", retcode=d.get("retcode"))
 
         return Order(
             order_id=order_id,
@@ -309,37 +397,83 @@ class Mt5Adapter:
         )
 
     def close_position(self, ticket: int) -> bool:
-        """بستن پوزیشن با ticket."""
+        """بستن کامل پوزیشن بر اساس شماره تیکت."""
         if self._dry_run:
-            # b240: حذف از دفتر شبیه‌سازی
             self._sim_book.pop(ticket, None)
             self._sim_save()
             log.info("DRY_RUN close_position ticket=%s", ticket)
             return True
+
         d = self._post("/api/close", {"ticket": ticket})
         self._requireOk(d, "/api/close")
         return True
 
-    def modify_position(self, ticket: int, sl: float, tp: float) -> bool:
-        """اصلاح SL/TP پوزیشن (trailing / breakeven)."""
+    def partial_close(self, ticket: int, percent: float = 50.0) -> bool:
+        """بستن پله‌ای (Partial Close) پوزیشن — مثلاً ۵۰٪ حجم در تارگت اول."""
         if self._dry_run:
-            # b240: اعمال SL جدید روی پوزیشن شبیه‌سازی‌شده
+            pos = self._sim_book.get(ticket)
+            if pos is not None:
+                new_vol = round(pos.volume * (1.0 - percent / 100.0), 2)
+                if new_vol < 0.01:
+                    self._sim_book.pop(ticket, None)
+                else:
+                    self._sim_book[ticket] = dataclasses.replace(pos, volume=new_vol)
+                self._sim_save()
+            log.info("DRY_RUN partial_close ticket=%s percent=%.1f%%", ticket, percent)
+            return True
+
+        d = self._post("/api/partial", {"ticket": ticket, "percent": percent})
+        self._requireOk(d, "/api/partial")
+        return True
+
+    def modify_position(self, ticket: int, sl: float, tp: float) -> bool:
+        """اصلاح سطوح Stop Loss یا Take Profit پوزیشن."""
+        if self._dry_run:
             pos = self._sim_book.get(ticket)
             if pos is not None:
                 self._sim_book[ticket] = dataclasses.replace(pos, sl=sl, tp=tp or pos.tp)
                 self._sim_save()
             log.info("DRY_RUN modify ticket=%s sl=%.2f tp=%.2f", ticket, sl, tp)
             return True
+
         d = self._post("/api/modify", {"ticket": ticket, "sl": sl, "tp": tp})
         self._requireOk(d, "/api/modify")
         return True
 
-    # ─ـ سلامت ──────────────────────────────────────────
+    # ── پایش سلامت و اتصالات ──────────────────────────
 
     def health(self) -> bool:
-        """بررسی زنده بودن bridge."""
+        """بررسی سریع زنده بودن ترمینال و اتصال بروکر."""
         try:
             self.get_account()
             return True
         except BridgeError:
             return False
+
+    def ping(self) -> dict:
+        """سنجش تاخیر رفت و برگشت پکت‌ها (RTT Latency) به میلی‌ثانیه."""
+        t0 = time.time()
+        try:
+            acc = self.get_account()
+            dt_ms = round((time.time() - t0) * 1000, 2)
+            return {
+                "ok": True,
+                "latency_ms": dt_ms,
+                "login": acc.login,
+                "balance": acc.balance,
+                "equity": acc.equity,
+            }
+        except Exception as e:
+            dt_ms = round((time.time() - t0) * 1000, 2)
+            return {
+                "ok": False,
+                "latency_ms": dt_ms,
+                "error": str(e),
+            }
+
+    def close(self) -> None:
+        """بستن ایمن کانکشن پول Session."""
+        try:
+            self._session.close()
+        except Exception:
+            pass

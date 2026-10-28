@@ -358,6 +358,7 @@ class HermesDaemon:
 
     def close(self) -> None:
         self.led.close()
+        self.mt5.close()
 
 
 def main() -> None:
