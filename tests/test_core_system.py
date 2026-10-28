@@ -477,3 +477,57 @@ class TestEngineHybrid:
         plan = engine.plan_from_analysis(candles, view)
         assert plan is None  # Blocked by news blackout!
 
+
+# ══════════════════════════════════════════════════════════════════
+# ۹. تست‌های یادگیری تطبیقی (AdaptiveLearner)
+# ══════════════════════════════════════════════════════════════════
+
+class TestAdaptiveLearner:
+    def test_metrics_calculation(self):
+        from core.learning import AdaptiveLearner
+        from core.entities import Trade, Side, ExitReason, SetupGrade
+        learner = AdaptiveLearner(min_trades=5)
+
+        trades = [
+            Trade(
+                trade_id=f"t-{i}", plan_id=f"p-{i}", ticket=i, symbol="XAUUSD",
+                side=Side.BUY, volume=0.1, entry_price=2000.0, exit_price=2010.0 if i % 2 == 0 else 1995.0,
+                sl=1990.0, tp=2020.0, pnl=100.0 if i % 2 == 0 else -50.0,
+                exit_reason=ExitReason.TAKE_PROFIT if i % 2 == 0 else ExitReason.STOP_LOSS,
+                opened_at=1700000000, closed_at=1700001000 + i, grade=SetupGrade.A, r_multiple=1.0 if i % 2 == 0 else -0.5
+            )
+            for i in range(10)
+        ]
+        metrics = learner.evaluate_performance(trades)
+        assert metrics.total_trades == 10
+        assert metrics.wins == 5
+        assert metrics.losses == 5
+        assert metrics.win_rate == 50.0
+        assert metrics.profit_factor == 2.0  # 500 / 250 = 2.0
+
+    def test_adapt_tightens_on_loss_streak(self, tmp_path):
+        from core.learning import AdaptiveLearner
+        from core.db import Ledger
+        from core.entities import Trade, Side, ExitReason, SetupGrade
+
+        db_path = tmp_path / "learn_test.db"
+        ledger = Ledger(db_path)
+        learner = AdaptiveLearner(min_trades=5, floor_rr=1.0, floor_grade="B")
+
+        # Insert 5 losing trades
+        for i in range(5):
+            t = Trade(
+                trade_id=f"loss-{i}", plan_id=f"p-{i}", ticket=100 + i, symbol="XAUUSD",
+                side=Side.BUY, volume=0.1, entry_price=2000.0, exit_price=1990.0,
+                sl=1990.0, tp=2020.0, pnl=-100.0, exit_reason=ExitReason.STOP_LOSS,
+                opened_at=1700000000, closed_at=1700001000 + i, grade=SetupGrade.B, r_multiple=-1.0
+            )
+            ledger.save_trade(t)
+
+        res = learner.adapt(ledger)
+        assert res["adapted"] is True
+        assert res["min_rr"] == 1.5
+        assert res["min_grade"] == "A"
+        assert ledger.get_param("min_grade") == "A"
+        ledger.close()
+

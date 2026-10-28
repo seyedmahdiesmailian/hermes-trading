@@ -219,6 +219,13 @@ class Ledger:
             (today_start,)).fetchall()
         return [self._row_to_trade(r) for r in rows]
 
+    def get_trades(self, limit: int = 50) -> list[Trade]:
+        """لیست آخرین معاملات بسته‌شده — خوراک موتور یادگیری."""
+        rows = self._con.execute(
+            "SELECT * FROM trades ORDER BY closed_at DESC LIMIT ?",
+            (limit,)).fetchall()
+        return [self._row_to_trade(r) for r in rows]
+
     def _row_to_trade(self, row: sqlite3.Row) -> Trade:
         return Trade(
             trade_id=row["trade_id"], plan_id=row["plan_id"],

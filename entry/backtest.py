@@ -174,7 +174,7 @@ class Backtester:
 
             if not entry_queue:
                 # ─ـ ۲‌ب) مسیر تحلیل خودکار — بدون سیگنال کانال ──
-                view = self.eng.analyze(past, tick)
+                view = self.eng.analyze(past, tick, check_news=False)
                 plan = self.eng.plan_from_analysis(candles[:i+1], view,
                                                    self.cfg.analysis.timeframe)
                 if plan is None:
@@ -217,7 +217,7 @@ class Backtester:
                 continue
             sig = touched[0]
             entry_queue.remove(sig)
-            view = self.eng.analyze(past, tick)
+            view = self.eng.analyze(past, tick, check_news=False)
             plan = self.eng.plan_from_signal(sig, view, self.cfg.analysis.timeframe)
             if plan is None:
                 self.denied.append({
@@ -278,7 +278,7 @@ class Backtester:
             past = candles[max(0, i - 200):i + 1]
             tick = Tick(symbol=self.cfg.symbol, bid=cur.close, ask=cur.close,
                         time=cur.time)
-            view = self.eng.analyze(past, tick)
+            view = self.eng.analyze(past, tick, check_news=False)
             decision = self.exits.manage(pos, now_ts, atr=view.atr)
             if decision is not None:
                 exit_reason, exit_price = decision

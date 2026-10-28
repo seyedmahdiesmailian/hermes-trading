@@ -93,7 +93,13 @@ class SignalsAdapter:
             log.info("signals: %d سیگنال معتبر و تازه برای بررسی ارسال شد", len(valid_signals))
         return valid_signals
 
-    # ── پارس و اعتبارسنجی چندلایه ────────────────────────
+    def _parse(self, item: dict, now_ts: Optional[float] = None) -> Optional[Signal]:
+        """متد کمکی برای سازگاری با بک‌تستر و استفاده‌های ماژولار."""
+        ts = now_ts or time.time()
+        ts_str = str(item.get("timestamp") or "")
+        epoch = self._parse_iso_timestamp(ts_str) if ts_str else None
+        ref_ts = epoch if epoch is not None else ts
+        return self._parse_and_validate(item, ref_ts)
 
     def _parse_and_validate(self, item: dict, now_ts: float) -> Optional[Signal]:
         """پارس، فیلتر تکراری، سنجش تازگی زمانی و هندسه قیمت."""

@@ -39,6 +39,7 @@ from core.entities import (
 )
 from core.exits import ExitManager
 from core.gates import GatesEngine
+from core.learning import AdaptiveLearner
 from core.params import DEFAULT_CONFIG_PATH, load_config
 
 log = logging.getLogger("hermes")
@@ -81,6 +82,7 @@ class HermesDaemon:
                 self.notify.status(f"🎯 بستن پله‌ای: {percent}% حجم پوزیشن #{ticket} سیو سود شد.")
 
         self.exits = ExitManager(self.cfg.position, on_modify=_on_modify, on_partial=_on_partial)
+        self.learner = AdaptiveLearner()
 
         # سیگنال‌های قدیمی را رد کن — فقط آینده پردازش می‌شود
         self.signals.skip_backlog()
@@ -161,8 +163,9 @@ class HermesDaemon:
         account = self.mt5.get_account()
         positions = self.mt5.get_open_positions(self.cfg.symbol)
 
-        # ۲) snapshot موجودی
+        # ۲) snapshot موجودی + یادگیری تطبیقی
         self.led.snapshot_equity(account)
+        self.learner.adapt(self.led)
 
         # ۳) سیگنال‌های جدید کانال
         new_signals = self.signals.read_new()
