@@ -282,10 +282,7 @@ class Backtester:
             decision = self.exits.manage(pos, now_ts, atr=view.atr)
             if decision is not None:
                 exit_reason, exit_price = decision
-                # اعمال SL تغییر کرده را بازگردان (state محلی)
-                ot.sl = pos.sl
             else:
-                ot.sl = pos.sl  # breakeven/trailing اعمال شد
                 return False
         else:
             exit_reason, exit_price = hit

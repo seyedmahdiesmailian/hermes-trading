@@ -295,6 +295,23 @@ class Engine:
                 return "REJECT", None, None
 
         now_ts = time.time()
+        cur_price = tick.mid
+
+        # اعتبارسنجی زنده: آیا سیگنال قبلاً استاپ خورده یا به تارگت رسیده است؟ (ابطال فوری)
+        if sig.side == Side.BUY:
+            if cur_price <= sig.sl:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به استاپ لاس (%.2f) رسیده یا از آن گذشته", cur_price, sig.sl)
+                return "REJECT", None, None
+            if cur_price >= sig.tp:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به تارگت (%.2f) رسیده است", cur_price, sig.tp)
+                return "REJECT", None, None
+        else:
+            if cur_price >= sig.sl:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به استاپ لاس (%.2f) رسیده یا از آن گذشته", cur_price, sig.sl)
+                return "REJECT", None, None
+            if cur_price <= sig.tp:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به تارگت (%.2f) رسیده است", cur_price, sig.tp)
+                return "REJECT", None, None
 
         # اگر در زمان خبر داغ باشیم -> نگهداری در واچ‌لیست تا رفع خبر!
         if view.news_blackout:

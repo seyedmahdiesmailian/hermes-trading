@@ -71,6 +71,8 @@ AUTO-TRADER, not the harness. Priority order for picking a todo:
       (actual realized gain in initial risk units), never against normalized progress ratios
       like rr_progress ((current-sl)/(tp-sl)), which max out at 1.0 upon TP and silently
       silence any gate or trigger set >= 1.0R.
+- [x] b225 TRADER EXIT PARITY: DONE 2026-10-28: ExitManager dynamic ATR trail for no-TP auto-analysis positions fixed to apply single Breakeven+buffer without subsequent loss-zone overwrite, with ratchet clamp ensuring trailing stops never regress below Breakeven+buffer or regress backwards; GatesEngine verifies stop/target orientation (invalid_stops); Engine.evaluate_signal rejects signals where live price already reached/breached SL or TP; Backtester preserves modified stop losses across candles by eliminating redundant post-manage ot.sl reset; 60/60 tests green.
+- [ ] b226 REUSABLE PROCEDURE (learned 2026-10-28, b225): multi-stage exit managers must never chain a breakeven modification with an unconstrained wide trailing stop in the same cycle without an explicit return or ratchet clamp, and backtest simulator loops must not reset mutable trade state to an immutable snapshot taken prior to exit evaluation.
 - [ ] b212 PROCEDURE (learned 2026-09-10, budget-boundary run): before opening
       ANY trader item, read autopilot_state.json's last_run_utc against
       `date -u` — the 55-min wall is measured from the KICKOFF, and a run whose

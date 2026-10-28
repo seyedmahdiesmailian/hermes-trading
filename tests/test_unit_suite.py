@@ -386,6 +386,65 @@ class TestTradingCore(unittest.TestCase):
         self.assertEqual(len(modifies), 1)
         self.assertEqual(modifies[0], (223, 2012.0))
 
+    def test_b225_exit_manager_dynamic_atr_trail_ratchet_and_single_be(self):
+        """b225: Dynamic ATR trailing in auto-analysis lane (tp<=0) only moves to breakeven once and ratchets."""
+        modifies = []
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=2.0,
+            partial_enabled=False,
+        )
+        mgr = ExitManager(cfg, on_modify=lambda t, sl: modifies.append((t, sl)))
+
+        # Position at 1.0R (between breakeven 0.8 and trailing 1.5)
+        pos = BrokerPosition(
+            ticket=225,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.1,
+            open_price=2700.0,
+            current_price=2715.0,
+            sl=2685.0,
+            tp=0.0,
+            profit=150.0,
+            swap=0.0,
+            commission=0.0,
+            open_time=1700000000,
+        )
+        res = mgr.manage(pos, now_ts=1700001000, atr=10.0, atr_sl_mult=1.5)
+        self.assertIsNone(res)
+        # Exactly ONE modify call, and it is Breakeven + buffer (2700.15), NOT overwritten by losing stop!
+        self.assertEqual(len(modifies), 1)
+        self.assertEqual(modifies[0], (225, 2700.15))
+
+    def test_b225_gates_rejects_inverted_stops(self):
+        """b225: GatesEngine rejects inverted stops (BUY SL>=entry or SELL SL<=entry) with invalid_stops."""
+        bad_buy = Plan(
+            plan_id="p-inv-buy",
+            symbol="XAUUSD",
+            side=Side.BUY,
+            entry_price=2600.0,
+            stop_loss=2610.0,
+            take_profit=2630.0,
+            volume=0.0,
+            grade=SetupGrade.A,
+            source="telegram",
+            rr=2.0,
+        )
+        outcome = self.engine.evaluate(
+            plan=bad_buy,
+            account=self.account,
+            positions=[],
+            trades_today=0,
+            daily_pnl=0.0,
+            atr=4.0,
+            spread=0.3,
+        )
+        self.assertFalse(outcome.allowed)
+        self.assertIn("invalid_stops", outcome.reasons)
+
 
 if __name__ == "__main__":
     unittest.main()

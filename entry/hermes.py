@@ -250,10 +250,15 @@ class HermesDaemon:
                     log.info("سیگنال واچ‌لیست پولبک زد و تبدیل به پلن شد: %s", plan.plan_id)
                     break
 
-                # چک کردن آیا استاپ لاس قبل از پولبک شکسته و باطل شده
-                invalidated = (side == Side.BUY and tick.bid < item["sl"]) or \
-                              (side == Side.SELL and tick.ask > item["sl"])
-                if invalidated:
+                # چک کردن آیا استاپ لاس یا تارگت قبل از پولبک لمس شده و باطل شده
+                target_hit = (side == Side.BUY and tick.ask >= item["tp"]) or \
+                             (side == Side.SELL and tick.bid <= item["tp"])
+                sl_hit = (side == Side.BUY and tick.bid <= item["sl"]) or \
+                         (side == Side.SELL and tick.ask >= item["sl"])
+                if target_hit:
+                    self.led.update_watchlist_status(item["item_id"], "target_reached")
+                    log.info("سیگنال واچ‌لیست به تارگت رسید و بسته شد: %s", item["item_id"])
+                elif sl_hit:
                     self.led.update_watchlist_status(item["item_id"], "invalidated")
                     log.info("سیگنال واچ‌لیست ابطال شد (لمس SL): %s", item["item_id"])
 

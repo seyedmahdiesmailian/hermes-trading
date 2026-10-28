@@ -21,7 +21,7 @@ import logging
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from core.entities import AccountState, BrokerPosition, Plan, SetupGrade
+from core.entities import AccountState, BrokerPosition, Plan, SetupGrade, Side
 from core.params import Gates
 
 log = logging.getLogger(__name__)
@@ -123,6 +123,15 @@ class GatesEngine:
         # ۸) حساب معتبر (قرارداد b221: fail-closed در حساب نامعتبر یا bridge خاموش)
         if account is None or account.equity <= 0 or account.balance <= 0:
             reasons.append("equity_invalid")
+
+        # ۹) اعتبار هندسه استاپ و تارگت نسبت به جهت ورود (Invalid Stops)
+        if (plan.side == Side.BUY and plan.stop_loss >= plan.entry_price) or \
+           (plan.side == Side.SELL and plan.stop_loss <= plan.entry_price):
+            reasons.append("invalid_stops")
+        elif plan.take_profit > 0:
+            if (plan.side == Side.BUY and plan.take_profit <= plan.entry_price) or \
+               (plan.side == Side.SELL and plan.take_profit >= plan.entry_price):
+                reasons.append("invalid_stops")
 
         if reasons:
             log.warning("GUARD DENY %s: %s", plan.plan_id, reasons)

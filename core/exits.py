@@ -98,28 +98,40 @@ class ExitManager:
     # ── ترلینگ چندمرحله‌ای ATR (Multi-Stage Trailing) ───────
 
     def _manage_dynamic_atr_trail(self, pos: BrokerPosition, r_achieved: float, atr: float) -> None:
-        """ترلینگ داینامیک و پلکانی در رالی‌های بزرگ طلا."""
-        if r_achieved < 0.8:
+        """ترلینگ داینامیک و پلکانی در رالی‌های بزرگ طلا برای پوزیشن‌های بدون TP."""
+        be_rr = self._cfg.breakeven_rr
+        trail_rr = self._cfg.trailing_start_rr
+
+        if r_achieved < be_rr:
             return  # هنوز در مرحله ابتدایی شکل‌گیری روند هستیم
 
-        # مرحله اول سود (0.8R تا 1.5R): Breakeven + ترلینگ فاصله باز (2.5 ATR)
-        if 0.8 <= r_achieved < 1.5:
+        # مرحله اول سود (بین breakeven_rr و trailing_start_rr): صرفاً انتقال به نقطه ورود امن
+        if r_achieved < trail_rr:
             self._apply_breakeven_with_buffer(pos)
-            trail_dist = atr * 2.5
-        # مرحله دوم سود (1.5R تا 3.0R): ترلینگ استاندارد (2.0 ATR)
-        elif 1.5 <= r_achieved < 3.0:
-            trail_dist = atr * 2.0
-        # مرحله سوم سود (بیش از 3.0R): ترلینگ فشرده (1.5 ATR) برای صید سقف/کف
-        else:
-            trail_dist = atr * 1.5
+            return
 
+        # مرحله دوم و سوم سود (رسیدن به حد ترلینگ): ترلینگ با تضمین راچت بالای نقطه ورود
+        if r_achieved < 3.0:
+            trail_dist = atr * 2.0  # ترلینگ استاندارد
+        else:
+            trail_dist = atr * 1.5  # ترلینگ فشرده برای صید سقف/کف
+
+        buffer = BREAKEVEN_BUFFER_POINTS
         if pos.is_buy:
             new_sl = pos.current_price - trail_dist
-            if new_sl > pos.sl:
+            # تضمین راچت: استاپ ترلینگ هرگز نباید عقب‌تر از Breakeven+buffer برود
+            target_be = pos.open_price + buffer
+            if new_sl < target_be and target_be < pos.current_price:
+                new_sl = target_be
+            if new_sl > pos.sl and new_sl < pos.current_price:
                 self._modify(pos, round(new_sl, 2))
         else:
             new_sl = pos.current_price + trail_dist
-            if pos.sl == 0 or new_sl < pos.sl:
+            # تضمین راچت: استاپ ترلینگ هرگز نباید عقب‌تر از Breakeven-buffer برود
+            target_be = pos.open_price - buffer
+            if new_sl > target_be and target_be > pos.current_price:
+                new_sl = target_be
+            if (pos.sl == 0 or new_sl < pos.sl) and new_sl > pos.current_price:
                 self._modify(pos, round(new_sl, 2))
 
     # ── جابجایی استاپ به نقطه ورود + بافر ──────────────────

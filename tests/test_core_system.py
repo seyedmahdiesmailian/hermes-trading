@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -235,6 +236,39 @@ class TestGatesEngine:
         assert res.allowed is False
         assert "equity_invalid" in res.reasons
 
+    def test_b225_gates_rejects_inverted_stops_buy(self, default_gates, healthy_account):
+        """b225: استاپ‌های معکوس یا اشتباه در خرید (SL>=Entry یا TP<=Entry) مسدود می‌شوند."""
+        # SL بالاتر از قیمت ورود
+        bad_sl_plan = Plan(
+            plan_id="p-inv-sl", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2060.0, take_profit=2070.0,
+            volume=0.0, grade=SetupGrade.A, source="analysis", rr=2.0
+        )
+        res = default_gates.evaluate(bad_sl_plan, healthy_account, [], 0, 0.0, atr=5.0, spread=0.5)
+        assert res.allowed is False
+        assert "invalid_stops" in res.reasons
+
+        # TP پایین‌تر از قیمت ورود در خرید
+        bad_tp_plan = Plan(
+            plan_id="p-inv-tp", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2030.0,
+            volume=0.0, grade=SetupGrade.A, source="analysis", rr=2.0
+        )
+        res2 = default_gates.evaluate(bad_tp_plan, healthy_account, [], 0, 0.0, atr=5.0, spread=0.5)
+        assert res2.allowed is False
+        assert "invalid_stops" in res2.reasons
+
+    def test_b225_gates_rejects_inverted_stops_sell(self, default_gates, healthy_account):
+        """b225: استاپ‌های معکوس یا اشتباه در فروش (SL<=Entry یا TP>=Entry) مسدود می‌شوند."""
+        bad_sell_plan = Plan(
+            plan_id="p-inv-sell", symbol="XAUUSD", side=Side.SELL,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2030.0,
+            volume=0.0, grade=SetupGrade.A, source="analysis", rr=2.0
+        )
+        res = default_gates.evaluate(bad_sell_plan, healthy_account, [], 0, 0.0, atr=5.0, spread=0.5)
+        assert res.allowed is False
+        assert "invalid_stops" in res.reasons
+
 
 # ══════════════════════════════════════════════════════════════════
 # ۳. تست‌های موتور تحلیل (Engine)
@@ -427,9 +461,119 @@ class TestExitManager:
         assert decision is None
         assert len(partials) == 1
         assert partials[0] == (888, 50.0)
+
         # Should not fire a second time for same ticket
         manager.manage(pos, now_ts=time.time(), atr=5.0, atr_sl_mult=1.5)
         assert len(partials) == 1
+
+    def test_b225_dynamic_atr_trail_breakeven_stage_single_modify(self):
+        """b225: در پوزیشن بدون TP، در مرحله breakeven_rr تا trailing_start_rr فقط یکبار BE ارسال می‌شود و با استاپ ضررده بازنویسی نمی‌شود."""
+        modifies = []
+        def _on_modify(ticket, new_sl):
+            modifies.append((ticket, new_sl))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=2.0,
+            partial_enabled=False
+        )
+        manager = ExitManager(cfg, on_modify=_on_modify)
+
+        # BUY: Open=2000, initial SL=1985 (ATR=10, 1.5*ATR=15). Current=2010 -> r_achieved = 10/15 = 0.67 < 0.8
+        pos = BrokerPosition(
+            ticket=101, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2010.0, sl=1985.0, tp=0.0,
+            profit=100.0, swap=0.0, open_time=int(time.time()), comment="auto"
+        )
+        manager.manage(pos, now_ts=time.time(), atr=10.0, atr_sl_mult=1.5)
+        assert len(modifies) == 0  # زیر 0.8R هنوز تغییری اعمال نمی‌شود
+
+        # قیمت به 2015 می‌رسد -> r_achieved = 15/15 = 1.0R (بین 0.8 و 1.5)
+        pos_be = BrokerPosition(
+            ticket=101, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2015.0, sl=1985.0, tp=0.0,
+            profit=150.0, swap=0.0, open_time=int(time.time()), comment="auto"
+        )
+        manager.manage(pos_be, now_ts=time.time(), atr=10.0, atr_sl_mult=1.5)
+        # فقط یکبار modify فراخوانی می‌شود و آن هم دقیقاً Breakeven + buffer (2000.15) است
+        assert len(modifies) == 1
+        assert modifies[0] == (101, 2000.15)
+
+    def test_b225_dynamic_atr_trail_ratchet_never_below_breakeven_buy(self):
+        """b225: ترلینگ داینامیک ATR در پوزیشن خرید هرگز نباید پایین‌تر از Breakeven+buffer استاپ بگذارد."""
+        modifies = []
+        def _on_modify(ticket, new_sl):
+            modifies.append((ticket, new_sl))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=2.0,
+            partial_enabled=False
+        )
+        manager = ExitManager(cfg, on_modify=_on_modify)
+
+        # BUY: Open=2000, initial SL=1985 (ATR=10, 1.5*ATR=15). Current=2024 -> r_achieved = 24/15 = 1.6R >= 1.5R
+        # با ATR=10، فاصله ترلینگ مرحله ۲ = 2.0*10 = 20. new_sl = 2024 - 20 = 2004.0 > 2000.15
+        pos_trail = BrokerPosition(
+            ticket=102, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2024.0, sl=2000.15, tp=0.0,
+            profit=240.0, swap=0.0, open_time=int(time.time()), comment="auto"
+        )
+        manager.manage(pos_trail, now_ts=time.time(), atr=10.0, atr_sl_mult=1.5)
+        assert len(modifies) == 1
+        assert modifies[0] == (102, 2004.0)
+
+        # اگر ATR جهش کند (مثلاً ATR=15 -> فاصله ترلینگ 30.0 -> new_sl = 2024 - 30 = 1994 < 2000.15)
+        # راچت مانع افتادن زیر Breakeven شده و آن را به 2000.15 کلمپ می‌کند، اما چون sl قبلی 2004 بود شل نمی‌کند
+        modifies.clear()
+        pos_wide_atr = BrokerPosition(
+            ticket=102, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2024.0, sl=2004.0, tp=0.0,
+            profit=240.0, swap=0.0, open_time=int(time.time()), comment="auto"
+        )
+        manager.manage(pos_wide_atr, now_ts=time.time(), atr=15.0, atr_sl_mult=1.5)
+        assert len(modifies) == 0  # استاپ نباید شل شود
+
+    def test_b225_dynamic_atr_trail_ratchet_sell(self):
+        """b225: ترلینگ داینامیک ATR در پوزیشن فروش استاپ را بالاتر از Breakeven-buffer نمی‌برد و راچت حفظ می‌شود."""
+        modifies = []
+        def _on_modify(ticket, new_sl):
+            modifies.append((ticket, new_sl))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=2.0,
+            partial_enabled=False
+        )
+        manager = ExitManager(cfg, on_modify=_on_modify)
+
+        # SELL: Open=2000, initial SL=2015 (ATR=10, 1.5*ATR=15). Current=1985 -> r_achieved = 1.0R (BE zone)
+        pos_be = BrokerPosition(
+            ticket=103, symbol="XAUUSD", side=Side.SELL, volume=0.1,
+            open_price=2000.0, current_price=1985.0, sl=2015.0, tp=0.0,
+            profit=150.0, swap=0.0, open_time=int(time.time()), comment="auto"
+        )
+        manager.manage(pos_be, now_ts=time.time(), atr=10.0, atr_sl_mult=1.5)
+        assert len(modifies) == 1
+        assert modifies[0] == (103, 1999.85)
+
+        # مرحله ۳ سود (r_achieved >= 3.0R): Current=1950 -> r_achieved = 50/15 = 3.33R
+        # با ATR=10، فاصله ترلینگ مرحله ۳ = 1.5*10 = 15.0. new_sl = 1950 + 15 = 1965.0 < 1999.85
+        modifies.clear()
+        pos_stage3 = BrokerPosition(
+            ticket=103, symbol="XAUUSD", side=Side.SELL, volume=0.1,
+            open_price=2000.0, current_price=1950.0, sl=1999.85, tp=0.0,
+            profit=500.0, swap=0.0, open_time=int(time.time()), comment="auto"
+        )
+        manager.manage(pos_stage3, now_ts=time.time(), atr=10.0, atr_sl_mult=1.5)
+        assert len(modifies) == 1
+        assert modifies[0] == (103, 1965.0)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -724,5 +868,32 @@ class TestWatchlistEngine:
         )
         dec3, _, _ = engine.evaluate_signal(sig_near, view_bear, tick_near)
         assert dec3 == "REJECT"
+
+    def test_b225_evaluate_signal_boundary_rejects(self):
+        """b225: اگر قیمت زنده قبلاً استاپ یا تارگت سیگنال را رد کرده باشد، بلافاصله رد می‌شود."""
+        from core.engine import Engine, MarketView
+        from core.entities import Signal, Side, Tick
+        engine = Engine()
+        view = MarketView(
+            trend="bullish", trend_strength=0.2, atr=5.0, spread=0.5,
+            last_price=2050.0, support=2000.0, resistance=2100.0
+        )
+        # سیگنال خرید: entry=2050, sl=2040, tp=2070
+        sig_buy = Signal(
+            signal_id="sig-bound-1", raw_text="", symbol="XAUUSD", side=Side.BUY,
+            entry=2050.0, sl=2040.0, tp=2070.0, rr=2.0, confidence=0.8,
+            timestamp=datetime.now(timezone.utc).isoformat()
+        )
+        # قیمت به زیر استاپ رسیده (2038 <= 2040)
+        tick_sl_hit = Tick(symbol="XAUUSD", bid=2038.0, ask=2038.5, time=int(time.time()))
+        dec_sl, plan_sl, _ = engine.evaluate_signal(sig_buy, view, tick_sl_hit)
+        assert dec_sl == "REJECT"
+        assert plan_sl is None
+
+        # قیمت به بالای تارگت رسیده (2072 >= 2070)
+        tick_tp_hit = Tick(symbol="XAUUSD", bid=2072.0, ask=2072.5, time=int(time.time()))
+        dec_tp, plan_tp, _ = engine.evaluate_signal(sig_buy, view, tick_tp_hit)
+        assert dec_tp == "REJECT"
+        assert plan_tp is None
 
 
