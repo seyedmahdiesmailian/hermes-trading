@@ -203,12 +203,59 @@ class HermesDaemon:
             f"BLACKOUT ({view.news_reason})" if view.news_blackout else "CLEAR",
         )
 
-        # ۶) ساخت plan — اولویت با سیگنال کانال، سپس تحلیل خودکار
+        # ۶) ساخت plan — اولویت با سیگنال کانال (اجرا یا واچ‌لیست)، سپس واچ‌لیست فعال، سپس تحلیل خودکار
+        self.led.prune_expired_watchlist(time.time())
         plan = None
+
         for sig in new_signals:
-            plan = self.eng.plan_from_signal(sig, view, self.cfg.analysis.timeframe)
-            if plan is not None:
+            decision, plan_cand, wl_item = self.eng.evaluate_signal(
+                sig, view, tick, self.cfg.analysis.timeframe
+            )
+            if decision == "EXECUTE" and plan_cand is not None:
+                plan = plan_cand
+                log.info("سیگنال کانال تایید شد و آماده اجراست: %s", sig.signal_id)
                 break
+            elif decision == "WATCHLIST" and wl_item is not None:
+                self.led.add_to_watchlist(wl_item)
+                log.info("سیگنال به واچ‌لیست رفت: %s — %s", sig.signal_id, wl_item.get("reason"))
+                self.notify.status(f"⏳ سیگنال به واچ‌لیست رفت:\n{wl_item.get('reason')}")
+
+        # اگر پلنی از سیگنال‌های جدید نیامده، واچ‌لیست‌های گذشته را چک کن
+        if plan is None:
+            active_wl = self.led.get_active_watchlist(self.cfg.symbol)
+            for item in active_wl:
+                side = Side(item["side"])
+                # چک کردن آیا قیمت به ناحیه پولبک رسیده است
+                reached = (side == Side.BUY and tick.ask <= item["trigger_price"] + 0.50 and tick.ask >= item["sl"]) or \
+                          (side == Side.SELL and tick.bid >= item["trigger_price"] - 0.50 and tick.bid <= item["sl"])
+
+                if reached and not view.news_blackout:
+                    rr = round(abs(item["tp"] - tick.mid) / max(0.1, abs(tick.mid - item["sl"])), 2)
+                    plan = Plan(
+                        plan_id=f"wl-exec-{item['signal_id']}",
+                        symbol=item["symbol"],
+                        side=side,
+                        entry_price=tick.mid,
+                        stop_loss=item["sl"],
+                        take_profit=item["tp"],
+                        volume=0.0,
+                        grade=SetupGrade.A,
+                        source="watchlist_pullback",
+                        timeframe=self.cfg.analysis.timeframe,
+                        rr=rr,
+                        confidence=0.85,
+                        reasoning=f"واچ‌لیست پولبک فعال شد: {item['reason']}",
+                    )
+                    self.led.update_watchlist_status(item["item_id"], "executed")
+                    log.info("سیگنال واچ‌لیست پولبک زد و تبدیل به پلن شد: %s", plan.plan_id)
+                    break
+
+                # چک کردن آیا استاپ لاس قبل از پولبک شکسته و باطل شده
+                invalidated = (side == Side.BUY and tick.bid < item["sl"]) or \
+                              (side == Side.SELL and tick.ask > item["sl"])
+                if invalidated:
+                    self.led.update_watchlist_status(item["item_id"], "invalidated")
+                    log.info("سیگنال واچ‌لیست ابطال شد (لمس SL): %s", item["item_id"])
 
         if plan is None and not positions and auto_allowed:
             # تحلیل خودکار: ستاپ روند-EMA (تاییدشده با بک‌تست)

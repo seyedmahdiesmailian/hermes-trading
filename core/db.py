@@ -119,6 +119,21 @@ CREATE TABLE IF NOT EXISTS params (
     value TEXT NOT NULL,
     updated_at REAL NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS watchlist (
+    item_id TEXT PRIMARY KEY,
+    signal_id TEXT NOT NULL,
+    symbol TEXT NOT NULL,
+    side TEXT NOT NULL,
+    entry_price REAL NOT NULL,
+    trigger_price REAL NOT NULL,
+    sl REAL NOT NULL,
+    tp REAL NOT NULL,
+    added_at REAL NOT NULL,
+    expires_at REAL NOT NULL,
+    status TEXT NOT NULL DEFAULT 'waiting',
+    reason TEXT NOT NULL DEFAULT ''
+);
 """
 
 
@@ -293,3 +308,43 @@ class Ledger:
             " ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
             (key, value, self._now()))
         self._con.commit()
+
+    # ── watchlist (سیگنال‌های در انتظار پولبک) ─────────────
+
+    def add_to_watchlist(self, item: dict) -> None:
+        """افزودن سیگنال مشروط به واچ‌لیست جهت انتظار برای پولبک یا رفع خبر."""
+        self._con.execute(
+            """INSERT INTO watchlist (item_id, signal_id, symbol, side, entry_price,
+               trigger_price, sl, tp, added_at, expires_at, status, reason)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+               ON CONFLICT(item_id) DO UPDATE SET
+               trigger_price=excluded.trigger_price, status=excluded.status, reason=excluded.reason""",
+            (item["item_id"], item["signal_id"], item["symbol"], item["side"],
+             float(item["entry_price"]), float(item["trigger_price"]),
+             float(item["sl"]), float(item["tp"]),
+             float(item["added_at"]), float(item["expires_at"]),
+             item.get("status", "waiting"), str(item.get("reason", "")))
+        )
+        self._con.commit()
+
+    def get_active_watchlist(self, symbol: str = "XAUUSD") -> list[dict]:
+        """استعلام آیتم‌های فعال در انتظار پولبک."""
+        rows = self._con.execute(
+            "SELECT * FROM watchlist WHERE symbol = ? AND status = 'waiting' ORDER BY added_at ASC",
+            (symbol,)).fetchall()
+        return [dict(r) for r in rows]
+
+    def update_watchlist_status(self, item_id: str, status: str) -> None:
+        """به‌روزرسانی وضعیت آیتم واچ‌لیست (executed, expired, invalidated)."""
+        self._con.execute(
+            "UPDATE watchlist SET status = ? WHERE item_id = ?",
+            (status, item_id))
+        self._con.commit()
+
+    def prune_expired_watchlist(self, now_ts: float) -> int:
+        """منقضی کردن آیتم‌های کهنه‌تر از مهلت مقرر (معمولاً ۲ ساعت)."""
+        cur = self._con.execute(
+            "UPDATE watchlist SET status = 'expired' WHERE status = 'waiting' AND expires_at <= ?",
+            (now_ts,))
+        self._con.commit()
+        return cur.rowcount

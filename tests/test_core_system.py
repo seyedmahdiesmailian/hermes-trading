@@ -540,3 +540,87 @@ class TestAdaptiveLearner:
         assert ledger.get_param("min_grade") == "A"
         ledger.close()
 
+
+# ══════════════════════════════════════════════════════════════════
+# ۱۰. تست‌های واچ‌لیست و انتظار برای پولبک (Watchlist Engine)
+# ══════════════════════════════════════════════════════════════════
+
+class TestWatchlistEngine:
+    def test_watchlist_db_lifecycle(self, tmp_path):
+        from core.db import Ledger
+        db_path = tmp_path / "wl_test.db"
+        ledger = Ledger(db_path)
+        now = time.time()
+
+        item = {
+            "item_id": "wl-101",
+            "signal_id": "sig-101",
+            "symbol": "XAUUSD",
+            "side": "BUY",
+            "entry_price": 2050.0,
+            "trigger_price": 2050.0,
+            "sl": 2040.0,
+            "tp": 2070.0,
+            "added_at": now,
+            "expires_at": now + 3600.0,
+            "status": "waiting",
+            "reason": "منتظر پولبک",
+        }
+        ledger.add_to_watchlist(item)
+
+        active = ledger.get_active_watchlist("XAUUSD")
+        assert len(active) == 1
+        assert active[0]["item_id"] == "wl-101"
+
+        # Update status
+        ledger.update_watchlist_status("wl-101", "executed")
+        assert len(ledger.get_active_watchlist("XAUUSD")) == 0
+
+        # Prune expired
+        item_expired = {
+            "item_id": "wl-102", "signal_id": "sig-102", "symbol": "XAUUSD",
+            "side": "SELL", "entry_price": 2060.0, "trigger_price": 2060.0,
+            "sl": 2070.0, "tp": 2040.0, "added_at": now - 7200, "expires_at": now - 100,
+            "status": "waiting", "reason": "قدیمی",
+        }
+        ledger.add_to_watchlist(item_expired)
+        pruned = ledger.prune_expired_watchlist(now)
+        assert pruned == 1
+        ledger.close()
+
+    def test_evaluate_signal_states(self):
+        from core.engine import Engine, MarketView
+        from core.entities import Signal, Side, Tick
+        engine = Engine()
+        view = MarketView(
+            trend="bullish", trend_strength=0.7, atr=5.0, spread=0.5,
+            last_price=2050.0, support=2000.0, resistance=2100.0
+        )
+
+        # 1. Immediate Execution (price is right at entry 2050)
+        sig_near = Signal(
+            signal_id="s1", raw_text="BUY 2050", symbol="XAUUSD", side=Side.BUY,
+            entry=2050.0, sl=2040.0, tp=2070.0, rr=2.0, confidence=0.85, timestamp="2026-10-28T12:00:00Z"
+        )
+        tick_near = Tick(symbol="XAUUSD", bid=2050.0, ask=2050.3, time=1700000000)
+        dec1, plan1, _ = engine.evaluate_signal(sig_near, view, tick_near)
+        assert dec1 == "EXECUTE"
+        assert plan1 is not None
+
+        # 2. Watchlist (price has run away to 2055, wait for pullback to 2050)
+        tick_far = Tick(symbol="XAUUSD", bid=2055.0, ask=2055.3, time=1700000000)
+        dec2, plan2, wl_item = engine.evaluate_signal(sig_near, view, tick_far)
+        assert dec2 == "WATCHLIST"
+        assert plan2 is None
+        assert wl_item is not None
+        assert "پولبک" in wl_item["reason"]
+
+        # 3. Reject (Counter-trend BUY in a Bearish market)
+        view_bear = MarketView(
+            trend="bearish", trend_strength=0.8, atr=5.0, spread=0.5,
+            last_price=2050.0, support=2000.0, resistance=2100.0
+        )
+        dec3, _, _ = engine.evaluate_signal(sig_near, view_bear, tick_near)
+        assert dec3 == "REJECT"
+
+

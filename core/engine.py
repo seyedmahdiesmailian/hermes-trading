@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import math
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
@@ -259,6 +260,88 @@ class Engine:
             confidence=sig.confidence,
             reasoning=f"sig_conf={sig.confidence:.2f} trend={view.trend} zone={view.smc.zone.value if view.smc else 'N/A'}",
         )
+
+    def evaluate_signal(
+        self,
+        sig: Signal,
+        view: MarketView,
+        tick: Tick,
+        timeframe: str = "M15"
+    ) -> tuple[str, Optional[Plan], Optional[dict]]:
+        """تصمیم‌گیری سه‌حالته تریدر حرفه‌ای درباره سیگنال:
+        ۱. EXECUTE: اجرای فوری
+        ۲. WATCHLIST: نگهداری در واچ‌لیست تا پولبک به قیمت بهینه یا رفع خبر داغ
+        ۳. REJECT: رد قطعی (خلاف روند یا تله نقدینگی)
+        """
+        if not sig.is_valid:
+            return "REJECT", None, None
+
+        # فیلتر وتوی خلاف روند کلان -> رد قطعی
+        if view.is_trending:
+            if sig.side == Side.BUY and view.trend == "bearish":
+                log.info("سیگنال رد شد: خرید در روند نزولی قوی")
+                return "REJECT", None, None
+            if sig.side == Side.SELL and view.trend == "bullish":
+                log.info("سیگنال رد شد: فروش در روند صعودی قوی")
+                return "REJECT", None, None
+
+        # فیلتر تله نقدینگی سقف و کف -> رد قطعی
+        if view.smc is not None:
+            if sig.side == Side.BUY and view.smc.zone == ZoneType.PREMIUM and view.smc.fib_level > 0.80:
+                log.info("سیگنال رد شد: خرید در سقف قیمت")
+                return "REJECT", None, None
+            if sig.side == Side.SELL and view.smc.zone == ZoneType.DISCOUNT and view.smc.fib_level < 0.20:
+                log.info("سیگنال رد شد: فروش در کف قیمت")
+                return "REJECT", None, None
+
+        now_ts = time.time()
+
+        # اگر در زمان خبر داغ باشیم -> نگهداری در واچ‌لیست تا رفع خبر!
+        if view.news_blackout:
+            item = {
+                "item_id": f"wl-{sig.signal_id}",
+                "signal_id": sig.signal_id,
+                "symbol": sig.symbol,
+                "side": sig.side.value,
+                "entry_price": sig.entry,
+                "trigger_price": sig.entry,
+                "sl": sig.sl,
+                "tp": sig.tp,
+                "added_at": now_ts,
+                "expires_at": now_ts + 7200.0,
+                "status": "waiting",
+                "reason": f"در انتظار رفع خبر: {view.news_reason}",
+            }
+            return "WATCHLIST", None, item
+
+        # بررسی فاصله قیمت لحظه‌ای بازار با قیمت ورود سیگنال
+        cur_price = tick.mid
+        has_run = (sig.side == Side.BUY and cur_price > sig.entry + 1.5) or \
+                  (sig.side == Side.SELL and cur_price < sig.entry - 1.5)
+
+        if has_run:
+            item = {
+                "item_id": f"wl-{sig.signal_id}",
+                "signal_id": sig.signal_id,
+                "symbol": sig.symbol,
+                "side": sig.side.value,
+                "entry_price": sig.entry,
+                "trigger_price": sig.entry,
+                "sl": sig.sl,
+                "tp": sig.tp,
+                "added_at": now_ts,
+                "expires_at": now_ts + 7200.0,
+                "status": "waiting",
+                "reason": f"قیمت امتداد یافته ({cur_price:,.2f}) — در انتظار پولبک به {sig.entry:,.2f}",
+            }
+            return "WATCHLIST", None, item
+
+        # اجرای فوری!
+        plan = self.plan_from_signal(sig, view, timeframe)
+        if plan is not None:
+            return "EXECUTE", plan, None
+
+        return "REJECT", None, None
 
     # ── سیستم نمره‌دهی ستاپ‌ها (Grading Matrix) ────────────
 
