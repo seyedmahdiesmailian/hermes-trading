@@ -122,7 +122,7 @@ class ExitManager:
         if pos.tp > 0 and pos.sl > 0 and r_mult >= self._cfg.trailing_start_rr:
             new_sl = self._trail_sl_with_tp(pos)
             if new_sl is not None:
-                self._modify(pos, new_sl)
+                self._modify(pos, new_sl, reason="trailing")
             else:
                 self._apply_breakeven_with_buffer(pos)
         elif r_mult >= self._cfg.breakeven_rr:
@@ -167,7 +167,7 @@ class ExitManager:
             if new_sl > target_be and target_be > pos.current_price:
                 new_sl = target_be
             if (pos.sl == 0 or new_sl < pos.sl) and new_sl > pos.current_price:
-                self._modify(pos, round(new_sl, 2))
+                self._modify(pos, round(new_sl, 2), reason="trailing")
 
     # ── جابجایی استاپ به نقطه ورود + بافر ──────────────────
 
@@ -178,11 +178,11 @@ class ExitManager:
             target_be = pos.open_price + buffer
             # استاپ فقط به سمت سود می‌تواند حرکت کند و نباید از قیمت جاری بالاتر برود
             if target_be > pos.sl and target_be < pos.current_price:
-                self._modify(pos, round(target_be, 2))
+                self._modify(pos, round(target_be, 2), reason="breakeven")
         else:
             target_be = pos.open_price - buffer
             if (pos.sl == 0 or target_be < pos.sl) and target_be > pos.current_price:
-                self._modify(pos, round(target_be, 2))
+                self._modify(pos, round(target_be, 2), reason="breakeven")
 
     # ── بستن پله‌ای (Partial Close Execution) ─────────────
 
@@ -198,13 +198,16 @@ class ExitManager:
 
     # ── متدهای کمکی ──────────────────────────────────────
 
-    def _modify(self, pos: BrokerPosition, new_sl: float) -> None:
+    def _modify(self, pos: BrokerPosition, new_sl: float, reason: str = "modify") -> None:
         """اعمال SL جدید با استفاده از کال‌بک ثبت‌شده."""
         if self._on_modify is not None:
             try:
-                self._on_modify(pos.ticket, new_sl, pos.tp)
+                self._on_modify(pos.ticket, new_sl, pos.tp, reason=reason)
             except TypeError:
-                self._on_modify(pos.ticket, new_sl)
+                try:
+                    self._on_modify(pos.ticket, new_sl, pos.tp)
+                except TypeError:
+                    self._on_modify(pos.ticket, new_sl)
 
     @staticmethod
     def _trail_sl_with_tp(pos: BrokerPosition) -> float | None:

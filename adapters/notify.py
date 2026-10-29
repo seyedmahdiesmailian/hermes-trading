@@ -68,3 +68,26 @@ class NotifyAdapter:
 
     def status(self, text: str) -> None:
         self.send(f"ℹ️ {text}")
+
+    def breakeven_activated(self, ticket: int, symbol: str, side: str, new_sl: float) -> None:
+        arrow = "🟢 خرید" if side.upper() == "BUY" else "🔴 فروش"
+        self.send(
+            f"🛡 *معامله ریسک‌فری شد (Breakeven)*\n"
+            f"تیکت: `#{ticket}` · {symbol} ({arrow})\n"
+            f"استاپ به نقطه ورود امن `{new_sl:.2f}` (+ بافر کارمزد) منتقل شد."
+        )
+
+    def partial_closed(self, ticket: int, symbol: str, percent: float, volume_closed: float, pnl: float) -> None:
+        self.send(
+            f"💰 *سیو سود پله‌ای (Partial TP)*\n"
+            f"تیکت: `#{ticket}` · {symbol}\n"
+            f"بستن `{percent:.0f}%` حجم معامله (`{volume_closed:.2f}` لات)\n"
+            f"سود نقدی کسب‌شده: `+{pnl:.2f} $`"
+        )
+
+    def trailing_ratcheted(self, ticket: int, symbol: str, new_sl: float, cur_price: float) -> None:
+        self.send(
+            f"📈 *ترلینگ استاپ (Trailing Ratchet)*\n"
+            f"تیکت: `#{ticket}` · {symbol}\n"
+            f"استاپ به سمت سود به `{new_sl:.2f}` فشرده شد (قیمت جاری: `{cur_price:.2f}`)."
+        )

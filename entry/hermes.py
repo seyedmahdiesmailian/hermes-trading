@@ -72,13 +72,19 @@ class HermesDaemon:
         self.notify = self._build_notify()
 
         # منطق خروج مشترک (دیمن زنده + بک‌تستر یک کد اجرا می‌کنند)
-        def _on_modify(ticket: int, new_sl: float, tp: float = 0.0) -> None:
+        def _on_modify(ticket: int, new_sl: float, tp: float = 0.0, reason: str = "modify") -> None:
             try:
                 # b233: حفظ TP فعلی در صورت عدم ارسال مقدار جدید تا در بروکر پاک نشود
                 if tp <= 0.0 and ticket in self._tracked_positions:
                     tp = self._tracked_positions[ticket].tp
                 self.mt5.modify_position(ticket, new_sl, tp)
-                log.info("SL modified: ticket=%s sl=%.2f tp=%.2f", ticket, new_sl, tp)
+                log.info("SL modified: ticket=%s sl=%.2f tp=%.2f reason=%s", ticket, new_sl, tp, reason)
+                if ticket in self._tracked_positions:
+                    p = self._tracked_positions[ticket]
+                    if reason == "breakeven":
+                        self.notify.breakeven_activated(ticket, p.symbol, p.side.value, new_sl)
+                    elif reason == "trailing":
+                        self.notify.trailing_ratcheted(ticket, p.symbol, new_sl, p.current_price)
             except BridgeError as e:
                 log.warning("modify_position failed: ticket=%s error=%s", ticket, e)
 
@@ -140,7 +146,7 @@ class HermesDaemon:
                     self.led.save_trade(trade)
                     log.info("Partial close: ticket=%s percent=%.1f%% executed vol=%.2f pnl=%.2f",
                              ticket, percent, closed_vol, pnl)
-                    self.notify.status(f"🎯 بستن پله‌ای: {percent}% حجم پوزیشن #{ticket} با سود ${pnl:+.2f} سیو شد.")
+                    self.notify.partial_closed(ticket, cur_pos.symbol, percent, closed_vol, pnl)
             elif ok:
                 log.info("Partial close: ticket=%s percent=%.1f%% executed", ticket, percent)
                 self.notify.status(f"🎯 بستن پله‌ای: {percent}% حجم پوزیشن #{ticket} سیو شد.")
