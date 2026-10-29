@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Weekly management report for the trading system (Persian, Telegram-ready).
+"""Weekly management report for Hermes Trading System (Persian, Telegram-ready).
 
-Collects: live balance, 7-day journal stats, lifetime stats, funnel
-activity (plans vs trades), open positions, safety-gate skips,
-and system changes (git) — prints a formatted report to stdout.
-Cron-safe: never raises; on data failure prints what it has.
+Collects: live balance/equity from MT5, 7-day trade stats from SQLite & broker,
+funnel activity (plans vs trades), open positions, safety-gate guard activity,
+and system changes (git) — prints a clean formatted report to stdout.
+Cron-safe: never raises; on partial data failure prints what it has.
 """
-import sys, os, csv, time, json, glob, subprocess, statistics
+import sys
+import os
+import time
+import sqlite3
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, _ROOT)
-try:
-    from dotenv import load_dotenv
-except ImportError:
-    from env_loader import load_dotenv
-load_dotenv(os.path.join(_ROOT, '.env'))
+_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_ROOT))
 
-# V2: Get bridge URL from env instead of engines.config
-sys.path.insert(0, os.path.join(_ROOT, 'legacy_v1'))  # For engines if needed
-BRIDGE_URL = os.getenv('HERMES_BRIDGE_URL', 'http://192.168.10.51:5050')
+from core.params import load_config
+from adapters.mt5 import Mt5Adapter
 
 DAYS = 7
 WEEK_S = DAYS * 86400
@@ -32,131 +32,162 @@ def money(v):
     return f"{sign}{fa(f'{abs(v):,.2f}')}$"
 
 def pct(v):
-    return fa(f"{v:.0f}") + '٪'
+    return fa(f"{v:.1f}") + '٪'
 
 def main():
     now = time.time()
+    week_ago = now - WEEK_S
     lines = []
 
-    # ── journal (closed trades) ────────────────────────────────────────
-    # Journal rows are per CLOSING DEAL. A position closed in parts (partial
-    # TPs) writes several rows, so counting rows overstates the trade count.
-    # Group by position_id first — this reported "34 trades" for 23 positions
-    # until 2026-09-04.
-    rows = []
+    # ── ۱. اتصال به بریج و استعلام اکانت زنده ──
+    token = ""
+    env_file = _ROOT / ".env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if line.startswith("HERMES_BRIDGE_TOKEN="):
+                token = line.split("=", 1)[1].strip()
+
+    cfg = load_config(_ROOT / "config.yaml", bridge_token=token)
+    mt5 = Mt5Adapter(cfg.bridge.url, cfg.bridge.token, cfg.bridge.timeout_s, dry_run=False)
+
+    acct = None
+    open_pos = []
     try:
-        with open(os.path.join(_ROOT, 'data/xau_plan/trade_journal.csv')) as f:
-            rows = list(csv.DictReader(f))
+        acct = mt5.get_account()
     except Exception as e:
-        lines.append(f"⚠️ ژورنال خوانده نشد: {e}")
+        lines.append(f"⚠️ استعلام حساب از بریج با خطا مواجه شد: {e}")
 
     try:
-        from engines.learning import group_positions
-        positions = list(group_positions(rows).values())
-    except Exception:
-        positions = [{'net': r.get('profit'), 'close_time': r.get('close_time'),
-                      'volume': r.get('volume')} for r in rows]
-
-    def stats(subset):
-        if not subset:
-            return None
-        # 'net' = profit + commission + swap + entry_commission
-        # (see learning.group_positions — the ONE net formula, b152)
-        p = [float(r['net']) for r in subset if r.get('net') is not None
-             and str(r.get('net')) != '']
-        w = [x for x in p if x > 0]
-        l = [x for x in p if x <= 0]
-        return dict(n=len(p), total=sum(p), wins=len(w), losses=len(l),
-                    wr=(100.0*len(w)/len(p)) if p else 0,
-                    avg_w=statistics.mean(w) if w else 0,
-                    avg_l=statistics.mean(l) if l else 0,
-                    best=max(p), worst=min(p))
-
-    week = [r for r in positions if now - float(r['close_time'] or 0) <= WEEK_S]
-    sw, sa = stats(week), stats(positions)
-
-    # ── live bridge state ──────────────────────────────────────────────
-    # Documented precedence (b52/b63): explicit HERMES_BRIDGE_URL >
-    # derived from HERMES_WIN_IP > bridge_client default. Read by NAME.
-    acct, open_pos = None, None
-    try:
-        from bridge_client import BridgeClient
-        b = BridgeClient(url=BRIDGE_URL)
-        acct = b.get_account()
-        pos = b.get_positions()
-        open_pos = pos.get('data', []) if isinstance(pos, dict) else []
+        open_pos = mt5.get_open_positions(cfg.symbol)
     except Exception as e:
-        lines.append(f"⚠️ بریج پاسخ نداد: {e}")
+        lines.append(f"⚠️ استعلام پوزیشن‌های باز با خطا مواجه شد: {e}")
 
-    # ── funnel activity ────────────────────────────────────────────────
-    n_plans = len([p for p in glob.glob(os.path.join(
-        _ROOT, 'data/xau_plan/plan_history/*.json'))
-        if now - os.path.getmtime(p) <= WEEK_S])
+    # ── ۲. استخراج معاملات از SQLite و بروکر ──
+    trades = []
+    plans_week = 0
+    guards_week = {}
+    db_path = _ROOT / "data" / "hermes.db"
 
-    # ── safety-gate skips this week (from runtime log) ─────────────────
-    skips = {}
+    if db_path.exists():
+        try:
+            con = sqlite3.connect(db_path)
+            con.row_factory = sqlite3.Row
+            # معاملات ۷ روز گذشته
+            rows = con.execute(
+                "SELECT * FROM trades WHERE closed_at >= ? ORDER BY closed_at ASC",
+                (week_ago,)
+            ).fetchall()
+            trades = [dict(r) for r in rows]
+
+            # تعداد پلن‌های ۷ روز گذشته
+            row_p = con.execute(
+                "SELECT count(*) FROM plans WHERE created_at >= ?",
+                (week_ago,)
+            ).fetchone()
+            plans_week = row_p[0] if row_p else 0
+
+            # گیت‌های فعال ۷ روز گذشته
+            g_rows = con.execute(
+                "SELECT reasons FROM guard_log WHERE ts >= ?",
+                (week_ago,)
+            ).fetchall()
+            for gr in g_rows:
+                r_txt = gr["reasons"] or ""
+                for part in r_txt.replace("[", "").replace("]", "").replace("'", "").replace('"', '').split(","):
+                    p = part.strip()
+                    if p and p != "ok":
+                        key = p.split("(")[0].strip()
+                        guards_week[key] = guards_week.get(key, 0) + 1
+
+            con.close()
+        except Exception as e:
+            lines.append(f"⚠️ خواندن دیتابیس هرمس با خطا مواجه شد: {e}")
+
+    # محاسبه آمار ۷ روز گذشته
+    n_trades = len(trades)
+    wins = [t for t in trades if t["pnl"] > 0]
+    losses = [t for t in trades if t["pnl"] < 0]
+    total_pnl = sum(t["pnl"] for t in trades)
+    win_rate = (len(wins) / n_trades * 100) if n_trades > 0 else 0.0
+    avg_win = (sum(w["pnl"] for w in wins) / len(wins)) if wins else 0.0
+    avg_loss = (sum(l["pnl"] for l in losses) / len(losses)) if losses else 0.0
+    best_trade = max((t["pnl"] for t in trades), default=0.0)
+    worst_trade = min((t["pnl"] for t in trades), default=0.0)
+
+    # ── ۳. تاریخچه تغییرات سیستم (Git) ──
+    git_commits = []
     try:
-        log = os.path.join(_ROOT, 'logs/master.log')
-        cutoff = now - WEEK_S
-        with open(log, errors='ignore') as f:
-            for ln in f:
-                if 'daily_trade_limit' in ln: skips['سقف ترید روزانه'] = skips.get('سقف ترید روزانه', 0) + 1
-                if 'daily_loss_limit' in ln: skips['سقف ضرر روزانه'] = skips.get('سقف ضرر روزانه', 0) + 1
-                if 'macro_blackout' in ln: skips['بلک‌اوت اخبار'] = skips.get('بلک‌اوت اخبار', 0) + 1
+        cmd = [
+            "git", "log", f"--since={DAYS} days", "--oneline",
+            "--", "core/", "adapters/", "entry/", "notifier/", "scripts/", "config.yaml"
+        ]
+        res = subprocess.run(cmd, cwd=str(_ROOT), capture_output=True, text=True, check=True)
+        git_commits = [c.strip() for c in res.stdout.strip().splitlines() if c.strip()]
     except Exception:
         pass
 
-    # ── system changes (git) ───────────────────────────────────────────
-    commits = []
-    try:
-        out = subprocess.run(
-            ['git', 'log', f'--since={DAYS} days', '--oneline', '--',
-             'engines/', 'hermes_runtime.py', 'hermes_master.py', 'config.py'],
-            cwd=_ROOT, capture_output=True, text=True, timeout=20).stdout
-        commits = [l.split(' ', 1)[1][:90] for l in out.strip().splitlines()]
-    except Exception:
-        pass
+    # ── ۴. نگارش و قالب‌بندی نهایی گزارش (Telegram Markdown) ──
+    t = time.localtime(now)
+    report_lines = [
+        f"📊 **گزارش هفتگی سامانه معاملاتی هرمس** — {fa(t.tm_year)}/{fa(f'{t.tm_mon:02d}')}/{fa(f'{t.tm_mday:02d}')}",
+        ""
+    ]
 
-    # ── render ─────────────────────────────────────────────────────────
-    t = time.gmtime(now)
-    lines.insert(0, f"📊 گزارش هفتگی هرمس — {fa(t.tm_year)}/{fa(t.tm_mon)}/{fa(t.tm_mday)}")
-    lines.append("")
+    # بخش حساب
     if acct:
-        bal = float(acct.get('balance', 0)); eq = float(acct.get('equity', 0))
+        bal = acct.balance
+        eq = acct.equity
         base = 5000.0
-        lines.append(f"💰 بالانس: {fa(f'{bal:,.2f}')}$ | اکوئیتی: {fa(f'{eq:,.2f}')}$")
-        lines.append(f"📈 کل بازده از شروع: {money(bal-base)} ({pct(100*(bal-base)/base)})")
-    if open_pos is not None:
-        if open_pos:
-            lines.append(f"🔓 پوزیشن باز: {fa(len(open_pos))}")
-            for p in open_pos[:5]:
-                lines.append(f"   • {p.get('type','?')} {fa(p.get('volume','?'))} @ {fa(p.get('price_open','?'))} | شناور {money(float(p.get('profit',0)))}")
-        else:
-            lines.append("🔒 پوزیشن باز: صفر")
-    lines.append("")
-    lines.append(f"— ۷ روز گذشته ({fa(sw['n']) if sw else '۰'} معامله بسته) —")
-    if sw:
-        lines.append(f"✅ برد: {fa(sw['wins'])} | ❌ باخت: {fa(sw['losses'])} | وین‌ریت {pct(sw['wr'])}")
-        lines.append(f"💵 سود هفته: {money(sw['total'])}")
-        lines.append(f"میانگین برد {money(sw['avg_w'])} | میانگین باخت {money(sw['avg_l'])}")
-        lines.append(f"بهترین {money(sw['best'])} | بدترین {money(sw['worst'])}")
+        ret_val = bal - base
+        ret_pct = (ret_val / base) * 100.0
+        report_lines.append(f"💰 **Balance:** {fa(f'{bal:,.2f}')}$ | **Equity:** {fa(f'{eq:,.2f}')}$")
+        report_lines.append(f"📈 **بازدهی کل:** {money(ret_val)} ({pct(ret_pct)})")
+    
+    # پوزیشن‌های باز
+    if open_pos:
+        report_lines.append(f"🔓 **پوزیشن‌های باز:** {fa(len(open_pos))}")
+        for p in open_pos[:5]:
+            report_lines.append(
+                f"   • {p.side.value} {fa(f'{p.volume:.2f}')} @ {fa(f'{p.open_price:,.2f}')} | P&L: {money(p.net_profit)}"
+            )
     else:
-        lines.append("معامله‌ای بسته نشد.")
-    lines.append("")
-    lines.append(f"— قیف سیستم (۷ روز) —")
-    lines.append(f"🧠 پلن تحلیل‌شده: {fa(n_plans)} | تبدیل به معامله: {fa(sw['n']) if sw else '۰'} ({pct(100*(sw['n'])/n_plans) if sw and n_plans else '۰'})")
-    if skips:
-        lines.append("🛡 گیت‌های ایمنی فعال: " + " | ".join(f"{k} ×{fa(v)}" for k, v in skips.items()))
-    lines.append("")
-    lines.append(f"— کل از شروع ({fa(sa['n']) if sa else '۰'} معامله) —")
-    if sa:
-        lines.append(f"وین‌ریت {pct(sa['wr'])} | سود کل {money(sa['total'])} | میانگین هر معامله {money(sa['total']/sa['n'])}")
-    if commits:
-        lines.append("")
-        lines.append(f"— تغییرات سیستم ({fa(len(commits))} کامیت) —")
-        for c in commits[:6]:
-            lines.append(f"• {c}")
-    print("\n".join(lines))
+        report_lines.append("🔒 **پوزیشن باز:** صفر (سیستم آماده شکار ستاپ)")
 
-if __name__ == '__main__':
+    report_lines.append("")
+
+    # کارنامه ۷ روز اخیر
+    report_lines.append(f"— **عملکرد ۷ روز گذشته** ({fa(n_trades)} معامله بسته) —")
+    if n_trades > 0:
+        report_lines.append(f"✅ برد: {fa(len(wins))} | ❌ باخت: {fa(len(losses))} | **وین‌ریت: {pct(win_rate)}**")
+        report_lines.append(f"💵 سود خالص هفته: **{money(total_pnl)}**")
+        report_lines.append(f"میانگین برد: {money(avg_win)} | میانگین باخت: {money(avg_loss)}")
+        report_lines.append(f"بهترین معامله: {money(best_trade)} | بدترین: {money(worst_trade)}")
+    else:
+        report_lines.append("در ۷ روز گذشته معامله بسته‌شده‌ای ثبت نشد.")
+
+    report_lines.append("")
+
+    # قیف سیستم
+    report_lines.append("— **قیف سیستم (Funnel)** —")
+    conv_rate = (n_trades / plans_week * 100) if plans_week > 0 else 0.0
+    report_lines.append(f"🧠 ستاپ‌های تحلیل‌شده: {fa(plans_week)} | تبدیل به معامله: {fa(n_trades)} ({pct(conv_rate)})")
+    if guards_week:
+        g_summary = " | ".join(f"{k} ×{fa(v)}" for k, v in list(guards_week.items())[:4])
+        report_lines.append(f"🛡 **گیت‌های ایمنی فعال:** {g_summary}")
+
+    report_lines.append("")
+
+    # تغییرات گیت
+    if git_commits:
+        report_lines.append(f"— **تغییرات و ارتقای سیستم** ({fa(len(git_commits))} کامیت) —")
+        for c in git_commits[:5]:
+            report_lines.append(f"• `{c}`")
+    
+    if lines:
+        report_lines.append("")
+        report_lines.extend(lines)
+
+    print("\n".join(report_lines))
+
+if __name__ == "__main__":
     main()
