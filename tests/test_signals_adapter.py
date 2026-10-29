@@ -158,3 +158,38 @@ class TestSignalsAdapter:
         assert signals[0].entry == 4037.0
         assert signals[0].sl == 4052.0
         assert signals[0].tp == 4022.0
+
+    def test_b243_expand_abbreviated_price_3_digit_and_century(self):
+        # تست تبدیل قیمت ۳ رقمی به هزاره جاری (مثلاً 735 برای طلای 2730)
+        assert SignalsAdapter._expand_abbreviated_price("735", 2730.0) == 2735.0
+        assert SignalsAdapter._expand_abbreviated_price("725.5", 2730.0) == 2725.5
+        assert SignalsAdapter._expand_abbreviated_price("755", 2730.0) == 2755.0
+        # تست شکست هزاره (Rollover)
+        assert SignalsAdapter._expand_abbreviated_price("990", 3005.0) == 2990.0
+        assert SignalsAdapter._expand_abbreviated_price("15", 2990.0) == 3015.0
+        # تست قیمت ۲ رقمی استاندارد و شکست سده (Century Rollover)
+        assert SignalsAdapter._expand_abbreviated_price("35", 2730.0) == 2735.0
+        assert SignalsAdapter._expand_abbreviated_price("98", 2701.0) == 2698.0
+        assert SignalsAdapter._expand_abbreviated_price("02", 2699.0) == 2702.0
+        # قیمت ۴ رقمی بدون تغییر
+        assert SignalsAdapter._expand_abbreviated_price("2735.5", 2730.0) == 2735.5
+
+    def test_b243_parse_3_digit_persian_signal(self, setup_paths):
+        log_file, state_file = setup_paths
+        now_iso = datetime.now(timezone.utc).isoformat()
+        sample = [{
+            "id": "sig-3digit-1",
+            "timestamp": now_iso,
+            "raw_text": "خرید طلا 735 حد ضرر 725 حد سود 755",
+        }]
+        log_file.write_text(json.dumps(sample), encoding="utf-8")
+
+        adapter = SignalsAdapter(log_file, state_file)
+        signals = adapter.read_new(current_price=2730.0)
+        assert len(signals) == 1
+        sig = signals[0]
+        assert sig.symbol == "XAUUSD"
+        assert sig.side == Side.BUY
+        assert sig.entry == 2735.0
+        assert sig.sl == 2725.0
+        assert sig.tp == 2755.0

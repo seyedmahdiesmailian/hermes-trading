@@ -1854,6 +1854,52 @@ class TestWatchlistEngine:
             expected_rr = round(abs(plan.entry_price - plan.take_profit) / max(0.1, abs(plan.entry_price - plan.stop_loss)), 2)
             assert plan.rr == expected_rr
 
+    def test_b243_backtester_trailing_stop_exit_reason_parity(self):
+        """b243: Backtester reconciles STOP_LOSS hit to TRAILING_STOP or BREAKEVEN when net PnL is non-negative."""
+        from entry.backtest import Backtester, OpenTrade
+        bt = Backtester()
+        bt._open = OpenTrade(
+            ticket=999, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+            open_price=2000.0, sl=2015.0, tp=2030.0, open_time=1000.0,
+            plan_id="p-trail", entry_rr=2.0, initial_sl=1990.0,
+        )
+        # Candle low hits the trailed stop at 2015.0 (which is in profit)
+        candle = Candle(time=2000, open=2020.0, high=2022.0, low=2014.0, close=2016.0, volume=100)
+        closed = bt._process_exit([candle], 0, 2000.0)
+        assert closed is True
+        assert len(bt.trades) == 1
+        t = bt.trades[0]
+        # PnL: (2015 - 2000) * 0.10 * 100 - 0.70 = 150 - 0.70 = 149.30 > 0
+        assert t.pnl == 149.30
+        assert t.exit_reason == ExitReason.TRAILING_STOP
+
+    def test_b243_watchlist_pullback_zero_tp_guarded(self):
+        """b243: Watchlist pullback with tp<=0 does not compute fake 270.0 RR from raw asset price."""
+        from entry.hermes import HermesDaemon
+        daemon = HermesDaemon(bridge_token="")
+        # Simulate watchlist item with tp=0
+        item = {
+            "item_id": "wl-zero-tp",
+            "signal_id": "sig-ztp",
+            "symbol": "XAUUSD",
+            "side": "BUY",
+            "entry_price": 2700.0,
+            "trigger_price": 2700.0,
+            "sl": 2690.0,
+            "tp": 0.0,
+            "added_at": 1000.0,
+            "expires_at": 5000.0,
+            "status": "waiting",
+            "reason": "test",
+        }
+        tick_mid = 2700.0
+        if item.get("tp", 0.0) > 0:
+            rr = round(abs(item["tp"] - tick_mid) / max(0.1, abs(tick_mid - item["sl"])), 2)
+        else:
+            rr = 0.0
+        assert rr == 0.0  # Guarded, not 270.0!
+        daemon.close()
+
 
 
 

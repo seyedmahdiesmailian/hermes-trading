@@ -353,6 +353,13 @@ class Backtester:
         if pnl < 0:
             self._last_loss_ts = now_ts
 
+        # هماهنگی خروج با دیمن زنده: در صورت ترلینگ استاپ یا بریک‌اون، دلیل خروج اصلاح شود
+        if exit_reason == ExitReason.STOP_LOSS:
+            if pnl > 0.0:
+                exit_reason = ExitReason.TRAILING_STOP
+            elif pnl == 0.0:
+                exit_reason = ExitReason.BREAKEVEN
+
         trade = Trade(
             trade_id=f"bt-{ot.ticket}", plan_id=ot.plan_id, ticket=ot.ticket,
             symbol=ot.symbol, side=ot.side, volume=ot.volume,

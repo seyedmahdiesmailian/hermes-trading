@@ -419,7 +419,8 @@ class SMCAnalyzer:
             return None, 0.0, 0.0
         last_day = candles[-1].time // 86400
         asia_candles = []
-        for c in candles[-40:]:
+        # پنجره ۱۰۰ کندلی برای پوشش کامل ۲۴ ساعت شبانه‌روز و جلوگیری از ریزش کندل‌های آسیا
+        for c in candles[-100:]:
             if (c.time // 86400) == last_day:
                 h = (c.time % 86400) // 3600
                 if 0 <= h < 6:

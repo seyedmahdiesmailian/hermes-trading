@@ -332,7 +332,10 @@ class HermesDaemon:
                           (side == Side.SELL and tick.bid >= item["trigger_price"] - 0.50 and tick.bid <= item["sl"])
 
                 if reached and not view.news_blackout:
-                    rr = round(abs(item["tp"] - tick.mid) / max(0.1, abs(tick.mid - item["sl"])), 2)
+                    if item.get("tp", 0.0) > 0:
+                        rr = round(abs(item["tp"] - tick.mid) / max(0.1, abs(tick.mid - item["sl"])), 2)
+                    else:
+                        rr = 0.0
                     plan = Plan(
                         plan_id=f"wl-exec-{item['signal_id']}",
                         symbol=item["symbol"],

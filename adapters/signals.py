@@ -195,12 +195,22 @@ class SignalsAdapter:
         v = float(val_str)
         if v >= 1000:
             return v
-        cur_base = (current_price // 100) * 100
-        candidates = [
-            cur_base - 100 + v,
-            cur_base + v,
-            cur_base + 100 + v,
-        ]
+        if v >= 100:
+            # قیمت ۳ رقمی (مثلاً 735 برای طلای 2735) -> مبنای هزارگان
+            cur_base = (current_price // 1000) * 1000
+            candidates = [
+                cur_base - 1000 + v,
+                cur_base + v,
+                cur_base + 1000 + v,
+            ]
+        else:
+            # قیمت ۲ رقمی (مثلاً 35 برای طلای 2735) -> مبنای صدگان
+            cur_base = (current_price // 100) * 100
+            candidates = [
+                cur_base - 100 + v,
+                cur_base + v,
+                cur_base + 100 + v,
+            ]
         return min(candidates, key=lambda c: abs(c - current_price))
 
     @classmethod
