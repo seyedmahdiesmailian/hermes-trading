@@ -166,12 +166,15 @@ class Engine:
                 return None
 
         entry = view.last_price
+        risk_dist = view.atr * SL_ATR_MULT
+        target_dist = risk_dist * 2.0  # تارگت سخت‌افزاری 2.0R به عنوان سقف سود در بروکر
+
         if side == Side.BUY:
-            sl = entry - view.atr * SL_ATR_MULT
-            tp = 0.0  # مدیریت سود با تریلینگ داینامیک
+            sl = round(entry - risk_dist, 2)
+            tp = round(entry + target_dist, 2)
         else:
-            sl = entry + view.atr * SL_ATR_MULT
-            tp = 0.0
+            sl = round(entry + risk_dist, 2)
+            tp = round(entry - target_dist, 2)
 
         if entry <= 0 or sl <= 0:
             return None
