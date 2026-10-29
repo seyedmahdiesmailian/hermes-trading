@@ -212,24 +212,31 @@ class Engine:
                 return None
 
         # فیلتر ۲: عدم تعقیب قیمت امتدادیافته (Anti-Chasing Mean Reversion Filter)
-        # اگر قیمت بیش از ۱.۰ برابر ATR از EMA20 فاصله گرفته باشد، ورود با مارکت ممنوع است
         dist_to_mean = abs(last - e20)
-        if dist_to_mean > 1.0 * view.atr:
-            log.info("تحلیل خودکار رد شد: قیمت امتداد یافته (فاصله از EMA20: %.2f > ATR %.2f) — در انتظار پولبک", dist_to_mean, view.atr)
+        if dist_to_mean > 0.85 * view.atr:
+            log.info("تحلیل خودکار رد شد: قیمت امتداد یافته (فاصله از EMA20: %.2f > ATR %.2f) — در انتظار پولبک", dist_to_mean, 0.85 * view.atr)
             return None
 
-        # فیلتر ۳: تاییدیه نواحی ارزان‌فروشی/گران‌فروشی (SMC Zone Check)
+        # فیلتر ۳: قانون طلایی اسمارت مانی (SMC Strict Premium/Discount Rule)
         if view.smc is not None:
-            # نباید در سقف رنج (Extreme Premium) خرید زد
-            if side == Side.BUY and view.smc.zone == ZoneType.PREMIUM and view.smc.fib_level > 0.70:
-                log.info("تحلیل رد شد: خرید در ناحیه گران (Premium fib=%.2f)", view.smc.fib_level)
+            # خرید فقط و فقط در محدوده ارزان‌فروشی (Discount <= 50%) مجاز است
+            if side == Side.BUY and view.smc.fib_level > 0.50:
+                log.info("تحلیل رد شد: خرید در ناحیه گران (Premium fib=%.2f > 0.50) خلاف اصول نقدینگی SMC", view.smc.fib_level)
                 return None
-            # نباید در کف رنج (Extreme Discount) فروش زد
-            if side == Side.SELL and view.smc.zone == ZoneType.DISCOUNT and view.smc.fib_level < 0.30:
-                log.info("تحلیل رد شد: فروش در ناحیه ارزان (Discount fib=%.2f)", view.smc.fib_level)
+            # فروش فقط و فقط در محدوده گران‌فروشی (Premium >= 50%) مجاز است
+            if side == Side.SELL and view.smc.fib_level < 0.50:
+                log.info("تحلیل رد شد: فروش در ناحیه ارزان (Discount fib=%.2f < 0.50) خلاف اصول نقدینگی SMC", view.smc.fib_level)
                 return None
 
         entry = view.last_price
+
+        # فیلتر ۴: سد حمایت و مقاومت کلیدی (عدم فروش در کف حمایت یا خرید در سقف مقاومت)
+        if side == Side.SELL and view.support > 0 and (entry - view.support) < view.atr * 1.2:
+            log.info("تحلیل خودکار رد شد: فاصله تا حمایت اصلی (%.2f) بسیار کم است — ریسک بازگشت قیمت", view.support)
+            return None
+        if side == Side.BUY and view.resistance > 0 and (view.resistance - entry) < view.atr * 1.2:
+            log.info("تحلیل خودکار رد شد: فاصله تا مقاومت اصلی (%.2f) بسیار کم است — ریسک سقف قیمت", view.resistance)
+            return None
         recent_window = candles[-10:]
         buffer = round(view.atr * 0.15, 2)
 

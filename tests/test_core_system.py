@@ -1511,7 +1511,7 @@ class TestWatchlistEngine:
         candles[49] = Candle(time=1000 + 49*900, open=2000.0, high=2000.0, low=1986.0, close=1988.0, volume=100)
 
         tick = Tick(symbol="XAUUSD", bid=1988.0, ask=1988.2, time=1000 + 49*900)
-        view = engine.analyze(candles, tick)
+        view = engine.analyze(candles, tick, check_news=False)
         assert view.smc is not None
         # OB should be unmitigated before bar 49
         assert len(view.smc.unmitigated_obs) > 0
@@ -1606,7 +1606,7 @@ class TestWatchlistEngine:
         candles[49] = Candle(time=base_t + 49*900, open=2015.0, high=2015.0, low=1990.0, close=1992.0, volume=100)
 
         tick = Tick(symbol="XAUUSD", bid=1992.0, ask=1992.2, time=base_t + 49*900)
-        view = engine.analyze(candles, tick)
+        view = engine.analyze(candles, tick, check_news=False)
         assert view.smc is not None
         # FVG should be unfilled before bar 49 and detected
         unfilled = [f for f in view.smc.unfilled_fvgs if f.fvg_type == FVGType.BULLISH]
