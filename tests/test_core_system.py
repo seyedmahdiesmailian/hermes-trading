@@ -154,7 +154,7 @@ class TestGatesEngine:
 
     def test_allow_clean_setup_and_calc_volume(self, default_gates, healthy_account, standard_plan):
         # ATR=5.0, min_dist=7.5, sl_dist=10.0 (OK)
-        # Risk 2% of $5000 = $100. sl_dist=10 -> volume = 100 / (10 * 100) = 0.10 lots
+        # Grade A: Risk 2% of $5000 = $100. sl_dist=10 -> volume = 100 / (10 * 100) = 0.10 lots
         res = default_gates.evaluate(
             plan=standard_plan,
             account=healthy_account,
@@ -167,6 +167,34 @@ class TestGatesEngine:
         assert res.allowed is True
         assert res.verdict == "ALLOW"
         assert pytest.approx(res.volume, 0.01) == 0.10
+
+    def test_dynamic_risk_sizing_by_grade(self, default_gates, healthy_account):
+        # Grade B gets 50% risk (1.0% = $50). Volume should be 0.05 lots instead of 0.10
+        plan_b = Plan(
+            plan_id="plan-b", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2070.0,
+            volume=0.0, grade=SetupGrade.B, source="analysis", rr=2.0
+        )
+        res_b = default_gates.evaluate(plan_b, healthy_account, [], 0, 0.0, atr=5.0, spread=0.5)
+        assert res_b.allowed is True
+        assert pytest.approx(res_b.volume, 0.01) == 0.05
+
+    def test_loss_cooldown_circuit_breaker(self, default_gates, healthy_account, standard_plan):
+        now = time.time()
+        # Loss was 10 minutes ago (within 45m cooldown)
+        res = default_gates.evaluate(
+            standard_plan, healthy_account, [], 0, 0.0, atr=5.0, spread=0.5,
+            last_loss_ts=now - 600, now_ts=now
+        )
+        assert res.allowed is False
+        assert any("loss_cooldown" in r for r in res.reasons)
+
+        # Loss was 60 minutes ago (cooldown expired)
+        res_ok = default_gates.evaluate(
+            standard_plan, healthy_account, [], 0, 0.0, atr=5.0, spread=0.5,
+            last_loss_ts=now - 3600, now_ts=now
+        )
+        assert res_ok.allowed is True
 
     def test_block_when_position_limit_reached(self, default_gates, healthy_account, standard_plan):
         existing_pos = BrokerPosition(

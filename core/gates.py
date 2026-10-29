@@ -18,8 +18,10 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass, field
 from decimal import Decimal
+from typing import Optional
 
 from core.entities import AccountState, BrokerPosition, Plan, SetupGrade, Side
 from core.params import Gates
@@ -70,12 +72,21 @@ class GatesEngine:
         spread: float,
         learning_min_rr: float = 0.0,
         learning_min_grade: str = "",
+        last_loss_ts: float = 0.0,
+        now_ts: Optional[float] = None,
     ) -> GuardOutcome:
         """ارزیابی کامل plan → مجاز با حجم، یا ممنوع با دلایل.
 
         همه پارامترها زنده (از bridge). هیچ cached state‌ای نیست.
         """
         reasons: list[str] = []
+
+        # ۰) قفل استراحت پس از استاپ (Loss Cooldown Circuit)
+        cooldown_s = getattr(self._g, "loss_cooldown_minutes", 45) * 60
+        now = now_ts or time.time()
+        if last_loss_ts > 0 and (now - last_loss_ts) < cooldown_s:
+            rem_m = int(round((cooldown_s - (now - last_loss_ts)) / 60))
+            reasons.append(f"loss_cooldown({rem_m}m_left)")
 
         # ۱) پوزیشن‌های باز — حقیقت زنده bridge (قرارداد b221: fail-closed)
         if positions is None:
@@ -155,7 +166,17 @@ class GatesEngine:
         try:
             if account is None or account.equity <= 0:
                 return 0.0
-            risk_pct = Decimal(str(self._g.risk_per_trade_pct)) / Decimal("100")
+
+            # ریسک تطبیقی بر مبنای کیفیت و گرید ستاپ (Dynamic Sizing)
+            base_risk = float(self._g.risk_per_trade_pct)
+            if plan.grade == SetupGrade.A:
+                eff_risk = base_risk           # ۲.۰٪ برای ستاپ‌های ممتاز گرید A
+            elif plan.grade == SetupGrade.B:
+                eff_risk = base_risk * 0.5     # ۱.۰٪ برای ستاپ‌های استاندارد روند گرید B
+            else:
+                eff_risk = base_risk * 0.25    # ۰.۵٪ برای سایر موارد
+
+            risk_pct = Decimal(str(eff_risk)) / Decimal("100")
             risk_amount = Decimal(str(account.equity)) * risk_pct
             sl_distance = Decimal(str(abs(plan.entry_price - plan.stop_loss)))
             if sl_distance <= 0:

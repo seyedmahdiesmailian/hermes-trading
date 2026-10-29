@@ -24,6 +24,7 @@ gates:
   min_grade: B                  # حداقل گرید برنامه
   min_atr_stop_mult: 2.0        # استاپ حداقل ATR×۲
   max_spread_points: 3.0
+  loss_cooldown_minutes: 45     # دوره استراحت پس از هر استاپ (دقیقه)
 
 # ─ـ مدیریت پوزیشن ─────────────────────────────────────
 position:

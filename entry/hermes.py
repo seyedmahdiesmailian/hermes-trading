@@ -349,11 +349,13 @@ class HermesDaemon:
         # ۸) دروازه — fail-closed (قرارداد b221)
         # هر دو مسیر ورود (سیگنال کانال/واچ‌لیست و تحلیل خودکار) منحصراً از این گیت زنده ارزیابی می‌شوند.
         # بریج خاموش یا اطلاعات ناقص به هیچ وجه چراغ سبز دریافت نمی‌کند (رد fail-closed).
+        last_loss = self.led.get_last_loss_time()
         outcome = self.gates.evaluate(
             plan, account, positions, trades_today, today_pnl,
             atr=view.atr, spread=view.spread,
             learning_min_rr=float(self.led.get_param("min_rr", "0") or 0),
             learning_min_grade=self.led.get_param("min_grade", ""),
+            last_loss_ts=last_loss,
         )
 
         # ۹) ثبت در دفتر کل (شفافیت کامل)
