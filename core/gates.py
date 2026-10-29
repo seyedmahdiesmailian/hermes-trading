@@ -105,18 +105,24 @@ class GatesEngine:
                 reasons.append(f"daily_loss({daily_pnl:.2f}<=-{max_loss:.2f})")
 
         # ۴) حداقل RR (سخت‌ترین: config یا یادگیری)
-        eff_min_rr = max(self._g.min_rr, learning_min_rr or 0.0)
+        # برای سیگنال‌های کانال و واچ‌لیست، کف مصوب config.yaml مبناست تا سیگنال‌های 1:1 معتبر نسوزند
+        if plan.source in ("signal", "watchlist_pullback"):
+            eff_min_rr = self._g.min_rr
+        else:
+            eff_min_rr = max(self._g.min_rr, learning_min_rr or 0.0)
         if plan.rr < eff_min_rr:
             reasons.append(f"rr({plan.rr:.2f}<{eff_min_rr:.2f})")
 
         # ۵) حداقل گرید (سخت‌ترین)
-        eff_min_grade = self._tougher_grade(self._g.min_grade, learning_min_grade)
+        if plan.source in ("signal", "watchlist_pullback"):
+            eff_min_grade = self._tougher_grade(self._g.min_grade, "")
+        else:
+            eff_min_grade = self._tougher_grade(self._g.min_grade, learning_min_grade)
         if SetupGrade.rank(plan.grade) < SetupGrade.rank(eff_min_grade):
             reasons.append(f"grade({plan.grade.value}<{eff_min_grade.value})")
 
         # ۶) فاصله استاپ ≥ ATR × k
-        #    پلن‌های تحلیلی (source=analysis) ضریب جداگانه دارند:
-        #    ستاپ روند-EMA با SL=۱.۵×ATR تایید شده (بک‌تست EV=+۰.۱۶۳).
+        #    پلن‌های تحلیلی، سازمانی و سیگنال‌های تلگرام هر کدام ضریب استاپ واقع‌بینانه دارند
         if atr > 0:
             sl_dist = round(abs(plan.entry_price - plan.stop_loss), 2)
             mult = self._g.min_atr_stop_mult
@@ -125,6 +131,9 @@ class GatesEngine:
                                self._g.min_atr_stop_mult)
             elif plan.source.startswith("smc") or plan.source.startswith("rtm") or plan.source in ("smc_ob", "smc_judas", "smc_fvg", "rtm_qml", "rtm_ftr"):
                 mult = getattr(self._g, "min_atr_stop_mult_smc", 1.2)
+            elif plan.source == "watchlist_pullback":
+                # در ورودهای پولبک، استاپ به دلیل ورود در قیمت بهتر فشرده‌تر شده و ضریب ۰.۸ ملاک است
+                mult = getattr(self._g, "min_atr_stop_mult_watchlist", 0.8)
             min_dist = round(atr * mult, 2)
             if sl_dist < min_dist:
                 reasons.append(f"stop_too_tight({sl_dist:.2f}<{min_dist:.2f})")

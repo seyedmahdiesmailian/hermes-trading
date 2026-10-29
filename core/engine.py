@@ -856,15 +856,15 @@ class Engine:
     @staticmethod
     def _grade_signal(sig: Signal, view: MarketView) -> SetupGrade:
         """گریدبندی کیفیت سیگنال تلگرام با تایید چندبعدی (DXY Proxy + RSI Divergence)."""
-        score = 0.0
-        score += min(1.0, sig.confidence) * 0.40
+        score = 0.50  # امتیاز پایه برای سیگنال‌های معتبر کانال‌های تاییدشده
+        score += min(1.0, sig.confidence) * 0.20
         sig_rr = sig.rr if sig.rr > 0 else _calc_rr(sig)
-        score += min(1.0, sig_rr / 2.0) * 0.30
+        score += min(1.0, sig_rr / 1.5) * 0.15
 
         if view.is_trending:
             aligned = (sig.side == Side.BUY and view.trend == "bullish") or \
                       (sig.side == Side.SELL and view.trend == "bearish")
-            score += 0.20 if aligned else 0.0
+            score += 0.15 if aligned else 0.0
 
         if view.smc is not None:
             if (sig.side == Side.BUY and view.smc.zone == ZoneType.DISCOUNT) or \

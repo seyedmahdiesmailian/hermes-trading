@@ -106,8 +106,8 @@ class AdaptiveLearner:
         new_grade = current_grade
         changes = []
 
-        # سناریوی ۱: ۳ باخت متوالی اخیر یا وین‌ریت زیر ۳۵٪ -> سفت کردن گیت‌ها
-        if metrics.consecutive_losses >= 3 or metrics.win_rate < 35.0:
+        # سناریوی ۱: ۳ باخت متوالی اخیر -> سفت کردن گیت‌ها جهت محافظت از سرمایه
+        if metrics.consecutive_losses >= 3:
             if current_min_rr < 1.5:
                 new_min_rr = 1.5
                 changes.append(f"min_rr: {current_min_rr} -> 1.5")
