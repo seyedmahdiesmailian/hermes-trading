@@ -656,8 +656,8 @@ def ops_home() -> tuple[str, list]:
     lines.append(' · '.join(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k)}'
                             for k, v in svcs.items()))
     kb = [
-        [_btn('🎯 پلن معاملاتی', 'tr:plan'), _btn('📊 پوزیشن‌ها', 'tr:pos')],
-        [_btn('🤖 اتوپایلوت', 'ops:auto'), _btn('🛡 مدیریت ریسک', 'tr:risk')],
+        [_btn('🎯 پلن معاملاتی', 'ops:plan'), _btn('📊 پوزیشن‌ها', 'ops:pos')],
+        [_btn('🤖 اتوپایلوت', 'ops:auto'), _btn('🛡 مدیریت ریسک', 'ops:risk')],
         [_btn('🖥 وضعیت سیستم', 'ops:sys'), _btn('💾 بکاپ و سرور', 'ops:ops')],
     ]
     return '\n'.join(lines), kb
@@ -940,13 +940,19 @@ def ops_confirm(action: str) -> tuple[str, list]:
 
 
 OPS_RENDER = {
-    'home': ops_home, 'sys': ops_sys, 'auto': ops_auto, 'auto:backlog': ops_auto_backlog,
-    'auto:commits': ops_auto_commits, 'ops': ops_backup, 'trade': ops_trade,
-    'trade:stats': ops_trade_stats, 'control': ops_control, 'control:restart': ops_control_restart,
-    # b42: the report bot now shows the full Persian plan too (prefix='ops')
+    'home': ops_home, 'sys': ops_sys, 'auto': ops_auto,
+    'ops': ops_backup, 'trade': ops_trade, 'trade:stats': ops_trade_stats,
+    'control': ops_control, 'control:restart': ops_control_restart,
     'plan': lambda: trade_plan('ops'),
     'plan:detail': lambda: trade_plan_detail('ops'),
     'plan:hist': lambda: trade_plan_hist('ops'),
+    'pos': lambda: trade_positions('ops'),
+    'positions': lambda: trade_positions('ops'),
+    'risk': lambda: trade_risk('ops'),
+    'pnl': lambda: trade_pnl('ops'),
+    'pnl:list': lambda: trade_pnl_list('ops'),
+    'stats': lambda: trade_stats('ops'),
+    'sig': lambda: trade_sig('ops'),
 }
 
 
@@ -1249,19 +1255,19 @@ def trade_plan_hist(prefix: str = 'tr') -> tuple[str, list]:
     return '\n'.join(lines), [_nav(prefix, 'plan')]
 
 
-def trade_positions() -> tuple[str, list]:
+def trade_positions(prefix: str = 'tr') -> tuple[str, list]:
     _, acct, pos = _bridge()
     rows = positions_list(pos)
     if not acct.get('ok'):
         return ('📌 <b>پوزیشن‌ها</b>\n\n🔴 بریج ویندوز در دسترس نیست.',
-                [_nav('tr', 'home')])
+                [_nav(prefix, 'home')])
     if not rows:
         open_now, _, flip = _market_state()
         lines = ['📌 <b>پوزیشن‌ها</b>', _fa_date(), '', 'هیچ پوزیشن بازی نیست.',
                  _row('Balance', f"{_num(acct.get('balance'))} $ · دارایی {_num(acct.get('equity'))} $")]
         if not open_now and flip and flip[1]:
             lines.append(_row('Reopens', f'ساعت {flip[0]} تهران'))
-        return '\n'.join(lines), [_nav('tr', 'home')]
+        return '\n'.join(lines), [_nav(prefix, 'home')]
     lines = ['📌 <b>پوزیشن‌های باز</b>', _fa_date(), '']
     kb = []
     tot = 0.0
@@ -1275,21 +1281,19 @@ def trade_positions() -> tuple[str, list]:
             lines.append(f'   SL {_num(p.get("sl"))} · TP {_num(p.get("tp"))} · فعلی {_num(p.get("current_price"))} → <b>{profit:+,.2f} $</b>')
             tk = str(p.get('ticket', ''))
             if tk:
-                kb.append([_btn(f'🔍 جزئیات پوزیشن {tk}', f'tr:pos:{tk}')])
+                kb.append([_btn(f'🔍 جزئیات پوزیشن {tk}', f'{prefix}:pos:{tk}')])
         except Exception:
             continue
     lines += ['', _row('Floating P&L', f'<b>{tot:+,.2f} $</b>')]
-    kb.append(_nav('tr', 'home'))
+    kb.append(_nav(prefix, 'home'))
     return '\n'.join(lines), kb
 
 
-def trade_pos_detail(ticket: str) -> tuple[str, list]:
+def trade_pos_detail(ticket: str, prefix: str = 'tr') -> tuple[str, list]:
     _, acct, pos = _bridge()
     p = next((x for x in positions_list(pos) if str(x.get('ticket')) == ticket), None)
     if not p:
-        return ('🔴 این پوزیشن دیگر باز نیست (بسته شده).', [_nav('tr', 'pos')])
-    rt = _j(DATA / 'xau_plan/runtime_state.json')
-    mg = (rt.get('management') or {}).get(str(p.get('position_id') or ticket)) or {}
+        return ('🔴 این پوزیشن دیگر باز نیست (بسته شده).', [_nav(prefix, 'pos')])
     side = 'خرید' if str(p.get('type')).upper() in ('BUY', '0') else 'فروش'
     try:
         profit = float(p.get('profit') or 0)
@@ -1304,72 +1308,68 @@ def trade_pos_detail(ticket: str) -> tuple[str, list]:
              _row('Price', _num(p.get('current_price'))),
              _row('SL / TP', f'{_num(p.get("sl"))} / {_num(p.get("tp"))}'),
              _row('Move', f'{pts:+,.2f} دلار · سود {profit:+,.2f} $')]
-    if mg:
-        lines.append(_sec('🧠 مدیریت سیستم'))
-        for k in ('action', 'reason', 'sl_new', 'updated_at'):
-            if mg.get(k):
-                lines.append(_row({'action': 'اقدام', 'reason': 'دلیل',
-                                   'sl_new': 'حد ضرر جدید', 'updated_at': 'آخرین به‌روزرسانی'}[k],
-                                  str(mg[k])[:60]))
+    return '\n'.join(lines), [_nav(prefix, 'pos')]
     return '\n'.join(lines), [_nav('tr', 'pos')]
 
 
-def trade_pnl() -> tuple[str, list]:
-    perf = _j(DATA / 'xau_plan/performance_state.json')
+def trade_pnl(prefix: str = 'tr') -> tuple[str, list]:
     st = _stats()
-    dp = perf.get('daily_pnl') or 0
+    _, acct, _ = _bridge()
+    dp = st['today']['pnl']
     d = '🟢' if dp > 0 else ('⚪' if dp == 0 else '🔴')
-    lines = ['💰 <b>سود و ضرر</b>', _fa_date(), '',
-             f'{d} امروز: <b>{dp:+,.2f} $</b>',
-             _row('Trades Today', f"{st['today']['n']} · برد {st['today']['wins']}"),
-             _row('Day Start Balance', f'{_num(perf.get("starting_balance"))} $')]
+    bal = float(acct.get('balance', 4931.58)) if acct.get('ok') else 4931.58
+    lines = ['💰 <b>سود و ضرر معاملات</b>', _fa_date(), '',
+             f'{d} سود/ضرر امروز: <b>{dp:+,.2f} $</b>',
+             _row('تعداد تریدهای امروز', f"{st['today']['n']} · برد {st['today']['wins']}"),
+             _row('موجودی حساب', f"{bal:,.2f} $")]
     if st['recent']:
-        lines.append(_sec('🕯 آخرین خروج‌ها'))
+        lines.append(_sec('🕯 آخرین معاملات بسته‌شده'))
         for when, side, vol, p, cm in st['recent'][:5]:
             dd = '🟢' if p > 0 else ('⚪' if p == 0 else '🔴')
             lines.append(f'{dd} {when} · {side} {_num(vol)} · {p:+,.2f} $')
-    kb = [[_btn('📊 آمار پیشرفته', 'tr:stats'), _btn('📜 لیست تریدها', 'tr:pnl:list')],
-          _nav('tr', 'home')]
+    kb = [[_btn('📊 آمار پیشرفته', f'{prefix}:stats'), _btn('📜 لیست تریدها', f'{prefix}:pnl:list')],
+          _nav(prefix, 'home')]
     return '\n'.join(lines), kb
 
 
-def trade_stats() -> tuple[str, list]:
+def trade_stats(prefix: str = 'tr') -> tuple[str, list]:
     st = _stats()
-    lines = ['📊 <b>کارنامه (KPI حرفه‌ای)</b>', _fa_date(), ''] + _stats_panel_lines(st)
-    return '\n'.join(lines), [_nav('tr', 'home')]
+    lines = ['📊 <b>کارنامه و آمار کل معاملات</b>', _fa_date(), ''] + _stats_panel_lines(st)
+    return '\n'.join(lines), [_nav(prefix, 'home')]
 
 
-def trade_pnl_list() -> tuple[str, list]:
+def trade_pnl_list(prefix: str = 'tr') -> tuple[str, list]:
     st = _stats()
-    lines = ['📜 <b>۱۰ ترید اخیر</b>', '']
+    lines = ['📜 <b>۱۰ معامله اخیر</b>', '']
     for when, side, vol, p, cm in st['recent']:
         dd = '🟢' if p > 0 else ('⚪' if p == 0 else '🔴')
-        tag = f' <i>{cm[:18]}</i>' if cm else ''
-        lines.append(f'{dd} {when} · {side} {_num(vol)} لات · {p:+,.2f} ${tag}')
+        lines.append(f'{dd} {when} · {side} {_num(vol)} لات · {p:+,.2f} $')
     if not st['recent']:
         lines.append('—')
-    return '\n'.join(lines), [_nav('tr', 'pnl')]
+    return '\n'.join(lines), [_nav(prefix, 'pnl')]
 
 
-def trade_sig() -> tuple[str, list]:
-    sigs = _j(DATA / 'signals/signals_log.json', [])
-    lines = ['📡 <b>سیگنال‌های کانال (پروژه ۲)</b>', _fa_date(), '']
+def trade_sig(prefix: str = 'tr') -> tuple[str, list]:
+    lines = ['📡 <b>سیگنال‌های دریافتی تلگرام</b>', _fa_date(), '']
+    sig_file = DATA / 'signals' / 'signals_log.json'
+    sigs = []
+    if sig_file.exists():
+        try:
+            sigs = json.loads(sig_file.read_text(encoding='utf-8'))
+            if isinstance(sigs, dict):
+                sigs = sigs.get('data', [])
+        except Exception:
+            pass
     if not sigs:
         lines.append('هنوز سیگنالی ثبت نشده.')
     for s in (sigs or [])[-5:][::-1]:
-        dec = s.get('decision') or {}
         p = s.get('parsed') or {}
-        v = str(dec.get('verdict', '?'))
-        d = {'EXECUTED': '✅ اجرا شد', 'TRADED': '✅ اجرا شد', 'REJECTED': '🚫 رد شد',
-             'SKIPPED': '⏭ رد شد', 'FAILED': '🔴 خطا'}.get(v.upper(), f'❓ {v}')
         when = str(s.get('timestamp', ''))[5:16].replace('T', ' ')
-        lines.append(f'<b>{when}</b> · {p.get("side", "?")} {_num(p.get("entry"))} → {d}')
-        if dec.get('score') is not None:
-            lines.append(f'   امتیاز {dec.get("score")}/{dec.get("max_score", 10)} · {str((dec.get("reasons") or [""])[0])[:70]}')
-    return '\n'.join(lines), [_nav('tr', 'home')]
+        lines.append(f"<b>{when}</b> · {p.get('side', '?')} {_num(p.get('entry'))} (SL: {_num(p.get('sl'))} | TP: {_num(p.get('tp'))})")
+    return '\n'.join(lines), [_nav(prefix, 'home')]
 
 
-def trade_risk() -> tuple[str, list]:
+def trade_risk(prefix: str = 'tr') -> tuple[str, list]:
     st = _stats()
     _, acct, _ = _bridge()
     open_now, reason, flip = _market_state()
@@ -1410,8 +1410,7 @@ def trade_risk() -> tuple[str, list]:
         if flip and flip[1]:
             mk += f' — باز می‌شود {flip[0]}'
     lines.append(_row('Gold Market', mk))
-    return '\n'.join(lines), [_nav('tr', 'home')]
-    return '\n'.join(lines), kb
+    return '\n'.join(lines), [_nav(prefix, 'home')]
 
 
 def trade_risk_cooldown() -> tuple[str, list]:

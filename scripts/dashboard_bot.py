@@ -118,7 +118,12 @@ def main():
                             {'callback_query_id': qid, 'text': 'دسترسی نیست', 'show_alert': True})
                         continue
                     data = cb.get('data') or ''
-                    panel = data[4:] if data.startswith('ops:') else 'home'
+                    if data.startswith('ops:'):
+                        panel = data[4:]
+                    elif data.startswith('tr:'):
+                        panel = data[3:]
+                    else:
+                        panel = data or 'home'
                     if panel.startswith('cfm:'):
                         # b40: confirmed operator action — execute, show result
                         ok, msg = dashboards.handle_control(panel[4:])
