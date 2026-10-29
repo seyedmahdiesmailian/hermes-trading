@@ -346,6 +346,24 @@ class TestEngine:
         assert div_type == "BEARISH_REGULAR"
         assert strg > 0
 
+    def test_usd_intermarket_bias(self):
+        from core.engine import Engine
+        # EURUSD dropping (Bearish EUR) + USDJPY rising (Bullish USD) -> Strong Bullish USD
+        eur_candles = [
+            Candle(time=i * 60, open=1.10 - i * 0.001, high=1.10 - i * 0.001, low=1.09 - i * 0.001, close=1.09 - i * 0.001, volume=10)
+            for i in range(25)
+        ]
+        jpy_candles = [
+            Candle(time=i * 60, open=150.0 + i * 0.1, high=151.0 + i * 0.1, low=149.0 + i * 0.1, close=150.5 + i * 0.1, volume=10)
+            for i in range(25)
+        ]
+        bias = Engine.calculate_usd_bias(eur_candles, jpy_candles)
+        assert bias == "BULLISH"
+
+        # Inverse case -> Bearish USD
+        bias_inv = Engine.calculate_usd_bias(jpy_candles, eur_candles)
+        assert bias_inv in ("BEARISH", "NEUTRAL")
+
 
 # ══════════════════════════════════════════════════════════════════
 # ۴. تست‌های خروج (ExitManager)

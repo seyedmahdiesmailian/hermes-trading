@@ -262,15 +262,27 @@ class HermesDaemon:
                 h_utc, h0, h1,
             )
 
-        # ۶) تحلیل چندبعدی بازار (Technical + SMC/ICT + News)
-        view = self.eng.analyze(candles, tick, h1_candles=h1_candles)
+        # ۶) تحلیل چندبعدی بازار (Technical + SMC/ICT + News + DXY Intermarket)
+        eur_candles = None
+        jpy_candles = None
+        try:
+            eur_candles = self.mt5.get_candles("EURUSD", "M15", 30)
+            jpy_candles = self.mt5.get_candles("USDJPY", "M15", 30)
+        except Exception as e:
+            log.warning("عدم دریافت داده‌های بین‌بازاری دلار: %s", e)
+
+        view = self.eng.analyze(
+            candles, tick, h1_candles=h1_candles,
+            eur_candles=eur_candles, jpy_candles=jpy_candles
+        )
         self._last_atr = view.atr  # برای trailing تحلیلی در exit loop
         log.info(
-            "بازار: %s str=%.2f atr=%.2f spread=%.2f | SMC: %s (conf=%.2f zone=%s) | News: %s",
+            "بازار: %s str=%.2f atr=%.2f spread=%.2f | SMC: %s (conf=%.2f zone=%s) | USD: %s | News: %s",
             view.trend, view.trend_strength, view.atr, view.spread,
             view.smc.bias if view.smc else "none",
             view.smc.confidence if view.smc else 0.0,
             view.smc.zone.value if view.smc else "none",
+            view.usd_bias,
             f"BLACKOUT ({view.news_reason})" if view.news_blackout else "CLEAR",
         )
 

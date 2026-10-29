@@ -40,6 +40,7 @@ class MarketView:
     rsi: float = 50.0           # مقدار فعلی RSI(14)
     divergence: Optional[str] = None  # نوع واگرایی (BULLISH_REGULAR, BEARISH_REGULAR, ...)
     div_strength: float = 0.0   # قدرت واگرایی 0.0 .. 1.0
+    usd_bias: str = "NEUTRAL"   # وضعیت شاخص دلار: "BULLISH" | "BEARISH" | "NEUTRAL"
     smc: Optional[SMCView] = None
     news_blackout: bool = False
     news_reason: str = ""
@@ -59,12 +60,40 @@ class Engine:
 
     # ── تحلیل جامع بازار ─────────────────────────────────
 
+    @staticmethod
+    def calculate_usd_bias(
+        eur_candles: Optional[list[Candle]] = None,
+        jpy_candles: Optional[list[Candle]] = None,
+    ) -> str:
+        """سنجش وضعیت بین‌بازاری شاخص دلار (DXY Proxy) بر مبنای EURUSD و USDJPY."""
+        if not eur_candles or len(eur_candles) < 20 or not jpy_candles or len(jpy_candles) < 20:
+            return "NEUTRAL"
+        try:
+            eur_closes = [c.close for c in eur_candles[-20:]]
+            jpy_closes = [c.close for c in jpy_candles[-20:]]
+            eur_e20 = _ema(eur_closes, 20)
+            jpy_e20 = _ema(jpy_closes, 20)
+            eur_last = eur_closes[-1]
+            jpy_last = jpy_closes[-1]
+
+            # EURUSD نزولی (زیر EMA20) و USDJPY صعودی (بالای EMA20) -> دلار قوی
+            if eur_last < eur_e20 and jpy_last > jpy_e20:
+                return "BULLISH"
+            # EURUSD صعودی (بالای EMA20) و USDJPY نزولی (زیر EMA20) -> دلار ضعیف
+            elif eur_last > eur_e20 and jpy_last < jpy_e20:
+                return "BEARISH"
+            return "NEUTRAL"
+        except Exception:
+            return "NEUTRAL"
+
     def analyze(
         self,
         candles: list[Candle],
         tick: Tick,
         h1_candles: Optional[list[Candle]] = None,
         check_news: bool = True,
+        eur_candles: Optional[list[Candle]] = None,
+        jpy_candles: Optional[list[Candle]] = None,
     ) -> MarketView:
         """تحلیل کامل بازار از داده‌های کندل، تیک و تقویم اقتصادی."""
         if len(candles) < 30:
@@ -116,7 +145,10 @@ class Engine:
         if check_news:
             news_blackout, news_reason = self.news.is_blackout()
 
-        notes = f"ema20={ema_fast:.2f} ema50={ema_slow:.2f} rsi={current_rsi:.1f} div={div_type or 'none'} smc_bias={smc_view.bias} kz={smc_view.killzone}"
+        # ۵. وضعیت بین‌بازاری شاخص دلار (DXY Proxy)
+        usd_bias = self.calculate_usd_bias(eur_candles, jpy_candles)
+
+        notes = f"ema20={ema_fast:.2f} ema50={ema_slow:.2f} rsi={current_rsi:.1f} div={div_type or 'none'} usd={usd_bias} smc_bias={smc_view.bias} kz={smc_view.killzone}"
 
         return MarketView(
             trend=trend,
@@ -129,6 +161,7 @@ class Engine:
             rsi=current_rsi,
             divergence=div_type,
             div_strength=div_strength,
+            usd_bias=usd_bias,
             smc=smc_view,
             news_blackout=news_blackout,
             news_reason=news_reason,
@@ -416,6 +449,15 @@ class Engine:
             elif (side == Side.BUY and view.divergence == "BEARISH_REGULAR") or \
                  (side == Side.SELL and view.divergence == "BULLISH_REGULAR"):
                 score -= 0.25  # جریمه ورود در انتهای روند (تله اگزاست مومنتوم)
+
+        # پاداش همبستگی بین‌بازاری شاخص دلار (DXY / USD Proxy)
+        if view.usd_bias != "NEUTRAL":
+            if (side == Side.BUY and view.usd_bias == "BEARISH") or \
+               (side == Side.SELL and view.usd_bias == "BULLISH"):
+                score += 0.15  # تاییدیه قوی همبستگی دلار و طلا
+            elif (side == Side.BUY and view.usd_bias == "BULLISH") or \
+                 (side == Side.SELL and view.usd_bias == "BEARISH"):
+                score -= 0.20  # تله نقدینگی ناشی از تقابل با جهت کلان دلار
 
         if score >= 0.85:
             return SetupGrade.A
