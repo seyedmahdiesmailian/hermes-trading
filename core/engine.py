@@ -299,8 +299,22 @@ class Engine:
         smc = view.smc
         buffer = round(view.atr * 0.15, 2)
 
+        # هماهنگی با روند کلان تایم‌فریم بالاتر (H1 Trend Filter)
+        h1_bias = "NEUTRAL"
+        if h1_candles and len(h1_candles) >= 30:
+            h1_closes = [c.close for c in h1_candles[-30:]]
+            h1_e20 = _ema(h1_closes, 20)
+            h1_e50 = _ema(h1_closes, 50)
+            if h1_closes[-1] > h1_e20 > h1_e50:
+                h1_bias = "BULLISH"
+            elif h1_closes[-1] < h1_e20 < h1_e50:
+                h1_bias = "BEARISH"
+
         # ── ۱. ستاپ شکار نقدینگی سشن آسیا (Judas Swing) ──
         if smc.judas_swing == "BEARISH_JUDAS":
+            if h1_bias == "BULLISH":
+                log.info("ستاپ SMC رد شد: فروش Judas در تضاد با روند صعودی قدرتمند H1")
+                return None
             sl = round(smc.swing_high + buffer, 2)
             if (sl - entry) < view.atr * 1.2:
                 sl = round(entry + view.atr * 1.2, 2)
@@ -324,6 +338,9 @@ class Engine:
                 )
 
         elif smc.judas_swing == "BULLISH_JUDAS":
+            if h1_bias == "BEARISH":
+                log.info("ستاپ SMC رد شد: خرید Judas در تضاد با روند نزولی قدرتمند H1")
+                return None
             sl = round(smc.swing_low - buffer, 2)
             if (entry - sl) < view.atr * 1.2:
                 sl = round(entry - view.atr * 1.2, 2)
@@ -352,6 +369,9 @@ class Engine:
             last_c = candles[-1]
             for ob in unmitigated_obs[::-1]:
                 if ob.ob_type.value == "BULLISH" and smc.zone == ZoneType.DISCOUNT:
+                    if h1_bias == "BEARISH":
+                        log.info("ستاپ SMC رد شد: خرید Order Block در تضاد با روند نزولی قدرتمند H1")
+                        continue
                     if last_c.low <= ob.top and last_c.close >= ob.midpoint:
                         sl = round(ob.bottom - buffer, 2)
                         if (entry - sl) < view.atr * 1.2:
@@ -376,6 +396,9 @@ class Engine:
                             )
 
                 elif ob.ob_type.value == "BEARISH" and smc.zone == ZoneType.PREMIUM:
+                    if h1_bias == "BULLISH":
+                        log.info("ستاپ SMC رد شد: فروش Order Block در تضاد با روند صعودی قدرتمند H1")
+                        continue
                     if last_c.high >= ob.bottom and last_c.close <= ob.midpoint:
                         sl = round(ob.top + buffer, 2)
                         if (sl - entry) < view.atr * 1.2:
@@ -398,6 +421,113 @@ class Engine:
                                 confidence=0.88,
                                 reasoning=f"Bearish Order Block در ناحیه گران ({ob.bottom}-{ob.top})",
                             )
+
+        # ── ۳. ستاپ فوق‌العاده بازگشتی RTM Quasimodo (QML) ──
+        if smc.qml is not None:
+            qml = smc.qml
+            retesting_qml = abs(entry - qml.level) <= view.atr * 0.50
+
+            if qml.qml_type == "BEARISH_QML" and retesting_qml:
+                if h1_bias != "BULLISH":
+                    sl = round(qml.invalidation + buffer, 2)
+                    if (sl - entry) < view.atr * 1.2:
+                        sl = round(entry + view.atr * 1.2, 2)
+                    if (sl - entry) <= view.atr * 2.5:
+                        tp = round(min(qml.target, entry - (sl - entry) * 2.5), 2)
+                        rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                        return Plan(
+                            plan_id=f"rtm-qml-{int(candles[-1].time)}",
+                            symbol="XAUUSD",
+                            side=Side.SELL,
+                            entry_price=round(entry, 2),
+                            stop_loss=sl,
+                            take_profit=tp,
+                            volume=0.0,
+                            grade=SetupGrade.A,
+                            source="rtm_qml",
+                            timeframe=timeframe,
+                            rr=rr,
+                            confidence=0.94,
+                            reasoning=f"RTM Quasimodo (QML) Bearish: پولبک به شانه چپ {qml.level:,.2f} پس از شکار سقف {qml.invalidation:,.2f}",
+                        )
+
+            elif qml.qml_type == "BULLISH_QML" and retesting_qml:
+                if h1_bias != "BEARISH":
+                    sl = round(qml.invalidation - buffer, 2)
+                    if (entry - sl) < view.atr * 1.2:
+                        sl = round(entry - view.atr * 1.2, 2)
+                    if (entry - sl) <= view.atr * 2.5:
+                        tp = round(max(qml.target, entry + (entry - sl) * 2.5), 2)
+                        rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
+                        return Plan(
+                            plan_id=f"rtm-qml-{int(candles[-1].time)}",
+                            symbol="XAUUSD",
+                            side=Side.BUY,
+                            entry_price=round(entry, 2),
+                            stop_loss=sl,
+                            take_profit=tp,
+                            volume=0.0,
+                            grade=SetupGrade.A,
+                            source="rtm_qml",
+                            timeframe=timeframe,
+                            rr=rr,
+                            confidence=0.94,
+                            reasoning=f"RTM Quasimodo (QML) Bullish: پولبک به شانه چپ {qml.level:,.2f} پس از شکار کف {qml.invalidation:,.2f}",
+                        )
+
+        # ── ۴. ستاپ ورود در نواحی تصمیم‌گیری RTM Fail-To-Return (FTR) ──
+        if smc.unmitigated_ftrs:
+            last_c = candles[-1]
+            for ftr in smc.unmitigated_ftrs[::-1]:
+                if ftr.ftr_type == "DEMAND_FTR" and smc.zone == ZoneType.DISCOUNT:
+                    if last_c.low <= ftr.base_top and last_c.close >= ftr.base_bottom:
+                        if h1_bias != "BEARISH":
+                            sl = round(ftr.base_bottom - buffer, 2)
+                            if (entry - sl) < view.atr * 1.2:
+                                sl = round(entry - view.atr * 1.2, 2)
+                            if (entry - sl) <= view.atr * 2.2:
+                                tp = round(entry + (entry - sl) * 2.5, 2)
+                                rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
+                                return Plan(
+                                    plan_id=f"rtm-ftr-{int(candles[-1].time)}",
+                                    symbol="XAUUSD",
+                                    side=Side.BUY,
+                                    entry_price=round(entry, 2),
+                                    stop_loss=sl,
+                                    take_profit=tp,
+                                    volume=0.0,
+                                    grade=SetupGrade.A,
+                                    source="rtm_ftr",
+                                    timeframe=timeframe,
+                                    rr=rr,
+                                    confidence=0.90,
+                                    reasoning=f"RTM Demand FTR: تست بیس پس از شکست سطح {ftr.broken_level:,.2f}",
+                                )
+
+                elif ftr.ftr_type == "SUPPLY_FTR" and smc.zone == ZoneType.PREMIUM:
+                    if last_c.high >= ftr.base_bottom and last_c.close <= ftr.base_top:
+                        if h1_bias != "BULLISH":
+                            sl = round(ftr.base_top + buffer, 2)
+                            if (sl - entry) < view.atr * 1.2:
+                                sl = round(entry + view.atr * 1.2, 2)
+                            if (sl - entry) <= view.atr * 2.2:
+                                tp = round(entry - (sl - entry) * 2.5, 2)
+                                rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                                return Plan(
+                                    plan_id=f"rtm-ftr-{int(candles[-1].time)}",
+                                    symbol="XAUUSD",
+                                    side=Side.SELL,
+                                    entry_price=round(entry, 2),
+                                    stop_loss=sl,
+                                    take_profit=tp,
+                                    volume=0.0,
+                                    grade=SetupGrade.A,
+                                    source="rtm_ftr",
+                                    timeframe=timeframe,
+                                    rr=rr,
+                                    confidence=0.90,
+                                    reasoning=f"RTM Supply FTR: تست بیس پس از شکست سطح {ftr.broken_level:,.2f}",
+                                )
 
         return None
 

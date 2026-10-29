@@ -119,7 +119,7 @@ class HermesDaemon:
                         plan = self.led.get_plan(plan_id)
 
                     grade = plan.grade if plan else SetupGrade.C
-                    source = plan.source if plan else ("analysis" if (cur_pos.comment or "").startswith("hms-auto") else "signal")
+                    source = plan.source if plan else ("analysis" if (cur_pos.comment or "").startswith("hms-auto") else ("smc" if (cur_pos.comment or "").startswith("hms-smc") else "signal"))
 
                     initial_sl = cur_pos.initial_sl if cur_pos.initial_sl > 0 else (self.exits._initial_sl.get(ticket) or (plan.stop_loss if plan else cur_pos.sl))
                     risk_denom = abs(cur_pos.open_price - initial_sl) if initial_sl > 0 else 0.0
@@ -563,7 +563,7 @@ class HermesDaemon:
             plan = self.led.get_plan(plan_id)
 
         grade = plan.grade if plan else SetupGrade.C
-        source = plan.source if plan else ("analysis" if (pos.comment or "").startswith("hms-auto") else "signal")
+        source = plan.source if plan else ("analysis" if (pos.comment or "").startswith("hms-auto") else ("smc" if (pos.comment or "").startswith("hms-smc") else "signal"))
 
         initial_sl = pos.initial_sl if pos.initial_sl > 0 else (self.exits._initial_sl.get(pos.ticket) or (plan.stop_loss if plan else pos.sl))
         risk_denom = abs(pos.open_price - initial_sl) if initial_sl > 0 else 0.0
@@ -660,7 +660,7 @@ class HermesDaemon:
                 plan = self.led.get_plan(plan_id)
 
             grade = plan.grade if plan else SetupGrade.C
-            source = plan.source if plan else ("analysis" if (old_pos.comment or "").startswith("hms-auto") else "signal")
+            source = plan.source if plan else ("analysis" if (old_pos.comment or "").startswith("hms-auto") else ("smc" if (old_pos.comment or "").startswith("hms-smc") else "signal"))
 
             # R-Multiple بر مبنای استاپ اولیه
             init_sl = self.exits._initial_sl.get(ticket, old_pos.initial_sl if old_pos.initial_sl > 0 else (plan.stop_loss if plan else old_pos.sl))

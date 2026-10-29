@@ -78,6 +78,27 @@ class LiquiditySweep:
 
 
 @dataclass(frozen=True)
+class QuasimodoPattern:
+    """الگوی بازگشتی پرایس‌اکشن سازمانی RTM Quasimodo (QML)."""
+    qml_type: str        # "BEARISH_QML" | "BULLISH_QML"
+    level: float         # تراز ورود شانه چپ (Left Shoulder)
+    invalidation: float  # حد ضرر / سقف یا کف هانت
+    target: float        # تارگت ساختاری
+    bar_index: int
+
+
+@dataclass(frozen=True)
+class FTRZone:
+    """ناحیه تصمیم‌گیری پرایس‌اکشن RTM Fail-To-Return (FTR)."""
+    ftr_type: str        # "SUPPLY_FTR" | "DEMAND_FTR"
+    base_top: float      # سقف بیس
+    base_bottom: float   # کف بیس
+    broken_level: float  # سطح شکسته‌شده
+    bar_index: int
+    mitigated: bool = False
+
+
+@dataclass(frozen=True)
 class SMCView:
     bias: str                      # "bullish" | "bearish" | "neutral"
     confidence: float              # 0.0 .. 1.0
@@ -90,6 +111,8 @@ class SMCView:
     unfilled_fvgs: list[FairValueGap] = field(default_factory=list)
     sweep: Optional[LiquiditySweep] = None
     judas_swing: Optional[str] = None  # "BEARISH_JUDAS" | "BULLISH_JUDAS"
+    qml: Optional[QuasimodoPattern] = None  # الگوی RTM QML
+    unmitigated_ftrs: list[FTRZone] = field(default_factory=list)  # نواحی RTM FTR
     swing_high: float = 0.0
     swing_low: float = 0.0
 
@@ -137,6 +160,11 @@ class SMCAnalyzer:
         # ۵.ب شکار نقدینگی سشن آسیا (Judas Swing)
         judas = self.detect_judas_swing(candles, killzone)
 
+        # ۵.ج الگوهای پرایس‌اکشن سازمانی RTM (Quasimodo و FTR)
+        qml_pattern = self.detect_quasimodo(candles)
+        ftr_zones = self.detect_ftr_zones(candles)
+        unmitigated_ftrs = [f for f in ftr_zones if not f.mitigated]
+
         # ۶. تلفیق جهت و امتیازدهی اعتماد (Bias & Confidence)
         bias, conf = self._compute_bias_and_confidence(
             phase_bias, unmitigated_obs, unfilled_fvgs, sweep, zone, killzone, judas
@@ -154,6 +182,8 @@ class SMCAnalyzer:
             unfilled_fvgs=unfilled_fvgs,
             sweep=sweep if sweep.swept else None,
             judas_swing=judas,
+            qml=qml_pattern,
+            unmitigated_ftrs=unmitigated_ftrs,
             swing_high=swing_high,
             swing_low=swing_low,
         )
@@ -460,3 +490,112 @@ class SMCAnalyzer:
             return "bearish", min(1.0, bear_score * kz_mult)
 
         return "neutral", 0.0
+
+    # ── الگوهای پرایس‌اکشن سازمانی RTM ──────────────────
+
+    @staticmethod
+    def detect_quasimodo(candles: list[Candle]) -> Optional[QuasimodoPattern]:
+        """تشخیص الگوی بازگشتی قدرتمند RTM Quasimodo (QML) در ۳۵ کندل اخیر."""
+        n = len(candles)
+        if n < 25:
+            return None
+
+        recent = candles[-35:]
+        rn = len(recent)
+
+        # شناسایی پیووت‌های سوئینگ سقف و کف
+        sh = []
+        sl = []
+        for i in range(1, rn - 1):
+            if recent[i].high > recent[i - 1].high and recent[i].high > recent[i + 1].high:
+                sh.append((i, recent[i].high))
+            if recent[i].low < recent[i - 1].low and recent[i].low < recent[i + 1].low:
+                sl.append((i, recent[i].low))
+
+        # بررسی Bearish QML: H1, L1, H2 (Higher High), L2 (Lower Low)
+        if len(sh) >= 2 and len(sl) >= 2:
+            h1_idx, h1 = sh[-2]
+            h2_idx, h2 = sh[-1]
+            lows_between = [l for l in sl if h1_idx < l[0] < h2_idx]
+            lows_after = [l for l in sl if h2_idx < l[0]]
+
+            if lows_between and lows_after:
+                l1 = lows_between[0][1]
+                l2 = min(l[1] for l in lows_after)
+                if h2 > h1 and l2 < l1:
+                    return QuasimodoPattern(
+                        qml_type="BEARISH_QML",
+                        level=round(h1, 2),
+                        invalidation=round(h2, 2),
+                        target=round(l2, 2),
+                        bar_index=n - rn + h2_idx,
+                    )
+
+            # بررسی Bullish QML: L1, H1, L2 (Lower Low), H2 (Higher High)
+            l1_idx, l1 = sl[-2]
+            l2_idx, l2 = sl[-1]
+            highs_between = [h for h in sh if l1_idx < h[0] < l2_idx]
+            highs_after = [h for h in sh if l2_idx < h[0]]
+
+            if highs_between and highs_after:
+                h1 = highs_between[0][1]
+                h2 = max(h[1] for h in highs_after)
+                if l2 < l1 and h2 > h1:
+                    return QuasimodoPattern(
+                        qml_type="BULLISH_QML",
+                        level=round(l1, 2),
+                        invalidation=round(l2, 2),
+                        target=round(h2, 2),
+                        bar_index=n - rn + l2_idx,
+                    )
+
+        return None
+
+    @staticmethod
+    def detect_ftr_zones(candles: list[Candle]) -> list[FTRZone]:
+        """شناسایی نواحی تصمیم‌گیری RTM Fail-To-Return (FTR)."""
+        n = len(candles)
+        if n < 20:
+            return []
+
+        ftrs: list[FTRZone] = []
+        recent = candles[-30:]
+        rn = len(recent)
+
+        for i in range(5, rn - 3):
+            c_break = recent[i]
+            # شکست صعودی مقاومت (Bullish Engulf)
+            res_level = max(c.high for c in recent[i - 5:i])
+            if c_break.close > res_level and c_break.body > (c_break.high - c_break.low) * 0.6:
+                c_base = recent[i + 1]
+                if c_base.low >= res_level - 0.5:
+                    top = max(c_base.open, c_base.close)
+                    bottom = c_base.low
+                    mitigated = any(c.low <= top for c in recent[i + 2:])
+                    ftrs.append(FTRZone(
+                        ftr_type="DEMAND_FTR",
+                        base_top=round(top, 2),
+                        base_bottom=round(bottom, 2),
+                        broken_level=round(res_level, 2),
+                        bar_index=n - rn + i + 1,
+                        mitigated=mitigated,
+                    ))
+
+            # شکست نزولی حمایت (Bearish Engulf)
+            sup_level = min(c.low for c in recent[i - 5:i])
+            if c_break.close < sup_level and c_break.body > (c_break.high - c_break.low) * 0.6:
+                c_base = recent[i + 1]
+                if c_base.high <= sup_level + 0.5:
+                    top = c_base.high
+                    bottom = min(c_base.open, c_base.close)
+                    mitigated = any(c.high >= bottom for c in recent[i + 2:])
+                    ftrs.append(FTRZone(
+                        ftr_type="SUPPLY_FTR",
+                        base_top=round(top, 2),
+                        base_bottom=round(bottom, 2),
+                        broken_level=round(sup_level, 2),
+                        bar_index=n - rn + i + 1,
+                        mitigated=mitigated,
+                    ))
+
+        return ftrs[-4:]

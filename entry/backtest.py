@@ -75,6 +75,7 @@ class OpenTrade:
     entry_rr: float
     initial_sl: float = 0.0
     grade: SetupGrade = SetupGrade.B
+    source: str = "analysis"
 
     def to_broker_position(self, current_price: float) -> BrokerPosition:
         # pnl تقریبی برای لاگ (محاسبه دقیق در close انجام می‌شود)
@@ -87,6 +88,29 @@ class OpenTrade:
             profit=pnl, swap=0.0, open_time=self.open_time,
             comment=self.plan_id, initial_sl=self.initial_sl,
         )
+
+
+def _aggregate_h1_candles(m15_candles: list[Candle]) -> list[Candle]:
+    """تلفیق کندل‌های M15 به کندل‌های H1 برای تحلیل تایم‌فریم بالاتر در بک‌تست."""
+    if not m15_candles:
+        return []
+    h1_groups: dict[int, list[Candle]] = {}
+    for c in m15_candles:
+        h_ts = c.time - (c.time % 3600)
+        h1_groups.setdefault(h_ts, []).append(c)
+
+    out: list[Candle] = []
+    for h_ts in sorted(h1_groups.keys()):
+        group = h1_groups[h_ts]
+        out.append(Candle(
+            time=h_ts,
+            open=group[0].open,
+            high=max(c.high for c in group),
+            low=min(c.low for c in group),
+            close=group[-1].close,
+            volume=sum(c.volume for c in group),
+        ))
+    return out
 
 
 # ════════════════════ بک‌تستر ════════════════════
@@ -188,8 +212,14 @@ class Backtester:
                     continue
 
                 view = self.eng.analyze(past, tick, check_news=False)
-                plan = self.eng.plan_from_analysis(candles[:i+1], view,
-                                                   self.cfg.analysis.timeframe)
+                h1_candles = _aggregate_h1_candles(candles[:i+1])
+                # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
+                plan = self.eng.plan_from_smc(candles[:i+1], view, h1_candles=h1_candles, timeframe=self.cfg.analysis.timeframe)
+                # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (گرید B با تاییدیه H1)
+                if plan is None:
+                    plan = self.eng.plan_from_analysis(candles[:i+1], view,
+                                                       self.cfg.analysis.timeframe,
+                                                       h1_candles=h1_candles)
                 if plan is None:
                     continue
                 account = AccountState(
@@ -220,6 +250,7 @@ class Backtester:
                     open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
                     initial_sl=plan.stop_loss,
                     grade=plan.grade,
+                    source=plan.source,
                 )
                 self._ticket_seq += 1
                 log.info("OPEN-AUTO #%d %s vol=%.2f entry=%.2f sl=%.2f atr=%.2f",
@@ -274,6 +305,7 @@ class Backtester:
                 open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
                 initial_sl=plan.stop_loss,
                 grade=plan.grade,
+                source=plan.source,
             )
             self._ticket_seq += 1
             n_processed_signals += 1
@@ -326,7 +358,7 @@ class Backtester:
             sl=ot.sl, tp=ot.tp, pnl=pnl, exit_reason=exit_reason,
             opened_at=ot.open_time, closed_at=now_ts,
             grade=ot.grade,
-            source="analysis" if ot.plan_id.startswith("auto-") else "signal",
+            source=ot.source,
             r_multiple=self._r_multiple(ot, exit_price),
         )
         self.trades.append(trade)
@@ -379,7 +411,7 @@ class Backtester:
             sl=ot.sl, tp=ot.tp, pnl=pnl, exit_reason=ExitReason.PARTIAL_TP,
             opened_at=ot.open_time, closed_at=self._cur_candle_ts if self._cur_candle_ts > 0 else ot.open_time,
             grade=ot.grade,
-            source="analysis" if ot.plan_id.startswith("auto-") else "signal",
+            source=ot.source,
             r_multiple=self._r_multiple(ot, cur_price),
         )
         self.trades.append(trade)
@@ -469,6 +501,7 @@ class Backtester:
             "trades": [
                 {
                     "signal": t.plan_id,
+                    "source": t.source,
                     "grade": t.grade.value if hasattr(t.grade, "value") else str(t.grade),
                     "side": t.side.value if hasattr(t.side, "value") else str(t.side),
                     "entry": t.entry_price, "sl": t.sl, "tp": t.tp,

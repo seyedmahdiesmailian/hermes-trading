@@ -29,6 +29,7 @@ class Gates:
     min_atr_stop_mult: float
     max_spread_points: float
     min_atr_stop_mult_analysis: float = 1.4   # ستاپ تحلیلی = ۱.۵×ATR → کف ۱.۴
+    min_atr_stop_mult_smc: float = 1.2        # ستاپ سازمانی هوشمند SMC/ICT → کف ۱.۲
     max_volume_lots: float = 2.0              # حداکثر سقف حجم مجاز هر معامله
     loss_cooldown_minutes: int = 45           # توقف معاملاتی پس از هر استاپ (دقیقه)
 
@@ -128,6 +129,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
             min_atr_stop_mult=_float(g, "min_atr_stop_mult"),
             max_spread_points=_float(g, "max_spread_points"),
             min_atr_stop_mult_analysis=_float(g, "min_atr_stop_mult_analysis") if "min_atr_stop_mult_analysis" in g else 1.4,
+            min_atr_stop_mult_smc=_float(g, "min_atr_stop_mult_smc") if "min_atr_stop_mult_smc" in g else 1.2,
             max_volume_lots=_float(g, "max_volume_lots") if "max_volume_lots" in g else 2.0,
             loss_cooldown_minutes=_int(g, "loss_cooldown_minutes") if "loss_cooldown_minutes" in g else 45,
             )

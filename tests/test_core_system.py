@@ -246,6 +246,48 @@ class TestGatesEngine:
         assert res.allowed is False
         assert any("stop_too_tight" in r for r in res.reasons)
 
+    def test_smc_gates_stop_distance_thresholds(self, default_gates, healthy_account):
+        # ATR=10.0: Signal min=1.5*10=15.0, Analysis min=1.4*10=14.0, SMC min=1.2*10=12.0
+        # 1) SMC setup with sl_dist = 13.0 (between 12.0 and 15.0): SMC allows, Signal denies
+        smc_plan = Plan(
+            plan_id="smc-p1", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2037.0, take_profit=2080.0,
+            volume=0.0, grade=SetupGrade.A, source="smc_ob", rr=2.3
+        )
+        res_smc = default_gates.evaluate(
+            plan=smc_plan, account=healthy_account,
+            positions=[], trades_today=0, daily_pnl=0.0,
+            atr=10.0, spread=0.5
+        )
+        assert res_smc.allowed is True
+
+        sig_plan = Plan(
+            plan_id="sig-p1", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2037.0, take_profit=2080.0,
+            volume=0.0, grade=SetupGrade.A, source="signal", rr=2.3
+        )
+        res_sig = default_gates.evaluate(
+            plan=sig_plan, account=healthy_account,
+            positions=[], trades_today=0, daily_pnl=0.0,
+            atr=10.0, spread=0.5
+        )
+        assert res_sig.allowed is False
+        assert any("stop_too_tight" in r for r in res_sig.reasons)
+
+        # 2) SMC setup with sl_dist = 11.0 (< 1.2*ATR): Denies with stop_too_tight
+        tight_smc = Plan(
+            plan_id="smc-tight", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2039.0, take_profit=2080.0,
+            volume=0.0, grade=SetupGrade.A, source="smc_judas", rr=2.7
+        )
+        res_tight = default_gates.evaluate(
+            plan=tight_smc, account=healthy_account,
+            positions=[], trades_today=0, daily_pnl=0.0,
+            atr=10.0, spread=0.5
+        )
+        assert res_tight.allowed is False
+        assert any("stop_too_tight" in r for r in res_tight.reasons)
+
     def test_b221_dark_bridge_positions_none(self, default_gates, healthy_account, standard_plan):
         res = default_gates.evaluate(
             plan=standard_plan, account=healthy_account,
@@ -843,6 +885,75 @@ class TestEngineHybrid:
         plan = engine.plan_from_analysis(m15_candles, view, h1_candles=h1_candles)
         assert plan is None
 
+    def test_plan_from_smc_h1_trend_conflict(self):
+        from core.smc import SMCView, MarketPhase, ZoneType
+        engine = Engine()
+        now = time.time()
+        m15_candles = [
+            Candle(time=int(now - (35-i)*900), open=2040.0, high=2042.0, low=2038.0, close=2040.0, volume=100)
+            for i in range(35)
+        ]
+        # Judas swing setup pointing to SELL
+        smc_view = SMCView(
+            bias="bearish", confidence=0.85, phase=MarketPhase.BOS_BEARISH,
+            zone=ZoneType.PREMIUM, fib_level=0.75, killzone="london",
+            judas_swing="BEARISH_JUDAS", swing_high=2050.0, swing_low=2020.0
+        )
+        view = MarketView(
+            trend="bearish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2040.0, support=2020.0, resistance=2050.0,
+            smc=smc_view
+        )
+        # 1. H1 strongly BULLISH -> should reject SMC SELL
+        h1_bull = [
+            Candle(time=int(now - (35-i)*3600), open=2000.0+i*2.0, high=2003.0+i*2.0, low=1999.0+i*2.0, close=2002.0+i*2.0, volume=500)
+            for i in range(35)
+        ]
+        plan_blocked = engine.plan_from_smc(m15_candles, view, h1_candles=h1_bull)
+        assert plan_blocked is None
+
+        # 2. H1 aligned/neutral -> allows SMC SELL
+        h1_aligned = [
+            Candle(time=int(now - (35-i)*3600), open=2050.0-i*1.0, high=2051.0-i*1.0, low=2048.0-i*1.0, close=2049.0-i*1.0, volume=500)
+            for i in range(35)
+        ]
+        plan_allowed = engine.plan_from_smc(m15_candles, view, h1_candles=h1_aligned)
+        assert plan_allowed is not None
+        assert plan_allowed.side == Side.SELL
+        assert plan_allowed.source == "smc_judas"
+
+    def test_rtm_quasimodo_plan_generation(self):
+        from core.smc import SMCView, MarketPhase, ZoneType, QuasimodoPattern
+        engine = Engine()
+        now = time.time()
+        candles = [
+            Candle(time=int(now - (35-i)*900), open=2040.0, high=2042.0, low=2038.0, close=2040.0, volume=100)
+            for i in range(35)
+        ]
+        qml_pattern = QuasimodoPattern(
+            qml_type="BEARISH_QML",
+            level=2040.0,
+            invalidation=2050.0,
+            target=2020.0,
+            bar_index=20,
+        )
+        smc_view = SMCView(
+            bias="bearish", confidence=0.85, phase=MarketPhase.BOS_BEARISH,
+            zone=ZoneType.PREMIUM, fib_level=0.75, killzone="london",
+            qml=qml_pattern
+        )
+        view = MarketView(
+            trend="bearish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2040.0, support=2020.0, resistance=2050.0,
+            smc=smc_view
+        )
+        plan = engine.plan_from_smc(candles, view)
+        assert plan is not None
+        assert plan.side == Side.SELL
+        assert plan.source == "rtm_qml"
+        assert plan.grade == SetupGrade.A
+        assert plan.stop_loss > 2050.0
+
 
 # ══════════════════════════════════════════════════════════════════
 # ۹. تست‌های یادگیری تطبیقی (AdaptiveLearner)
@@ -1294,6 +1405,45 @@ class TestWatchlistEngine:
 
         assert SetupGrade.rank(grade_usd_bear_div) >= SetupGrade.rank(grade_neutral)
         assert SetupGrade.rank(grade_neutral) >= SetupGrade.rank(grade_usd_bull)
+
+    def test_backtest_h1_aggregation_and_smc_parity(self):
+        from entry.backtest import Backtester, _aggregate_h1_candles
+        # 1. Test aggregation of 8 M15 candles -> 2 H1 candles
+        base_ts = 1700000000 - (1700000000 % 3600)  # aligned to hour
+        m15_list = []
+        for i in range(8):
+            m15_list.append(Candle(
+                time=base_ts + i * 900,
+                open=2000.0 + i,
+                high=2005.0 + i,
+                low=1995.0 + i,
+                close=2001.0 + i,
+                volume=100 + i * 10
+            ))
+        h1_list = _aggregate_h1_candles(m15_list)
+        assert len(h1_list) == 2
+        # First H1 candle covers candles 0..3
+        assert h1_list[0].time == base_ts
+        assert h1_list[0].open == 2000.0
+        assert h1_list[0].high == max(2005.0 + i for i in range(4))
+        assert h1_list[0].low == min(1995.0 + i for i in range(4))
+        assert h1_list[0].close == 2001.0 + 3
+        # Second H1 candle covers candles 4..7
+        assert h1_list[1].time == base_ts + 3600
+        assert h1_list[1].open == 2000.0 + 4
+        assert h1_list[1].close == 2001.0 + 7
+
+    def test_daemon_smc_source_fallback(self):
+        # Position created by SMC with comment hms-smc-ob-1234
+        pos = BrokerPosition(
+            ticket=777, symbol="XAUUSD", side=Side.BUY, volume=0.05,
+            open_price=2000.0, current_price=2010.0, sl=1995.0, tp=2025.0,
+            profit=50.0, swap=0.0, open_time=int(time.time()),
+            comment="hms-smc-ob-1234"
+        )
+        source = ("analysis" if (pos.comment or "").startswith("hms-auto")
+                  else ("smc" if (pos.comment or "").startswith("hms-smc") else "signal"))
+        assert source == "smc"
 
 
 
