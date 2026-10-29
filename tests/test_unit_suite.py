@@ -142,18 +142,20 @@ class TestTradingCore(unittest.TestCase):
         """b210: HermesDaemon._today_pnl sums profit, swap and commission from broker deals."""
         from unittest.mock import MagicMock
         from entry.hermes import HermesDaemon
-        import time
+        from datetime import datetime, timezone
 
         daemon = MagicMock(spec=HermesDaemon)
         daemon.dry_run = False
         daemon.cfg = MagicMock()
         daemon.cfg.symbol = "XAUUSD"
         
-        now = time.time()
+        today_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ).timestamp()
         # Mock broker deals: profit -200, commission -15, swap -5 -> true net -220
         mock_deals = [
-            {"ticket": 1, "time": now - 3600, "entry": 0, "profit": 0.0, "commission": -7.5, "swap": 0.0},
-            {"ticket": 2, "time": now - 1800, "entry": 1, "profit": -200.0, "commission": -7.5, "swap": -5.0},
+            {"ticket": 1, "time": today_start + 100, "entry": 0, "profit": 0.0, "commission": -7.5, "swap": 0.0},
+            {"ticket": 2, "time": today_start + 200, "entry": 1, "profit": -200.0, "commission": -7.5, "swap": -5.0},
         ]
         daemon.mt5 = MagicMock()
         daemon.mt5.get_history_deals.return_value = mock_deals
@@ -165,7 +167,7 @@ class TestTradingCore(unittest.TestCase):
         """b210: HermesDaemon._today_trades_count counts broker exit deals (entry==1)."""
         from unittest.mock import MagicMock
         from entry.hermes import HermesDaemon
-        import time
+        from datetime import datetime, timezone
 
         daemon = MagicMock(spec=HermesDaemon)
         daemon.dry_run = False
@@ -174,13 +176,15 @@ class TestTradingCore(unittest.TestCase):
         daemon.led = MagicMock()
         daemon.led.get_today_trades.return_value = []
 
-        now = time.time()
+        today_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ).timestamp()
         # 2 entry deals (entry=0), 2 exit deals (entry=1)
         mock_deals = [
-            {"ticket": 1, "time": now - 3600, "entry": 0, "profit": 0.0},
-            {"ticket": 2, "time": now - 3500, "entry": 1, "profit": 50.0},
-            {"ticket": 3, "time": now - 1800, "entry": 0, "profit": 0.0},
-            {"ticket": 4, "time": now - 1700, "entry": 1, "profit": -30.0},
+            {"ticket": 1, "time": today_start + 100, "entry": 0, "profit": 0.0},
+            {"ticket": 2, "time": today_start + 200, "entry": 1, "profit": -50.0},
+            {"ticket": 3, "time": today_start + 300, "entry": 0, "profit": 0.0},
+            {"ticket": 4, "time": today_start + 400, "entry": 1, "profit": 120.0},
         ]
         daemon.mt5 = MagicMock()
         daemon.mt5.get_history_deals.return_value = mock_deals
@@ -560,6 +564,106 @@ class TestTradingCore(unittest.TestCase):
             self.assertEqual(len(trades), 1)
             self.assertEqual(trades[0].exit_reason, ExitReason.PARTIAL_TP)
             self.assertEqual(trades[0].pnl, 71.5)
+            ledger.close()
+
+    def test_b229_exit_manager_cleanup_ticket(self):
+        """b229: ExitManager.cleanup_ticket properly cleans _initial_sl and _partial_executed."""
+        from core.exits import ExitManager
+        from core.params import PositionCfg
+        cfg = PositionCfg(trailing_start_rr=1.5, breakeven_rr=1.0, max_hold_hours=24, partial_tp_rr=1.5, partial_enabled=True)
+        mgr = ExitManager(cfg)
+        mgr.register_initial_sl(555, 1990.0)
+        mgr._partial_executed.add(555)
+        self.assertIn(555, mgr._initial_sl)
+        self.assertIn(555, mgr._partial_executed)
+
+        mgr.cleanup_ticket(555)
+        self.assertNotIn(555, mgr._initial_sl)
+        self.assertNotIn(555, mgr._partial_executed)
+
+    def test_b229_reconcile_broker_closed_positions(self):
+        """b229: HermesDaemon._reconcile_broker_closed_positions reconciles MT5 exit deals into ledger and notifications."""
+        from unittest.mock import MagicMock
+        from entry.hermes import HermesDaemon
+        from core.entities import BrokerPosition, Side, ExitReason
+        from core.exits import ExitManager
+        from core.params import PositionCfg
+        import tempfile
+        from pathlib import Path
+        from core.db import Ledger
+
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_reconcile.db"
+            ledger = Ledger(db_path)
+
+            daemon = MagicMock(spec=HermesDaemon)
+            daemon.dry_run = False
+            daemon.cfg = MagicMock()
+            daemon.cfg.symbol = "XAUUSD"
+            daemon.led = ledger
+            daemon.notify = MagicMock()
+            cfg = PositionCfg(trailing_start_rr=1.5, breakeven_rr=1.0, max_hold_hours=24, partial_tp_rr=1.5, partial_enabled=True)
+            daemon.exits = ExitManager(cfg)
+            daemon.exits.register_initial_sl(999, 1990.0)
+
+            old_pos = BrokerPosition(
+                ticket=999,
+                symbol="XAUUSD",
+                side=Side.BUY,
+                volume=0.1,
+                open_price=2000.0,
+                current_price=2015.0,
+                sl=1990.0,
+                tp=2020.0,
+                profit=150.0,
+                swap=-2.0,
+                commission=-7.0,
+                open_time=1700000000,
+                comment="hms-auto-test",
+                initial_sl=1990.0,
+            )
+            daemon._tracked_positions = {999: old_pos}
+
+            # Mock broker deal for exit
+            mock_deal = {
+                "ticket": 8888,
+                "position_id": 999,
+                "entry": 1,
+                "price": 2020.0,
+                "profit": 200.0,
+                "swap": -2.0,
+                "commission": -7.0,
+                "comment": "[tp] take profit reached",
+                "time": 1700000500,
+            }
+            daemon.mt5 = MagicMock()
+            daemon.mt5.get_history_deals.return_value = [mock_deal]
+
+            # Reconcile closed position
+            HermesDaemon._reconcile_broker_closed_positions(daemon, [999])
+
+            # Verify saved trade
+            trades = ledger.get_trades(limit=10)
+            self.assertEqual(len(trades), 1)
+            t = trades[0]
+            self.assertEqual(t.ticket, 999)
+            self.assertEqual(t.exit_price, 2020.0)
+            self.assertEqual(t.pnl, 191.0)  # 200 - 2 - 7 = 191.0 net pnl
+            self.assertEqual(t.exit_reason, ExitReason.TAKE_PROFIT)
+            self.assertEqual(t.r_multiple, 2.0)  # (2020 - 2000) / (2000 - 1990) = 2.0R
+
+            # Verify notification
+            daemon.notify.trade_closed.assert_called_once_with(
+                Side.BUY.value, "XAUUSD", 191.0, ExitReason.TAKE_PROFIT.value
+            )
+
+            # Verify ExitManager ticket cleaned up
+            self.assertNotIn(999, daemon.exits._initial_sl)
+
+            # Idempotency test: calling again should not double insert
+            HermesDaemon._reconcile_broker_closed_positions(daemon, [999])
+            self.assertEqual(len(ledger.get_trades(limit=10)), 1)
+
             ledger.close()
 
 

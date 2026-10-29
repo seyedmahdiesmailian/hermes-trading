@@ -40,6 +40,16 @@ class ExitManager:
         # ثبت استاپ‌لاس اولیه برای هر تیکت جهت محاسبه دقیق R-Multiple بعد از بریک‌اون
         self._initial_sl: dict[int, float] = {}
 
+    def register_initial_sl(self, ticket: int, sl: float) -> None:
+        """ثبت استاپ‌لاس اولیه برای یک تیکت جهت استفاده در محاسبات R-Multiple."""
+        if sl > 0 and ticket not in self._initial_sl:
+            self._initial_sl[ticket] = float(sl)
+
+    def cleanup_ticket(self, ticket: int) -> None:
+        """پاکسازی وضعیت ذخیره‌شده تیکت پس از بسته شدن کامل."""
+        self._initial_sl.pop(ticket, None)
+        self._partial_executed.discard(ticket)
+
     # ── API مدیریت پوزیشن ─────────────────────────────────
 
     def manage(
@@ -108,6 +118,8 @@ class ExitManager:
             new_sl = self._trail_sl_with_tp(pos)
             if new_sl is not None:
                 self._modify(pos, new_sl)
+            else:
+                self._apply_breakeven_with_buffer(pos)
         elif r_mult >= self._cfg.breakeven_rr:
             self._apply_breakeven_with_buffer(pos)
 

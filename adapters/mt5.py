@@ -360,6 +360,7 @@ class Mt5Adapter:
                 swap=0.0,
                 open_time=int(time.time()),
                 comment=order_id,
+                initial_sl=sl,
             )
             self._sim_book[ticket] = pos
             self._sim_save()

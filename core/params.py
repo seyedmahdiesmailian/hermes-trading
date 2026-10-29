@@ -126,6 +126,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
             min_grade=_str(g, "min_grade"),
             min_atr_stop_mult=_float(g, "min_atr_stop_mult"),
             max_spread_points=_float(g, "max_spread_points"),
+            min_atr_stop_mult_analysis=_float(g, "min_atr_stop_mult_analysis") if "min_atr_stop_mult_analysis" in g else 1.4,
             max_volume_lots=_float(g, "max_volume_lots") if "max_volume_lots" in g else 2.0,
             )
 

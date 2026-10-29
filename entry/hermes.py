@@ -129,6 +129,7 @@ class HermesDaemon:
         self._last_entry_loop = 0.0
         self._last_exit_loop = 0.0
         self._last_atr = 0.0  # آخرین ATR زنده — trailing تحلیلی
+        self._tracked_positions: dict[int, BrokerPosition] = {}
 
     # ───────────────────────────────────────────────────
     # چرخه حیات
@@ -345,6 +346,8 @@ class HermesDaemon:
         )
         order.plan_id = plan.plan_id
         self.led.save_order(order)
+        if order.ticket > 0 and plan.stop_loss > 0:
+            self.exits.register_initial_sl(order.ticket, plan.stop_loss)
 
         self.notify.trade_opened(
             plan.side.value, plan.symbol, outcome.volume,
@@ -359,6 +362,15 @@ class HermesDaemon:
     def _exit_loop(self) -> None:
         """مدیریت پوزیشن‌های باز — breakeven / trailing / time-exit."""
         positions = self.mt5.get_open_positions(self.cfg.symbol)
+
+        # ۱) تطبیق معاملات بسته‌شده در سمت بروکر (Broker Reconciliation)
+        # اگر پوزیشنی در چرخه قبل باز بوده ولی اکنون بسته شده، اطلاعات خروج را از هیستوری دیل‌ها استخراج و در ژورنال ثبت می‌کنیم.
+        current_map = {p.ticket: p for p in (positions or []) if not p.comment or p.comment.startswith("hms")}
+        closed_tickets = [t for t in self._tracked_positions if t not in current_map]
+        if closed_tickets and not self.dry_run:
+            self._reconcile_broker_closed_positions(closed_tickets)
+        self._tracked_positions = current_map
+
         if not positions:
             return
 
@@ -461,7 +473,95 @@ class HermesDaemon:
         )
         self.led.save_trade(trade)
         self.notify.trade_closed(pos.side.value, pos.symbol, pnl, reason.value)
+        self.exits.cleanup_ticket(pos.ticket)
+        self._tracked_positions.pop(pos.ticket, None)
         log.info("پوزیشن بسته شد: ticket=%s pnl=%.2f reason=%s", pos.ticket, pnl, reason.value)
+
+    def _reconcile_broker_closed_positions(self, closed_tickets: list[int]) -> None:
+        """تطبیق و ثبت معاملات بسته‌شده توسط بروکر (SL/TP) در ژورنال، اعلان و پاکسازی حافظه."""
+        try:
+            deals = self.mt5.get_history_deals(days=1, symbol=self.cfg.symbol)
+        except Exception as e:
+            log.warning("عدم دسترسی به تاریخچه دیل‌های بروکر جهت تطبیق خروج: %s", e)
+            deals = []
+
+        deal_by_pos: dict[int, dict] = {}
+        for d in deals:
+            if d.get("entry") == 1:
+                pos_id = d.get("position_id") or d.get("ticket") or d.get("order")
+                if pos_id:
+                    deal_by_pos[int(pos_id)] = d
+
+        for ticket in closed_tickets:
+            old_pos = self._tracked_positions.get(ticket)
+            if not old_pos:
+                continue
+
+            # چک کردن اینکه آیا این معامله قبلاً با _close_position ثبت شده یا خیر
+            try:
+                row = self.led._con.execute(
+                    "SELECT 1 FROM trades WHERE ticket = ? AND exit_reason != ?",
+                    (ticket, ExitReason.PARTIAL_TP.value)
+                ).fetchone()
+                if row:
+                    self.exits.cleanup_ticket(ticket)
+                    continue
+            except Exception:
+                pass
+
+            d = deal_by_pos.get(ticket)
+            if d:
+                exit_price = float(d.get("price") or old_pos.current_price)
+                profit = float(d.get("profit", 0.0))
+                swap = float(d.get("swap", 0.0))
+                comm = float(d.get("commission", 0.0))
+                pnl = round(profit + swap + comm, 2)
+                comment = str(d.get("comment", "")).lower()
+                if "[tp]" in comment or (old_pos.tp > 0 and ((old_pos.is_buy and exit_price >= old_pos.tp - 0.25) or (not old_pos.is_buy and exit_price <= old_pos.tp + 0.25))):
+                    reason = ExitReason.TAKE_PROFIT
+                elif "[sl]" in comment or (old_pos.sl > 0 and ((old_pos.is_buy and exit_price <= old_pos.sl + 0.25) or (not old_pos.is_buy and exit_price >= old_pos.sl - 0.25))):
+                    reason = ExitReason.STOP_LOSS
+                else:
+                    reason = ExitReason.MANUAL
+            else:
+                exit_price = old_pos.current_price
+                pnl = old_pos.net_profit
+                reason = ExitReason.MANUAL
+
+            # R-Multiple بر مبنای استاپ اولیه
+            init_sl = self.exits._initial_sl.get(ticket, old_pos.initial_sl if old_pos.initial_sl > 0 else old_pos.sl)
+            if init_sl > 0:
+                if old_pos.is_buy:
+                    risk = old_pos.open_price - init_sl
+                    r_mult = round((exit_price - old_pos.open_price) / risk, 3) if risk > 0 else old_pos.r_multiple
+                else:
+                    risk = init_sl - old_pos.open_price
+                    r_mult = round((old_pos.open_price - exit_price) / risk, 3) if risk > 0 else old_pos.r_multiple
+            else:
+                r_mult = old_pos.r_multiple
+
+            trade = Trade(
+                trade_id=f"trade-{ticket}",
+                plan_id=old_pos.comment or "",
+                ticket=ticket,
+                symbol=old_pos.symbol,
+                side=old_pos.side,
+                volume=old_pos.volume,
+                entry_price=old_pos.open_price,
+                exit_price=exit_price,
+                sl=old_pos.sl,
+                tp=old_pos.tp,
+                pnl=pnl,
+                exit_reason=reason,
+                opened_at=old_pos.open_time,
+                closed_at=time.time(),
+                source="analysis" if (old_pos.comment or "").startswith("hms-auto") else "signal",
+                r_multiple=r_mult,
+            )
+            self.led.save_trade(trade)
+            self.notify.trade_closed(old_pos.side.value, old_pos.symbol, pnl, reason.value)
+            self.exits.cleanup_ticket(ticket)
+            log.info("پوزیشن بسته شده توسط بروکر تطبیق و در ژورنال ثبت شد: ticket=%s pnl=%.2f reason=%s", ticket, pnl, reason.value)
 
     # ───────────────────────────────────────────────────
     # کمکی

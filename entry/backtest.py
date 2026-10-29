@@ -310,6 +310,8 @@ class Backtester:
             r_multiple=self._r_multiple(ot, exit_price),
         )
         self.trades.append(trade)
+        if ot is not None:
+            self.exits.cleanup_ticket(ot.ticket)
         self._open = None
         self._last_exit_ts = now_ts
         log.info("CLOSE #%d pnl=%+.2f reason=%s",
