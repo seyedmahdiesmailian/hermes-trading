@@ -1875,8 +1875,10 @@ class TestWatchlistEngine:
 
     def test_b243_watchlist_pullback_zero_tp_guarded(self):
         """b243: Watchlist pullback with tp<=0 does not compute fake 270.0 RR from raw asset price."""
+        from unittest.mock import MagicMock
         from entry.hermes import HermesDaemon
         daemon = HermesDaemon(bridge_token="")
+        daemon.notify = MagicMock()
         # Simulate watchlist item with tp=0
         item = {
             "item_id": "wl-zero-tp",
@@ -2026,6 +2028,7 @@ class TestWatchlistEngine:
             db_path = Path(td) / "test_b247_close.db"
             ledger = Ledger(db_path)
             daemon = HermesDaemon(bridge_token="")
+            daemon.notify = MagicMock()
             daemon.led = ledger
             daemon.dry_run = True
             daemon.mt5.close_position = MagicMock()
@@ -2083,6 +2086,7 @@ class TestWatchlistEngine:
             db_path = Path(td) / "test_b247_initsl.db"
             ledger = Ledger(db_path)
             daemon = HermesDaemon(bridge_token="")
+            daemon.notify = MagicMock()
             daemon.led = ledger
             daemon.dry_run = True
             daemon.mt5.close_position = MagicMock()
@@ -2114,6 +2118,7 @@ class TestWatchlistEngine:
             db_path = Path(td) / "test_b247_wl.db"
             ledger = Ledger(db_path)
             daemon = HermesDaemon(bridge_token="")
+            daemon.notify = MagicMock()
             daemon.led = ledger
 
             # Add waiting item to watchlist
