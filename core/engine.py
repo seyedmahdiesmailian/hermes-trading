@@ -365,28 +365,34 @@ class Engine:
     @staticmethod
     def _grade_analysis_setup(side: Side, view: MarketView) -> SetupGrade:
         """نمره‌دهی ستاپ تحلیلی بر مبنای همگرایی تکنیکال و SMC."""
-        score = 0.5  # پایه هماهنگی روند
+        # پایه هماهنگی روند EMA سریع و کند تأییدشده در بک‌تست = 0.65 (گرید B پایه)
+        score = 0.65
+
+        # پاداش قدرت شیب روند
+        if view.trend_strength >= 0.20:
+            score += 0.10
 
         if view.smc is not None:
-            # همگرایی با دیدگاه SMC
+            # همگرایی مستقیم با دیدگاه سازمانی SMC
             if (side == Side.BUY and view.smc.bias == "bullish") or \
                (side == Side.SELL and view.smc.bias == "bearish"):
-                score += 0.25
+                score += 0.15
 
             # پاداش ناحیه بهینه ورود (Discount برای خرید / Premium برای فروش)
             if (side == Side.BUY and view.smc.zone == ZoneType.DISCOUNT) or \
                (side == Side.SELL and view.smc.zone == ZoneType.PREMIUM):
-                score += 0.15
-
-            # پاداش ستاپ شکار نقدینگی آسیا (Judas Swing) یا OTE
-            if view.smc.judas_swing is not None:
-                score += 0.20
-            if view.smc.is_ote:
-                score += 0.15
-
-            # پاداش سشن نقدینگی فعال
-            if view.smc.killzone in ("london", "newyork"):
                 score += 0.10
+
+            # پاداش ستاپ شکار نقدینگی آسیا (Judas Swing) یا ورود بهینه OTE
+            if view.smc.judas_swing is not None:
+                score += 0.15
+            if view.smc.is_ote:
+                score += 0.10
+
+            # جریمه سنگین تله نقدینگی: خرید در سقف یا فروش در کف
+            if (side == Side.BUY and view.smc.zone == ZoneType.PREMIUM and view.smc.fib_level > 0.80) or \
+               (side == Side.SELL and view.smc.zone == ZoneType.DISCOUNT and view.smc.fib_level < 0.20):
+                score -= 0.30
 
         if score >= 0.85:
             return SetupGrade.A

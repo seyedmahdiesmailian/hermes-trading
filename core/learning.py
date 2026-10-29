@@ -54,7 +54,7 @@ class AdaptiveLearner:
             return PerformanceMetrics(0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0)
 
         wins = [t for t in trades if t.is_win]
-        losses = [t for t in trades if not t.is_win]
+        losses = [t for t in trades if t.pnl < 0]
 
         total_profit = sum(t.pnl for t in wins)
         total_loss = abs(sum(t.pnl for t in losses))
@@ -66,12 +66,12 @@ class AdaptiveLearner:
         r_multiples = [t.r_multiple for t in trades if t.r_multiple != 0.0]
         avg_r = round(sum(r_multiples) / len(r_multiples), 3) if r_multiples else 0.0
 
-        # شمارش باخت‌های متوالی اخیر
+        # شمارش باخت‌های متوالی اخیر (صرفاً تریدهای زیان‌ده، نه بریک‌اون)
         streak = 0
         for t in reversed(trades):
-            if not t.is_win:
+            if t.pnl < 0:
                 streak += 1
-            else:
+            elif t.pnl > 0:
                 break
 
         return PerformanceMetrics(

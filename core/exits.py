@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Callable, Optional, Set
 
 from core.entities import BrokerPosition, ExitReason
@@ -29,8 +30,8 @@ class ExitManager:
     def __init__(
         self,
         pos_cfg: PositionCfg,
-        on_modify: Optional[Callable[[int, float], None]] = None,
-        on_partial: Optional[Callable[[int, float], None]] = None,
+        on_modify: Optional[Callable[..., None]] = None,
+        on_partial: Optional[Callable[..., None]] = None,
     ):
         self._cfg = pos_cfg
         self._on_modify = on_modify
@@ -55,7 +56,7 @@ class ExitManager:
     def manage(
         self,
         pos: BrokerPosition,
-        now_ts: float,
+        now_ts: Optional[float] = None,
         atr: float = 0.0,
         atr_sl_mult: float = 1.5,
         atr_trail_mult: float = 2.5,
@@ -66,11 +67,15 @@ class ExitManager:
           (ExitReason, exit_price) -> بستن کامل پوزیشن
           None -> پوزیشن حفظ یا اصلاح شد
         """
+        if now_ts is None:
+            now_ts = time.time()
+
         # ۱) خروج زمانی (Time-Based Exit)
-        age_hours = (now_ts - pos.open_time) / 3600.0
-        if age_hours >= self._cfg.max_hold_hours:
-            log.info("time exit triggered: ticket=%d age=%.1fh", pos.ticket, age_hours)
-            return ExitReason.TIME_EXIT, pos.current_price
+        if pos.open_time > 0:
+            age_hours = (now_ts - pos.open_time) / 3600.0
+            if age_hours >= self._cfg.max_hold_hours:
+                log.info("time exit triggered: ticket=%d age=%.1fh", pos.ticket, age_hours)
+                return ExitReason.TIME_EXIT, pos.current_price
 
         # ثبت استاپ‌لاس اولیه برای هر تیکت
         if pos.ticket not in self._initial_sl:
@@ -196,7 +201,10 @@ class ExitManager:
     def _modify(self, pos: BrokerPosition, new_sl: float) -> None:
         """اعمال SL جدید با استفاده از کال‌بک ثبت‌شده."""
         if self._on_modify is not None:
-            self._on_modify(pos.ticket, new_sl)
+            try:
+                self._on_modify(pos.ticket, new_sl, pos.tp)
+            except TypeError:
+                self._on_modify(pos.ticket, new_sl)
 
     @staticmethod
     def _trail_sl_with_tp(pos: BrokerPosition) -> float | None:

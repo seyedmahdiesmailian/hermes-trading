@@ -400,8 +400,8 @@ class Backtester:
 
     def _trades_today(self, now_ts: float) -> int:
         day = datetime.fromtimestamp(now_ts, timezone.utc).date()
-        return sum(1 for t in self.trades
-                   if datetime.fromtimestamp(t.closed_at, timezone.utc).date() == day)
+        today_trades = [t for t in self.trades if datetime.fromtimestamp(t.closed_at, timezone.utc).date() == day]
+        return len({t.ticket for t in today_trades})
 
     def _pnl_today(self, now_ts: float) -> float:
         day = datetime.fromtimestamp(now_ts, timezone.utc).date()

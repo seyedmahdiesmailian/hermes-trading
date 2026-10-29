@@ -293,17 +293,17 @@ class Mt5Adapter:
             out.append(
                 BrokerPosition(
                     ticket=int(p["ticket"]),
-                    symbol=p["symbol"],
+                    symbol=str(p.get("symbol") or symbol or "XAUUSD"),
                     side=side,
                     volume=float(p["volume"]),
-                    open_price=float(p["price_open"]),
-                    current_price=float(p.get("price_current", p["price_open"])),
+                    open_price=float(p.get("price_open", p.get("open_price", 0.0))),
+                    current_price=float(p.get("price_current", p.get("price_open", p.get("open_price", 0.0)))),
                     sl=float(p.get("sl") or 0.0),
                     tp=float(p.get("tp") or 0.0),
                     profit=float(p.get("profit", 0.0)),
                     swap=float(p.get("swap", 0.0)),
                     commission=float(p.get("commission", 0.0)),
-                    open_time=int(p["time"]),
+                    open_time=int(p.get("time") or time.time()),
                     comment=str(p.get("comment", "") or ""),
                 )
             )

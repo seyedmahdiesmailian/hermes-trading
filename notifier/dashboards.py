@@ -408,8 +408,10 @@ def panel_plan_hist() -> tuple[str, list]:
 
 def panel_pos() -> tuple[str, list]:
     """📊 پوزیشن‌های باز و خروج داینامیک."""
-    _, acct, pos = _get_bridge()
+    client, acct, pos = _get_bridge()
     rows = positions_list(pos)
+    tick = client.get_tick("XAUUSD") if client else {}
+    cur_mid = tick.get("bid") or tick.get("ask") or 0.0
 
     lines = [
         "📊 <b>پوزیشن‌های باز و مدیریت خروج</b>",
@@ -433,8 +435,8 @@ def panel_pos() -> tuple[str, list]:
             d = '🟢' if profit > 0 else ('⚪' if profit == 0 else '🔴')
             side = 'خرید (BUY)' if str(p.get('type')).upper() in ('BUY', '0') else 'فروش (SELL)'
             vol = float(p.get('volume') or 0)
-            op = float(p.get('open_price') or 0)
-            cp = float(p.get('current_price') or 0)
+            op = float(p.get('open_price') or p.get('price_open') or 0)
+            cp = float(p.get('current_price') or p.get('price_current') or cur_mid or op)
             sl = float(p.get('sl') or 0)
             tp = float(p.get('tp') or 0)
             tk = str(p.get('ticket') or '')

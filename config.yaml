@@ -47,7 +47,7 @@ analysis:
   timeframe: M15
   candle_count: 200
   higher_timeframes: [H1, H4]   # تأیید روند چند‌بازه‌ای
-  session_hours: [7, 17]        # ساعت UTC активности (London+NY)
+  session_hours: [0, 22]        # ساعت UTC فعالیت (پوشش کامل آسیا + لندن + نیویورک)
 
 # ── منابع ─────────────────────────────────────────────
 signals:

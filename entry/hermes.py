@@ -71,9 +71,15 @@ class HermesDaemon:
         self.notify = self._build_notify()
 
         # منطق خروج مشترک (دیمن زنده + بک‌تستر یک کد اجرا می‌کنند)
-        def _on_modify(ticket: int, new_sl: float) -> None:
-            self.mt5.modify_position(ticket, new_sl, 0.0)
-            log.info("SL modified: ticket=%s sl=%.2f", ticket, new_sl)
+        def _on_modify(ticket: int, new_sl: float, tp: float = 0.0) -> None:
+            try:
+                # b233: حفظ TP فعلی در صورت عدم ارسال مقدار جدید تا در بروکر پاک نشود
+                if tp <= 0.0 and ticket in self._tracked_positions:
+                    tp = self._tracked_positions[ticket].tp
+                self.mt5.modify_position(ticket, new_sl, tp)
+                log.info("SL modified: ticket=%s sl=%.2f tp=%.2f", ticket, new_sl, tp)
+            except BridgeError as e:
+                log.warning("modify_position failed: ticket=%s error=%s", ticket, e)
 
         def _on_partial(ticket: int, percent: float) -> None:
             # جستجوی پوزیشن قبل از کاهش حجم جهت محاسبه دقیق سود پله‌ای
@@ -84,7 +90,12 @@ class HermesDaemon:
             except Exception as e:
                 log.warning("خطا در خواندن پوزیشن قبل از partial: %s", e)
 
-            ok = self.mt5.partial_close(ticket, percent)
+            try:
+                ok = self.mt5.partial_close(ticket, percent)
+            except BridgeError as e:
+                log.warning("partial_close failed: ticket=%s error=%s", ticket, e)
+                return
+
             if ok and cur_pos:
                 closed_vol = round(cur_pos.volume * (percent / 100.0), 2)
                 if closed_vol > 0:
@@ -452,7 +463,11 @@ class HermesDaemon:
 
     def _close_position(self, pos: BrokerPosition, reason: ExitReason, exit_price: float) -> None:
         """بستن پوزیشن و ثبت در دفتر کل."""
-        ok = self.mt5.close_position(pos.ticket)
+        try:
+            ok = self.mt5.close_position(pos.ticket)
+        except BridgeError as e:
+            log.warning("close failed: ticket=%s error=%s", pos.ticket, e)
+            return
         if not ok:
             log.warning("close failed: ticket=%s", pos.ticket)
             return
@@ -650,7 +665,9 @@ class HermesDaemon:
 
     def _today_trades_count(self) -> int:
         """تعداد معاملات بسته‌شده امروز جهت ارزیابی گیت max_daily_trades."""
-        local_count = len(self.led.get_today_trades())
+        local_trades = self.led.get_today_trades()
+        distinct_local_tickets = {t.ticket for t in local_trades}
+        local_count = len(distinct_local_tickets)
         if not self.dry_run:
             try:
                 deals = self.mt5.get_history_deals(days=1, symbol=self.cfg.symbol)
@@ -658,7 +675,8 @@ class HermesDaemon:
                     hour=0, minute=0, second=0, microsecond=0
                 ).timestamp()
                 exit_deals = [d for d in deals if d.get("time", 0) >= today_start and d.get("entry") == 1]
-                return max(local_count, len(exit_deals))
+                broker_tickets = {d.get("position_id") or d.get("ticket") for d in exit_deals if (d.get("position_id") or d.get("ticket"))}
+                return max(local_count, len(broker_tickets))
             except Exception as e:
                 log.warning("عدم دسترسی به تاریخچه معاملات بروکر برای شمارش: %s", e)
         return local_count
