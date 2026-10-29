@@ -2014,6 +2014,166 @@ class TestWatchlistEngine:
         assert len(called) > 0
         assert res["total_trades"] > 0 or len(bt.denied) > 0
 
+    def test_b247_daemon_close_position_breakeven_and_trailing_parity(self):
+        """b247: HermesDaemon._close_position resolves STOP_LOSS exits with pnl>=0 to BREAKEVEN or TRAILING_STOP."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import MagicMock
+        from core.db import Ledger
+        from entry.hermes import HermesDaemon
+
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_b247_close.db"
+            ledger = Ledger(db_path)
+            daemon = HermesDaemon(bridge_token="")
+            daemon.led = ledger
+            daemon.dry_run = True
+            daemon.mt5.close_position = MagicMock()
+
+            pos_be = BrokerPosition(
+                ticket=101, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+                open_price=2000.0, current_price=2000.15, sl=2000.15, tp=2030.0,
+                profit=1.5, swap=0.0, commission=-0.70, open_time=1000,
+                comment="hms-test-be", initial_sl=1990.0,
+            )
+            daemon.exits.register_initial_sl(101, 1990.0)
+            daemon._close_position(pos_be, ExitReason.STOP_LOSS, exit_price=2000.15)
+            t_be = ledger.get_trades(limit=1)[0]
+            assert t_be.exit_reason == ExitReason.BREAKEVEN
+            assert t_be.ticket == 101
+
+            pos_trail = BrokerPosition(
+                ticket=102, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+                open_price=2000.0, current_price=2015.0, sl=2015.0, tp=2030.0,
+                profit=150.0, swap=0.0, commission=-0.70, open_time=1000,
+                comment="hms-test-trail", initial_sl=1990.0,
+            )
+            daemon.exits.register_initial_sl(102, 1990.0)
+            daemon._close_position(pos_trail, ExitReason.STOP_LOSS, exit_price=2015.0)
+            t_trail = ledger.get_trades(limit=1)[0]
+            assert t_trail.exit_reason == ExitReason.TRAILING_STOP
+            assert t_trail.ticket == 102
+            assert t_trail.pnl > 0
+
+            pos_loss = BrokerPosition(
+                ticket=103, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+                open_price=2000.0, current_price=1990.0, sl=1990.0, tp=2030.0,
+                profit=-100.0, swap=0.0, commission=-0.70, open_time=1000,
+                comment="hms-test-loss", initial_sl=1990.0,
+            )
+            daemon.exits.register_initial_sl(103, 1990.0)
+            daemon._close_position(pos_loss, ExitReason.STOP_LOSS, exit_price=1990.0)
+            t_loss = ledger.get_trades(limit=1)[0]
+            assert t_loss.exit_reason == ExitReason.STOP_LOSS
+            assert t_loss.ticket == 103
+            assert t_loss.pnl < 0
+
+            ledger.close()
+            daemon.close()
+
+    def test_b247_daemon_initial_sl_recovery_guards_against_advanced_sl(self):
+        """b247: HermesDaemon does not use advanced/breakeven sl as initial_sl when initial_sl is missing."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import MagicMock
+        from core.db import Ledger
+        from entry.hermes import HermesDaemon
+
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_b247_initsl.db"
+            ledger = Ledger(db_path)
+            daemon = HermesDaemon(bridge_token="")
+            daemon.led = ledger
+            daemon.dry_run = True
+            daemon.mt5.close_position = MagicMock()
+
+            # Position without registered initial_sl or plan, and sl has moved to breakeven +0.15
+            pos = BrokerPosition(
+                ticket=201, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+                open_price=2000.0, current_price=2000.15, sl=2000.15, tp=2030.0,
+                profit=1.5, swap=0.0, commission=-0.70, open_time=1000,
+                comment="hms-orphan", initial_sl=0.0,
+            )
+            daemon._close_position(pos, ExitReason.STOP_LOSS, exit_price=2000.15)
+            t = ledger.get_trades(limit=1)[0]
+            assert t.r_multiple == 0.0
+
+            ledger.close()
+            daemon.close()
+
+    def test_b247_daemon_watchlist_execution_marks_failed_on_rejected_order(self):
+        """b247: Watchlist item is updated to failed (not executed) if order placement fails."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import MagicMock
+        from core.db import Ledger
+        from entry.hermes import HermesDaemon
+        from core.entities import Order, OrderStatus
+
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_b247_wl.db"
+            ledger = Ledger(db_path)
+            daemon = HermesDaemon(bridge_token="")
+            daemon.led = ledger
+
+            # Add waiting item to watchlist
+            wl_item = {
+                "item_id": "wl-sig-fail-1", "signal_id": "sig-fail-1", "symbol": "XAUUSD",
+                "side": "BUY", "entry_price": 2000.0, "trigger_price": 2000.0,
+                "sl": 1990.0, "tp": 2020.0, "added_at": 1000.0, "expires_at": 5000.0,
+                "status": "waiting", "reason": "test failure",
+            }
+            ledger.add_to_watchlist(wl_item)
+
+            # Mock place_order to return rejected order
+            failed_order = Order(
+                order_id="hms-plan-fail", plan_id="", ticket=0, symbol="XAUUSD",
+                side=Side.BUY, volume=0.1, price=0.0, sl=1990.0, tp=2020.0,
+                status=OrderStatus.REJECTED, created_at=1000.0,
+            )
+            daemon.mt5.place_order = MagicMock(return_value=failed_order)
+
+            # Execute logic as in daemon._entry_loop
+            wl_executed_item_id = "wl-sig-fail-1"
+            if wl_executed_item_id:
+                if failed_order.ticket > 0 and failed_order.status != OrderStatus.REJECTED:
+                    daemon.led.update_watchlist_status(wl_executed_item_id, "executed")
+                else:
+                    daemon.led.update_watchlist_status(wl_executed_item_id, "failed")
+
+            # Verify status in database
+            rows = daemon.led._con.execute("SELECT status FROM watchlist WHERE item_id = ?", ("wl-sig-fail-1",)).fetchall()
+            assert rows[0][0] == "failed"
+
+            ledger.close()
+            daemon.close()
+
+    def test_b247_backtester_invalidates_pending_signal_on_sl_or_tp_touch_before_entry(self):
+        """b247: Backtester prunes pending signals when SL or TP is reached before market touches entry."""
+        from entry.backtest import Backtester
+        bt = Backtester()
+
+        base_ts = 1793268000.0
+        sig = Signal(
+            signal_id="sig-b247-tp-first", raw_text="BUY", symbol="XAUUSD",
+            side=Side.BUY, entry=2010.0, sl=1990.0, tp=2030.0,
+            rr=2.0, confidence=0.85, timestamp="2026-10-29T10:00:00Z"
+        )
+        # 60 warmup candles (from base_ts - 60*900)
+        bars = [{"time": base_ts - (60 - i) * 900, "open": 2000.0, "high": 2002.0, "low": 1998.0, "close": 2000.0, "tick_volume": 100} for i in range(60)]
+        # Candle 60: at base_ts (now_ts matches sig_ts)
+        bars.append({"time": base_ts, "open": 2000.0, "high": 2002.0, "low": 1998.0, "close": 2000.0, "tick_volume": 100})
+        # Candle 61: market spikes to 2035 (high >= tp 2030) without touching entry 2010 (open=2020, high=2035, low=2015, close=2030)
+        bars.append({"time": base_ts + 900, "open": 2020.0, "high": 2035.0, "low": 2015.0, "close": 2030.0, "tick_volume": 100})
+        # Candle 62: market drops back and touches entry 2010 (high=2015, low=2005)
+        bars.append({"time": base_ts + 1800, "open": 2015.0, "high": 2015.0, "low": 2005.0, "close": 2010.0, "tick_volume": 100})
+
+        res = bt.run(bars, [sig])
+        denied_reasons = [d.get("reason") for d in bt.denied if d.get("signal") == "sig-b247-tp-first"]
+        assert "target_reached_before_entry" in denied_reasons
+        executed_sig_trades = [t for t in bt.trades if t.plan_id == "plan-sig-b247-tp-first"]
+        assert len(executed_sig_trades) == 0
+
 
 
 

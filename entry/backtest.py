@@ -195,9 +195,33 @@ class Backtester:
                 entry_queue.append(s)
                 n_processed_signals += 1
 
-            # صف ورود: حذف سیگنال‌های منقضی‌شده (بازار به entry نرسید)
-            entry_queue = [s for s in entry_queue
-                           if now_ts - self._signal_ts(s) < self.ENTRY_WAIT_S]
+            # صف ورود: حذف سیگنال‌های منقضی‌شده یا باطل‌شده (لمس SL یا تارگت قبل از تاچ قیمت ورود — انطباق با دیمن زنده)
+            valid_queue = []
+            for s in entry_queue:
+                if now_ts - self._signal_ts(s) >= self.ENTRY_WAIT_S:
+                    continue
+                # اگر در همین کندل قیمت ورود لمس شود، تقدم با ورود است
+                touched_entry = cur.low <= s.entry <= cur.high
+                if not touched_entry:
+                    is_buy = s.side == Side.BUY
+                    target_hit = (is_buy and s.tp > 0 and cur.high >= s.tp) or \
+                                 (not is_buy and s.tp > 0 and cur.low <= s.tp)
+                    sl_hit = (is_buy and s.sl > 0 and cur.low <= s.sl) or \
+                             (not is_buy and s.sl > 0 and cur.high >= s.sl)
+                    if target_hit:
+                        self.denied.append({
+                            "signal": s.signal_id, "reason": "target_reached_before_entry",
+                            "timestamp": datetime.fromtimestamp(now_ts, timezone.utc).isoformat(),
+                        })
+                        continue
+                    if sl_hit:
+                        self.denied.append({
+                            "signal": s.signal_id, "reason": "invalidated_sl_hit_before_entry",
+                            "timestamp": datetime.fromtimestamp(now_ts, timezone.utc).isoformat(),
+                        })
+                        continue
+                valid_queue.append(s)
+            entry_queue = valid_queue
 
             # پوزیشن باز داریم → ورود ممنوع (معادل _entry_loop دیمن)
             if self._open is not None:

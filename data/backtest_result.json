@@ -7866,7 +7866,7 @@
       "volume": 0.22
     }
   ],
-  "denied_count": 147,
+  "denied_count": 148,
   "denied": [
     {
       "signal": "rtm-qml-1776973500",

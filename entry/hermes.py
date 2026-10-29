@@ -421,7 +421,11 @@ class HermesDaemon:
         order.plan_id = plan.plan_id
         self.led.save_order(order)
         if wl_executed_item_id:
-            self.led.update_watchlist_status(wl_executed_item_id, "executed")
+            if order.ticket > 0 and order.status != OrderStatus.REJECTED:
+                self.led.update_watchlist_status(wl_executed_item_id, "executed")
+            else:
+                self.led.update_watchlist_status(wl_executed_item_id, "failed")
+                log.warning("ثبت سفارش واچ‌لیست ناموفق بود: %s — وضعیت به failed تغییر یافت", wl_executed_item_id)
         if order.ticket > 0 and plan.stop_loss > 0:
             self.exits.register_initial_sl(order.ticket, plan.stop_loss)
 
@@ -568,12 +572,23 @@ class HermesDaemon:
         grade = plan.grade if plan else SetupGrade.C
         source = plan.source if plan else ("analysis" if (pos.comment or "").startswith("hms-auto") else ("smc" if ((pos.comment or "").startswith("hms-smc") or (pos.comment or "").startswith("hms-rtm")) else "signal"))
 
-        initial_sl = pos.initial_sl if pos.initial_sl > 0 else (self.exits._initial_sl.get(pos.ticket) or (plan.stop_loss if plan else pos.sl))
+        candidate_sl = self.exits._initial_sl.get(pos.ticket) or (plan.stop_loss if plan else 0.0)
+        if not candidate_sl and pos.sl > 0:
+            if (pos.is_buy and pos.sl < pos.open_price) or (not pos.is_buy and pos.sl > pos.open_price):
+                candidate_sl = pos.sl
+        initial_sl = pos.initial_sl if pos.initial_sl > 0 else candidate_sl
         risk_denom = abs(pos.open_price - initial_sl) if initial_sl > 0 else 0.0
         if risk_denom > 0:
             r_mult = round((exit_price - pos.open_price) / risk_denom if pos.is_buy else (pos.open_price - exit_price) / risk_denom, 2)
         else:
             r_mult = 0.0
+
+        # هماهنگی خروج: در صورت ترلینگ استاپ یا بریک‌اون، دلیل خروج اصلاح شود
+        if reason == ExitReason.STOP_LOSS:
+            if abs(exit_price - pos.open_price) <= 0.25 or pnl == 0.0:
+                reason = ExitReason.BREAKEVEN
+            elif pnl > 0.0:
+                reason = ExitReason.TRAILING_STOP
 
         trade = Trade(
             trade_id=f"trade-{pos.ticket}",
@@ -666,7 +681,11 @@ class HermesDaemon:
             source = plan.source if plan else ("analysis" if (old_pos.comment or "").startswith("hms-auto") else ("smc" if ((old_pos.comment or "").startswith("hms-smc") or (old_pos.comment or "").startswith("hms-rtm")) else "signal"))
 
             # R-Multiple بر مبنای استاپ اولیه
-            init_sl = self.exits._initial_sl.get(ticket, old_pos.initial_sl if old_pos.initial_sl > 0 else (plan.stop_loss if plan else old_pos.sl))
+            candidate_sl = self.exits._initial_sl.get(ticket) or (plan.stop_loss if plan else 0.0)
+            if not candidate_sl and old_pos.sl > 0:
+                if (old_pos.is_buy and old_pos.sl < old_pos.open_price) or (not old_pos.is_buy and old_pos.sl > old_pos.open_price):
+                    candidate_sl = old_pos.sl
+            init_sl = old_pos.initial_sl if old_pos.initial_sl > 0 else candidate_sl
             if init_sl > 0:
                 if old_pos.is_buy:
                     risk = old_pos.open_price - init_sl
