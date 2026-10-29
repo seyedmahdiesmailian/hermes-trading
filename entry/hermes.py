@@ -322,6 +322,7 @@ class HermesDaemon:
                 self.notify.status(f"⏳ سیگنال به واچ‌لیست رفت:\n{wl_item.get('reason')}")
 
         # اگر پلنی از سیگنال‌های جدید نیامده، واچ‌لیست‌های گذشته را چک کن
+        wl_executed_item_id = None
         if plan is None:
             active_wl = self.led.get_active_watchlist(self.cfg.symbol)
             for item in active_wl:
@@ -347,7 +348,7 @@ class HermesDaemon:
                         confidence=0.85,
                         reasoning=f"واچ‌لیست پولبک فعال شد: {item['reason']}",
                     )
-                    self.led.update_watchlist_status(item["item_id"], "executed")
+                    wl_executed_item_id = item["item_id"]
                     log.info("سیگنال واچ‌لیست پولبک زد و تبدیل به پلن شد: %s", plan.plan_id)
                     break
 
@@ -364,10 +365,16 @@ class HermesDaemon:
                     log.info("سیگنال واچ‌لیست ابطال شد (لمس SL): %s", item["item_id"])
 
         if plan is None and not positions and auto_allowed:
-            # تحلیل خودکار: ستاپ روند-EMA (تاییدشده با بک‌تست)
-            plan = self.eng.plan_from_analysis(candles, view, self.cfg.analysis.timeframe)
+            # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
+            plan = self.eng.plan_from_smc(candles, view, h1_candles, self.cfg.analysis.timeframe)
             if plan is not None:
-                log.info("تحلیل خودکار: ستاپ روند-EMA %s تشخیص داده شد", plan.side.value)
+                log.info("تحلیل خودکار: ستاپ سازمانی SMC %s (%s) تشخیص داده شد", plan.side.value, plan.reasoning)
+
+            # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (گرید B با تاییدیه H1)
+            if plan is None:
+                plan = self.eng.plan_from_analysis(candles, view, self.cfg.analysis.timeframe, h1_candles=h1_candles)
+                if plan is not None:
+                    log.info("تحلیل خودکار: ستاپ روند-EMA %s تشخیص داده شد", plan.side.value)
 
         if plan is None:
             return  # ستاپی وجود ندارد → منتظر می‌مانیم
@@ -410,6 +417,8 @@ class HermesDaemon:
         )
         order.plan_id = plan.plan_id
         self.led.save_order(order)
+        if wl_executed_item_id:
+            self.led.update_watchlist_status(wl_executed_item_id, "executed")
         if order.ticket > 0 and plan.stop_loss > 0:
             self.exits.register_initial_sl(order.ticket, plan.stop_loss)
 
@@ -537,12 +546,12 @@ class HermesDaemon:
             swap = float(deal_exit.get("swap", 0.0))
             comm = float(deal_exit.get("commission", 0.0))
             pnl = round(profit + swap + comm, 2)
-        elif self.dry_run and exit_price > 0:
+        elif exit_price > 0:
             if pos.is_buy:
                 gross = (exit_price - pos.open_price) * pos.volume * 100.0
             else:
                 gross = (pos.open_price - exit_price) * pos.volume * 100.0
-            # b210: کسر کمیسیون استاندارد و سواپ جهت احتساب سود خالص
+            # کسر کمیسیون استاندارد و سواپ جهت احتساب سود خالص
             comm = pos.commission if pos.commission != 0.0 else -7.0 * pos.volume
             pnl = round(gross + comm + pos.swap, 2)
         else:
@@ -632,7 +641,12 @@ class HermesDaemon:
                 if "[tp]" in comment or (old_pos.tp > 0 and ((old_pos.is_buy and exit_price >= old_pos.tp - 0.25) or (not old_pos.is_buy and exit_price <= old_pos.tp + 0.25))):
                     reason = ExitReason.TAKE_PROFIT
                 elif "[sl]" in comment or (old_pos.sl > 0 and ((old_pos.is_buy and exit_price <= old_pos.sl + 0.25) or (not old_pos.is_buy and exit_price >= old_pos.sl - 0.25))):
-                    reason = ExitReason.STOP_LOSS
+                    if pnl > 0.0:
+                        reason = ExitReason.TRAILING_STOP
+                    elif pnl == 0.0 or abs(exit_price - old_pos.open_price) <= 0.20:
+                        reason = ExitReason.BREAKEVEN
+                    else:
+                        reason = ExitReason.STOP_LOSS
                 else:
                     reason = ExitReason.MANUAL
             else:

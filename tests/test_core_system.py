@@ -797,6 +797,52 @@ class TestEngineHybrid:
         plan = engine.plan_from_analysis(candles, view)
         assert plan is None  # Blocked by news blackout!
 
+    def test_plan_from_smc_judas_setup(self):
+        from core.smc import SMCView, MarketPhase, ZoneType
+        engine = Engine()
+        now = time.time()
+        candles = [
+            Candle(time=int(now - (35-i)*900), open=2040.0, high=2042.0, low=2038.0, close=2040.0, volume=100)
+            for i in range(35)
+        ]
+        smc_view = SMCView(
+            bias="bearish", confidence=0.85, phase=MarketPhase.BOS_BEARISH,
+            zone=ZoneType.PREMIUM, fib_level=0.75, killzone="london",
+            judas_swing="BEARISH_JUDAS", swing_high=2050.0, swing_low=2020.0
+        )
+        tick = Tick(symbol="XAUUSD", bid=2040.0, ask=2040.2, time=int(now))
+        from core.engine import MarketView
+        view = MarketView(
+            trend="bearish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2040.0, support=2020.0, resistance=2050.0,
+            smc=smc_view
+        )
+        plan = engine.plan_from_smc(candles, view)
+        assert plan is not None
+        assert plan.side == Side.SELL
+        assert plan.grade == SetupGrade.A
+        assert plan.stop_loss > plan.entry_price
+        assert "Judas" in plan.reasoning
+
+    def test_plan_from_analysis_h1_trend_conflict(self):
+        engine = Engine()
+        now = time.time()
+        # M15 looks bearish: last < e20 < e50
+        m15_candles = [
+            Candle(time=int(now - (65-i)*900), open=2050.0-i*0.5, high=2051.0-i*0.5, low=2049.0-i*0.5, close=2050.0-i*0.5, volume=100)
+            for i in range(65)
+        ]
+        # H1 is strongly BULLISH: rising sharply
+        h1_candles = [
+            Candle(time=int(now - (35-i)*3600), open=2000.0+i*2.0, high=2003.0+i*2.0, low=1999.0+i*2.0, close=2002.0+i*2.0, volume=500)
+            for i in range(35)
+        ]
+        tick = Tick(symbol="XAUUSD", bid=2017.5, ask=2017.7, time=int(now))
+        view = engine.analyze(m15_candles, tick, h1_candles=h1_candles, check_news=False)
+        # Should reject SELL because H1 is strongly BULLISH
+        plan = engine.plan_from_analysis(m15_candles, view, h1_candles=h1_candles)
+        assert plan is None
+
 
 # ══════════════════════════════════════════════════════════════════
 # ۹. تست‌های یادگیری تطبیقی (AdaptiveLearner)
@@ -1105,6 +1151,150 @@ class TestWatchlistEngine:
         summary = bt.run(bars, signals=[])
         # Since all candles are outside [0, 22), no auto-analysis trades should execute
         assert summary["total_trades"] == 0
+
+    def test_b235_backtest_loss_cooldown_parity(self):
+        """b235: Backtester tracks last_loss_ts and enforces 45-minute loss cooldown circuit breaker."""
+        from entry.backtest import Backtester
+        bt = Backtester()
+        ts_10utc = 1700042400  # 2023-11-15 10:00:00 UTC (inside session_hours)
+        bars = []
+        price = 2000.0
+        # Create 120 bars inside active trading hours
+        for i in range(120):
+            bars.append({
+                "time": ts_10utc + i * 900,
+                "open": price + i * 0.5,
+                "high": price + i * 0.5 + 2.0,
+                "low": price + i * 0.5 - 1.0,
+                "close": price + i * 0.5 + 1.0,
+                "tick_volume": 100,
+            })
+        # Simulate a trade closing at a loss
+        bt._last_loss_ts = ts_10utc + 3600  # loss occurred at 11:00 UTC
+        # Check gates 15 minutes after loss (within 45-min cooldown)
+        plan = Plan(
+            plan_id="p-cooldown-test", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2070.0,
+            volume=0.0, grade=SetupGrade.A, source="analysis",
+            timeframe="M15", rr=2.0, confidence=0.8, reasoning="test",
+        )
+        account = AccountState(balance=5000.0, equity=5000.0, margin=0.0, margin_free=5000.0)
+        outcome = bt.gates.evaluate(
+            plan, account, [], trades_today=0, daily_pnl=0.0,
+            atr=5.0, spread=0.15,
+            last_loss_ts=bt._last_loss_ts,
+            now_ts=ts_10utc + 3600 + 15 * 60,  # 15 minutes after loss
+        )
+        assert not outcome.allowed
+        assert any("loss_cooldown" in r for r in outcome.reasons)
+
+        # 50 minutes after loss (outside 45-min cooldown)
+        outcome_ok = bt.gates.evaluate(
+            plan, account, [], trades_today=0, daily_pnl=0.0,
+            atr=5.0, spread=0.15,
+            last_loss_ts=bt._last_loss_ts,
+            now_ts=ts_10utc + 3600 + 50 * 60,
+        )
+        assert outcome_ok.allowed
+
+    def test_b235_db_get_last_loss_time_excludes_profitable_stops(self):
+        """b235: Ledger.get_last_loss_time ignores trades with pnl >= 0 even if exit_reason is STOP_LOSS."""
+        import tempfile
+        from core.db import Ledger
+        with tempfile.NamedTemporaryFile(suffix=".db") as f:
+            led = Ledger(path=Path(f.name))
+            # Trade 1: real loss at t=1000, pnl=-50.0
+            t1 = Trade(
+                trade_id="t1", plan_id="p1", ticket=101, symbol="XAUUSD", side=Side.BUY,
+                volume=0.1, entry_price=2000.0, exit_price=1995.0, sl=1995.0, tp=2010.0,
+                pnl=-50.0, exit_reason=ExitReason.STOP_LOSS, opened_at=900, closed_at=1000.0,
+                grade=SetupGrade.A, source="signal", r_multiple=-1.0,
+            )
+            led.save_trade(t1)
+            assert led.get_last_loss_time() == 1000.0
+
+            # Trade 2: profitable trailed stop at t=2000, pnl=+75.0, exit_reason=STOP_LOSS (e.g. from MT5 [sl] comment)
+            t2 = Trade(
+                trade_id="t2", plan_id="p2", ticket=102, symbol="XAUUSD", side=Side.BUY,
+                volume=0.1, entry_price=2000.0, exit_price=2007.5, sl=2007.5, tp=2020.0,
+                pnl=75.0, exit_reason=ExitReason.STOP_LOSS, opened_at=1900, closed_at=2000.0,
+                grade=SetupGrade.A, source="signal", r_multiple=1.5,
+            )
+            led.save_trade(t2)
+            # Must still report 1000.0 (t1's loss), NOT 2000.0 (t2 was profitable)
+            assert led.get_last_loss_time() == 1000.0
+            led.close()
+
+    def test_b235_exits_modify_idempotent_no_duplicate_requests(self):
+        """b235: ExitManager._modify suppresses duplicate modifications when rounded_sl == pos.sl."""
+        from core.exits import ExitManager
+        from core.params import PositionCfg
+        calls = []
+        def mock_modify(ticket, sl, tp, reason="modify"):
+            calls.append((ticket, sl, tp, reason))
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.5,
+            breakeven_rr=0.8,
+            max_hold_hours=24,
+            partial_tp_rr=2.0,
+            partial_enabled=False,
+        )
+        em = ExitManager(cfg, on_modify=mock_modify)
+        pos = BrokerPosition(
+            ticket=555, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2020.0, sl=2000.15, tp=2040.0,
+            profit=198.5, swap=0.0, open_time=int(time.time()),
+        )
+        # Calling _apply_breakeven_with_buffer when SL is already 2000.15
+        em._apply_breakeven_with_buffer(pos)
+        assert len(calls) == 0  # No call because sl is already 2000.15!
+
+        # Now test _modify directly with same value
+        em._modify(pos, 2000.15, reason="test")
+        assert len(calls) == 0
+
+        # Now test _modify with genuine new value
+        em._modify(pos, 2005.00, reason="trailing")
+        assert len(calls) == 1
+        assert calls[0] == (555, 2005.0, 2040.0, "trailing")
+
+    def test_b235_grade_signal_dxy_and_divergence_parity(self):
+        """b235: _grade_signal reflects DXY bias and RSI divergence alignment/penalties."""
+        from core.engine import Engine, MarketView
+        eng = Engine()
+        sig_buy = Signal(
+            signal_id="sig-dxy-1", raw_text="BUY GOLD", symbol="XAUUSD", side=Side.BUY,
+            entry=2000.0, sl=1990.0, tp=2020.0, rr=2.0, confidence=0.8,
+            timestamp="2026-10-29T00:00:00Z",
+        )
+        # 1. Base neutral view
+        view_neutral = MarketView(
+            trend="ranging", trend_strength=0.0, atr=5.0, spread=0.15,
+            last_price=2000.0, support=1990.0, resistance=2020.0,
+            usd_bias="NEUTRAL", divergence=None,
+        )
+        grade_neutral = eng._grade_signal(sig_buy, view_neutral)
+
+        # 2. Bullish USD view (fighting against DXY)
+        view_usd_bull = MarketView(
+            trend="ranging", trend_strength=0.0, atr=5.0, spread=0.15,
+            last_price=2000.0, support=1990.0, resistance=2020.0,
+            usd_bias="BULLISH", divergence=None,
+        )
+        grade_usd_bull = eng._grade_signal(sig_buy, view_usd_bull)
+
+        # 3. Bearish USD view + Bullish Divergence (strong multi-market confirmation)
+        view_usd_bear_div = MarketView(
+            trend="ranging", trend_strength=0.0, atr=5.0, spread=0.15,
+            last_price=2000.0, support=1990.0, resistance=2020.0,
+            usd_bias="BEARISH", divergence="BULLISH_REGULAR",
+        )
+        grade_usd_bear_div = eng._grade_signal(sig_buy, view_usd_bear_div)
+
+        assert SetupGrade.rank(grade_usd_bear_div) >= SetupGrade.rank(grade_neutral)
+        assert SetupGrade.rank(grade_neutral) >= SetupGrade.rank(grade_usd_bull)
+
 
 
 

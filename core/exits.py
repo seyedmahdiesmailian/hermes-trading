@@ -153,21 +153,21 @@ class ExitManager:
 
         buffer = BREAKEVEN_BUFFER_POINTS
         if pos.is_buy:
-            new_sl = pos.current_price - trail_dist
+            new_sl = round(pos.current_price - trail_dist, 2)
             # تضمین راچت: استاپ ترلینگ هرگز نباید عقب‌تر از Breakeven+buffer برود
-            target_be = pos.open_price + buffer
+            target_be = round(pos.open_price + buffer, 2)
             if new_sl < target_be and target_be < pos.current_price:
                 new_sl = target_be
             if new_sl > pos.sl and new_sl < pos.current_price:
-                self._modify(pos, round(new_sl, 2))
+                self._modify(pos, new_sl, reason="trailing")
         else:
-            new_sl = pos.current_price + trail_dist
+            new_sl = round(pos.current_price + trail_dist, 2)
             # تضمین راچت: استاپ ترلینگ هرگز نباید عقب‌تر از Breakeven-buffer برود
-            target_be = pos.open_price - buffer
+            target_be = round(pos.open_price - buffer, 2)
             if new_sl > target_be and target_be > pos.current_price:
                 new_sl = target_be
             if (pos.sl == 0 or new_sl < pos.sl) and new_sl > pos.current_price:
-                self._modify(pos, round(new_sl, 2), reason="trailing")
+                self._modify(pos, new_sl, reason="trailing")
 
     # ── جابجایی استاپ به نقطه ورود + بافر ──────────────────
 
@@ -175,14 +175,14 @@ class ExitManager:
         """انتقال استاپ به نقطه ورود به علاوه بافر پوشش کمیسیون."""
         buffer = BREAKEVEN_BUFFER_POINTS
         if pos.is_buy:
-            target_be = pos.open_price + buffer
+            target_be = round(pos.open_price + buffer, 2)
             # استاپ فقط به سمت سود می‌تواند حرکت کند و نباید از قیمت جاری بالاتر برود
             if target_be > pos.sl and target_be < pos.current_price:
-                self._modify(pos, round(target_be, 2), reason="breakeven")
+                self._modify(pos, target_be, reason="breakeven")
         else:
-            target_be = pos.open_price - buffer
+            target_be = round(pos.open_price - buffer, 2)
             if (pos.sl == 0 or target_be < pos.sl) and target_be > pos.current_price:
-                self._modify(pos, round(target_be, 2), reason="breakeven")
+                self._modify(pos, target_be, reason="breakeven")
 
     # ── بستن پله‌ای (Partial Close Execution) ─────────────
 
@@ -200,14 +200,17 @@ class ExitManager:
 
     def _modify(self, pos: BrokerPosition, new_sl: float, reason: str = "modify") -> None:
         """اعمال SL جدید با استفاده از کال‌بک ثبت‌شده."""
+        rounded_sl = round(new_sl, 2)
+        if round(pos.sl, 2) == rounded_sl:
+            return  # عدم تغییر — جلوگیری از درخواست تکراری به بروکر
         if self._on_modify is not None:
             try:
-                self._on_modify(pos.ticket, new_sl, pos.tp, reason=reason)
+                self._on_modify(pos.ticket, rounded_sl, pos.tp, reason=reason)
             except TypeError:
                 try:
-                    self._on_modify(pos.ticket, new_sl, pos.tp)
+                    self._on_modify(pos.ticket, rounded_sl, pos.tp)
                 except TypeError:
-                    self._on_modify(pos.ticket, new_sl)
+                    self._on_modify(pos.ticket, rounded_sl)
 
     @staticmethod
     def _trail_sl_with_tp(pos: BrokerPosition) -> float | None:

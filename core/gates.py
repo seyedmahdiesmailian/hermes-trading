@@ -84,7 +84,7 @@ class GatesEngine:
         # ۰) قفل استراحت پس از استاپ (Loss Cooldown Circuit)
         cooldown_s = getattr(self._g, "loss_cooldown_minutes", 45) * 60
         now = now_ts or time.time()
-        if last_loss_ts > 0 and (now - last_loss_ts) < cooldown_s:
+        if last_loss_ts > 0 and 0 <= (now - last_loss_ts) < cooldown_s:
             rem_m = int(round((cooldown_s - (now - last_loss_ts)) / 60))
             reasons.append(f"loss_cooldown({rem_m}m_left)")
 

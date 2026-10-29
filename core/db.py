@@ -400,8 +400,8 @@ class Ledger:
         return cur.rowcount
 
     def get_last_loss_time(self) -> float:
-        """زمان خروج آخرین معامله زیان‌ده یا استاپ‌خورده جهت اعمال قفل استراحت."""
+        """زمان خروج آخرین معامله زیان‌ده (pnl < 0) جهت اعمال قفل استراحت."""
         row = self._con.execute(
-            "SELECT max(closed_at) as last_loss FROM trades WHERE pnl < 0 OR exit_reason = 'STOP_LOSS'"
+            "SELECT max(closed_at) as last_loss FROM trades WHERE pnl < 0"
         ).fetchone()
         return float(row["last_loss"]) if row and row["last_loss"] else 0.0

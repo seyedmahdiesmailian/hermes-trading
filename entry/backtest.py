@@ -117,6 +117,7 @@ class Backtester:
         )
         self._entry_idx = 0  # جدیدترین اندیس سیگنال پردازش‌شده
         self._last_exit_ts = 0.0  # زمان آخرین خروج — cooldown ورود
+        self._last_loss_ts = 0.0  # زمان آخرین ضرر — قفل استراحت ۴۵ دقیقه‌ای (circuit breaker)
         COOLDOWN_S = 4 * 3600   # ۴ ساعت بعد از هر خروج، ورود ممنوع
 
         def _on_sim_close(ts: float) -> None:
@@ -200,6 +201,8 @@ class Backtester:
                 outcome = self.gates.evaluate(
                     plan, account, [], trades_today, today_pnl,
                     atr=view.atr, spread=view.spread,
+                    last_loss_ts=self._last_loss_ts,
+                    now_ts=now_ts,
                 )
                 if not outcome.allowed:
                     self.denied.append({
@@ -250,6 +253,8 @@ class Backtester:
             outcome = self.gates.evaluate(
                 plan, account, [], trades_today, today_pnl,
                 atr=view.atr, spread=view.spread,
+                last_loss_ts=self._last_loss_ts,
+                now_ts=now_ts,
             )
             n_entry_cycles += 1
 
@@ -311,6 +316,8 @@ class Backtester:
         direction = 1.0 if ot.side == Side.BUY else -1.0
         pnl = direction * (exit_price - ot.open_price) * ot.volume * 100.0
         self.state.apply_pnl(pnl)
+        if pnl < 0:
+            self._last_loss_ts = now_ts
 
         trade = Trade(
             trade_id=f"bt-{ot.ticket}", plan_id=ot.plan_id, ticket=ot.ticket,

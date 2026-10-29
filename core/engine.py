@@ -174,7 +174,8 @@ class Engine:
         self,
         candles: list[Candle],
         view: MarketView,
-        timeframe: str = "M15"
+        timeframe: str = "M15",
+        h1_candles: Optional[list[Candle]] = None,
     ) -> Optional[Plan]:
         """ساخت پلن ورود بر مبنای تلفیق ستاپ روند-EMA و تاییدیه SMC/ICT."""
         # فیلتر ۱: مسدود بودن در زمان اخبار داغ
@@ -197,6 +198,18 @@ class Engine:
             side = Side.SELL
         else:
             return None
+
+        # فیلتر ۲: هماهنگی با روند تایم‌فریم بالاتر (H1 Trend Filter)
+        if h1_candles and len(h1_candles) >= 30:
+            h1_closes = [c.close for c in h1_candles[-30:]]
+            h1_e20 = _ema(h1_closes, 20)
+            h1_e50 = _ema(h1_closes, 50)
+            if side == Side.SELL and h1_closes[-1] > h1_e20 > h1_e50:
+                log.info("تحلیل خودکار رد شد: فروش در M15 در تضاد با روند صعودی قدرتمند H1")
+                return None
+            if side == Side.BUY and h1_closes[-1] < h1_e20 < h1_e50:
+                log.info("تحلیل خودکار رد شد: خرید در M15 در تضاد با روند نزولی قدرتمند H1")
+                return None
 
         # فیلتر ۲: عدم تعقیب قیمت امتدادیافته (Anti-Chasing Mean Reversion Filter)
         # اگر قیمت بیش از ۱.۰ برابر ATR از EMA20 فاصله گرفته باشد، ورود با مارکت ممنوع است
@@ -268,6 +281,125 @@ class Engine:
             confidence=view.smc.confidence if view.smc else 0.6,
             reasoning=reasoning,
         )
+
+    # ── ساخت Plan از ستاپ‌های سازمانی SMC/ICT (Grade A+) ──
+
+    def plan_from_smc(
+        self,
+        candles: list[Candle],
+        view: MarketView,
+        h1_candles: Optional[list[Candle]] = None,
+        timeframe: str = "M15"
+    ) -> Optional[Plan]:
+        """ساخت ستاپ‌های اختصاصی و سازمانی پرایس‌اکشن هوشمند SMC/ICT (گرید A+)."""
+        if view.news_blackout or not view.smc or len(candles) < 30:
+            return None
+
+        entry = view.last_price
+        smc = view.smc
+        buffer = round(view.atr * 0.15, 2)
+
+        # ── ۱. ستاپ شکار نقدینگی سشن آسیا (Judas Swing) ──
+        if smc.judas_swing == "BEARISH_JUDAS":
+            sl = round(smc.swing_high + buffer, 2)
+            if (sl - entry) < view.atr * 1.2:
+                sl = round(entry + view.atr * 1.2, 2)
+            if (sl - entry) <= view.atr * 2.5:
+                tp = round(min(smc.swing_low, entry - (sl - entry) * 2.5), 2)
+                rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                return Plan(
+                    plan_id=f"smc-judas-{int(candles[-1].time)}",
+                    symbol="XAUUSD",
+                    side=Side.SELL,
+                    entry_price=round(entry, 2),
+                    stop_loss=sl,
+                    take_profit=tp,
+                    volume=0.0,
+                    grade=SetupGrade.A,
+                    source="smc_judas",
+                    timeframe=timeframe,
+                    rr=rr,
+                    confidence=0.92,
+                    reasoning=f"Judas Swing: شکار سقف آسیا در آغاز لندن ({smc.swing_high}) و برگشت نزولی",
+                )
+
+        elif smc.judas_swing == "BULLISH_JUDAS":
+            sl = round(smc.swing_low - buffer, 2)
+            if (entry - sl) < view.atr * 1.2:
+                sl = round(entry - view.atr * 1.2, 2)
+            if (entry - sl) <= view.atr * 2.5:
+                tp = round(max(smc.swing_high, entry + (entry - sl) * 2.5), 2)
+                rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
+                return Plan(
+                    plan_id=f"smc-judas-{int(candles[-1].time)}",
+                    symbol="XAUUSD",
+                    side=Side.BUY,
+                    entry_price=round(entry, 2),
+                    stop_loss=sl,
+                    take_profit=tp,
+                    volume=0.0,
+                    grade=SetupGrade.A,
+                    source="smc_judas",
+                    timeframe=timeframe,
+                    rr=rr,
+                    confidence=0.92,
+                    reasoning=f"Judas Swing: شکار کف آسیا در آغاز لندن ({smc.swing_low}) و برگشت صعودی",
+                )
+
+        # ── ۲. ستاپ برخورد به اردر بلاک میتیگیت‌نشده (Order Block Mitigation) ──
+        unmitigated_obs = [ob for ob in smc.unmitigated_obs if not ob.mitigated]
+        if unmitigated_obs:
+            last_c = candles[-1]
+            for ob in unmitigated_obs[::-1]:
+                if ob.ob_type.value == "BULLISH" and smc.zone == ZoneType.DISCOUNT:
+                    if last_c.low <= ob.top and last_c.close >= ob.midpoint:
+                        sl = round(ob.bottom - buffer, 2)
+                        if (entry - sl) < view.atr * 1.2:
+                            sl = round(entry - view.atr * 1.2, 2)
+                        if (entry - sl) <= view.atr * 2.2:
+                            tp = round(entry + (entry - sl) * 2.5, 2)
+                            rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
+                            return Plan(
+                                plan_id=f"smc-ob-{int(candles[-1].time)}",
+                                symbol="XAUUSD",
+                                side=Side.BUY,
+                                entry_price=round(entry, 2),
+                                stop_loss=sl,
+                                take_profit=tp,
+                                volume=0.0,
+                                grade=SetupGrade.A,
+                                source="smc_ob",
+                                timeframe=timeframe,
+                                rr=rr,
+                                confidence=0.88,
+                                reasoning=f"Bullish Order Block در ناحیه ارزان ({ob.bottom}-{ob.top})",
+                            )
+
+                elif ob.ob_type.value == "BEARISH" and smc.zone == ZoneType.PREMIUM:
+                    if last_c.high >= ob.bottom and last_c.close <= ob.midpoint:
+                        sl = round(ob.top + buffer, 2)
+                        if (sl - entry) < view.atr * 1.2:
+                            sl = round(entry + view.atr * 1.2, 2)
+                        if (sl - entry) <= view.atr * 2.2:
+                            tp = round(entry - (sl - entry) * 2.5, 2)
+                            rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                            return Plan(
+                                plan_id=f"smc-ob-{int(candles[-1].time)}",
+                                symbol="XAUUSD",
+                                side=Side.SELL,
+                                entry_price=round(entry, 2),
+                                stop_loss=sl,
+                                take_profit=tp,
+                                volume=0.0,
+                                grade=SetupGrade.A,
+                                source="smc_ob",
+                                timeframe=timeframe,
+                                rr=rr,
+                                confidence=0.88,
+                                reasoning=f"Bearish Order Block در ناحیه گران ({ob.bottom}-{ob.top})",
+                            )
+
+        return None
 
     # ── ساخت Plan از سیگنال تلگرام با فیلتر هوشمند ─────────
 
@@ -485,7 +617,7 @@ class Engine:
 
     @staticmethod
     def _grade_signal(sig: Signal, view: MarketView) -> SetupGrade:
-        """گریدبندی کیفیت سیگنال تلگرام."""
+        """گریدبندی کیفیت سیگنال تلگرام با تایید چندبعدی (DXY Proxy + RSI Divergence)."""
         score = 0.0
         score += min(1.0, sig.confidence) * 0.40
         sig_rr = sig.rr if sig.rr > 0 else _calc_rr(sig)
@@ -500,6 +632,24 @@ class Engine:
             if (sig.side == Side.BUY and view.smc.zone == ZoneType.DISCOUNT) or \
                (sig.side == Side.SELL and view.smc.zone == ZoneType.PREMIUM):
                 score += 0.10
+
+        # پاداش همبستگی بین‌بازاری شاخص دلار (DXY / USD Proxy)
+        if view.usd_bias != "NEUTRAL":
+            if (sig.side == Side.BUY and view.usd_bias == "BEARISH") or \
+               (sig.side == Side.SELL and view.usd_bias == "BULLISH"):
+                score += 0.15  # تاییدیه قوی همبستگی دلار و طلا
+            elif (sig.side == Side.BUY and view.usd_bias == "BULLISH") or \
+                 (sig.side == Side.SELL and view.usd_bias == "BEARISH"):
+                score -= 0.20  # تله نقدینگی ناشی از تقابل با جهت کلان دلار
+
+        # پاداش همگرایی واگرایی مومنتوم (RSI Divergence)
+        if view.divergence is not None:
+            if (sig.side == Side.BUY and view.divergence in ("BULLISH_REGULAR", "BULLISH_HIDDEN")) or \
+               (sig.side == Side.SELL and view.divergence in ("BEARISH_REGULAR", "BEARISH_HIDDEN")):
+                score += 0.15
+            elif (sig.side == Side.BUY and view.divergence == "BEARISH_REGULAR") or \
+                 (sig.side == Side.SELL and view.divergence == "BULLISH_REGULAR"):
+                score -= 0.20
 
         if score >= 0.80:
             return SetupGrade.A
