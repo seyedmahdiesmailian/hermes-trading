@@ -211,18 +211,24 @@ def cmd_positions() -> str:
     if not positions:
         return "📊 <b>پوزیشن‌های باز</b>\n\nدر حال حاضر هیچ پوزیشن بازی وجود ندارد."
 
+    symbol = cfg.get("symbol", "XAUUSD")
+    tick_resp = bridge_get(f"/api/tick/{symbol}")
+    cur_bid = float(tick_resp.get("bid") or 0.0)
+    cur_ask = float(tick_resp.get("ask") or 0.0)
+
     msg = f"📊 <b>پوزیشن‌های باز ({len(positions)})</b>\n\n"
     for p in positions:
         ticket = p.get("ticket", "?")
         symbol = p.get("symbol", "XAUUSD")
         side_raw = str(p.get("side") or p.get("type", "BUY")).upper()
-        direction = "🟢 خرید (BUY)" if "BUY" in side_raw or side_raw == "0" else "🔴 فروش (SELL)"
-        vol = p.get("volume", 0.0)
-        open_p = p.get("open_price") or p.get("price_open", 0.0)
-        cur_p = p.get("current_price") or p.get("price_current", open_p)
-        sl = p.get("sl", 0.0)
-        tp = p.get("tp", 0.0)
-        profit = p.get("profit", 0.0)
+        is_buy = "BUY" in side_raw or side_raw == "0"
+        direction = "🟢 خرید (BUY)" if is_buy else "🔴 فروش (SELL)"
+        vol = float(p.get("volume") or 0.0)
+        open_p = float(p.get("open_price") or p.get("price_open") or 0.0)
+        cur_p = float(p.get("current_price") or p.get("price_current") or (cur_bid if is_buy else cur_ask) or open_p)
+        sl = float(p.get("sl") or 0.0)
+        tp = float(p.get("tp") or 0.0)
+        profit = float(p.get("profit") or 0.0)
         p_emoji = "🟢" if profit >= 0 else "🔴"
 
         msg += (
