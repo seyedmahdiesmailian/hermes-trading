@@ -271,8 +271,8 @@ class SMCAnalyzer:
                 if c_next.close > c_prev.high:
                     top = max(c_prev.open, c_prev.close)
                     bottom = c_prev.low
-                    # بررسی میتیگیشن توسط کندل‌های بعدی
-                    mitigated = any(c.low <= top for c in candles[i + 2:])
+                    # بررسی میتیگیشن توسط کندل‌های بعدی قبل از کندل جاری
+                    mitigated = any(c.low <= top for c in candles[i + 2 : -1]) if (i + 2 < n - 1) else False
                     obs.append(OrderBlock(
                         ob_type=OBType.BULLISH,
                         top=round(top, 2),
@@ -287,7 +287,8 @@ class SMCAnalyzer:
                 if c_next.close < c_prev.low:
                     top = c_prev.high
                     bottom = min(c_prev.open, c_prev.close)
-                    mitigated = any(c.high >= bottom for c in candles[i + 2:])
+                    # بررسی میتیگیشن توسط کندل‌های بعدی قبل از کندل جاری
+                    mitigated = any(c.high >= bottom for c in candles[i + 2 : -1]) if (i + 2 < n - 1) else False
                     obs.append(OrderBlock(
                         ob_type=OBType.BEARISH,
                         top=round(top, 2),
@@ -571,7 +572,8 @@ class SMCAnalyzer:
                 if c_base.low >= res_level - 0.5:
                     top = max(c_base.open, c_base.close)
                     bottom = c_base.low
-                    mitigated = any(c.low <= top for c in recent[i + 2:])
+                    # بررسی میتیگیشن قبل از کندل جاری
+                    mitigated = any(c.low <= top for c in recent[i + 2 : -1]) if (i + 2 < rn - 1) else False
                     ftrs.append(FTRZone(
                         ftr_type="DEMAND_FTR",
                         base_top=round(top, 2),
@@ -588,7 +590,8 @@ class SMCAnalyzer:
                 if c_base.high <= sup_level + 0.5:
                     top = c_base.high
                     bottom = min(c_base.open, c_base.close)
-                    mitigated = any(c.high >= bottom for c in recent[i + 2:])
+                    # بررسی میتیگیشن قبل از کندل جاری
+                    mitigated = any(c.high >= bottom for c in recent[i + 2 : -1]) if (i + 2 < rn - 1) else False
                     ftrs.append(FTRZone(
                         ftr_type="SUPPLY_FTR",
                         base_top=round(top, 2),

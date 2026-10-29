@@ -1442,8 +1442,142 @@ class TestWatchlistEngine:
             comment="hms-smc-ob-1234"
         )
         source = ("analysis" if (pos.comment or "").startswith("hms-auto")
-                  else ("smc" if (pos.comment or "").startswith("hms-smc") else "signal"))
+                  else ("smc" if ((pos.comment or "").startswith("hms-smc") or (pos.comment or "").startswith("hms-rtm")) else "signal"))
         assert source == "smc"
+
+        pos_rtm = BrokerPosition(
+            ticket=778, symbol="XAUUSD", side=Side.SELL, volume=0.05,
+            open_price=2050.0, current_price=2040.0, sl=2058.0, tp=2030.0,
+            profit=50.0, swap=0.0, open_time=int(time.time()),
+            comment="hms-rtm-qml-1234"
+        )
+        source_rtm = ("analysis" if (pos_rtm.comment or "").startswith("hms-auto")
+                      else ("smc" if ((pos_rtm.comment or "").startswith("hms-smc") or (pos_rtm.comment or "").startswith("hms-rtm")) else "signal"))
+        assert source_rtm == "smc"
+
+    def test_rtm_qml_and_ftr_gates_allow_institutional_stops(self):
+        """b235: GatesEngine treats rtm_qml and rtm_ftr with institutional 1.2x ATR stop multiplier."""
+        from core.gates import GatesEngine
+        from core.params import Gates
+        g_cfg = Gates(
+            max_open_positions=3, max_daily_trades=5, max_daily_loss_pct=5.0,
+            max_spread_points=0.50, min_rr=1.5, min_grade="B", min_atr_stop_mult=2.0,
+            risk_per_trade_pct=2.0, max_volume_lots=0.5,
+            min_atr_stop_mult_analysis=1.4, min_atr_stop_mult_smc=1.2,
+        )
+        gates = GatesEngine(g_cfg)
+        account = AccountState(balance=5000.0, equity=5000.0, margin=0.0, margin_free=5000.0)
+
+        # Plan with sl_dist = 6.5 (1.3 * ATR of 5.0) -> would be rejected if mult=2.0, approved if mult=1.2
+        plan_qml = Plan(
+            plan_id="p-rtm-qml-gate", symbol="XAUUSD", side=Side.SELL,
+            entry_price=2040.0, stop_loss=2046.5, take_profit=2020.0,
+            volume=0.0, grade=SetupGrade.A, source="rtm_qml",
+            timeframe="M15", rr=3.0, confidence=0.9, reasoning="qml test",
+        )
+        outcome_qml = gates.evaluate(plan_qml, account, [], trades_today=0, daily_pnl=0.0, atr=5.0, spread=0.15)
+        assert outcome_qml.allowed is True
+        assert outcome_qml.volume > 0
+
+        plan_ftr = Plan(
+            plan_id="p-rtm-ftr-gate", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2000.0, stop_loss=1993.5, take_profit=2020.0,
+            volume=0.0, grade=SetupGrade.A, source="rtm_ftr",
+            timeframe="M15", rr=3.0, confidence=0.9, reasoning="ftr test",
+        )
+        outcome_ftr = gates.evaluate(plan_ftr, account, [], trades_today=0, daily_pnl=0.0, atr=5.0, spread=0.15)
+        assert outcome_ftr.allowed is True
+        assert outcome_ftr.volume > 0
+
+    def test_smc_order_block_unmitigated_retest_and_plan_generation(self):
+        """b235: Unmitigated Bullish Order Block correctly recognized on current bar retest."""
+        from core.smc import SMCAnalyzer
+        from core.engine import Engine
+        engine = Engine()
+
+        candles = [
+            Candle(time=1000 + i*900, open=2000.0, high=2002.0, low=1998.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        # Bullish OB at candle 32: bearish candle (open 1990, close 1986, low 1985)
+        candles[32] = Candle(time=1000 + 32*900, open=1990.0, high=1991.0, low=1985.0, close=1986.0, volume=100)
+        # Strong bullish breakout at 33
+        candles[33] = Candle(time=1000 + 33*900, open=1986.0, high=2015.0, low=1986.0, close=2010.0, volume=500)
+        # Price stays high in bars 34..48
+        for i in range(34, 49):
+            candles[i] = Candle(time=1000 + i*900, open=2010.0, high=2020.0, low=2005.0, close=2015.0, volume=100)
+        # Bar 49 (current bar) pulls back to OB midpoint: top=1990, bottom=1985, mid=1987.5
+        candles[49] = Candle(time=1000 + 49*900, open=2000.0, high=2000.0, low=1986.0, close=1988.0, volume=100)
+
+        tick = Tick(symbol="XAUUSD", bid=1988.0, ask=1988.2, time=1000 + 49*900)
+        view = engine.analyze(candles, tick)
+        assert view.smc is not None
+        # OB should be unmitigated before bar 49
+        assert len(view.smc.unmitigated_obs) > 0
+
+        # Plan generation should recognize the OB test and generate plan
+        plan = engine.plan_from_smc(candles, view)
+        assert plan is not None
+        assert plan.source == "smc_ob"
+        assert plan.side == Side.BUY
+        assert plan.grade == SetupGrade.A
+
+    def test_smc_ftr_unmitigated_retest_and_plan_generation(self):
+        """b235: Unmitigated Demand FTR correctly recognized on current bar retest."""
+        from core.smc import SMCView, MarketPhase, ZoneType, FTRZone
+        engine = Engine()
+        now = 1700000000
+        candles = [
+            Candle(time=now + i*900, open=2000.0, high=2002.0, low=1998.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        candles[-1] = Candle(time=now + 49*900, open=2010.0, high=2010.0, low=2007.0, close=2008.0, volume=100)
+
+        ftr = FTRZone(
+            ftr_type="DEMAND_FTR", base_top=2010.0, base_bottom=2005.0,
+            broken_level=2004.0, bar_index=35, mitigated=False
+        )
+        smc_view = SMCView(
+            bias="bullish", confidence=0.85, phase=MarketPhase.BOS_BULLISH,
+            zone=ZoneType.DISCOUNT, fib_level=0.35, killzone="london",
+            unmitigated_ftrs=[ftr]
+        )
+        view = MarketView(
+            trend="bullish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2008.0, support=2000.0, resistance=2030.0,
+            smc=smc_view
+        )
+        plan = engine.plan_from_smc(candles, view)
+        assert plan is not None
+        assert plan.source == "rtm_ftr"
+        assert plan.side == Side.BUY
+        assert plan.grade == SetupGrade.A
+
+    def test_plan_from_signal_stale_at_birth_rejection(self):
+        """b235: plan_from_signal rejects stale signals where price already touched SL or TP."""
+        engine = Engine()
+        view = MarketView(
+            trend="ranging", trend_strength=0.0, atr=5.0, spread=0.15,
+            last_price=2000.0, support=1990.0, resistance=2020.0,
+        )
+        # Buy signal where SL is 2010.0 (market 2000.0 has already breached SL)
+        sig_stale_sl = Signal(
+            signal_id="sig-stale-1", raw_text="BUY", symbol="XAUUSD",
+            side=Side.BUY, entry=2020.0, sl=2010.0, tp=2040.0,
+            rr=2.0, confidence=0.8,
+            timestamp="2026-10-29T00:00:00Z",
+        )
+        assert engine.plan_from_signal(sig_stale_sl, view) is None
+
+        # Buy signal where TP is 1995.0 (market 2000.0 has already hit TP)
+        sig_stale_tp = Signal(
+            signal_id="sig-stale-2", raw_text="BUY", symbol="XAUUSD",
+            side=Side.BUY, entry=1980.0, sl=1970.0, tp=1995.0,
+            rr=1.5, confidence=0.8,
+            timestamp="2026-10-29T00:00:00Z",
+        )
+        assert engine.plan_from_signal(sig_stale_tp, view) is None
+
 
 
 

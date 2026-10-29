@@ -544,12 +544,28 @@ class Engine:
             log.info("سیگنال نامعتبر متنی: %s", sig.signal_id)
             return None
 
-        # فیلتر ۱: وتوی اخبار داغ اقتصادی
+        # فیلتر ۱: اعتبارسنجی زنده قیمت جاری نسبت به SL و TP (ابطال سیگنال‌های سوخته)
+        if sig.side == Side.BUY:
+            if view.last_price <= sig.sl:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به استاپ‌لاس (%.2f) رسیده", view.last_price, sig.sl)
+                return None
+            if sig.tp > 0 and view.last_price >= sig.tp:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به تارگت (%.2f) رسیده", view.last_price, sig.tp)
+                return None
+        else:
+            if view.last_price >= sig.sl:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به استاپ‌لاس (%.2f) رسیده", view.last_price, sig.sl)
+                return None
+            if sig.tp > 0 and view.last_price <= sig.tp:
+                log.info("سیگنال رد شد: قیمت بازار (%.2f) به تارگت (%.2f) رسیده", view.last_price, sig.tp)
+                return None
+
+        # فیلتر ۲: وتوی اخبار داغ اقتصادی
         if view.news_blackout:
             log.warning("سیگنال رد شد به دلیل انتشار خبر داغ: %s", view.news_reason)
             return None
 
-        # فیلتر ۲: وتوی سیگنال خلاف روند ماژور بازار
+        # فیلتر ۳: وتوی سیگنال خلاف روند ماژور بازار
         if view.is_trending:
             if sig.side == Side.BUY and view.trend == "bearish":
                 log.info("سیگنال خرید در روند نزولی قوی رد شد (Counter-trend)")
@@ -558,7 +574,7 @@ class Engine:
                 log.info("سیگنال فروش در روند صعودی قوی رد شد (Counter-trend)")
                 return None
 
-        # فیلتر ۳: وتوی تله نقدینگی خرد (Retail Trap Protection)
+        # فیلتر ۴: وتوی تله نقدینگی خرد (Retail Trap Protection)
         if view.smc is not None:
             if sig.side == Side.BUY and view.smc.zone == ZoneType.PREMIUM and view.smc.fib_level > 0.75:
                 log.info("سیگنال خرید در سقف قیمت (Extreme Premium) وتو شد")
