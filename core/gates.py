@@ -118,14 +118,14 @@ class GatesEngine:
         #    پلن‌های تحلیلی (source=analysis) ضریب جداگانه دارند:
         #    ستاپ روند-EMA با SL=۱.۵×ATR تایید شده (بک‌تست EV=+۰.۱۶۳).
         if atr > 0:
-            sl_dist = abs(plan.entry_price - plan.stop_loss)
+            sl_dist = round(abs(plan.entry_price - plan.stop_loss), 2)
             mult = self._g.min_atr_stop_mult
             if plan.source == "analysis":
                 mult = getattr(self._g, "min_atr_stop_mult_analysis",
                                self._g.min_atr_stop_mult)
             elif plan.source.startswith("smc") or plan.source.startswith("rtm") or plan.source in ("smc_ob", "smc_judas", "smc_fvg", "rtm_qml", "rtm_ftr"):
                 mult = getattr(self._g, "min_atr_stop_mult_smc", 1.2)
-            min_dist = atr * mult
+            min_dist = round(atr * mult, 2)
             if sl_dist < min_dist:
                 reasons.append(f"stop_too_tight({sl_dist:.2f}<{min_dist:.2f})")
 

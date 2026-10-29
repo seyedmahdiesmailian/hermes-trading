@@ -119,6 +119,8 @@ class SMCView:
     unmitigated_ftrs: list[FTRZone] = field(default_factory=list)  # نواحی RTM FTR
     swing_high: float = 0.0
     swing_low: float = 0.0
+    asia_high: float = 0.0
+    asia_low: float = 0.0
 
 
 class SMCAnalyzer:
@@ -140,7 +142,7 @@ class SMCAnalyzer:
                 killzone="dead",
             )
 
-        now = now_dt or datetime.now(timezone.utc)
+        now = now_dt or (datetime.fromtimestamp(candles[-1].time, timezone.utc) if candles else datetime.now(timezone.utc))
         killzone = self.detect_killzone(now)
 
         # ۱. ساختار بازار (BOS / CHOCH)
@@ -162,7 +164,7 @@ class SMCAnalyzer:
         is_ote = (0.618 <= fib <= 0.786) or (0.214 <= fib <= 0.382)
 
         # ۵.ب شکار نقدینگی سشن آسیا (Judas Swing)
-        judas = self.detect_judas_swing(candles, killzone)
+        judas, asia_high, asia_low = self.detect_judas_swing(candles, killzone)
 
         # ۵.ج الگوهای پرایس‌اکشن سازمانی RTM (Quasimodo و FTR)
         qml_pattern = self.detect_quasimodo(candles)
@@ -190,6 +192,8 @@ class SMCAnalyzer:
             unmitigated_ftrs=unmitigated_ftrs,
             swing_high=swing_high,
             swing_low=swing_low,
+            asia_high=asia_high,
+            asia_low=asia_low,
         )
 
     # ── تشخیص سشن نقدینگی (Killzones) ────────────────────
@@ -408,28 +412,30 @@ class SMCAnalyzer:
     # ── شکار نقدینگی سشن آسیا (Judas Swing) ──────────────
 
     @staticmethod
-    def detect_judas_swing(candles: list[Candle], killzone: str) -> Optional[str]:
+    def detect_judas_swing(candles: list[Candle], killzone: str) -> tuple[Optional[str], float, float]:
         """تشخیص شکار نقدینگی سشن آسیا در آغاز سشن لندن (Judas Swing)."""
-        if killzone != "london" or len(candles) < 30:
-            return None
+        if killzone != "london" or len(candles) < 20:
+            return None, 0.0, 0.0
+        last_day = candles[-1].time // 86400
         asia_candles = []
         for c in candles[-40:]:
-            h = (c.time % 86400) // 3600
-            if 0 <= h < 6:
-                asia_candles.append(c)
+            if (c.time // 86400) == last_day:
+                h = (c.time % 86400) // 3600
+                if 0 <= h < 6:
+                    asia_candles.append(c)
         if len(asia_candles) < 4:
-            return None
-        asia_high = max(c.high for c in asia_candles)
-        asia_low = min(c.low for c in asia_candles)
+            return None, 0.0, 0.0
+        asia_high = round(max(c.high for c in asia_candles), 2)
+        asia_low = round(min(c.low for c in asia_candles), 2)
 
         last = candles[-1]
         # شکار سقف آسیا و بازگشت به زیر آن
         if last.high > asia_high and last.close < asia_high:
-            return "BEARISH_JUDAS"
+            return "BEARISH_JUDAS", asia_high, asia_low
         # شکار کف آسیا و بازگشت به بالای آن
         if last.low < asia_low and last.close > asia_low:
-            return "BULLISH_JUDAS"
-        return None
+            return "BULLISH_JUDAS", asia_high, asia_low
+        return None, asia_high, asia_low
 
     # ── محاسبه دیدگاه و درجه اطمینان ─────────────────────
 

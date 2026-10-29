@@ -315,11 +315,13 @@ class Engine:
             if h1_bias == "BULLISH":
                 log.info("ستاپ SMC رد شد: فروش Judas در تضاد با روند صعودی قدرتمند H1")
                 return None
-            sl = round(smc.swing_high + buffer, 2)
-            if (sl - entry) < view.atr * 1.2:
-                sl = round(entry + view.atr * 1.2, 2)
-            if (sl - entry) <= view.atr * 2.5:
-                tp = round(min(smc.swing_low, entry - (sl - entry) * 2.5), 2)
+            sweep_ref = max(candles[-1].high, smc.asia_high) if smc.asia_high > 0 else smc.swing_high
+            sl = round(sweep_ref + buffer, 2)
+            min_stop = round(view.atr * 1.2, 2)
+            if (sl - entry) < min_stop:
+                sl = round(entry + min_stop, 2)
+            if (sl - entry) <= round(view.atr * 2.2, 2):
+                tp = round(entry - (sl - entry) * 2.5, 2)
                 rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
                 return Plan(
                     plan_id=f"smc-judas-{int(candles[-1].time)}",
@@ -334,18 +336,20 @@ class Engine:
                     timeframe=timeframe,
                     rr=rr,
                     confidence=0.92,
-                    reasoning=f"Judas Swing: شکار سقف آسیا در آغاز لندن ({smc.swing_high}) و برگشت نزولی",
+                    reasoning=f"Judas Swing: شکار سقف آسیا ({smc.asia_high or smc.swing_high}) در آغاز لندن و برگشت نزولی",
                 )
 
         elif smc.judas_swing == "BULLISH_JUDAS":
             if h1_bias == "BEARISH":
                 log.info("ستاپ SMC رد شد: خرید Judas در تضاد با روند نزولی قدرتمند H1")
                 return None
-            sl = round(smc.swing_low - buffer, 2)
-            if (entry - sl) < view.atr * 1.2:
-                sl = round(entry - view.atr * 1.2, 2)
-            if (entry - sl) <= view.atr * 2.5:
-                tp = round(max(smc.swing_high, entry + (entry - sl) * 2.5), 2)
+            sweep_ref = min(candles[-1].low, smc.asia_low) if smc.asia_low > 0 else smc.swing_low
+            sl = round(sweep_ref - buffer, 2)
+            min_stop = round(view.atr * 1.2, 2)
+            if (entry - sl) < min_stop:
+                sl = round(entry - min_stop, 2)
+            if (entry - sl) <= round(view.atr * 2.2, 2):
+                tp = round(entry + (entry - sl) * 2.5, 2)
                 rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
                 return Plan(
                     plan_id=f"smc-judas-{int(candles[-1].time)}",
@@ -360,7 +364,7 @@ class Engine:
                     timeframe=timeframe,
                     rr=rr,
                     confidence=0.92,
-                    reasoning=f"Judas Swing: شکار کف آسیا در آغاز لندن ({smc.swing_low}) و برگشت صعودی",
+                    reasoning=f"Judas Swing: شکار کف آسیا ({smc.asia_low or smc.swing_low}) در آغاز لندن و برگشت صعودی",
                 )
 
         # ── ۲. ستاپ برخورد به اردر بلاک میتیگیت‌نشده (Order Block Mitigation) ──

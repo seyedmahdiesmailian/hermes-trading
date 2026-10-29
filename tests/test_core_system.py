@@ -1145,9 +1145,10 @@ class TestWatchlistEngine:
 
         # 1. Open volume halved from 0.10 to 0.05
         assert bt._open.volume == 0.05
-        # 2. Realized PnL: (2015 - 2000) * 0.05 * 100 = 75.0
-        expected_pnl = (2015.0 - 2000.0) * 0.05 * 100.0
-        assert bt.state.balance == initial_balance + expected_pnl
+        # 2. Realized PnL (net of round-turn broker commission: -$7.0/lot):
+        # gross = (2015 - 2000) * 0.05 * 100 = 75.0, comm = -7.0 * 0.05 = -0.35 -> net = 74.65
+        expected_pnl = round((2015.0 - 2000.0) * 0.05 * 100.0 - 7.0 * 0.05, 2)
+        assert round(bt.state.balance, 2) == round(initial_balance + expected_pnl, 2)
         # 3. Trade recorded with ExitReason.PARTIAL_TP
         assert len(bt.trades) == 1
         t = bt.trades[0]
@@ -1693,6 +1694,109 @@ class TestWatchlistEngine:
         div_type, strength = detect_rsi_divergence(highs, lows, rsi, window=30)
         assert div_type == "BULLISH_REGULAR"
         assert strength > 0.0
+
+    def test_b239_gates_float_parity_exact_cent_stop_allowed(self):
+        """b239: GatesEngine rounds atr*mult to cents preventing sub-cent rejection (14.00 < 14.004)."""
+        engine = GatesEngine(Gates(
+            max_open_positions=1, max_daily_trades=5, risk_per_trade_pct=2.0,
+            max_daily_loss_pct=5.0, min_rr=1.0, min_grade="B",
+            min_atr_stop_mult=2.0, max_spread_points=3.0,
+            min_atr_stop_mult_smc=1.2,
+        ))
+        acc = AccountState(balance=5000.0, equity=5000.0, margin=0.0, margin_free=5000.0, currency="USD")
+        # atr = 11.67, mult = 1.2 -> atr * mult = 14.004
+        # Plan stop distance is exactly 14.00
+        plan = Plan(
+            plan_id="p-b239-smc", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2600.00, stop_loss=2586.00, take_profit=2635.00,
+            volume=0.0, grade=SetupGrade.A, source="smc_fvg", rr=2.5,
+        )
+        outcome = engine.evaluate(plan, acc, [], 0, 0.0, atr=11.67, spread=0.20)
+        assert outcome.allowed is True
+        assert "stop_too_tight" not in str(outcome.reasons)
+
+    def test_b239_smc_judas_asian_session_levels(self):
+        """b239: SMCView captures asia_high/asia_low and plan_from_smc anchors stop to Asian sweep levels."""
+        from core.smc import SMCAnalyzer, SMCView, ZoneType
+        from core.entities import Candle, Tick
+        # Build Asian session candles (hours 0-5 UTC) followed by London open sweep candle (hour 7 UTC)
+        # Using a fixed date timestamp: 1700000000 % 86400 = 60800 (hour 16)
+        # Midnight UTC timestamp: 1699920000 (2023-11-14 00:00:00 UTC)
+        midnight = 1699920000
+        candles = []
+        # Pre-Asian candles (prior day late hours to ensure len(candles) >= 30 for engine)
+        for i in range(5):
+            candles.append(Candle(
+                time=midnight - 4500 + i * 900,
+                open=2600.0, high=2602.0, low=2598.0, close=2601.0, volume=50
+            ))
+        for i in range(24):  # 24 candles of M15 = 6 hours (00:00 to 06:00 UTC)
+            candles.append(Candle(
+                time=midnight + i * 900,
+                open=2600.0, high=2610.0, low=2595.0, close=2605.0, volume=100
+            ))
+        # Add pre-London candles (06:00 - 07:00 UTC)
+        for i in range(4):
+            candles.append(Candle(
+                time=midnight + 21600 + i * 900,
+                open=2605.0, high=2608.0, low=2602.0, close=2604.0, volume=120
+            ))
+        # London open candle (hour 7 UTC): sweeps Asia high (2610.0) up to 2614.0 and closes at 2608.0
+        candles.append(Candle(
+            time=midnight + 25200,
+            open=2604.0, high=2614.0, low=2603.0, close=2608.0, volume=300
+        ))
+
+        analyzer = SMCAnalyzer()
+        judas, asia_high, asia_low = analyzer.detect_judas_swing(candles, killzone="london")
+        assert judas == "BEARISH_JUDAS"
+        assert asia_high == 2610.0
+        assert asia_low == 2595.0
+
+        view = analyzer.analyze(candles, now_dt=None)
+        assert view.asia_high == 2610.0
+        assert view.asia_low == 2595.0
+        assert view.judas_swing == "BEARISH_JUDAS"
+
+        # Verify plan_from_smc sets stop loss above the sweep high (2614.0) with buffer
+        eng = Engine()
+        tick = Tick(symbol="XAUUSD", bid=2608.0, ask=2608.2, time=candles[-1].time)
+        mkt_view = eng.analyze(candles, tick, check_news=False)
+        plan = eng.plan_from_smc(candles, mkt_view, timeframe="M15")
+        assert plan is not None
+        assert plan.side == Side.SELL
+        assert plan.source == "smc_judas"
+        assert plan.stop_loss > 2614.0  # Above the Judas sweep peak
+        assert plan.rr == 2.5
+        assert plan.take_profit < plan.entry_price
+
+    def test_b239_backtester_sim_partial_deducts_broker_commission(self):
+        """b239: Backtester _sim_partial deducts round-turn commission (-$7.0/lot)."""
+        from entry.backtest import Backtester, OpenTrade
+        from core.entities import Side, ExitReason
+        bt = Backtester()
+        bt._open = OpenTrade(
+            ticket=888, symbol="XAUUSD", side=Side.BUY, volume=0.20,
+            open_price=2000.0, sl=1990.0, tp=2030.0, open_time=1000.0,
+            plan_id="p-comm", entry_rr=2.0, initial_sl=1990.0,
+        )
+        bt._cur_candle_close = 2010.0
+        bt._cur_candle_ts = 1500.0
+        init_balance = bt.state.balance
+
+        # Partial close 50% = 0.10 lot
+        # Gross = (2010 - 2000) * 0.10 * 100 = 100.0
+        # Commission = -7.0 * 0.10 = -0.70
+        # Net = 99.30
+        bt._sim_partial(ticket=888, percent=50.0)
+        assert bt._open.volume == 0.10
+        assert len(bt.trades) == 1
+        t = bt.trades[0]
+        assert t.exit_reason == ExitReason.PARTIAL_TP
+        assert t.volume == 0.10
+        assert t.pnl == 99.30
+        assert round(bt.state.balance, 2) == round(init_balance + 99.30, 2)
+
 
 
 

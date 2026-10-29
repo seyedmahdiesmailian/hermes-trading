@@ -404,7 +404,9 @@ class Backtester:
             return
         cur_price = self._cur_candle_close if self._cur_candle_close > 0 else ot.open_price
         direction = 1.0 if ot.side == Side.BUY else -1.0
-        pnl = direction * (cur_price - ot.open_price) * closed_vol * 100.0
+        gross = direction * (cur_price - ot.open_price) * closed_vol * 100.0
+        comm = -7.0 * closed_vol
+        pnl = round(gross + comm, 2)
         self.state.apply_pnl(pnl)
         trade = Trade(
             trade_id=f"bt-{ot.ticket}-part", plan_id=ot.plan_id, ticket=ot.ticket,
