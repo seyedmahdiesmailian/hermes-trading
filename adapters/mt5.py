@@ -290,14 +290,25 @@ class Mt5Adapter:
                 side = Side.BUY if t.upper() == "BUY" else Side.SELL
             else:
                 side = Side.BUY if int(t) == 0 else Side.SELL
+            op = float(p.get("price_open", p.get("open_price", 0.0)))
+            cur_p = float(p.get("price_current") or p.get("current_price") or 0.0)
+            if cur_p <= 0.0:
+                prof = float(p.get("profit", 0.0))
+                vol = float(p.get("volume", 0.0))
+                if vol > 0.0:
+                    diff = prof / (vol * 100.0)
+                    cur_p = round(op + diff if side == Side.BUY else op - diff, 2)
+                else:
+                    cur_p = op
+
             out.append(
                 BrokerPosition(
                     ticket=int(p["ticket"]),
                     symbol=str(p.get("symbol") or symbol or "XAUUSD"),
                     side=side,
                     volume=float(p["volume"]),
-                    open_price=float(p.get("price_open", p.get("open_price", 0.0))),
-                    current_price=float(p.get("price_current", p.get("price_open", p.get("open_price", 0.0)))),
+                    open_price=op,
+                    current_price=cur_p,
                     sl=float(p.get("sl") or 0.0),
                     tp=float(p.get("tp") or 0.0),
                     profit=float(p.get("profit", 0.0)),

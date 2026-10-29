@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import dataclasses
 import logging
 import signal
 import sys
@@ -409,6 +410,7 @@ class HermesDaemon:
 
         # ATR زنده برای مسیر trailing تحلیلی (پلن‌های بدون TP)
         # وقتی پوزیشن باز است entry loop رد می‌شود → اینجا تازه‌سازی می‌کنیم
+        tick = None
         try:
             candles = self.mt5.get_candles(
                 self.cfg.symbol, self.cfg.analysis.timeframe, self.cfg.analysis.candle_count
@@ -420,6 +422,11 @@ class HermesDaemon:
             log.warning("exit loop: ATR تازه‌سازی نشد — از مقدار قبلی استفاده می‌شود")
 
         for pos in positions:
+            # همگام‌سازی قیمت لحظه‌ای خروج با بهترین تیک بازار (Bid برای خرید، Ask برای فروش)
+            if tick and tick.bid > 0:
+                real_cur = tick.bid if pos.is_buy else tick.ask
+                pos = dataclasses.replace(pos, current_price=real_cur)
+
             # فقط پوزیشن‌های خودمان (magic comment hms-)
             if pos.comment and not pos.comment.startswith("hms"):
                 continue

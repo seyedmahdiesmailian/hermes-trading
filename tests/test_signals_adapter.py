@@ -120,3 +120,22 @@ class TestSignalsAdapter:
         adapter = SignalsAdapter(log_file, state_file)
         signals = adapter.read_new()
         assert len(signals) == 0
+
+    def test_parse_raw_text_signal(self, setup_paths):
+        log_file, state_file = setup_paths
+        now_iso = datetime.now(timezone.utc).isoformat()
+        sample = [{
+            "id": "raw-1",
+            "timestamp": now_iso,
+            "raw_text": "BUY GOLD 2045.00 SL: 2035.00 TP: 2065.00"
+        }]
+        log_file.write_text(json.dumps(sample), encoding="utf-8")
+
+        adapter = SignalsAdapter(log_file, state_file)
+        signals = adapter.read_new()
+        assert len(signals) == 1
+        assert signals[0].symbol == "XAUUSD"
+        assert signals[0].side == Side.BUY
+        assert signals[0].entry == 2045.0
+        assert signals[0].sl == 2035.0
+        assert signals[0].tp == 2065.0

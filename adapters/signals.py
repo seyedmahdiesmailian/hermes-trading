@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -105,6 +106,10 @@ class SignalsAdapter:
         """پارس، فیلتر تکراری، سنجش تازگی زمانی و هندسه قیمت."""
         try:
             parsed = item.get("parsed") or {}
+            raw_text = str(item.get("raw_text") or item.get("text") or item.get("raw") or "")
+            if not parsed and raw_text:
+                parsed = self.parse_text_to_dict(raw_text)
+
             side_raw = str(parsed.get("side", "")).upper()
             if side_raw not in ("BUY", "SELL"):
                 return None
@@ -182,6 +187,60 @@ class SignalsAdapter:
         expired = [h for h, t in self._seen_hashes.items() if now_ts - t > max_cache_age_s]
         for h in expired:
             self._seen_hashes.pop(h, None)
+
+    @staticmethod
+    def parse_text_to_dict(text: str) -> dict:
+        """استخراج پارامترهای سیگنال از متن خام تلگرام (فارسی و انگلیسی)."""
+        if not text:
+            return {}
+        clean = text.replace(",", ".").replace(":", " : ")
+
+        # تشخیص جهت معامله (Side)
+        side = None
+        if re.search(r"\b(BUY|LONG)\b|خرید", clean, re.IGNORECASE):
+            side = "BUY"
+        elif re.search(r"\b(SELL|SHORT)\b|فروش", clean, re.IGNORECASE):
+            side = "SELL"
+        if not side:
+            return {}
+
+        # استخراج حد ضرر (Stop Loss)
+        sl = None
+        sl_match = re.search(r"(?:SL|STOP|استاپ|حد\s*ضرر)[\s:=]*([0-9]{3,5}(?:\.[0-9]+)?)", clean, re.IGNORECASE)
+        if sl_match:
+            sl = float(sl_match.group(1))
+
+        # استخراج حد سود (Take Profit)
+        tp = None
+        tp_match = re.search(r"(?:TP1?|TARGET1?|تارگت|حد\s*سود)[\s:=]*([0-9]{3,5}(?:\.[0-9]+)?)", clean, re.IGNORECASE)
+        if tp_match:
+            tp = float(tp_match.group(1))
+
+        # استخراج قیمت ورود (Entry)
+        entry = None
+        entry_match = re.search(r"(?:ENTRY|ورود|AT|@)[\s:=]*([0-9]{3,5}(?:\.[0-9]+)?)", clean, re.IGNORECASE)
+        if entry_match:
+            entry = float(entry_match.group(1))
+        else:
+            all_nums = [float(n) for n in re.findall(r"\b[0-9]{4}(?:\.[0-9]+)?\b", clean)]
+            candidates = [n for n in all_nums if n != sl and n != tp]
+            if candidates:
+                entry = candidates[0]
+
+        if not entry or not sl:
+            return {}
+
+        if not tp:
+            tp = entry + 2.0 * (entry - sl) if side == "BUY" else entry - 2.0 * (sl - entry)
+
+        return {
+            "symbol": "XAUUSD",
+            "side": side,
+            "entry": round(entry, 2),
+            "sl": round(sl, 2),
+            "tp": round(tp, 2),
+            "confidence": 0.85,
+        }
 
     @staticmethod
     def _parse_iso_timestamp(ts_str: str) -> Optional[float]:
