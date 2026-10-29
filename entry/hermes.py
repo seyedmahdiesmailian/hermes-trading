@@ -644,10 +644,10 @@ class HermesDaemon:
                 if "[tp]" in comment or (old_pos.tp > 0 and ((old_pos.is_buy and exit_price >= old_pos.tp - 0.25) or (not old_pos.is_buy and exit_price <= old_pos.tp + 0.25))):
                     reason = ExitReason.TAKE_PROFIT
                 elif "[sl]" in comment or (old_pos.sl > 0 and ((old_pos.is_buy and exit_price <= old_pos.sl + 0.25) or (not old_pos.is_buy and exit_price >= old_pos.sl - 0.25))):
-                    if pnl > 0.0:
-                        reason = ExitReason.TRAILING_STOP
-                    elif pnl == 0.0 or abs(exit_price - old_pos.open_price) <= 0.20:
+                    if abs(exit_price - old_pos.open_price) <= 0.25 or pnl == 0.0:
                         reason = ExitReason.BREAKEVEN
+                    elif pnl > 0.0:
+                        reason = ExitReason.TRAILING_STOP
                     else:
                         reason = ExitReason.STOP_LOSS
                 else:

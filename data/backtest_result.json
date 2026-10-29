@@ -15,14 +15,14 @@
     "max_hold_hours": 24
   },
   "start_balance": 4931.58,
-  "end_balance": 7572.58,
-  "total_pnl": 2641.0,
-  "total_trades": 489,
-  "wins": 278,
-  "losses": 211,
-  "win_rate": 56.9,
-  "avg_r": 0.377,
-  "avg_r_wins": 1.422,
+  "end_balance": 6933.73,
+  "total_pnl": 2002.15,
+  "total_trades": 490,
+  "wins": 276,
+  "losses": 214,
+  "win_rate": 56.3,
+  "avg_r": 0.362,
+  "avg_r_wins": 1.418,
   "avg_r_losses": -1.0,
   "trades": [
     {
@@ -52,7 +52,7 @@
       "exit_price": 4796.48,
       "pnl": 0.8,
       "r_multiple": 0.015,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1776414600.0,
       "closed_at": 1776425400.0,
       "volume": 0.1
@@ -708,7 +708,7 @@
       "exit_price": 4562.19,
       "pnl": 0.72,
       "r_multiple": 0.011,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1777527000.0,
       "closed_at": 1777537800.0,
       "volume": 0.09
@@ -788,7 +788,7 @@
       "exit_price": 4631.97,
       "pnl": 0.48,
       "r_multiple": 0.008,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1777657500.0,
       "closed_at": 1777856400.0,
       "volume": 0.06
@@ -884,7 +884,7 @@
       "exit_price": 4541.79,
       "pnl": 1.04,
       "r_multiple": 0.016,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1777960800.0,
       "closed_at": 1777968000.0,
       "volume": 0.13
@@ -900,7 +900,7 @@
       "exit_price": 4545.92,
       "pnl": 1.2,
       "r_multiple": 0.02,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1777969800.0,
       "closed_at": 1777973400.0,
       "volume": 0.15
@@ -1380,7 +1380,7 @@
       "exit_price": 4555.49,
       "pnl": 0.48,
       "r_multiple": 0.008,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1778865300.0,
       "closed_at": 1778875200.0,
       "volume": 0.06
@@ -1524,7 +1524,7 @@
       "exit_price": 4508.26,
       "pnl": 0.16,
       "r_multiple": 0.006,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1779216300.0,
       "closed_at": 1779248700.0,
       "volume": 0.02
@@ -1572,7 +1572,7 @@
       "exit_price": 4489.65,
       "pnl": 0.96,
       "r_multiple": 0.015,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1779294600.0,
       "closed_at": 1779297300.0,
       "volume": 0.12
@@ -1636,7 +1636,7 @@
       "exit_price": 4525.19,
       "pnl": 0.8,
       "r_multiple": 0.013,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1779441300.0,
       "closed_at": 1779461100.0,
       "volume": 0.1
@@ -1668,7 +1668,7 @@
       "exit_price": 4519.29,
       "pnl": 0.64,
       "r_multiple": 0.011,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1779473700.0,
       "closed_at": 1779670800.0,
       "volume": 0.08
@@ -1716,7 +1716,7 @@
       "exit_price": 4562.57,
       "pnl": 0.72,
       "r_multiple": 0.012,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1779702300.0,
       "closed_at": 1779762600.0,
       "volume": 0.09
@@ -1876,7 +1876,7 @@
       "exit_price": 4492.41,
       "pnl": 1.52,
       "r_multiple": 0.022,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1780020900.0,
       "closed_at": 1780027200.0,
       "volume": 0.19
@@ -1892,7 +1892,7 @@
       "exit_price": 4503.28,
       "pnl": 1.04,
       "r_multiple": 0.016,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1780031700.0,
       "closed_at": 1780043400.0,
       "volume": 0.13
@@ -1988,7 +1988,7 @@
       "exit_price": 4491.32,
       "pnl": 0.88,
       "r_multiple": 0.013,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1780345800.0,
       "closed_at": 1780380000.0,
       "volume": 0.11
@@ -2148,7 +2148,7 @@
       "exit_price": 4473.19,
       "pnl": 1.04,
       "r_multiple": 0.015,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1780560900.0,
       "closed_at": 1780577100.0,
       "volume": 0.13
@@ -2228,7 +2228,7 @@
       "exit_price": 4335.56,
       "pnl": 0.64,
       "r_multiple": 0.01,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1780932600.0,
       "closed_at": 1780941600.0,
       "volume": 0.08
@@ -2292,7 +2292,7 @@
       "exit_price": 4339.07,
       "pnl": 1.04,
       "r_multiple": 0.016,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1780996500.0,
       "closed_at": 1781012700.0,
       "volume": 0.13
@@ -2420,7 +2420,7 @@
       "exit_price": 4179.62,
       "pnl": 0.56,
       "r_multiple": 0.008,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1781238600.0,
       "closed_at": 1781253000.0,
       "volume": 0.07
@@ -2436,7 +2436,7 @@
       "exit_price": 4173.44,
       "pnl": 1.12,
       "r_multiple": 0.015,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1781253900.0,
       "closed_at": 1781260200.0,
       "volume": 0.14
@@ -2756,7 +2756,7 @@
       "exit_price": 4190.83,
       "pnl": 0.72,
       "r_multiple": 0.009,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1782103500.0,
       "closed_at": 1782116100.0,
       "volume": 0.09
@@ -2772,7 +2772,7 @@
       "exit_price": 4202.09,
       "pnl": 1.44,
       "r_multiple": 0.018,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1782120600.0,
       "closed_at": 1782129600.0,
       "volume": 0.18
@@ -2964,7 +2964,7 @@
       "exit_price": 4002.38,
       "pnl": 0.16,
       "r_multiple": 0.005,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1782405900.0,
       "closed_at": 1782451800.0,
       "volume": 0.02
@@ -3012,7 +3012,7 @@
       "exit_price": 4055.01,
       "pnl": 0.72,
       "r_multiple": 0.01,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1782705600.0,
       "closed_at": 1782718200.0,
       "volume": 0.09
@@ -3060,7 +3060,7 @@
       "exit_price": 4018.35,
       "pnl": 1.44,
       "r_multiple": 0.019,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1782781200.0,
       "closed_at": 1782784800.0,
       "volume": 0.18
@@ -3172,7 +3172,7 @@
       "exit_price": 4045.04,
       "pnl": 0.64,
       "r_multiple": 0.009,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1782961200.0,
       "closed_at": 1782968400.0,
       "volume": 0.08
@@ -3236,7 +3236,7 @@
       "exit_price": 4175.06,
       "pnl": 0.96,
       "r_multiple": 0.014,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1783306800.0,
       "closed_at": 1783309500.0,
       "volume": 0.12
@@ -3604,7 +3604,7 @@
       "exit_price": 4003.75,
       "pnl": 0.64,
       "r_multiple": 0.018,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1783992600.0,
       "closed_at": 1783998000.0,
       "volume": 0.08
@@ -3652,7 +3652,7 @@
       "exit_price": 4025.11,
       "pnl": 1.44,
       "r_multiple": 0.022,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1784021400.0,
       "closed_at": 1784038500.0,
       "volume": 0.18
@@ -4068,7 +4068,7 @@
       "exit_price": 4049.16,
       "pnl": 2.48,
       "r_multiple": 0.029,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1784859300.0,
       "closed_at": 1784863800.0,
       "volume": 0.31
@@ -4100,7 +4100,7 @@
       "exit_price": 4057.4,
       "pnl": 1.6,
       "r_multiple": 0.018,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1784893500.0,
       "closed_at": 1784911500.0,
       "volume": 0.2
@@ -4116,7 +4116,7 @@
       "exit_price": 4067.57,
       "pnl": 1.2,
       "r_multiple": 0.013,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1784921400.0,
       "closed_at": 1785114000.0,
       "volume": 0.15
@@ -4148,7 +4148,7 @@
       "exit_price": 4076.14,
       "pnl": 1.2,
       "r_multiple": 0.014,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1785175200.0,
       "closed_at": 1785182400.0,
       "volume": 0.15
@@ -4164,7 +4164,7 @@
       "exit_price": 4074.67,
       "pnl": 1.52,
       "r_multiple": 0.018,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1785184200.0,
       "closed_at": 1785201300.0,
       "volume": 0.19
@@ -4372,7 +4372,7 @@
       "exit_price": 4085.68,
       "pnl": 0.32,
       "r_multiple": 0.006,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1785434400.0,
       "closed_at": 1785472200.0,
       "volume": 0.04
@@ -4388,7 +4388,7 @@
       "exit_price": 4076.93,
       "pnl": 1.84,
       "r_multiple": 0.02,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1785481200.0,
       "closed_at": 1785491100.0,
       "volume": 0.23
@@ -4740,7 +4740,7 @@
       "exit_price": 4243.71,
       "pnl": 0.72,
       "r_multiple": 0.015,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1786072500.0,
       "closed_at": 1786075200.0,
       "volume": 0.09
@@ -4868,7 +4868,7 @@
       "exit_price": 4327.84,
       "pnl": 2.0,
       "r_multiple": 0.021,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1786374900.0,
       "closed_at": 1786380300.0,
       "volume": 0.25
@@ -5748,7 +5748,7 @@
       "exit_price": 4620.39,
       "pnl": 1.76,
       "r_multiple": 0.019,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1787751900.0,
       "closed_at": 1787758200.0,
       "volume": 0.22
@@ -6036,7 +6036,7 @@
       "exit_price": 4427.15,
       "pnl": 1.36,
       "r_multiple": 0.015,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1788426000.0,
       "closed_at": 1788439500.0,
       "volume": 0.17
@@ -6068,7 +6068,7 @@
       "exit_price": 4477.57,
       "pnl": 1.68,
       "r_multiple": 0.02,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1788489000.0,
       "closed_at": 1788494400.0,
       "volume": 0.21
@@ -6132,7 +6132,7 @@
       "exit_price": 4414.73,
       "pnl": 0.8,
       "r_multiple": 0.009,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1788759000.0,
       "closed_at": 1788778800.0,
       "volume": 0.1
@@ -6180,7 +6180,7 @@
       "exit_price": 4415.87,
       "pnl": 1.68,
       "r_multiple": 0.019,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1788803100.0,
       "closed_at": 1788834600.0,
       "volume": 0.21
@@ -6308,7 +6308,7 @@
       "exit_price": 4398.69,
       "pnl": 0.64,
       "r_multiple": 0.008,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1788979500.0,
       "closed_at": 1788991200.0,
       "volume": 0.08
@@ -6388,7 +6388,7 @@
       "exit_price": 4337.41,
       "pnl": 1.28,
       "r_multiple": 0.016,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1789134300.0,
       "closed_at": 1789139700.0,
       "volume": 0.16
@@ -6484,7 +6484,7 @@
       "exit_price": 4326.73,
       "pnl": 1.36,
       "r_multiple": 0.017,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1789373700.0,
       "closed_at": 1789378200.0,
       "volume": 0.17
@@ -6516,7 +6516,7 @@
       "exit_price": 4297.03,
       "pnl": 1.52,
       "r_multiple": 0.019,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1789434000.0,
       "closed_at": 1789444800.0,
       "volume": 0.19
@@ -6580,7 +6580,7 @@
       "exit_price": 4325.98,
       "pnl": 1.36,
       "r_multiple": 0.017,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1789549200.0,
       "closed_at": 1789556400.0,
       "volume": 0.17
@@ -6644,7 +6644,7 @@
       "exit_price": 4320.18,
       "pnl": 1.12,
       "r_multiple": 0.014,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1789642800.0,
       "closed_at": 1789652700.0,
       "volume": 0.14
@@ -6820,7 +6820,7 @@
       "exit_price": 4330.03,
       "pnl": 0.88,
       "r_multiple": 0.01,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1790077500.0,
       "closed_at": 1790081100.0,
       "volume": 0.11
@@ -6836,7 +6836,7 @@
       "exit_price": 4330.84,
       "pnl": 0.8,
       "r_multiple": 0.01,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1790082000.0,
       "closed_at": 1790090100.0,
       "volume": 0.1
@@ -6884,7 +6884,7 @@
       "exit_price": 4338.12,
       "pnl": 1.52,
       "r_multiple": 0.019,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1790144100.0,
       "closed_at": 1790152200.0,
       "volume": 0.19
@@ -6916,7 +6916,7 @@
       "exit_price": 4295.24,
       "pnl": 1.2,
       "r_multiple": 0.016,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1790227800.0,
       "closed_at": 1790236800.0,
       "volume": 0.15
@@ -6948,7 +6948,7 @@
       "exit_price": 4267.31,
       "pnl": 0.32,
       "r_multiple": 0.008,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1790268300.0,
       "closed_at": 1790277300.0,
       "volume": 0.04
@@ -7044,7 +7044,7 @@
       "exit_price": 4280.35,
       "pnl": 0.88,
       "r_multiple": 0.011,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1790359200.0,
       "closed_at": 1790557200.0,
       "volume": 0.11
@@ -7412,7 +7412,7 @@
       "exit_price": 4158.37,
       "pnl": 1.12,
       "r_multiple": 0.015,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1791304200.0,
       "closed_at": 1791309600.0,
       "volume": 0.14
@@ -7434,6 +7434,54 @@
       "volume": 0.04
     },
     {
+      "signal": "rtm-qml-1791384300",
+      "source": "rtm_qml",
+      "grade": "A",
+      "side": "BUY",
+      "entry": 4121.63,
+      "sl": 4108.3,
+      "tp": 4154.95,
+      "exit_price": 4108.3,
+      "pnl": -147.4,
+      "r_multiple": -1.0,
+      "exit_reason": "STOP_LOSS",
+      "opened_at": 1791384300.0,
+      "closed_at": 1791386100.0,
+      "volume": 0.11
+    },
+    {
+      "signal": "auto-1791394200",
+      "source": "analysis",
+      "grade": "B",
+      "side": "SELL",
+      "entry": 4102.41,
+      "sl": 4125.21,
+      "tp": 4056.81,
+      "exit_price": 4125.21,
+      "pnl": -68.61,
+      "r_multiple": -1.0,
+      "exit_reason": "STOP_LOSS",
+      "opened_at": 1791394200.0,
+      "closed_at": 1791403200.0,
+      "volume": 0.03
+    },
+    {
+      "signal": "auto-1791409500",
+      "source": "analysis",
+      "grade": "A",
+      "side": "SELL",
+      "entry": 4108.72,
+      "sl": 4128.17,
+      "tp": 4069.82,
+      "exit_price": 4128.17,
+      "pnl": -136.64,
+      "r_multiple": -1.0,
+      "exit_reason": "STOP_LOSS",
+      "opened_at": 1791409500.0,
+      "closed_at": 1791432000.0,
+      "volume": 0.07
+    },
+    {
       "signal": "smc-fvg-1791439200",
       "source": "smc_fvg",
       "grade": "A",
@@ -7442,12 +7490,12 @@
       "sl": 4139.86,
       "tp": 4103.7,
       "exit_price": 4139.86,
-      "pnl": -145.6,
+      "pnl": -135.2,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791439200.0,
       "closed_at": 1791441900.0,
-      "volume": 0.14
+      "volume": 0.13
     },
     {
       "signal": "smc-fvg-1791444600",
@@ -7458,12 +7506,12 @@
       "sl": 4140.74,
       "tp": 4111.27,
       "exit_price": 4117.74,
-      "pnl": 130.59,
+      "pnl": 116.08,
       "r_multiple": 1.732,
       "exit_reason": "PARTIAL_TP",
       "opened_at": 1791444600.0,
       "closed_at": 1791449100.0,
-      "volume": 0.09
+      "volume": 0.08
     },
     {
       "signal": "smc-fvg-1791444600",
@@ -7490,12 +7538,12 @@
       "sl": 4128.65,
       "tp": 4107.55,
       "exit_price": 4115.51,
-      "pnl": 118.98,
+      "pnl": 105.76,
       "r_multiple": 1.564,
       "exit_reason": "PARTIAL_TP",
       "opened_at": 1791457200.0,
       "closed_at": 1791466200.0,
-      "volume": 0.09
+      "volume": 0.08
     },
     {
       "signal": "rtm-qml-1791457200",
@@ -7524,42 +7572,10 @@
       "exit_price": 4122.82,
       "pnl": 0.4,
       "r_multiple": 0.011,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1791469800.0,
       "closed_at": 1791481500.0,
       "volume": 0.05
-    },
-    {
-      "signal": "smc-fvg-1791487800",
-      "source": "smc_fvg",
-      "grade": "A",
-      "side": "BUY",
-      "entry": 4119.31,
-      "sl": 4119.46,
-      "tp": 4148.21,
-      "exit_price": 4136.67,
-      "pnl": 121.03,
-      "r_multiple": 1.502,
-      "exit_reason": "PARTIAL_TP",
-      "opened_at": 1791487800.0,
-      "closed_at": 1791508500.0,
-      "volume": 0.07
-    },
-    {
-      "signal": "smc-fvg-1791487800",
-      "source": "smc_fvg",
-      "grade": "A",
-      "side": "BUY",
-      "entry": 4119.31,
-      "sl": 4142.9,
-      "tp": 4148.21,
-      "exit_price": 4148.21,
-      "pnl": 172.98,
-      "r_multiple": 2.5,
-      "exit_reason": "TAKE_PROFIT",
-      "opened_at": 1791487800.0,
-      "closed_at": 1791514800.0,
-      "volume": 0.06
     },
     {
       "signal": "smc-fvg-1791547200",
@@ -7570,12 +7586,12 @@
       "sl": 4178.34,
       "tp": 4203.92,
       "exit_price": 4178.34,
-      "pnl": -154.98,
+      "pnl": -140.22,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791547200.0,
       "closed_at": 1791554400.0,
-      "volume": 0.21
+      "volume": 0.19
     },
     {
       "signal": "auto-1791563400",
@@ -7602,12 +7618,12 @@
       "sl": 4185.51,
       "tp": 4203.71,
       "exit_price": 4203.71,
-      "pnl": 374.97,
+      "pnl": 349.11,
       "r_multiple": 2.5,
       "exit_reason": "TAKE_PROFIT",
       "opened_at": 1791773100.0,
       "closed_at": 1791774000.0,
-      "volume": 0.29
+      "volume": 0.27
     },
     {
       "signal": "smc-fvg-1791788400",
@@ -7618,12 +7634,12 @@
       "sl": 4190.34,
       "tp": 4220.23,
       "exit_price": 4190.34,
-      "pnl": -163.59,
+      "pnl": -146.37,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791788400.0,
       "closed_at": 1791792000.0,
-      "volume": 0.19
+      "volume": 0.17
     },
     {
       "signal": "smc-judas-1791795600",
@@ -7634,12 +7650,12 @@
       "sl": 4178.94,
       "tp": 4203.44,
       "exit_price": 4178.94,
-      "pnl": -155.54,
+      "pnl": -141.4,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791795600.0,
       "closed_at": 1791802800.0,
-      "volume": 0.22
+      "volume": 0.2
     },
     {
       "signal": "smc-ob-1791807300",
@@ -7650,12 +7666,12 @@
       "sl": 4172.15,
       "tp": 4191.09,
       "exit_price": 4172.15,
-      "pnl": -153.44,
+      "pnl": -142.48,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791807300.0,
       "closed_at": 1791808200.0,
-      "volume": 0.28
+      "volume": 0.26
     },
     {
       "signal": "smc-fvg-1791853200",
@@ -7666,12 +7682,12 @@
       "sl": 4176.69,
       "tp": 4161.33,
       "exit_price": 4162.0,
-      "pnl": 173.91,
+      "pnl": 153.45,
       "r_multiple": 2.346,
       "exit_reason": "PARTIAL_TP",
       "opened_at": 1791853200.0,
       "closed_at": 1791860400.0,
-      "volume": 0.17
+      "volume": 0.15
     },
     {
       "signal": "smc-fvg-1791853200",
@@ -7682,12 +7698,12 @@
       "sl": 4162.34,
       "tp": 4161.33,
       "exit_price": 4162.34,
-      "pnl": 168.13,
+      "pnl": 158.24,
       "r_multiple": 2.269,
       "exit_reason": "TRAILING_STOP",
       "opened_at": 1791853200.0,
       "closed_at": 1791861300.0,
-      "volume": 0.17
+      "volume": 0.16
     },
     {
       "signal": "auto-1791864000",
@@ -7700,7 +7716,7 @@
       "exit_price": 4167.13,
       "pnl": 0.64,
       "r_multiple": 0.016,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1791864000.0,
       "closed_at": 1791866700.0,
       "volume": 0.08
@@ -7714,12 +7730,12 @@
       "sl": 4177.46,
       "tp": 4143.65,
       "exit_price": 4177.46,
-      "pnl": -155.68,
+      "pnl": -145.95,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791867600.0,
       "closed_at": 1791870300.0,
-      "volume": 0.16
+      "volume": 0.15
     },
     {
       "signal": "smc-fvg-1791881100",
@@ -7730,12 +7746,12 @@
       "sl": 4192.69,
       "tp": 4175.17,
       "exit_price": 4192.69,
-      "pnl": 1.76,
+      "pnl": 1.6,
       "r_multiple": 0.021,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1791881100.0,
       "closed_at": 1791890100.0,
-      "volume": 0.22
+      "volume": 0.2
     },
     {
       "signal": "smc-fvg-1791900900",
@@ -7746,12 +7762,12 @@
       "sl": 4177.72,
       "tp": 4198.26,
       "exit_price": 4177.72,
-      "pnl": -154.44,
+      "pnl": -142.56,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791900900.0,
       "closed_at": 1791906300.0,
-      "volume": 0.26
+      "volume": 0.24
     },
     {
       "signal": "auto-1791939600",
@@ -7764,7 +7780,7 @@
       "exit_price": 4159.94,
       "pnl": 0.8,
       "r_multiple": 0.021,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1791939600.0,
       "closed_at": 1791951300.0,
       "volume": 0.1
@@ -7778,12 +7794,12 @@
       "sl": 4169.64,
       "tp": 4136.18,
       "exit_price": 4169.64,
-      "pnl": -154.08,
+      "pnl": -134.82,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1791954000.0,
       "closed_at": 1791958500.0,
-      "volume": 0.16
+      "volume": 0.14
     },
     {
       "signal": "smc-fvg-1791962100",
@@ -7794,12 +7810,12 @@
       "sl": 4161.2,
       "tp": 4135.28,
       "exit_price": 4161.2,
-      "pnl": 1.12,
+      "pnl": 1.04,
       "r_multiple": 0.014,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1791962100.0,
       "closed_at": 1791968400.0,
-      "volume": 0.14
+      "volume": 0.13
     },
     {
       "signal": "smc-fvg-1792030500",
@@ -7810,12 +7826,12 @@
       "sl": 4109.14,
       "tp": 4086.32,
       "exit_price": 4109.14,
-      "pnl": -151.57,
+      "pnl": -138.39,
       "r_multiple": -1.0,
       "exit_reason": "STOP_LOSS",
       "opened_at": 1792030500.0,
       "closed_at": 1792032300.0,
-      "volume": 0.23
+      "volume": 0.21
     },
     {
       "signal": "auto-1792058400",
@@ -7826,12 +7842,12 @@
       "sl": 4143.4,
       "tp": 4168.25,
       "exit_price": 4143.4,
-      "pnl": 0.48,
+      "pnl": 0.4,
       "r_multiple": 0.012,
-      "exit_reason": "TRAILING_STOP",
+      "exit_reason": "BREAKEVEN",
       "opened_at": 1792058400.0,
       "closed_at": 1792078200.0,
-      "volume": 0.06
+      "volume": 0.05
     },
     {
       "signal": "smc-fvg-1792126800",
@@ -7842,15 +7858,15 @@
       "sl": 4156.37,
       "tp": 4171.02,
       "exit_price": 4171.02,
-      "pnl": 353.52,
+      "pnl": 324.06,
       "r_multiple": 2.5,
       "exit_reason": "TAKE_PROFIT",
       "opened_at": 1792126800.0,
       "closed_at": 1792129500.0,
-      "volume": 0.24
+      "volume": 0.22
     }
   ],
-  "denied_count": 146,
+  "denied_count": 147,
   "denied": [
     {
       "signal": "rtm-qml-1776973500",

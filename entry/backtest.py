@@ -203,8 +203,64 @@ class Backtester:
             if self._open is not None:
                 continue
 
-            if not entry_queue:
-                # ─ـ ۲‌ب) مسیر تحلیل خودکار — بدون سیگنال کانال ──
+            # ── ۲) اولویت اول: سیگنال‌های کانال (fulfillment: بازار باید به entry رسیده باشد) ──
+            signal_executed = False
+            if entry_queue:
+                touched = [s for s in entry_queue
+                           if cur.low <= s.entry <= cur.high]
+                if touched:
+                    sig = touched[0]
+                    entry_queue.remove(sig)
+                    view = self.eng.analyze(past, tick, check_news=False)
+                    plan = self.eng.plan_from_signal(sig, view, self.cfg.analysis.timeframe)
+                    if plan is None:
+                        self.denied.append({
+                            "signal": sig.signal_id, "reason": "trend_filter",
+                            "timestamp": datetime.fromtimestamp(now_ts, timezone.utc).isoformat(),
+                        })
+                    else:
+                        account = AccountState(
+                            balance=self.state.balance, equity=self.state.equity,
+                            margin=0.0, margin_free=self.state.equity,
+                        )
+                        trades_today = self._trades_today(now_ts)
+                        today_pnl = self._pnl_today(now_ts)
+
+                        outcome = self.gates.evaluate(
+                            plan, account, [], trades_today, today_pnl,
+                            atr=view.atr, spread=view.spread,
+                            last_loss_ts=self._last_loss_ts,
+                            now_ts=now_ts,
+                        )
+                        n_entry_cycles += 1
+
+                        if not outcome.allowed:
+                            self.denied.append({
+                                "signal": sig.signal_id, "reason": "guard",
+                                "verdict": outcome.reasons,
+                                "timestamp": datetime.fromtimestamp(now_ts, timezone.utc).isoformat(),
+                            })
+                        else:
+                            # ── ۳) باز کردن پوزیشن — در entry سیگنال (limit-fill) ──
+                            self._open = OpenTrade(
+                                ticket=self._ticket_seq, symbol=plan.symbol, side=plan.side,
+                                volume=outcome.volume, open_price=plan.entry_price,
+                                sl=plan.stop_loss, tp=plan.take_profit,
+                                open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
+                                initial_sl=plan.stop_loss,
+                                grade=plan.grade,
+                                source=plan.source,
+                            )
+                            self._ticket_seq += 1
+                            n_processed_signals += 1
+                            signal_executed = True
+                            log.info("OPEN  #%d %s vol=%.2f entry=%.2f sl=%.2f tp=%.2f rr=%.2f",
+                                     self._open.ticket, self._open.side.value, self._open.volume,
+                                     self._open.open_price, self._open.sl, self._open.tp, plan.rr)
+                            continue
+
+            # ── ۲‌ب) مسیر تحلیل خودکار — عدم توقف در غیاب لمس سیگنال (انطباق با دیمن زنده) ──
+            if not signal_executed and self._open is None:
                 # سشن معاملاتی برای تحلیل خودکار — انطباق با دیمن زنده (session_hours)
                 h_utc = datetime.fromtimestamp(now_ts, timezone.utc).hour
                 h0, h1 = self.cfg.analysis.session_hours
@@ -258,61 +314,6 @@ class Backtester:
                          fill, plan.stop_loss, view.atr)
                 continue
 
-            # ── ۲) fulfillment: بازار باید به entry سیگنال رسیده باشد ──
-            touched = [s for s in entry_queue
-                       if cur.low <= s.entry <= cur.high]
-            if not touched:
-                continue
-            sig = touched[0]
-            entry_queue.remove(sig)
-            view = self.eng.analyze(past, tick, check_news=False)
-            plan = self.eng.plan_from_signal(sig, view, self.cfg.analysis.timeframe)
-            if plan is None:
-                self.denied.append({
-                    "signal": sig.signal_id, "reason": "trend_filter",
-                    "timestamp": datetime.fromtimestamp(now_ts, timezone.utc).isoformat(),
-                })
-                continue
-
-            account = AccountState(
-                balance=self.state.balance, equity=self.state.equity,
-                margin=0.0, margin_free=self.state.equity,
-            )
-            trades_today = self._trades_today(now_ts)
-            today_pnl = self._pnl_today(now_ts)
-
-            outcome = self.gates.evaluate(
-                plan, account, [], trades_today, today_pnl,
-                atr=view.atr, spread=view.spread,
-                last_loss_ts=self._last_loss_ts,
-                now_ts=now_ts,
-            )
-            n_entry_cycles += 1
-
-            if not outcome.allowed:
-                self.denied.append({
-                    "signal": sig.signal_id, "reason": "guard",
-                    "verdict": outcome.reasons,
-                    "timestamp": datetime.fromtimestamp(now_ts, timezone.utc).isoformat(),
-                })
-                continue
-
-            # ── ۳) باز کردن پوزیشن — در entry سیگنال (limit-fill) ──
-            self._open = OpenTrade(
-                ticket=self._ticket_seq, symbol=plan.symbol, side=plan.side,
-                volume=outcome.volume, open_price=plan.entry_price,
-                sl=plan.stop_loss, tp=plan.take_profit,
-                open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
-                initial_sl=plan.stop_loss,
-                grade=plan.grade,
-                source=plan.source,
-            )
-            self._ticket_seq += 1
-            n_processed_signals += 1
-            log.info("OPEN  #%d %s vol=%.2f entry=%.2f sl=%.2f tp=%.2f rr=%.2f",
-                     self._open.ticket, self._open.side.value, self._open.volume,
-                     self._open.open_price, self._open.sl, self._open.tp, plan.rr)
-
         return self._summary()
 
     # ── خروج ══════════════════════════════════
@@ -355,10 +356,10 @@ class Backtester:
 
         # هماهنگی خروج با دیمن زنده: در صورت ترلینگ استاپ یا بریک‌اون، دلیل خروج اصلاح شود
         if exit_reason == ExitReason.STOP_LOSS:
-            if pnl > 0.0:
-                exit_reason = ExitReason.TRAILING_STOP
-            elif pnl == 0.0:
+            if abs(exit_price - ot.open_price) <= 0.25 or pnl == 0.0:
                 exit_reason = ExitReason.BREAKEVEN
+            elif pnl > 0.0:
+                exit_reason = ExitReason.TRAILING_STOP
 
         trade = Trade(
             trade_id=f"bt-{ot.ticket}", plan_id=ot.plan_id, ticket=ot.ticket,

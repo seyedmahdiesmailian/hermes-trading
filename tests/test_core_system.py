@@ -1900,6 +1900,121 @@ class TestWatchlistEngine:
         assert rr == 0.0  # Guarded, not 270.0!
         daemon.close()
 
+    def test_b245_backtester_breakeven_exit_reason_parity(self):
+        """b245: Backtester classifies SL exit near open_price as BREAKEVEN even if net PnL > 0."""
+        from entry.backtest import Backtester, OpenTrade
+        bt = Backtester()
+        bt._open = OpenTrade(
+            ticket=1001, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+            open_price=2000.0, sl=2000.10, tp=2030.0, open_time=1000.0,
+            plan_id="p-be", entry_rr=2.0, initial_sl=1990.0,
+        )
+        # Candle low touches 2000.10 (moved to breakeven + 0.10 buffer)
+        candle = Candle(time=2000, open=2005.0, high=2005.0, low=2000.0, close=2001.0, volume=100)
+        closed = bt._process_exit([candle], 0, 2000.0)
+        assert closed is True
+        assert len(bt.trades) == 1
+        t = bt.trades[0]
+        # PnL: (2000.10 - 2000.0) * 0.10 * 100 - 0.70 = 1.00 - 0.70 = +0.30
+        assert t.pnl == 0.30
+        # Because abs(2000.10 - 2000.0) <= 0.25, it must be BREAKEVEN, NOT TRAILING_STOP
+        assert t.exit_reason == ExitReason.BREAKEVEN
+
+    def test_b245_daemon_breakeven_exit_reason_parity(self):
+        """b245: HermesDaemon._reconcile_broker_closed_positions resolves breakeven SL deals to BREAKEVEN."""
+        from unittest.mock import MagicMock
+        from entry.hermes import HermesDaemon
+        from core.exits import ExitManager
+        from core.params import PositionCfg
+        import tempfile
+        from pathlib import Path
+        from core.db import Ledger
+
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_reconcile_be.db"
+            ledger = Ledger(db_path)
+
+            daemon = MagicMock(spec=HermesDaemon)
+            daemon.dry_run = False
+            daemon.cfg = MagicMock()
+            daemon.cfg.symbol = "XAUUSD"
+            daemon.led = ledger
+            daemon.notify = MagicMock()
+            cfg = PositionCfg(trailing_start_rr=1.5, breakeven_rr=1.0, max_hold_hours=24, partial_tp_rr=1.5, partial_enabled=True)
+            daemon.exits = ExitManager(cfg)
+            daemon.exits.register_initial_sl(555, 1990.0)
+
+            old_pos = BrokerPosition(
+                ticket=555, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+                open_price=2000.0, current_price=2000.15, sl=2000.15, tp=2030.0,
+                profit=1.5, swap=0.0, commission=-0.70, open_time=1700000000,
+                comment="hms-auto-test", initial_sl=1990.0
+            )
+            daemon._tracked_positions = {555: old_pos}
+
+            # Simulate broker history deal with comment '[sl]' and small positive net pnl (2000.15 is within 0.25 of open 2000.0)
+            mock_deal = {
+                "ticket": 9991, "position_id": 555, "entry": 1,
+                "symbol": "XAUUSD", "price": 2000.15,
+                "profit": 1.5, "swap": 0.0, "commission": -0.70,
+                "comment": "[sl] breakeven hit", "time": 1700000500,
+            }
+            daemon.mt5 = MagicMock()
+            daemon.mt5.get_history_deals.return_value = [mock_deal]
+
+            HermesDaemon._reconcile_broker_closed_positions(daemon, [555])
+
+            trades = ledger.get_trades(limit=10)
+            assert len(trades) == 1
+            t = trades[0]
+            assert t.ticket == 555
+            assert t.exit_price == 2000.15
+            assert t.exit_reason == ExitReason.BREAKEVEN
+            ledger.close()
+
+    def test_b245_backtester_unfulfilled_signal_does_not_block_auto_analysis(self):
+        """b245: Unfulfilled channel signal in entry_queue does not block automated market analysis."""
+        from unittest.mock import MagicMock
+        from entry.backtest import Backtester
+        bt = Backtester()
+        # Mock signal with entry far above current market
+        unreached_sig = Signal(
+            signal_id="sig-unreached-1", raw_text="BUY", symbol="XAUUSD",
+            side=Side.BUY, entry=2500.0, sl=2480.0, tp=2540.0,
+            rr=2.0, confidence=0.85, timestamp="2026-10-29T10:00:00Z"
+        )
+        # Mock plan_from_smc to return an auto plan
+        auto_plan = Plan(
+            plan_id="smc-fvg-test", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2000.0, stop_loss=1990.0, take_profit=2020.0,
+            volume=0.1, grade=SetupGrade.A, source="smc_fvg",
+            timeframe="M15", rr=2.0, confidence=0.9, reasoning="test"
+        )
+        called = []
+        def mock_plan_from_smc(*args, **kwargs):
+            called.append(True)
+            return auto_plan
+        bt.eng.plan_from_smc = mock_plan_from_smc
+
+        # Create bars during session_hours (10:00 UTC) at price ~2000 (nowhere near 2500)
+        bars = []
+        base_ts = 1793268000.0  # 10:00 UTC
+        for i in range(70):
+            bars.append({
+                "time": base_ts + i * 900,
+                "open": 2000.0,
+                "high": 2005.0,
+                "low": 1995.0,
+                "close": 2000.0,
+                "tick_volume": 500,
+            })
+        # Run backtest with the unreached signal
+        res = bt.run(bars, [unreached_sig])
+        # In b245, plan_from_smc MUST be called and auto_plan processed even though entry_queue has a pending signal
+        assert len(called) > 0
+        assert res["total_trades"] > 0 or len(bt.denied) > 0
+
+
 
 
 
