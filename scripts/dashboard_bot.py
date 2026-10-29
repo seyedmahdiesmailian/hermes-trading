@@ -147,11 +147,10 @@ def main():
                 if text.startswith('/'):
                     cmd = text.split()[0].lstrip('/').split('@')[0].lower()
                     panel = {'home': 'home', 'start': 'home', 'help': 'home',
-                             'system': 'sys', 'sys': 'sys', 'autopilot': 'auto',
-                             'auto': 'auto', 'backup': 'ops', 'health': 'ops',
-                             'ops': 'ops', 'trades': 'trade', 'trade': 'trade',
-                             'stats': 'trade:stats', 'control': 'control',
-                             'backlog': 'auto:backlog'}.get(cmd, 'home')
+                             'plan': 'plan', 'pos': 'pos', 'positions': 'pos',
+                             'pnl': 'pnl', 'stats': 'pnl', 'risk': 'risk',
+                             'sig': 'sig', 'signals': 'sig', 'watchlist': 'sig:wl',
+                             'sys': 'sys', 'system': 'sys', 'ping': 'sys:ping'}.get(cmd, 'home')
                     send_panel(token, chat, panel)
                 else:
                     send_panel(token, chat, 'home')
