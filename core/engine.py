@@ -37,6 +37,9 @@ class MarketView:
     last_price: float
     support: float
     resistance: float
+    rsi: float = 50.0           # مقدار فعلی RSI(14)
+    divergence: Optional[str] = None  # نوع واگرایی (BULLISH_REGULAR, BEARISH_REGULAR, ...)
+    div_strength: float = 0.0   # قدرت واگرایی 0.0 .. 1.0
     smc: Optional[SMCView] = None
     news_blackout: bool = False
     news_reason: str = ""
@@ -102,13 +105,18 @@ class Engine:
         # ۲. تحلیل ساختار هوشمند SMC/ICT
         smc_view = self.smc.analyze(candles, h1_candles)
 
-        # ۳. بررسی وضعیت اخبار داغ اقتصادی
+        # ۳. محاسبه RSI و واگرایی مومنتوم (RSI Divergence)
+        rsi_series = _rsi_series(closes, period=14)
+        current_rsi = round(rsi_series[-1], 2) if rsi_series else 50.0
+        div_type, div_strength = detect_rsi_divergence(highs, lows, rsi_series, window=30)
+
+        # ۴. بررسی وضعیت اخبار داغ اقتصادی
         news_blackout = False
         news_reason = ""
         if check_news:
             news_blackout, news_reason = self.news.is_blackout()
 
-        notes = f"ema20={ema_fast:.2f} ema50={ema_slow:.2f} smc_bias={smc_view.bias} kz={smc_view.killzone}"
+        notes = f"ema20={ema_fast:.2f} ema50={ema_slow:.2f} rsi={current_rsi:.1f} div={div_type or 'none'} smc_bias={smc_view.bias} kz={smc_view.killzone}"
 
         return MarketView(
             trend=trend,
@@ -118,6 +126,9 @@ class Engine:
             last_price=tick.mid,
             support=round(support, 2),
             resistance=round(resistance, 2),
+            rsi=current_rsi,
+            divergence=div_type,
+            div_strength=div_strength,
             smc=smc_view,
             news_blackout=news_blackout,
             news_reason=news_reason,
@@ -397,6 +408,15 @@ class Engine:
                (side == Side.SELL and view.smc.zone == ZoneType.DISCOUNT and view.smc.fib_level < 0.20):
                 score -= 0.30
 
+        # پاداش همگرایی واگرایی مومنتوم (RSI Divergence)
+        if view.divergence is not None:
+            if (side == Side.BUY and view.divergence in ("BULLISH_REGULAR", "BULLISH_HIDDEN")) or \
+               (side == Side.SELL and view.divergence in ("BEARISH_REGULAR", "BEARISH_HIDDEN")):
+                score += 0.20  # ارتقا مستقیم به گرید A
+            elif (side == Side.BUY and view.divergence == "BEARISH_REGULAR") or \
+                 (side == Side.SELL and view.divergence == "BULLISH_REGULAR"):
+                score -= 0.25  # جریمه ورود در انتهای روند (تله اگزاست مومنتوم)
+
         if score >= 0.85:
             return SetupGrade.A
         if score >= 0.60:
@@ -467,3 +487,95 @@ def _calc_rr(sig: Signal) -> float:
     sl_dist = abs(sig.entry - sig.sl)
     tp_dist = abs(sig.tp - sig.entry)
     return tp_dist / sl_dist if sl_dist > 0 else 0.0
+
+
+def _rsi_series(closes: list[float], period: int = 14) -> list[float]:
+    """محاسبه اندیکاتور Relative Strength Index با فرمول Wilder."""
+    if len(closes) < period + 1:
+        return [50.0] * len(closes)
+
+    gains = []
+    losses = []
+    for i in range(1, len(closes)):
+        diff = closes[i] - closes[i - 1]
+        gains.append(max(0.0, diff))
+        losses.append(max(0.0, -diff))
+
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+
+    rsi = [50.0] * period
+    if avg_loss == 0:
+        rsi.append(100.0)
+    else:
+        rs = avg_gain / avg_loss
+        rsi.append(100.0 - (100.0 / (1.0 + rs)))
+
+    for i in range(period, len(gains)):
+        avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + losses[i]) / period
+        if avg_loss == 0:
+            rsi.append(100.0)
+        else:
+            rs = avg_gain / avg_loss
+            rsi.append(100.0 - (100.0 / (1.0 + rs)))
+
+    return rsi
+
+
+def detect_rsi_divergence(
+    highs: list[float],
+    lows: list[float],
+    rsi: list[float],
+    window: int = 30
+) -> tuple[Optional[str], float]:
+    """تشخیص واگرایی‌های معمولی و مخفی در قیمت و RSI."""
+    n = len(highs)
+    if n < window or len(rsi) < window:
+        return None, 0.0
+
+    start_idx = max(0, n - window)
+
+    # سوئینگ‌های سقف
+    swing_highs = []
+    for i in range(start_idx + 1, n - 1):
+        if highs[i] > highs[i - 1] and highs[i] > highs[i + 1]:
+            swing_highs.append((i, highs[i], rsi[i]))
+
+    # سوئینگ‌های کف
+    swing_lows = []
+    for i in range(start_idx + 1, n - 1):
+        if lows[i] < lows[i - 1] and lows[i] < lows[i + 1]:
+            swing_lows.append((i, lows[i], rsi[i]))
+
+    # واگرایی‌های نزولی بر روی سقف‌ها
+    if len(swing_highs) >= 2:
+        _, prev_high, prev_rsi = swing_highs[-2]
+        _, last_high, last_rsi = swing_highs[-1]
+
+        # Regular Bearish: سقف بالاتر قیمت، سقف پایین‌تر RSI (فرسودگی خریداران)
+        if last_high > prev_high and last_rsi < prev_rsi and prev_rsi > 50:
+            strength = round((prev_rsi - last_rsi) / 10.0, 2)
+            return "BEARISH_REGULAR", min(1.0, max(0.2, strength))
+
+        # Hidden Bearish: سقف پایین‌تر قیمت، سقف بالاتر RSI (ادامه روند نزولی)
+        if last_high < prev_high and last_rsi > prev_rsi:
+            strength = round((last_rsi - prev_rsi) / 10.0, 2)
+            return "BEARISH_HIDDEN", min(1.0, max(0.2, strength))
+
+    # واگرایی‌های صعودی بر روی کف‌ها
+    if len(swing_lows) >= 2:
+        _, prev_low, prev_rsi = swing_lows[-2]
+        _, last_low, last_rsi = swing_lows[-1]
+
+        # Regular Bullish: کف پایین‌تر قیمت، کف بالاتر RSI (فرسودگی فروشندگان)
+        if last_low < prev_low and last_rsi > prev_rsi and prev_rsi < 50:
+            strength = round((last_rsi - prev_rsi) / 10.0, 2)
+            return "BULLISH_REGULAR", min(1.0, max(0.2, strength))
+
+        # Hidden Bullish: کف بالاتر قیمت، کف پایین‌تر RSI (ادامه روند صعودی)
+        if last_low > prev_low and last_rsi < prev_rsi:
+            strength = round((prev_rsi - last_rsi) / 10.0, 2)
+            return "BULLISH_HIDDEN", min(1.0, max(0.2, strength))
+
+    return None, 0.0

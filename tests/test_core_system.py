@@ -298,6 +298,25 @@ class TestEngine:
         assert view.trend in ("bullish", "bearish", "ranging")
         assert view.atr > 0
         assert view.spread == 0.5
+        assert 0.0 <= view.rsi <= 100.0
+
+    def test_rsi_and_divergence_detection(self):
+        from core.engine import _rsi_series, detect_rsi_divergence
+        closes = [100.0 + i for i in range(40)]
+        rsi = _rsi_series(closes, period=14)
+        assert len(rsi) == 40
+        assert rsi[-1] > 70.0  # Strong uptrend
+
+        highs = [100.0] * 35
+        lows = [90.0] * 35
+        # Regular bearish divergence: Higher High in price, Lower High in RSI
+        highs[9], highs[10], highs[11] = 98.0, 105.0, 98.0
+        highs[24], highs[25], highs[26] = 99.0, 110.0, 99.0
+        rsi_test = [50.0] * 35
+        rsi_test[10], rsi_test[25] = 65.0, 58.0
+        div_type, strg = detect_rsi_divergence(highs, lows, rsi_test, window=30)
+        assert div_type == "BEARISH_REGULAR"
+        assert strg > 0
 
 
 # ══════════════════════════════════════════════════════════════════
