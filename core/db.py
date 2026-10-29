@@ -318,11 +318,32 @@ class Ledger:
     # ── equity snapshots ────────────────────────────────
 
     def snapshot_equity(self, acct: AccountState) -> None:
+        now = self._now()
+        # بهینه‌سازی دیسک و دیتابیس: ثبت اسنپ‌شات در صورت تغییر اکوئیتی (>0.10$) یا گذشت حداقل ۶۰ ثانیه
+        if hasattr(self, "_last_snap_ts"):
+            time_diff = now - getattr(self, "_last_snap_ts", 0.0)
+            eq_diff = abs(acct.equity - getattr(self, "_last_snap_eq", 0.0))
+            if time_diff < 60.0 and eq_diff < 0.10:
+                return
+
+        self._last_snap_ts = now
+        self._last_snap_eq = acct.equity
+
         self._con.execute(
             "INSERT INTO equity_snapshots (ts, balance, equity, floating) VALUES (?,?,?,?)",
-            (self._now(), acct.balance, acct.equity, acct.floating_pnl),
+            (now, acct.balance, acct.equity, acct.floating_pnl),
         )
         self._con.commit()
+
+    def prune_old_snapshots(self, keep_days: int = 14) -> int:
+        """پاکسازی اسنپ‌شات‌های قدیمی‌تر از ۱۴ روز جهت سبک نگه داشتن دیتابیس."""
+        cutoff = self._now() - (keep_days * 86400.0)
+        cur = self._con.execute(
+            "DELETE FROM equity_snapshots WHERE ts < ?",
+            (cutoff,)
+        )
+        self._con.commit()
+        return cur.rowcount
 
     # ── params (یادگیری) ───────────────────────────────
 
