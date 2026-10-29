@@ -1797,6 +1797,64 @@ class TestWatchlistEngine:
         assert t.pnl == 99.30
         assert round(bt.state.balance, 2) == round(init_balance + 99.30, 2)
 
+    def test_b241_judas_h1_conflict_falls_through_to_subsequent_smc(self):
+        """b241: When Judas swing conflicts with H1 bias, engine falls through to OB/FVG instead of returning None."""
+        engine = Engine()
+        now = 1700000000
+        candles = [
+            Candle(time=now + i*900, open=2000.0, high=2002.0, low=1998.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        # Bullish OB at candle 32
+        candles[32] = Candle(time=now + 32*900, open=1990.0, high=1991.0, low=1985.0, close=1986.0, volume=100)
+        candles[33] = Candle(time=now + 33*900, open=1986.0, high=2015.0, low=1986.0, close=2010.0, volume=500)
+        for i in range(34, 49):
+            candles[i] = Candle(time=now + i*900, open=2010.0, high=2020.0, low=2005.0, close=2015.0, volume=100)
+        candles[49] = Candle(time=now + 49*900, open=2000.0, high=2000.0, low=1986.0, close=1988.0, volume=100)
+
+        tick = Tick(symbol="XAUUSD", bid=1988.0, ask=1988.2, time=now + 49*900)
+        view = engine.analyze(candles, tick, check_news=False)
+
+        # Force a conflicting Judas swing (BEARISH_JUDAS) on view
+        from core.smc import SMCView
+        from core.engine import MarketView
+        smc_dict = view.smc.__dict__.copy()
+        smc_dict["judas_swing"] = "BEARISH_JUDAS"
+        mock_smc = SMCView(**smc_dict)
+        view_with_judas = MarketView(
+            trend=view.trend, trend_strength=view.trend_strength, atr=view.atr,
+            spread=view.spread, last_price=view.last_price, support=view.support,
+            resistance=view.resistance, rsi=view.rsi, divergence=view.divergence,
+            div_strength=view.div_strength, usd_bias=view.usd_bias, smc=mock_smc,
+            news_blackout=False, news_reason="", notes=view.notes,
+        )
+        # H1 candles indicating strong uptrend (h1_bias == 'BULLISH')
+        h1_candles = [
+            Candle(time=now + i*3600, open=1900.0 + i*2, high=1905.0 + i*2, low=1899.0 + i*2, close=1904.0 + i*2, volume=100)
+            for i in range(40)
+        ]
+        # In b239 this would abort (return None) because Judas was BEARISH while H1 was BULLISH.
+        # In b241 it skips the conflicting Judas and falls through to the bullish OB setup!
+        plan = engine.plan_from_smc(candles, view_with_judas, h1_candles=h1_candles)
+        assert plan is not None
+        assert plan.source == "smc_ob"
+        assert plan.side == Side.BUY
+
+    def test_b241_plan_from_analysis_dynamic_rr(self):
+        """b241: plan_from_analysis computes true dynamic rr rather than hardcoded 2.0."""
+        engine = Engine()
+        candles = [
+            Candle(time=i*900, open=2000.0 + i*0.5, high=2002.0 + i*0.5, low=1998.0 + i*0.5, close=2001.0 + i*0.5, volume=100)
+            for i in range(50)
+        ]
+        tick = Tick(symbol="XAUUSD", bid=2025.5, ask=2025.7, time=50*900)
+        view = engine.analyze(candles, tick, check_news=False)
+        plan = engine.plan_from_analysis(candles, view, "M15")
+        if plan is not None:
+            expected_rr = round(abs(plan.entry_price - plan.take_profit) / max(0.1, abs(plan.entry_price - plan.stop_loss)), 2)
+            assert plan.rr == expected_rr
+
+
 
 
 

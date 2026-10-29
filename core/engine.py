@@ -265,7 +265,7 @@ class Engine:
             # ستاپ‌های ضعیف اجازه عبور ندارند
             return None
 
-        rr = TRAIL_ATR_MULT / SL_ATR_MULT  # 3.0 / 1.5 = 2.0
+        rr = round(abs(entry - tp) / max(0.1, abs(entry - sl)), 2)
 
         reasoning = (
             f"trend={view.trend} str={view.trend_strength:.2f} atr={view.atr:.2f} "
@@ -321,58 +321,60 @@ class Engine:
         if smc.judas_swing == "BEARISH_JUDAS":
             if h1_bias == "BULLISH":
                 log.info("ستاپ SMC رد شد: فروش Judas در تضاد با روند صعودی قدرتمند H1")
-                return None
-            sweep_ref = max(candles[-1].high, smc.asia_high) if smc.asia_high > 0 else smc.swing_high
-            sl = round(sweep_ref + buffer, 2)
-            min_stop = round(view.atr * 1.2, 2)
-            if (sl - entry) < min_stop:
-                sl = round(entry + min_stop, 2)
-            if (sl - entry) <= round(view.atr * 2.2, 2):
-                tp = round(entry - (sl - entry) * 2.5, 2)
-                rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
-                return Plan(
-                    plan_id=f"smc-judas-{int(candles[-1].time)}",
-                    symbol="XAUUSD",
-                    side=Side.SELL,
-                    entry_price=round(entry, 2),
-                    stop_loss=sl,
-                    take_profit=tp,
-                    volume=0.0,
-                    grade=SetupGrade.A,
-                    source="smc_judas",
-                    timeframe=timeframe,
-                    rr=rr,
-                    confidence=0.92,
-                    reasoning=f"Judas Swing: شکار سقف آسیا ({smc.asia_high or smc.swing_high}) در آغاز لندن و برگشت نزولی",
-                )
+            else:
+                sweep_ref = max(candles[-1].high, smc.asia_high) if smc.asia_high > 0 else smc.swing_high
+                sl = round(sweep_ref + buffer, 2)
+                min_stop = round(view.atr * 1.2, 2)
+                max_stop = round(view.atr * 2.2, 2)
+                if (sl - entry) < min_stop:
+                    sl = round(entry + min_stop, 2)
+                if (sl - entry) <= max_stop:
+                    tp = round(entry - (sl - entry) * 2.5, 2)
+                    rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                    return Plan(
+                        plan_id=f"smc-judas-{int(candles[-1].time)}",
+                        symbol="XAUUSD",
+                        side=Side.SELL,
+                        entry_price=round(entry, 2),
+                        stop_loss=sl,
+                        take_profit=tp,
+                        volume=0.0,
+                        grade=SetupGrade.A,
+                        source="smc_judas",
+                        timeframe=timeframe,
+                        rr=rr,
+                        confidence=0.92,
+                        reasoning=f"Judas Swing: شکار سقف آسیا ({smc.asia_high or smc.swing_high}) در آغاز لندن و برگشت نزولی",
+                    )
 
         elif smc.judas_swing == "BULLISH_JUDAS":
             if h1_bias == "BEARISH":
                 log.info("ستاپ SMC رد شد: خرید Judas در تضاد با روند نزولی قدرتمند H1")
-                return None
-            sweep_ref = min(candles[-1].low, smc.asia_low) if smc.asia_low > 0 else smc.swing_low
-            sl = round(sweep_ref - buffer, 2)
-            min_stop = round(view.atr * 1.2, 2)
-            if (entry - sl) < min_stop:
-                sl = round(entry - min_stop, 2)
-            if (entry - sl) <= round(view.atr * 2.2, 2):
-                tp = round(entry + (entry - sl) * 2.5, 2)
-                rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
-                return Plan(
-                    plan_id=f"smc-judas-{int(candles[-1].time)}",
-                    symbol="XAUUSD",
-                    side=Side.BUY,
-                    entry_price=round(entry, 2),
-                    stop_loss=sl,
-                    take_profit=tp,
-                    volume=0.0,
-                    grade=SetupGrade.A,
-                    source="smc_judas",
-                    timeframe=timeframe,
-                    rr=rr,
-                    confidence=0.92,
-                    reasoning=f"Judas Swing: شکار کف آسیا ({smc.asia_low or smc.swing_low}) در آغاز لندن و برگشت صعودی",
-                )
+            else:
+                sweep_ref = min(candles[-1].low, smc.asia_low) if smc.asia_low > 0 else smc.swing_low
+                sl = round(sweep_ref - buffer, 2)
+                min_stop = round(view.atr * 1.2, 2)
+                max_stop = round(view.atr * 2.2, 2)
+                if (entry - sl) < min_stop:
+                    sl = round(entry - min_stop, 2)
+                if (entry - sl) <= max_stop:
+                    tp = round(entry + (entry - sl) * 2.5, 2)
+                    rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
+                    return Plan(
+                        plan_id=f"smc-judas-{int(candles[-1].time)}",
+                        symbol="XAUUSD",
+                        side=Side.BUY,
+                        entry_price=round(entry, 2),
+                        stop_loss=sl,
+                        take_profit=tp,
+                        volume=0.0,
+                        grade=SetupGrade.A,
+                        source="smc_judas",
+                        timeframe=timeframe,
+                        rr=rr,
+                        confidence=0.92,
+                        reasoning=f"Judas Swing: شکار کف آسیا ({smc.asia_low or smc.swing_low}) در آغاز لندن و برگشت صعودی",
+                    )
 
         # ── ۲. ستاپ برخورد به اردر بلاک میتیگیت‌نشده (Order Block Mitigation) ──
         unmitigated_obs = [ob for ob in smc.unmitigated_obs if not ob.mitigated]
@@ -384,10 +386,12 @@ class Engine:
                         log.info("ستاپ SMC رد شد: خرید Order Block در تضاد با روند نزولی قدرتمند H1")
                         continue
                     if last_c.low <= ob.top and last_c.close >= ob.midpoint:
+                        min_stop = round(view.atr * 1.2, 2)
+                        max_stop = round(view.atr * 2.2, 2)
                         sl = round(ob.bottom - buffer, 2)
-                        if (entry - sl) < view.atr * 1.2:
-                            sl = round(entry - view.atr * 1.2, 2)
-                        if (entry - sl) <= view.atr * 2.2:
+                        if (entry - sl) < min_stop:
+                            sl = round(entry - min_stop, 2)
+                        if (entry - sl) <= max_stop:
                             tp = round(entry + (entry - sl) * 2.5, 2)
                             rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
                             return Plan(
@@ -411,10 +415,12 @@ class Engine:
                         log.info("ستاپ SMC رد شد: فروش Order Block در تضاد با روند صعودی قدرتمند H1")
                         continue
                     if last_c.high >= ob.bottom and last_c.close <= ob.midpoint:
+                        min_stop = round(view.atr * 1.2, 2)
+                        max_stop = round(view.atr * 2.2, 2)
                         sl = round(ob.top + buffer, 2)
-                        if (sl - entry) < view.atr * 1.2:
-                            sl = round(entry + view.atr * 1.2, 2)
-                        if (sl - entry) <= view.atr * 2.2:
+                        if (sl - entry) < min_stop:
+                            sl = round(entry + min_stop, 2)
+                        if (sl - entry) <= max_stop:
                             tp = round(entry - (sl - entry) * 2.5, 2)
                             rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
                             return Plan(
@@ -440,10 +446,12 @@ class Engine:
 
             if qml.qml_type == "BEARISH_QML" and retesting_qml:
                 if h1_bias != "BULLISH":
+                    min_stop = round(view.atr * 1.2, 2)
+                    max_stop = round(view.atr * 2.5, 2)
                     sl = round(qml.invalidation + buffer, 2)
-                    if (sl - entry) < view.atr * 1.2:
-                        sl = round(entry + view.atr * 1.2, 2)
-                    if (sl - entry) <= view.atr * 2.5:
+                    if (sl - entry) < min_stop:
+                        sl = round(entry + min_stop, 2)
+                    if (sl - entry) <= max_stop:
                         tp = round(min(qml.target, entry - (sl - entry) * 2.5), 2)
                         rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
                         return Plan(
@@ -464,10 +472,12 @@ class Engine:
 
             elif qml.qml_type == "BULLISH_QML" and retesting_qml:
                 if h1_bias != "BEARISH":
+                    min_stop = round(view.atr * 1.2, 2)
+                    max_stop = round(view.atr * 2.5, 2)
                     sl = round(qml.invalidation - buffer, 2)
-                    if (entry - sl) < view.atr * 1.2:
-                        sl = round(entry - view.atr * 1.2, 2)
-                    if (entry - sl) <= view.atr * 2.5:
+                    if (entry - sl) < min_stop:
+                        sl = round(entry - min_stop, 2)
+                    if (entry - sl) <= max_stop:
                         tp = round(max(qml.target, entry + (entry - sl) * 2.5), 2)
                         rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
                         return Plan(
@@ -486,17 +496,19 @@ class Engine:
                             reasoning=f"RTM Quasimodo (QML) Bullish: پولبک به شانه چپ {qml.level:,.2f} پس از شکار کف {qml.invalidation:,.2f}",
                         )
 
-        # ── ۴. ستاپ ورود در نواحی تصمیم‌گیری RTM Fail-To-Return (FTR) ──
+        # ── ۴. ستاپ شکست ساختار و ادامه روند RTM (Failure to Return - FTR) ──
         if smc.unmitigated_ftrs:
             last_c = candles[-1]
             for ftr in smc.unmitigated_ftrs[::-1]:
                 if ftr.ftr_type == "DEMAND_FTR" and smc.zone == ZoneType.DISCOUNT:
                     if last_c.low <= ftr.base_top and last_c.close >= ftr.base_bottom:
                         if h1_bias != "BEARISH":
+                            min_stop = round(view.atr * 1.2, 2)
+                            max_stop = round(view.atr * 2.2, 2)
                             sl = round(ftr.base_bottom - buffer, 2)
-                            if (entry - sl) < view.atr * 1.2:
-                                sl = round(entry - view.atr * 1.2, 2)
-                            if (entry - sl) <= view.atr * 2.2:
+                            if (entry - sl) < min_stop:
+                                sl = round(entry - min_stop, 2)
+                            if (entry - sl) <= max_stop:
                                 tp = round(entry + (entry - sl) * 2.5, 2)
                                 rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
                                 return Plan(
@@ -518,10 +530,12 @@ class Engine:
                 elif ftr.ftr_type == "SUPPLY_FTR" and smc.zone == ZoneType.PREMIUM:
                     if last_c.high >= ftr.base_bottom and last_c.close <= ftr.base_top:
                         if h1_bias != "BULLISH":
+                            min_stop = round(view.atr * 1.2, 2)
+                            max_stop = round(view.atr * 2.2, 2)
                             sl = round(ftr.base_top + buffer, 2)
-                            if (sl - entry) < view.atr * 1.2:
-                                sl = round(entry + view.atr * 1.2, 2)
-                            if (sl - entry) <= view.atr * 2.2:
+                            if (sl - entry) < min_stop:
+                                sl = round(entry + min_stop, 2)
+                            if (sl - entry) <= max_stop:
                                 tp = round(entry - (sl - entry) * 2.5, 2)
                                 rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
                                 return Plan(
@@ -550,10 +564,12 @@ class Engine:
                         log.info("ستاپ SMC رد شد: خرید FVG در تضاد با روند نزولی قدرتمند H1")
                         continue
                     if last_c.low <= fvg.top and last_c.close >= fvg.bottom:
+                        min_stop = round(view.atr * 1.2, 2)
+                        max_stop = round(view.atr * 2.2, 2)
                         sl = round(fvg.bottom - buffer, 2)
-                        if (entry - sl) < view.atr * 1.2:
-                            sl = round(entry - view.atr * 1.2, 2)
-                        if (entry - sl) <= view.atr * 2.2:
+                        if (entry - sl) < min_stop:
+                            sl = round(entry - min_stop, 2)
+                        if (entry - sl) <= max_stop:
                             tp = round(entry + (entry - sl) * 2.5, 2)
                             rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
                             return Plan(
@@ -577,10 +593,12 @@ class Engine:
                         log.info("ستاپ SMC رد شد: فروش FVG در تضاد با روند صعودی قدرتمند H1")
                         continue
                     if last_c.high >= fvg.bottom and last_c.close <= fvg.top:
+                        min_stop = round(view.atr * 1.2, 2)
+                        max_stop = round(view.atr * 2.2, 2)
                         sl = round(fvg.top + buffer, 2)
-                        if (sl - entry) < view.atr * 1.2:
-                            sl = round(entry + view.atr * 1.2, 2)
-                        if (sl - entry) <= view.atr * 2.2:
+                        if (sl - entry) < min_stop:
+                            sl = round(entry + min_stop, 2)
+                        if (sl - entry) <= max_stop:
                             tp = round(entry - (sl - entry) * 2.5, 2)
                             rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
                             return Plan(
