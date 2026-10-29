@@ -230,13 +230,17 @@ class Engine:
 
         entry = view.last_price
 
-        # فیلتر ۴: سد حمایت و مقاومت کلیدی (عدم فروش در کف حمایت یا خرید در سقف مقاومت)
-        if side == Side.SELL and view.support > 0 and (entry - view.support) < view.atr * 1.2:
-            log.info("تحلیل خودکار رد شد: فاصله تا حمایت اصلی (%.2f) بسیار کم است — ریسک بازگشت قیمت", view.support)
-            return None
-        if side == Side.BUY and view.resistance > 0 and (view.resistance - entry) < view.atr * 1.2:
-            log.info("تحلیل خودکار رد شد: فاصله تا مقاومت اصلی (%.2f) بسیار کم است — ریسک سقف قیمت", view.resistance)
-            return None
+        # فیلتر ۴: سد حمایت و مقاومت کلیدی (جلوگیری از ورود مستقیم به دیواره حمایت/مقاومت متراکم)
+        if side == Side.SELL and view.support > 0:
+            dist_to_sup = entry - view.support
+            if 0 < dist_to_sup < view.atr * 0.5:
+                log.info("تحلیل خودکار رد شد: قیمت در آستانه برخورد به کف حمایت (%.2f) است — فاصله: %.2f", view.support, dist_to_sup)
+                return None
+        if side == Side.BUY and view.resistance > 0:
+            dist_to_res = view.resistance - entry
+            if 0 < dist_to_res < view.atr * 0.5:
+                log.info("تحلیل خودکار رد شد: قیمت در آستانه برخورد به سقف مقاومت (%.2f) است — فاصله: %.2f", view.resistance, dist_to_res)
+                return None
         recent_window = candles[-10:]
         buffer = round(view.atr * 0.15, 2)
 

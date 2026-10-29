@@ -386,8 +386,9 @@ class SMCAnalyzer:
         candles: list[Candle],
         h1_candles: Optional[list[Candle]] = None
     ) -> tuple[ZoneType, float, float, float]:
-        """محاسبه موقعیت قیمت نسبت به رنج سوئینگ اخیر (۰ تا ۱)."""
-        ref_candles = h1_candles if h1_candles and len(h1_candles) >= 15 else candles[-30:]
+        """محاسبه موقعیت قیمت نسبت به رنج سوئینگ درون‌روز اخیر (۰ تا ۱)."""
+        # رنج سوئینگ درون‌روز: ۲۸ کندل اخیر M15 (۷ ساعت معاملاتی اخیر)
+        ref_candles = candles[-28:] if len(candles) >= 28 else candles
         highs = [c.high for c in ref_candles]
         lows = [c.low for c in ref_candles]
 

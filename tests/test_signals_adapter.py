@@ -139,3 +139,22 @@ class TestSignalsAdapter:
         assert signals[0].entry == 2045.0
         assert signals[0].sl == 2035.0
         assert signals[0].tp == 2065.0
+
+    def test_parse_radin_vip_abbreviated_signal(self, setup_paths):
+        log_file, state_file = setup_paths
+        now_iso = datetime.now(timezone.utc).isoformat()
+        sample = [{
+            "id": "radin-1",
+            "timestamp": now_iso,
+            "raw_text": "32 و 42 فروش استاپ 52 تی پی 22 ، 12 ، 4002"
+        }]
+        log_file.write_text(json.dumps(sample), encoding="utf-8")
+
+        adapter = SignalsAdapter(log_file, state_file)
+        signals = adapter.read_new()
+        assert len(signals) == 1
+        assert signals[0].symbol == "XAUUSD"
+        assert signals[0].side == Side.SELL
+        assert signals[0].entry == 4037.0
+        assert signals[0].sl == 4052.0
+        assert signals[0].tp == 4022.0

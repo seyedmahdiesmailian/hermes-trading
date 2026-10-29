@@ -189,11 +189,31 @@ class SignalsAdapter:
             self._seen_hashes.pop(h, None)
 
     @staticmethod
-    def parse_text_to_dict(text: str) -> dict:
-        """استخراج پارامترهای سیگنال از متن خام تلگرام (فارسی و انگلیسی)."""
+    def _expand_abbreviated_price(val_str: str, current_price: float = 4030.0) -> float:
+        """تبدیل قیمت‌های اختصاری دو رقمی و سه رقمی کانال‌های تلگرام (مثل Radin VIP) به قیمت واقعی طلا."""
+        v = float(val_str)
+        if v >= 1000:
+            return v
+        cur_base = (current_price // 100) * 100
+        candidates = [
+            cur_base - 100 + v,
+            cur_base + v,
+            cur_base + 100 + v,
+        ]
+        return min(candidates, key=lambda c: abs(c - current_price))
+
+    @classmethod
+    def parse_text_to_dict(cls, text: str, current_price: float = 4030.0) -> dict:
+        """استخراج پارامترهای سیگنال از متن خام تلگرام (فارسی، انگلیسی و اختصاری Radin VIP)."""
         if not text:
             return {}
-        clean = text.replace(",", ".").replace(":", " : ")
+        clean = (
+            text.replace("$", " ")
+            .replace("€", " ")
+            .replace(",", ".")
+            .replace(":", " : ")
+            .replace("،", " ")
+        )
 
         # تشخیص جهت معامله (Side)
         side = None
@@ -206,26 +226,46 @@ class SignalsAdapter:
 
         # استخراج حد ضرر (Stop Loss)
         sl = None
-        sl_match = re.search(r"(?:SL|STOP|استاپ|حد\s*ضرر)[\s:=]*([0-9]{3,5}(?:\.[0-9]+)?)", clean, re.IGNORECASE)
+        sl_match = re.search(
+            r"(?:SL|STOP|STOP\s*LOSS|استاپ|حد\s*ضرر)[\s:=]*([0-9]{1,5}(?:\.[0-9]+)?)",
+            clean,
+            re.IGNORECASE,
+        )
         if sl_match:
-            sl = float(sl_match.group(1))
+            sl = cls._expand_abbreviated_price(sl_match.group(1), current_price)
 
         # استخراج حد سود (Take Profit)
         tp = None
-        tp_match = re.search(r"(?:TP1?|TARGET1?|تارگت|حد\s*سود)[\s:=]*([0-9]{3,5}(?:\.[0-9]+)?)", clean, re.IGNORECASE)
+        tp_match = re.search(
+            r"(?:TP1?|TARGET1?|تارگت|تی\s*پی|حد\s*سود)[\s:=]*([0-9]{1,5}(?:\.[0-9]+)?)",
+            clean,
+            re.IGNORECASE,
+        )
         if tp_match:
-            tp = float(tp_match.group(1))
+            tp = cls._expand_abbreviated_price(tp_match.group(1), current_price)
 
-        # استخراج قیمت ورود (Entry)
+        # استخراج نقطه یا بازه ورود (Entry)
         entry = None
-        entry_match = re.search(r"(?:ENTRY|ورود|AT|@)[\s:=]*([0-9]{3,5}(?:\.[0-9]+)?)", clean, re.IGNORECASE)
-        if entry_match:
-            entry = float(entry_match.group(1))
+        range_match = re.search(r"([0-9]{1,5}(?:\.[0-9]+)?)\s*(?:و|تا|-)\s*([0-9]{1,5}(?:\.[0-9]+)?)", clean)
+        if range_match and not re.search(r"(?:استاپ|تی\s*پی)\s*" + re.escape(range_match.group(0)), clean):
+            e1 = cls._expand_abbreviated_price(range_match.group(1), current_price)
+            e2 = cls._expand_abbreviated_price(range_match.group(2), current_price)
+            entry = round((e1 + e2) / 2.0, 2)
         else:
-            all_nums = [float(n) for n in re.findall(r"\b[0-9]{4}(?:\.[0-9]+)?\b", clean)]
-            candidates = [n for n in all_nums if n != sl and n != tp]
-            if candidates:
-                entry = candidates[0]
+            entry_match = re.search(
+                r"(?:ENTRY|ورود|AT|@)[\s:=]*([0-9]{1,5}(?:\.[0-9]+)?)",
+                clean,
+                re.IGNORECASE,
+            )
+            if entry_match:
+                entry = cls._expand_abbreviated_price(entry_match.group(1), current_price)
+            else:
+                nums = [n for n in re.findall(r"\b[0-9]{1,5}(?:\.[0-9]+)?\b", clean)]
+                for n in nums:
+                    candidate = cls._expand_abbreviated_price(n, current_price)
+                    if candidate != sl and candidate != tp:
+                        entry = candidate
+                        break
 
         if not entry or not sl:
             return {}
