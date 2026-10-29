@@ -933,5 +933,39 @@ class TestWatchlistEngine:
         assert t.volume == 0.05
         assert t.pnl == expected_pnl
 
+    def test_b231_backtester_propagates_plan_grade(self):
+        """b231: Backtester preserves Plan SetupGrade on OpenTrade and outputs grade in summary."""
+        from entry.backtest import Backtester, OpenTrade
+        from core.entities import Side, SetupGrade, Candle, ExitReason
+        bt = Backtester()
+        bt._open = OpenTrade(
+            ticket=666,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.10,
+            open_price=2000.0,
+            sl=1990.0,
+            tp=2030.0,
+            open_time=1700000000.0,
+            plan_id="p-bt-grade",
+            entry_rr=3.0,
+            initial_sl=1990.0,
+            grade=SetupGrade.A,
+        )
+        cur = Candle(time=1700000500, open=2000.0, high=2035.0, low=2000.0, close=2032.0, volume=100)
+        candles = [cur]
+        closed = bt._process_exit(candles, 0, 1700000500.0)
+        assert closed is True
+        assert len(bt.trades) == 1
+        trade = bt.trades[0]
+        assert trade.grade == SetupGrade.A
+        assert trade.exit_reason == ExitReason.TAKE_PROFIT
+        assert trade.r_multiple == 3.0
+
+        summary = bt._summary()
+        assert len(summary["trades"]) == 1
+        assert summary["trades"][0]["grade"] == "A"
+
+
 
 

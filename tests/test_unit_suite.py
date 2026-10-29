@@ -666,6 +666,181 @@ class TestTradingCore(unittest.TestCase):
 
             ledger.close()
 
+    def test_b231_ledger_get_plan_and_by_ticket(self):
+        """b231: Ledger.get_plan and get_plan_by_ticket recover saved Plan and SetupGrade."""
+        import tempfile
+        from pathlib import Path
+        from core.db import Ledger
+        from core.entities import Plan, Side, SetupGrade, Order, OrderStatus
+
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_plans.db"
+            ledger = Ledger(db_path)
+
+            plan = Plan(
+                plan_id="p-alpha-1",
+                symbol="XAUUSD",
+                side=Side.BUY,
+                entry_price=2000.0,
+                stop_loss=1990.0,
+                take_profit=2025.0,
+                volume=0.1,
+                grade=SetupGrade.A,
+                source="analysis",
+                timeframe="M15",
+                rr=2.5,
+                confidence=0.9,
+                reasoning="strong smc confluence",
+            )
+            ledger.save_plan(plan)
+
+            order = Order(
+                order_id="hms-p-alpha-1",
+                plan_id="p-alpha-1",
+                ticket=777,
+                symbol="XAUUSD",
+                side=Side.BUY,
+                volume=0.1,
+                price=2000.0,
+                sl=1990.0,
+                tp=2025.0,
+                status=OrderStatus.FILLED,
+            )
+            ledger.save_order(order)
+
+            # Lookup by plan_id
+            p_by_id = ledger.get_plan("p-alpha-1")
+            self.assertIsNotNone(p_by_id)
+            assert p_by_id is not None
+            self.assertEqual(p_by_id.plan_id, "p-alpha-1")
+            self.assertEqual(p_by_id.grade, SetupGrade.A)
+            self.assertEqual(p_by_id.stop_loss, 1990.0)
+
+            # Lookup by ticket
+            p_by_ticket = ledger.get_plan_by_ticket(777)
+            self.assertIsNotNone(p_by_ticket)
+            assert p_by_ticket is not None
+            self.assertEqual(p_by_ticket.plan_id, "p-alpha-1")
+            self.assertEqual(p_by_ticket.grade, SetupGrade.A)
+
+            # Lookup non-existent
+            self.assertIsNone(ledger.get_plan("p-missing"))
+            self.assertIsNone(ledger.get_plan_by_ticket(99999))
+
+            ledger.close()
+
+    def test_b231_close_position_calculates_r_multiple_and_retains_grade(self):
+        """b231: _close_position records true r_multiple and recovers grade from plan."""
+        from unittest.mock import MagicMock
+        from entry.hermes import HermesDaemon
+        from core.entities import BrokerPosition, Side, ExitReason, Plan, SetupGrade
+        from core.exits import ExitManager
+        from core.params import PositionCfg
+        import tempfile
+        from pathlib import Path
+        from core.db import Ledger
+
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "test_close_pos.db"
+            ledger = Ledger(db_path)
+
+            plan = Plan(
+                plan_id="p-alpha-close",
+                symbol="XAUUSD",
+                side=Side.BUY,
+                entry_price=2000.0,
+                stop_loss=1990.0,
+                take_profit=2030.0,
+                volume=0.1,
+                grade=SetupGrade.A,
+                source="analysis",
+                timeframe="M15",
+                rr=3.0,
+            )
+            ledger.save_plan(plan)
+
+            daemon = MagicMock(spec=HermesDaemon)
+            daemon.dry_run = True
+            daemon.cfg = MagicMock()
+            daemon.cfg.symbol = "XAUUSD"
+            daemon.led = ledger
+            daemon.notify = MagicMock()
+            cfg = PositionCfg(trailing_start_rr=1.5, breakeven_rr=1.0, max_hold_hours=24, partial_tp_rr=1.5, partial_enabled=True)
+            daemon.exits = ExitManager(cfg)
+            daemon.exits.register_initial_sl(888, 1990.0)
+            daemon.mt5 = MagicMock()
+            daemon.mt5.close_position.return_value = True
+            daemon._tracked_positions = {}
+
+            pos = BrokerPosition(
+                ticket=888,
+                symbol="XAUUSD",
+                side=Side.BUY,
+                volume=0.1,
+                open_price=2000.0,
+                current_price=2015.0,
+                sl=2000.15,
+                tp=2030.0,
+                profit=150.0,
+                swap=0.0,
+                commission=-0.7,
+                open_time=1700000000,
+                comment="hms-p-alpha-close",
+                initial_sl=1990.0,
+            )
+            daemon._tracked_positions[888] = pos
+
+            # Execute _close_position with TIME_EXIT
+            HermesDaemon._close_position(daemon, pos, ExitReason.TIME_EXIT, 2015.0)
+
+            trades = ledger.get_trades(limit=10)
+            self.assertEqual(len(trades), 1)
+            t = trades[0]
+            self.assertEqual(t.ticket, 888)
+            self.assertEqual(t.grade, SetupGrade.A)
+            self.assertEqual(t.r_multiple, 1.5)  # (2015 - 2000) / (2000 - 1990) = 1.5R
+            self.assertEqual(t.exit_reason, ExitReason.TIME_EXIT)
+            self.assertNotIn(888, daemon.exits._initial_sl)
+            self.assertNotIn(888, daemon._tracked_positions)
+
+            ledger.close()
+
+    def test_b231_exit_loop_guards_against_none_positions(self):
+        """b231: _exit_loop fails closed when positions is None without wiping tracked positions."""
+        from unittest.mock import MagicMock
+        from entry.hermes import HermesDaemon
+        from core.entities import BrokerPosition, Side
+
+        daemon = MagicMock(spec=HermesDaemon)
+        daemon.cfg = MagicMock()
+        daemon.cfg.symbol = "XAUUSD"
+        daemon.dry_run = False
+        daemon.mt5 = MagicMock()
+        daemon.mt5.get_open_positions.return_value = None  # Bridge down/unreadable
+        pos = BrokerPosition(
+            ticket=123,
+            symbol="XAUUSD",
+            side=Side.BUY,
+            volume=0.1,
+            open_price=2000.0,
+            current_price=2005.0,
+            sl=1990.0,
+            tp=2020.0,
+            profit=50.0,
+            swap=0.0,
+            commission=-0.7,
+            open_time=1700000000,
+            comment="hms-test",
+        )
+        daemon._tracked_positions = {123: pos}
+        daemon._reconcile_broker_closed_positions = MagicMock()
+
+        HermesDaemon._exit_loop(daemon)
+
+        # Invariant: must not call reconciliation and must keep tracked positions intact
+        daemon._reconcile_broker_closed_positions.assert_not_called()
+        self.assertIn(123, daemon._tracked_positions)
+
 
 if __name__ == "__main__":
     unittest.main()

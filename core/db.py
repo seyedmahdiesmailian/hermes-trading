@@ -194,6 +194,35 @@ class Ledger:
             created_at=row["created_at"], reasoning=row["reasoning"] or "",
         )
 
+    def get_plan(self, plan_id: str) -> Optional[Plan]:
+        """بازیابی پلن ذخیره‌شده بر اساس plan_id."""
+        if not plan_id:
+            return None
+        row = self._con.execute(
+            "SELECT * FROM plans WHERE plan_id = ?", (plan_id,)
+        ).fetchone()
+        if row is None:
+            return None
+        return Plan(
+            plan_id=row["plan_id"], symbol=row["symbol"], side=Side(row["side"]),
+            entry_price=row["entry_price"], stop_loss=row["stop_loss"],
+            take_profit=row["take_profit"], volume=row["volume"],
+            grade=SetupGrade(row["grade"]), source=row["source"],
+            timeframe=row["timeframe"], rr=row["rr"] or 0.0,
+            confidence=row["confidence"] or 0.0,
+            created_at=row["created_at"], reasoning=row["reasoning"] or "",
+        )
+
+    def get_plan_by_ticket(self, ticket: int) -> Optional[Plan]:
+        """بازیابی پلن بر اساس شماره تیکت سفارش."""
+        row = self._con.execute(
+            "SELECT plan_id FROM orders WHERE ticket = ? ORDER BY created_at DESC LIMIT 1",
+            (ticket,)
+        ).fetchone()
+        if row and row["plan_id"]:
+            return self.get_plan(row["plan_id"])
+        return None
+
     # ── orders ─────────────────────────────────────────
 
     def save_order(self, order: Order) -> None:

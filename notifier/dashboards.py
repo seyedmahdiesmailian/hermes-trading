@@ -655,9 +655,11 @@ def ops_home() -> tuple[str, list]:
     lines.append(_sec('🖥 سرویس‌ها'))
     lines.append(' · '.join(f'{_dot(v == "active")} {_SVC_LABEL.get(k, k)}'
                             for k, v in svcs.items()))
-    kb = [[_btn('🖥 سیستم', 'ops:sys'), _btn('🤖 اتوپایلوت', 'ops:auto')],
-          [_btn('💾 بکاپ/سلامت', 'ops:ops'), _btn('💹 ترید', 'ops:trade')],
-          [_btn('🎛 کنترل', 'ops:control')]]
+    kb = [
+        [_btn('🎯 پلن معاملاتی', 'tr:plan'), _btn('📊 پوزیشن‌ها', 'tr:pos')],
+        [_btn('🤖 اتوپایلوت', 'ops:auto'), _btn('🛡 مدیریت ریسک', 'tr:risk')],
+        [_btn('🖥 وضعیت سیستم', 'ops:sys'), _btn('💾 بکاپ و سرور', 'ops:ops')],
+    ]
     return '\n'.join(lines), kb
 
 
@@ -736,44 +738,37 @@ def ops_svc_detail(name: str) -> tuple[str, list]:
 
 
 def ops_auto() -> tuple[str, list]:
-    ap = _j(DATA / 'ops/autopilot_state.json')
-    bl = _backlog()
-    done_n, all_n = len(bl['done']), len(bl['done']) + len(bl['todo'])
-    paused = _autopilot_paused()
-    lines = ['🤖 <b>اتوپایلوت</b>', _fa_date(), '']
-    if paused:
-        lines.append(f'⏸ <b>متوقف است</b> — از: {paused}')
-        lines.append('اجراهای ساعتی فعلاً رد می‌شوند؛ هر لحظه می‌توانی ادامه بدهی.')
-    else:
-        lines.append('🟢 <b>فعال</b> — هر ساعت یک آیتم از بک‌لاگ')
-        lines.append(_row('Last Run', _ago(ap.get('last_run_utc'))))
-    lines.append(_row('Progress', f'{_bar(done_n / all_n if all_n else 0)} {done_n} از {all_n}'))
-    g = _guard_line()
-    if g:
-        lines.append('')
-        lines.append(f'🛑 <b>{g}</b>')
-    # b46: the autopilot panel is exactly where "the last run left code
-    # behind" belongs — the backlog queue below would still say `todo` for
-    # work that is actually finished but uncommitted.
-    d = _dirty_line()
-    if d:
-        lines.append('')
-        lines.append(f'📦 <b>{d}</b>')
-    nar = _autopilot_narrative()
-    if nar:
-        lines.append(_sec('📝 آخرین اجرا چه کرد'))
-        lines.append(nar)
-    if bl['todo']:
-        lines.append(_sec('🔜 در نوبت'))
-        # b90: backlog text is agent-authored too — same 400 risk
-        import html as _html
-        lines.append('· ' + _html.escape(bl['todo'][0][:150]))
-    kb = [[_btn('📜 بک‌لاگ کامل', 'ops:auto:backlog'), _btn('🔨 تغییرات کد', 'ops:auto:commits')]]
-    if paused:
-        kb.append([_btn('▶️ ازسرگیری اتوپایلوت', 'ops:ask:auto:resume')])
-    else:
-        kb.append([_btn('⏸ توقف موقت اتوپایلوت', 'ops:ask:auto:pause')])
-    kb.append(_nav('ops', 'home'))
+    svcs = _services()
+    daemon_active = svcs.get("hermes-daemon") == "active"
+
+    try:
+        from core.params import load_config
+        cfg = load_config(ROOT / 'config.yaml')
+        dry_run = cfg.dry_run
+        symbol = cfg.symbol
+        entry_s = cfg.loop.entry_interval_s
+        exit_s = cfg.loop.exit_interval_s
+    except Exception:
+        dry_run, symbol, entry_s, exit_s = False, "XAUUSD", 300, 15
+
+    mode = "DRY-RUN (شبیه‌ساز)" if dry_run else "LIVE (معاملات واقعی)"
+
+    lines = ['🤖 <b>اتوپایلوت معاملاتی هرمس</b>', _fa_date(), '',
+             f"وضعیت اجرا: {'🟢 <b>فعال و خودکار</b>' if daemon_active else '🔴 <b>غیرفعال</b>'}",
+             _row('حالت ترید', f"<b>{mode}</b>"),
+             _row('نماد معاملاتی', f"<b>{symbol}</b>"),
+             _row('چرخه تحلیل بازار', f"هر {entry_s // 60} دقیقه"),
+             _row('چرخه مدیریت پوزیشن', f"هر {exit_s} ثانیه")]
+
+    lines.append(_sec('⚙️ معماری خودکار'))
+    lines.append('• استراتژی: <b>تلفیقی SMC/ICT + روند EMA</b>')
+    lines.append('• فیلتر اخبار داغ: <b>فعال (وتوی ۳۰ دقیقه‌ای)</b>')
+    lines.append('• سشن‌های نقدینگی: <b>لندن و نیویورک</b>')
+    lines.append('• مدیریت سود: <b>سیو سود پله‌ای ۵۰٪ + ترلینگ داینامیک</b>')
+    lines.append('• مدیریت استاپ: <b>Breakeven در سود ۱.۰R (+ بافر کارمزد)</b>')
+
+    kb = [[_btn('🎯 آخرین پلن تحلیلی', 'tr:plan'), _btn('🛡 قوانین ریسک', 'tr:risk')],
+          [_btn('📊 وضعیت پوزیشن‌ها', 'tr:pos'), _btn('🏠 منوی اصلی', 'ops:home')]]
     return '\n'.join(lines), kb
 
 

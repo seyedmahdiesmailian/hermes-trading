@@ -34,6 +34,7 @@ from core.entities import (
     Candle,
     ExitReason,
     Plan,
+    SetupGrade,
     Signal,
     Side,
     Tick,
@@ -73,6 +74,7 @@ class OpenTrade:
     plan_id: str
     entry_rr: float
     initial_sl: float = 0.0
+    grade: SetupGrade = SetupGrade.B
 
     def to_broker_position(self, current_price: float) -> BrokerPosition:
         # pnl تقریبی برای لاگ (محاسبه دقیق در close انجام می‌شود)
@@ -208,6 +210,7 @@ class Backtester:
                     sl=plan.stop_loss, tp=plan.take_profit,
                     open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
                     initial_sl=plan.stop_loss,
+                    grade=plan.grade,
                 )
                 self._ticket_seq += 1
                 log.info("OPEN-AUTO #%d %s vol=%.2f entry=%.2f sl=%.2f atr=%.2f",
@@ -259,6 +262,7 @@ class Backtester:
                 sl=plan.stop_loss, tp=plan.take_profit,
                 open_time=now_ts, plan_id=plan.plan_id, entry_rr=plan.rr,
                 initial_sl=plan.stop_loss,
+                grade=plan.grade,
             )
             self._ticket_seq += 1
             n_processed_signals += 1
@@ -273,6 +277,8 @@ class Backtester:
     def _process_exit(self, candles: list[Candle], i: int, now_ts: float) -> bool:
         """پردازش خروج پوزیشن باز — برخورد SL/TP توسط کندل + ExitManager."""
         ot = self._open
+        if ot is None:
+            return False
         cur = candles[i]
         self._cur_candle_close = cur.close
         self._cur_candle_ts = now_ts
@@ -306,6 +312,7 @@ class Backtester:
             entry_price=ot.open_price, exit_price=exit_price,
             sl=ot.sl, tp=ot.tp, pnl=pnl, exit_reason=exit_reason,
             opened_at=ot.open_time, closed_at=now_ts,
+            grade=ot.grade,
             source="analysis" if ot.plan_id.startswith("auto-") else "signal",
             r_multiple=self._r_multiple(ot, exit_price),
         )
@@ -358,6 +365,7 @@ class Backtester:
             entry_price=ot.open_price, exit_price=cur_price,
             sl=ot.sl, tp=ot.tp, pnl=pnl, exit_reason=ExitReason.PARTIAL_TP,
             opened_at=ot.open_time, closed_at=self._cur_candle_ts if self._cur_candle_ts > 0 else ot.open_time,
+            grade=ot.grade,
             source="analysis" if ot.plan_id.startswith("auto-") else "signal",
             r_multiple=self._r_multiple(ot, cur_price),
         )
@@ -448,6 +456,7 @@ class Backtester:
             "trades": [
                 {
                     "signal": t.plan_id,
+                    "grade": t.grade.value if hasattr(t.grade, "value") else str(t.grade),
                     "side": t.side.value if hasattr(t.side, "value") else str(t.side),
                     "entry": t.entry_price, "sl": t.sl, "tp": t.tp,
                     "exit_price": t.exit_price, "pnl": round(t.pnl, 2),

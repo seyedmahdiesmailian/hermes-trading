@@ -93,9 +93,22 @@ class HermesDaemon:
                     gross = direction * (exit_price - cur_pos.open_price) * closed_vol * 100.0
                     comm = -7.0 * closed_vol
                     pnl = round(gross + comm, 2)
+
+                    plan = self.led.get_plan_by_ticket(ticket)
+                    if not plan and cur_pos.comment:
+                        plan_id = cur_pos.comment.replace("hms-", "")
+                        plan = self.led.get_plan(plan_id)
+
+                    grade = plan.grade if plan else SetupGrade.C
+                    source = plan.source if plan else ("analysis" if (cur_pos.comment or "").startswith("hms-auto") else "signal")
+
+                    initial_sl = cur_pos.initial_sl if cur_pos.initial_sl > 0 else (self.exits._initial_sl.get(ticket) or (plan.stop_loss if plan else cur_pos.sl))
+                    risk_denom = abs(cur_pos.open_price - initial_sl) if initial_sl > 0 else 0.0
+                    r_mult = round(((exit_price - cur_pos.open_price) if cur_pos.is_buy else (cur_pos.open_price - exit_price)) / risk_denom, 2) if risk_denom > 0 else 0.0
+
                     trade = Trade(
                         trade_id=f"trade-{ticket}-part",
-                        plan_id=cur_pos.comment or "",
+                        plan_id=plan.plan_id if plan else (cur_pos.comment or ""),
                         ticket=ticket,
                         symbol=cur_pos.symbol,
                         side=cur_pos.side,
@@ -108,8 +121,9 @@ class HermesDaemon:
                         exit_reason=ExitReason.PARTIAL_TP,
                         opened_at=cur_pos.open_time,
                         closed_at=time.time(),
-                        source="analysis" if (cur_pos.comment or "").startswith("hms-auto") else "signal",
-                        r_multiple=cur_pos.r_multiple,
+                        grade=grade,
+                        source=source,
+                        r_multiple=r_mult,
                     )
                     self.led.save_trade(trade)
                     log.info("Partial close: ticket=%s percent=%.1f%% executed vol=%.2f pnl=%.2f",
@@ -362,6 +376,9 @@ class HermesDaemon:
     def _exit_loop(self) -> None:
         """مدیریت پوزیشن‌های باز — breakeven / trailing / time-exit."""
         positions = self.mt5.get_open_positions(self.cfg.symbol)
+        if positions is None:
+            log.warning("exit loop: positions is None (bridge unreadable) — fail-closed, skipping exit pass")
+            return
 
         # ۱) تطبیق معاملات بسته‌شده در سمت بروکر (Broker Reconciliation)
         # اگر پوزیشنی در چرخه قبل باز بوده ولی اکنون بسته شده، اطلاعات خروج را از هیستوری دیل‌ها استخراج و در ژورنال ثبت می‌کنیم.
@@ -398,14 +415,12 @@ class HermesDaemon:
 
             # بازیابی استاپ‌لاس اولیه از دیتابیس در صورت لزوم (حفظ سلامت محاسبات پس از ریستارت)
             if pos.ticket not in self.exits._initial_sl:
-                plan_id = pos.comment.replace("hms-", "") if pos.comment else ""
-                if plan_id:
-                    try:
-                        row = self.led._con.execute("SELECT stop_loss FROM plans WHERE plan_id = ?", (plan_id,)).fetchone()
-                        if row and row["stop_loss"] > 0:
-                            self.exits._initial_sl[pos.ticket] = float(row["stop_loss"])
-                    except Exception:
-                        pass
+                plan = self.led.get_plan_by_ticket(pos.ticket)
+                if not plan and pos.comment:
+                    plan_id = pos.comment.replace("hms-", "")
+                    plan = self.led.get_plan(plan_id)
+                if plan and plan.stop_loss > 0:
+                    self.exits.register_initial_sl(pos.ticket, plan.stop_loss)
 
             # b240: در dry_run بروکری وجود ندارد — خودمان SL/TP را اجرا می‌کنیم
             # (در حالت LIVE بروکر این کار را می‌کند)
@@ -442,9 +457,27 @@ class HermesDaemon:
             log.warning("close failed: ticket=%s", pos.ticket)
             return
 
-        # رکورد ترید در دفتر کل
-        # b240: در dry_run سود را از قیمت خروج واقعی محاسبه می‌کنیم
-        if self.dry_run and exit_price > 0:
+        # در صورت دسترسی در حالت زنده، استخراج اطلاعات دقیق دیل خروج از بروکر
+        deal_exit = None
+        if not self.dry_run:
+            try:
+                deals = self.mt5.get_history_deals(days=1, symbol=self.cfg.symbol)
+                for d in deals:
+                    if d.get("entry") == 1:
+                        pos_id = d.get("position_id") or d.get("ticket") or d.get("order")
+                        if pos_id and int(pos_id) == pos.ticket:
+                            deal_exit = d
+                            break
+            except Exception as e:
+                log.warning("عدم دسترسی به تاریخچه دیل‌های بروکر در close_position: %s", e)
+
+        if deal_exit:
+            exit_price = float(deal_exit.get("price") or exit_price)
+            profit = float(deal_exit.get("profit", 0.0))
+            swap = float(deal_exit.get("swap", 0.0))
+            comm = float(deal_exit.get("commission", 0.0))
+            pnl = round(profit + swap + comm, 2)
+        elif self.dry_run and exit_price > 0:
             if pos.is_buy:
                 gross = (exit_price - pos.open_price) * pos.volume * 100.0
             else:
@@ -454,9 +487,25 @@ class HermesDaemon:
             pnl = round(gross + comm + pos.swap, 2)
         else:
             pnl = pos.net_profit
+
+        plan = self.led.get_plan_by_ticket(pos.ticket)
+        if not plan and pos.comment:
+            plan_id = pos.comment.replace("hms-", "")
+            plan = self.led.get_plan(plan_id)
+
+        grade = plan.grade if plan else SetupGrade.C
+        source = plan.source if plan else ("analysis" if (pos.comment or "").startswith("hms-auto") else "signal")
+
+        initial_sl = pos.initial_sl if pos.initial_sl > 0 else (self.exits._initial_sl.get(pos.ticket) or (plan.stop_loss if plan else pos.sl))
+        risk_denom = abs(pos.open_price - initial_sl) if initial_sl > 0 else 0.0
+        if risk_denom > 0:
+            r_mult = round((exit_price - pos.open_price) / risk_denom if pos.is_buy else (pos.open_price - exit_price) / risk_denom, 2)
+        else:
+            r_mult = 0.0
+
         trade = Trade(
             trade_id=f"trade-{pos.ticket}",
-            plan_id=pos.comment or "",
+            plan_id=plan.plan_id if plan else (pos.comment or ""),
             ticket=pos.ticket,
             symbol=pos.symbol,
             side=pos.side,
@@ -469,13 +518,15 @@ class HermesDaemon:
             exit_reason=reason,
             opened_at=pos.open_time,
             closed_at=time.time(),
-            source="analysis" if (pos.comment or "").startswith("hms-auto") else "signal",
+            grade=grade,
+            source=source,
+            r_multiple=r_mult,
         )
         self.led.save_trade(trade)
         self.notify.trade_closed(pos.side.value, pos.symbol, pnl, reason.value)
         self.exits.cleanup_ticket(pos.ticket)
         self._tracked_positions.pop(pos.ticket, None)
-        log.info("پوزیشن بسته شد: ticket=%s pnl=%.2f reason=%s", pos.ticket, pnl, reason.value)
+        log.info("پوزیشن بسته شد: ticket=%s pnl=%.2f r_mult=%.2f reason=%s", pos.ticket, pnl, r_mult, reason.value)
 
     def _reconcile_broker_closed_positions(self, closed_tickets: list[int]) -> None:
         """تطبیق و ثبت معاملات بسته‌شده توسط بروکر (SL/TP) در ژورنال، اعلان و پاکسازی حافظه."""
@@ -528,8 +579,16 @@ class HermesDaemon:
                 pnl = old_pos.net_profit
                 reason = ExitReason.MANUAL
 
+            plan = self.led.get_plan_by_ticket(ticket)
+            if not plan and old_pos.comment:
+                plan_id = old_pos.comment.replace("hms-", "")
+                plan = self.led.get_plan(plan_id)
+
+            grade = plan.grade if plan else SetupGrade.C
+            source = plan.source if plan else ("analysis" if (old_pos.comment or "").startswith("hms-auto") else "signal")
+
             # R-Multiple بر مبنای استاپ اولیه
-            init_sl = self.exits._initial_sl.get(ticket, old_pos.initial_sl if old_pos.initial_sl > 0 else old_pos.sl)
+            init_sl = self.exits._initial_sl.get(ticket, old_pos.initial_sl if old_pos.initial_sl > 0 else (plan.stop_loss if plan else old_pos.sl))
             if init_sl > 0:
                 if old_pos.is_buy:
                     risk = old_pos.open_price - init_sl
@@ -542,7 +601,7 @@ class HermesDaemon:
 
             trade = Trade(
                 trade_id=f"trade-{ticket}",
-                plan_id=old_pos.comment or "",
+                plan_id=plan.plan_id if plan else (old_pos.comment or ""),
                 ticket=ticket,
                 symbol=old_pos.symbol,
                 side=old_pos.side,
@@ -555,7 +614,8 @@ class HermesDaemon:
                 exit_reason=reason,
                 opened_at=old_pos.open_time,
                 closed_at=time.time(),
-                source="analysis" if (old_pos.comment or "").startswith("hms-auto") else "signal",
+                grade=grade,
+                source=source,
                 r_multiple=r_mult,
             )
             self.led.save_trade(trade)
