@@ -198,7 +198,14 @@ class Engine:
         else:
             return None
 
-        # فیلتر ۲: تاییدیه نواحی ارزان‌فروشی/گران‌فروشی (SMC Zone Check)
+        # فیلتر ۲: عدم تعقیب قیمت امتدادیافته (Anti-Chasing Mean Reversion Filter)
+        # اگر قیمت بیش از ۱.۰ برابر ATR از EMA20 فاصله گرفته باشد، ورود با مارکت ممنوع است
+        dist_to_mean = abs(last - e20)
+        if dist_to_mean > 1.0 * view.atr:
+            log.info("تحلیل خودکار رد شد: قیمت امتداد یافته (فاصله از EMA20: %.2f > ATR %.2f) — در انتظار پولبک", dist_to_mean, view.atr)
+            return None
+
+        # فیلتر ۳: تاییدیه نواحی ارزان‌فروشی/گران‌فروشی (SMC Zone Check)
         if view.smc is not None:
             # نباید در سقف رنج (Extreme Premium) خرید زد
             if side == Side.BUY and view.smc.zone == ZoneType.PREMIUM and view.smc.fib_level > 0.70:
@@ -210,15 +217,24 @@ class Engine:
                 return None
 
         entry = view.last_price
-        risk_dist = view.atr * SL_ATR_MULT
-        target_dist = risk_dist * 2.0  # تارگت سخت‌افزاری 2.0R به عنوان سقف سود در بروکر
+        recent_window = candles[-10:]
+        buffer = round(view.atr * 0.15, 2)
 
+        # استاپ‌لاس ساختاری پشت پیووت سوئینگ ۱۰ کندل اخیر با کف ایمنی ۱.۵ برابر ATR
         if side == Side.BUY:
-            sl = round(entry - risk_dist, 2)
-            tp = round(entry + target_dist, 2)
+            swing_low = min(c.low for c in recent_window)
+            sl = min(swing_low - buffer, entry - view.atr * SL_ATR_MULT)
+            if (entry - sl) > view.atr * 2.5:
+                sl = entry - view.atr * 2.5
+            sl = round(sl, 2)
+            tp = round(entry + abs(entry - sl) * 2.0, 2)
         else:
-            sl = round(entry + risk_dist, 2)
-            tp = round(entry - target_dist, 2)
+            swing_high = max(c.high for c in recent_window)
+            sl = max(swing_high + buffer, entry + view.atr * SL_ATR_MULT)
+            if (sl - entry) > view.atr * 2.5:
+                sl = entry + view.atr * 2.5
+            sl = round(sl, 2)
+            tp = round(entry - abs(sl - entry) * 2.0, 2)
 
         if entry <= 0 or sl <= 0:
             return None
