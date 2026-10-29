@@ -353,10 +353,10 @@ class HermesDaemon:
                     break
 
                 # چک کردن آیا استاپ لاس یا تارگت قبل از پولبک لمس شده و باطل شده
-                target_hit = (side == Side.BUY and tick.ask >= item["tp"]) or \
-                             (side == Side.SELL and tick.bid <= item["tp"])
-                sl_hit = (side == Side.BUY and tick.bid <= item["sl"]) or \
-                         (side == Side.SELL and tick.ask >= item["sl"])
+                target_hit = (side == Side.BUY and item["tp"] > 0 and tick.ask >= item["tp"]) or \
+                             (side == Side.SELL and item["tp"] > 0 and tick.bid <= item["tp"])
+                sl_hit = (side == Side.BUY and item["sl"] > 0 and tick.bid <= item["sl"]) or \
+                         (side == Side.SELL and item["sl"] > 0 and tick.ask >= item["sl"])
                 if target_hit:
                     self.led.update_watchlist_status(item["item_id"], "target_reached")
                     log.info("سیگنال واچ‌لیست به تارگت رسید و بسته شد: %s", item["item_id"])

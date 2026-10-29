@@ -1578,6 +1578,122 @@ class TestWatchlistEngine:
         )
         assert engine.plan_from_signal(sig_stale_tp, view) is None
 
+    def test_smc_fvg_unmitigated_retest_and_plan_generation(self):
+        """b237: Unmitigated Bullish FVG correctly recognized on current bar retest and generates Grade A plan."""
+        from core.smc import SMCAnalyzer, FVGType
+        from core.engine import Engine
+        engine = Engine()
+
+        base_t = 14 * 3600
+        candles = [
+            Candle(time=base_t + i*900, open=2000.0, high=2002.0, low=1998.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        # Form a Bullish FVG around bar 32..34:
+        # Candle 32 (c0): high = 1988.0
+        # Candle 33 (c1): displacement candle
+        # Candle 34 (c2): low = 1994.0 -> FVG gap is between 1988.0 (bottom) and 1994.0 (top)
+        candles[32] = Candle(time=base_t + 32*900, open=1985.0, high=1988.0, low=1984.0, close=1987.0, volume=100)
+        candles[33] = Candle(time=base_t + 33*900, open=1987.0, high=2015.0, low=1987.0, close=2010.0, volume=500)
+        candles[34] = Candle(time=base_t + 34*900, open=2010.0, high=2020.0, low=1994.0, close=2015.0, volume=300)
+
+        # Price stays high in bars 35..48 (swing high ~ 2030, establishing discount zone for pullback)
+        for i in range(35, 49):
+            candles[i] = Candle(time=base_t + i*900, open=2020.0, high=2030.0, low=2015.0, close=2025.0, volume=100)
+
+        # Bar 49 (current forming bar) pulls back into the FVG: low=1990.0 (inside gap 1988..1994), close=1992.0
+        candles[49] = Candle(time=base_t + 49*900, open=2015.0, high=2015.0, low=1990.0, close=1992.0, volume=100)
+
+        tick = Tick(symbol="XAUUSD", bid=1992.0, ask=1992.2, time=base_t + 49*900)
+        view = engine.analyze(candles, tick)
+        assert view.smc is not None
+        # FVG should be unfilled before bar 49 and detected
+        unfilled = [f for f in view.smc.unfilled_fvgs if f.fvg_type == FVGType.BULLISH]
+        assert len(unfilled) > 0
+        assert unfilled[-1].midpoint == (unfilled[-1].top + unfilled[-1].bottom) / 2.0
+
+        # Plan generation should recognize the FVG retest and generate plan
+        plan = engine.plan_from_smc(candles, view)
+        assert plan is not None
+        assert plan.source == "smc_fvg"
+        assert plan.side == Side.BUY
+        assert plan.grade == SetupGrade.A
+        assert plan.stop_loss < plan.entry_price
+        assert plan.take_profit > plan.entry_price
+
+    def test_evaluate_signal_tp_and_sl_reach_validation(self):
+        """b237: evaluate_signal validates target and sl reach against live tick."""
+        engine = Engine()
+        view = MarketView(
+            trend="ranging", trend_strength=0.0, atr=5.0, spread=0.15,
+            last_price=2000.0, support=1990.0, resistance=2020.0,
+        )
+        sig = Signal(
+            signal_id="sig-valid", raw_text="BUY", symbol="XAUUSD",
+            side=Side.BUY, entry=2000.0, sl=1990.0, tp=2020.0,
+            rr=2.0, confidence=0.8,
+            timestamp="2026-10-29T00:00:00Z",
+        )
+        # Normal market near entry: EXECUTE
+        tick_ok = Tick(symbol="XAUUSD", bid=1999.9, ask=2000.1, time=1000)
+        status, plan, _ = engine.evaluate_signal(sig, view, tick_ok)
+        assert status == "EXECUTE"
+        assert plan is not None
+
+        # Price already above TP: REJECT
+        tick_tp = Tick(symbol="XAUUSD", bid=2021.0, ask=2021.2, time=1000)
+        status_tp, _, _ = engine.evaluate_signal(sig, view, tick_tp)
+        assert status_tp == "REJECT"
+
+        # Price already below SL: REJECT
+        tick_sl = Tick(symbol="XAUUSD", bid=1989.0, ask=1989.2, time=1000)
+        status_sl, _, _ = engine.evaluate_signal(sig, view, tick_sl)
+        assert status_sl == "REJECT"
+
+    def test_backtest_close_sim_trade_deducts_commission(self):
+        """b237: Backtester._close_sim_trade deducts round-turn commission matching net-of-cost parity."""
+        from entry.backtest import Backtester, OpenTrade
+        bt = Backtester()
+        ot = OpenTrade(
+            ticket=1001, symbol="XAUUSD", side=Side.BUY, volume=0.10,
+            open_price=2000.0, sl=1990.0, tp=2020.0, open_time=1000.0,
+            entry_rr=2.0, initial_sl=1990.0, grade=SetupGrade.A,
+            source="smc_fvg", plan_id="p-1",
+        )
+        bt._open = ot
+        cur_candle = Candle(time=1900, open=2005.0, high=2025.0, low=2000.0, close=2020.0, volume=100)
+        # Hits TP at 2020.0: gross = (2020 - 2000) * 0.10 * 100 = $200.0
+        # Commission at -$7.0/lot * 0.10 = -$0.70 -> Net PnL = $199.30
+        hit = bt._check_sl_tp(cur_candle)
+        assert hit is not None
+        ok = bt._process_exit([cur_candle], 0, 1900.0)
+        assert ok is True
+        assert len(bt.trades) == 1
+        assert bt.trades[0].pnl == 199.30
+
+    def test_rsi_divergence_recent_swing_priority(self):
+        """b237: detect_rsi_divergence prioritizes the more recent swing structure."""
+        from core.engine import detect_rsi_divergence
+        highs = [2000.0] * 30
+        lows = [1990.0] * 30
+        rsi = [50.0] * 30
+
+        # Older swing highs: high at 10 (2010, rsi 65), high at 14 (2015, rsi 55) -> bearish divergence
+        highs[9], highs[10], highs[11] = 2005.0, 2010.0, 2005.0
+        rsi[10] = 65.0
+        highs[13], highs[14], highs[15] = 2010.0, 2015.0, 2010.0
+        rsi[14] = 55.0
+
+        # Recent swing lows: low at 22 (1985, rsi 35), low at 26 (1980, rsi 42) -> bullish regular divergence
+        lows[21], lows[22], lows[23] = 1990.0, 1985.0, 1990.0
+        rsi[22] = 35.0
+        lows[25], lows[26], lows[27] = 1985.0, 1980.0, 1985.0
+        rsi[26] = 42.0
+
+        div_type, strength = detect_rsi_divergence(highs, lows, rsi, window=30)
+        assert div_type == "BULLISH_REGULAR"
+        assert strength > 0.0
+
 
 
 

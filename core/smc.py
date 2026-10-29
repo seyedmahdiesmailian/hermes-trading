@@ -68,6 +68,10 @@ class FairValueGap:
     time: int
     filled: bool = False
 
+    @property
+    def midpoint(self) -> float:
+        return (self.top + self.bottom) / 2.0
+
 
 @dataclass(frozen=True)
 class LiquiditySweep:
@@ -318,7 +322,7 @@ class SMCAnalyzer:
             if c2.low > c0.high:
                 bottom = c0.high
                 top = c2.low
-                filled = any(c.low <= bottom for c in candles[i + 1:])
+                filled = any(c.low <= bottom for c in candles[i + 1 : -1]) if (i + 1 < n - 1) else False
                 fvgs.append(FairValueGap(
                     fvg_type=FVGType.BULLISH,
                     top=round(top, 2),
@@ -332,7 +336,7 @@ class SMCAnalyzer:
             if c2.high < c0.low:
                 top = c0.low
                 bottom = c2.high
-                filled = any(c.high >= top for c in candles[i + 1:])
+                filled = any(c.high >= top for c in candles[i + 1 : -1]) if (i + 1 < n - 1) else False
                 fvgs.append(FairValueGap(
                     fvg_type=FVGType.BEARISH,
                     top=round(top, 2),

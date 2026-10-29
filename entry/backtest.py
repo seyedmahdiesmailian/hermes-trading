@@ -346,7 +346,9 @@ class Backtester:
 
         # ── ثبت ترید بسته‌شده ──
         direction = 1.0 if ot.side == Side.BUY else -1.0
-        pnl = direction * (exit_price - ot.open_price) * ot.volume * 100.0
+        gross = direction * (exit_price - ot.open_price) * ot.volume * 100.0
+        comm = -7.0 * ot.volume
+        pnl = round(gross + comm, 2)
         self.state.apply_pnl(pnl)
         if pnl < 0:
             self._last_loss_ts = now_ts
@@ -381,7 +383,7 @@ class Backtester:
             if ot.tp > 0 and cur.high >= ot.tp:
                 return ExitReason.TAKE_PROFIT, ot.tp
         else:
-            if cur.high >= ot.sl:
+            if ot.sl > 0 and cur.high >= ot.sl:
                 return ExitReason.STOP_LOSS, ot.sl
             if ot.tp > 0 and cur.low <= ot.tp:
                 return ExitReason.TAKE_PROFIT, ot.tp

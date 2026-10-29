@@ -529,6 +529,65 @@ class Engine:
                                     reasoning=f"RTM Supply FTR: تست بیس پس از شکست سطح {ftr.broken_level:,.2f}",
                                 )
 
+        # ── ۵. ستاپ برخورد به شکاف ارزش منصفانه (Fair Value Gap - FVG Retest) ──
+        unfilled_fvgs = [f for f in smc.unfilled_fvgs if not f.filled]
+        if unfilled_fvgs:
+            last_c = candles[-1]
+            for fvg in unfilled_fvgs[::-1]:
+                if fvg.fvg_type.value == "BULLISH" and smc.zone == ZoneType.DISCOUNT:
+                    if h1_bias == "BEARISH":
+                        log.info("ستاپ SMC رد شد: خرید FVG در تضاد با روند نزولی قدرتمند H1")
+                        continue
+                    if last_c.low <= fvg.top and last_c.close >= fvg.bottom:
+                        sl = round(fvg.bottom - buffer, 2)
+                        if (entry - sl) < view.atr * 1.2:
+                            sl = round(entry - view.atr * 1.2, 2)
+                        if (entry - sl) <= view.atr * 2.2:
+                            tp = round(entry + (entry - sl) * 2.5, 2)
+                            rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
+                            return Plan(
+                                plan_id=f"smc-fvg-{int(candles[-1].time)}",
+                                symbol="XAUUSD",
+                                side=Side.BUY,
+                                entry_price=round(entry, 2),
+                                stop_loss=sl,
+                                take_profit=tp,
+                                volume=0.0,
+                                grade=SetupGrade.A,
+                                source="smc_fvg",
+                                timeframe=timeframe,
+                                rr=rr,
+                                confidence=0.90,
+                                reasoning=f"SMC Bullish FVG: تست عدم تعادل نقدینگی [{fvg.bottom:,.2f} - {fvg.top:,.2f}] در محدوده تخفیف",
+                            )
+
+                elif fvg.fvg_type.value == "BEARISH" and smc.zone == ZoneType.PREMIUM:
+                    if h1_bias == "BULLISH":
+                        log.info("ستاپ SMC رد شد: فروش FVG در تضاد با روند صعودی قدرتمند H1")
+                        continue
+                    if last_c.high >= fvg.bottom and last_c.close <= fvg.top:
+                        sl = round(fvg.top + buffer, 2)
+                        if (sl - entry) < view.atr * 1.2:
+                            sl = round(entry + view.atr * 1.2, 2)
+                        if (sl - entry) <= view.atr * 2.2:
+                            tp = round(entry - (sl - entry) * 2.5, 2)
+                            rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                            return Plan(
+                                plan_id=f"smc-fvg-{int(candles[-1].time)}",
+                                symbol="XAUUSD",
+                                side=Side.SELL,
+                                entry_price=round(entry, 2),
+                                stop_loss=sl,
+                                take_profit=tp,
+                                volume=0.0,
+                                grade=SetupGrade.A,
+                                source="smc_fvg",
+                                timeframe=timeframe,
+                                rr=rr,
+                                confidence=0.90,
+                                reasoning=f"SMC Bearish FVG: تست عدم تعادل نقدینگی [{fvg.bottom:,.2f} - {fvg.top:,.2f}] در محدوده پرمیوم",
+                            )
+
         return None
 
     # ── ساخت Plan از سیگنال تلگرام با فیلتر هوشمند ─────────
@@ -643,14 +702,14 @@ class Engine:
             if cur_price <= sig.sl:
                 log.info("سیگنال رد شد: قیمت بازار (%.2f) به استاپ لاس (%.2f) رسیده یا از آن گذشته", cur_price, sig.sl)
                 return "REJECT", None, None
-            if cur_price >= sig.tp:
+            if sig.tp > 0 and cur_price >= sig.tp:
                 log.info("سیگنال رد شد: قیمت بازار (%.2f) به تارگت (%.2f) رسیده است", cur_price, sig.tp)
                 return "REJECT", None, None
         else:
             if cur_price >= sig.sl:
                 log.info("سیگنال رد شد: قیمت بازار (%.2f) به استاپ لاس (%.2f) رسیده یا از آن گذشته", cur_price, sig.sl)
                 return "REJECT", None, None
-            if cur_price <= sig.tp:
+            if sig.tp > 0 and cur_price <= sig.tp:
                 log.info("سیگنال رد شد: قیمت بازار (%.2f) به تارگت (%.2f) رسیده است", cur_price, sig.tp)
                 return "REJECT", None, None
 
@@ -904,34 +963,40 @@ def detect_rsi_divergence(
         if lows[i] < lows[i - 1] and lows[i] < lows[i + 1]:
             swing_lows.append((i, lows[i], rsi[i]))
 
-    # واگرایی‌های نزولی بر روی سقف‌ها
-    if len(swing_highs) >= 2:
-        _, prev_high, prev_rsi = swing_highs[-2]
-        _, last_high, last_rsi = swing_highs[-1]
+    def _check_bearish() -> tuple[Optional[str], float]:
+        if len(swing_highs) >= 2:
+            _, prev_high, prev_rsi = swing_highs[-2]
+            _, last_high, last_rsi = swing_highs[-1]
+            if last_high > prev_high and last_rsi < prev_rsi and prev_rsi > 50:
+                strength = round((prev_rsi - last_rsi) / 10.0, 2)
+                return "BEARISH_REGULAR", min(1.0, max(0.2, strength))
+            if last_high < prev_high and last_rsi > prev_rsi:
+                strength = round((last_rsi - prev_rsi) / 10.0, 2)
+                return "BEARISH_HIDDEN", min(1.0, max(0.2, strength))
+        return None, 0.0
 
-        # Regular Bearish: سقف بالاتر قیمت، سقف پایین‌تر RSI (فرسودگی خریداران)
-        if last_high > prev_high and last_rsi < prev_rsi and prev_rsi > 50:
-            strength = round((prev_rsi - last_rsi) / 10.0, 2)
-            return "BEARISH_REGULAR", min(1.0, max(0.2, strength))
+    def _check_bullish() -> tuple[Optional[str], float]:
+        if len(swing_lows) >= 2:
+            _, prev_low, prev_rsi = swing_lows[-2]
+            _, last_low, last_rsi = swing_lows[-1]
+            if last_low < prev_low and last_rsi > prev_rsi and prev_rsi < 50:
+                strength = round((last_rsi - prev_rsi) / 10.0, 2)
+                return "BULLISH_REGULAR", min(1.0, max(0.2, strength))
+            if last_low > prev_low and last_rsi < prev_rsi:
+                strength = round((prev_rsi - last_rsi) / 10.0, 2)
+                return "BULLISH_HIDDEN", min(1.0, max(0.2, strength))
+        return None, 0.0
 
-        # Hidden Bearish: سقف پایین‌تر قیمت، سقف بالاتر RSI (ادامه روند نزولی)
-        if last_high < prev_high and last_rsi > prev_rsi:
-            strength = round((last_rsi - prev_rsi) / 10.0, 2)
-            return "BEARISH_HIDDEN", min(1.0, max(0.2, strength))
+    last_high_idx = swing_highs[-1][0] if len(swing_highs) >= 2 else -1
+    last_low_idx = swing_lows[-1][0] if len(swing_lows) >= 2 else -1
 
-    # واگرایی‌های صعودی بر روی کف‌ها
-    if len(swing_lows) >= 2:
-        _, prev_low, prev_rsi = swing_lows[-2]
-        _, last_low, last_rsi = swing_lows[-1]
-
-        # Regular Bullish: کف پایین‌تر قیمت، کف بالاتر RSI (فرسودگی فروشندگان)
-        if last_low < prev_low and last_rsi > prev_rsi and prev_rsi < 50:
-            strength = round((last_rsi - prev_rsi) / 10.0, 2)
-            return "BULLISH_REGULAR", min(1.0, max(0.2, strength))
-
-        # Hidden Bullish: کف بالاتر قیمت، کف پایین‌تر RSI (ادامه روند صعودی)
-        if last_low > prev_low and last_rsi < prev_rsi:
-            strength = round((prev_rsi - last_rsi) / 10.0, 2)
-            return "BULLISH_HIDDEN", min(1.0, max(0.2, strength))
-
-    return None, 0.0
+    if last_low_idx > last_high_idx:
+        res, strength = _check_bullish()
+        if res is not None:
+            return res, strength
+        return _check_bearish()
+    else:
+        res, strength = _check_bearish()
+        if res is not None:
+            return res, strength
+        return _check_bullish()
