@@ -62,7 +62,7 @@ class SignalsAdapter:
 
     # ── API خواندن و پالایش سیگنال‌ها ────────────────────
 
-    def read_new(self) -> list[Signal]:
+    def read_new(self, current_price: float = 0.0) -> list[Signal]:
         """خواندن سیگنال‌های جدید، حذف تکراری‌ها و فیلتر سیگنال‌های معتبر."""
         if not self._log_path.exists():
             return []
@@ -86,7 +86,7 @@ class SignalsAdapter:
 
         valid_signals: list[Signal] = []
         for item in new_items:
-            sig = self._parse_and_validate(item, now_ts)
+            sig = self._parse_and_validate(item, now_ts, current_price=current_price)
             if sig is not None:
                 valid_signals.append(sig)
 
@@ -94,21 +94,22 @@ class SignalsAdapter:
             log.info("signals: %d سیگنال معتبر و تازه برای بررسی ارسال شد", len(valid_signals))
         return valid_signals
 
-    def _parse(self, item: dict, now_ts: Optional[float] = None) -> Optional[Signal]:
+    def _parse(self, item: dict, now_ts: Optional[float] = None, current_price: float = 0.0) -> Optional[Signal]:
         """متد کمکی برای سازگاری با بک‌تستر و استفاده‌های ماژولار."""
         ts = now_ts or time.time()
         ts_str = str(item.get("timestamp") or "")
         epoch = self._parse_iso_timestamp(ts_str) if ts_str else None
         ref_ts = epoch if epoch is not None else ts
-        return self._parse_and_validate(item, ref_ts)
+        return self._parse_and_validate(item, ref_ts, current_price=current_price)
 
-    def _parse_and_validate(self, item: dict, now_ts: float) -> Optional[Signal]:
+    def _parse_and_validate(self, item: dict, now_ts: float, current_price: float = 0.0) -> Optional[Signal]:
         """پارس، فیلتر تکراری، سنجش تازگی زمانی و هندسه قیمت."""
         try:
             parsed = item.get("parsed") or {}
             raw_text = str(item.get("raw_text") or item.get("text") or item.get("raw") or "")
             if not parsed and raw_text:
-                parsed = self.parse_text_to_dict(raw_text)
+                ref_price = current_price if current_price > 0 else 4030.0
+                parsed = self.parse_text_to_dict(raw_text, current_price=ref_price)
 
             side_raw = str(parsed.get("side", "")).upper()
             if side_raw not in ("BUY", "SELL"):

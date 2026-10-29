@@ -258,8 +258,8 @@ class HermesDaemon:
         self.led.snapshot_equity(account)
         self.learner.adapt(self.led)
 
-        # ۳) سیگنال‌های جدید کانال
-        new_signals = self.signals.read_new()
+        # ۳) سیگنال‌های جدید کانال (تطبیق اختصارات با قیمت زنده)
+        new_signals = self.signals.read_new(current_price=tick.mid if tick else 0.0)
         for sig in new_signals:
             self.led.save_signal(sig)
 
