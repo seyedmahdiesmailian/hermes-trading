@@ -180,6 +180,12 @@ class Backtester:
 
             if not entry_queue:
                 # ─ـ ۲‌ب) مسیر تحلیل خودکار — بدون سیگنال کانال ──
+                # سشن معاملاتی برای تحلیل خودکار — انطباق با دیمن زنده (session_hours)
+                h_utc = datetime.fromtimestamp(now_ts, timezone.utc).hour
+                h0, h1 = self.cfg.analysis.session_hours
+                if not (h0 <= h_utc < h1):
+                    continue
+
                 view = self.eng.analyze(past, tick, check_news=False)
                 plan = self.eng.plan_from_analysis(candles[:i+1], view,
                                                    self.cfg.analysis.timeframe)

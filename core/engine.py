@@ -484,6 +484,8 @@ def _atr(candles: list[Candle], period: int = 14) -> float:
 
 def _calc_rr(sig: Signal) -> float:
     """محاسبه دقیق نسبت سود به زیان (Risk-to-Reward Ratio)."""
+    if sig.tp <= 0 or sig.entry <= 0:
+        return 0.0
     sl_dist = abs(sig.entry - sig.sl)
     tp_dist = abs(sig.tp - sig.entry)
     return tp_dist / sl_dist if sl_dist > 0 else 0.0

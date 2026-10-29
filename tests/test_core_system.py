@@ -985,6 +985,81 @@ class TestWatchlistEngine:
         assert len(summary["trades"]) == 1
         assert summary["trades"][0]["grade"] == "A"
 
+    def test_b233_adaptive_learner_consecutive_losses_recent_order(self):
+        """b233: AdaptiveLearner counts consecutive losses from newest to oldest trade."""
+        from core.learning import AdaptiveLearner
+        from core.entities import Trade, Side, ExitReason, SetupGrade
+
+        learner = AdaptiveLearner(min_trades=4)
+        # Trades ordered as returned by Ledger.get_trades (closed_at DESC)
+        trades = [
+            # Latest trade (loss)
+            Trade("t4", "p4", 4, "XAUUSD", Side.BUY, 0.1, 2000, 1990, 1990, 2020, -100.0, ExitReason.STOP_LOSS, 1700000000, 1700004000, SetupGrade.A),
+            # 2nd latest (loss)
+            Trade("t3", "p3", 3, "XAUUSD", Side.BUY, 0.1, 2000, 1990, 1990, 2020, -100.0, ExitReason.STOP_LOSS, 1700000000, 1700003000, SetupGrade.A),
+            # 3rd latest (loss)
+            Trade("t2", "p2", 2, "XAUUSD", Side.BUY, 0.1, 2000, 1990, 1990, 2020, -100.0, ExitReason.STOP_LOSS, 1700000000, 1700002000, SetupGrade.A),
+            # Oldest trade (win)
+            Trade("t1", "p1", 1, "XAUUSD", Side.BUY, 0.1, 2000, 2020, 1990, 2020, 200.0, ExitReason.TAKE_PROFIT, 1700000000, 1700001000, SetupGrade.A),
+        ]
+        metrics = learner.evaluate_performance(trades)
+        assert metrics.consecutive_losses == 3
+
+        # Winning sequence with old losses
+        trades_win = [
+            # Latest trade (win)
+            Trade("t4", "p4", 4, "XAUUSD", Side.BUY, 0.1, 2000, 2020, 1990, 2020, 200.0, ExitReason.TAKE_PROFIT, 1700000000, 1700004000, SetupGrade.A),
+            # 2nd latest (win)
+            Trade("t3", "p3", 3, "XAUUSD", Side.BUY, 0.1, 2000, 2020, 1990, 2020, 200.0, ExitReason.TAKE_PROFIT, 1700000000, 1700003000, SetupGrade.A),
+            # Oldest trade (loss)
+            Trade("t1", "p1", 1, "XAUUSD", Side.BUY, 0.1, 2000, 1990, 1990, 2020, -100.0, ExitReason.STOP_LOSS, 1700000000, 1700001000, SetupGrade.A),
+        ]
+        metrics_win = learner.evaluate_performance(trades_win)
+        assert metrics_win.consecutive_losses == 0
+
+    def test_b233_calc_rr_zero_tp_returns_zero(self):
+        """b233: _calc_rr returns 0.0 when tp <= 0 instead of asset-price artifact."""
+        from core.entities import Signal, Side
+        from core.engine import _calc_rr
+
+        sig = Signal(
+            signal_id="sig-notp",
+            raw_text="BUY GOLD 2700 SL 2690",
+            symbol="XAUUSD",
+            side=Side.BUY,
+            entry=2700.0,
+            sl=2690.0,
+            tp=0.0,
+            rr=0.0,
+            confidence=0.8,
+            timestamp="2026-10-29T00:00:00Z",
+        )
+        assert _calc_rr(sig) == 0.0
+
+    def test_b233_backtester_enforces_session_hours_for_auto_analysis(self):
+        """b233: Backtester blocks automated analysis outside analysis.session_hours."""
+        from entry.backtest import Backtester
+        from core.entities import Candle
+
+        bt = Backtester()
+        # Create 100 bullish candles at 22:30 UTC (outside [0, 22))
+        # 1700000000 = 2023-11-14 22:13:20 UTC
+        ts_22utc = 1700000000  # hour 22 UTC
+        bars = []
+        price = 2000.0
+        for i in range(120):
+            bars.append({
+                "time": ts_22utc + i * 900,
+                "open": price + i * 0.5,
+                "high": price + i * 0.5 + 2.0,
+                "low": price + i * 0.5 - 1.0,
+                "close": price + i * 0.5 + 1.0,
+                "tick_volume": 100,
+            })
+        summary = bt.run(bars, signals=[])
+        # Since all candles are outside [0, 22), no auto-analysis trades should execute
+        assert summary["total_trades"] == 0
+
 
 
 

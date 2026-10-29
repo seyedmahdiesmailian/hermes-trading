@@ -67,8 +67,10 @@ class AdaptiveLearner:
         avg_r = round(sum(r_multiples) / len(r_multiples), 3) if r_multiples else 0.0
 
         # شمارش باخت‌های متوالی اخیر (صرفاً تریدهای زیان‌ده، نه بریک‌اون)
+        # مرتب‌سازی بر اساس زمان بسته شدن نزولی جهت پیمایش از جدیدترین به قدیمی‌ترین
+        sorted_recent = sorted(trades, key=lambda t: t.closed_at, reverse=True)
         streak = 0
-        for t in reversed(trades):
+        for t in sorted_recent:
             if t.pnl < 0:
                 streak += 1
             elif t.pnl > 0:

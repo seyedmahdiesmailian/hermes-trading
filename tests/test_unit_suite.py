@@ -841,6 +841,65 @@ class TestTradingCore(unittest.TestCase):
         daemon._reconcile_broker_closed_positions.assert_not_called()
         self.assertIn(123, daemon._tracked_positions)
 
+    def test_b233_daemon_reconciles_and_cleans_dry_run_closed_tickets(self):
+        """b233: _exit_loop reconciles disappeared positions and cleans up ticket even in dry_run."""
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import MagicMock
+        from entry.hermes import HermesDaemon
+        from core.entities import BrokerPosition, Side, ExitReason
+        from core.params import PositionCfg
+        from core.exits import ExitManager
+        from core.db import Ledger
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test_hermes.db"
+            ledger = Ledger(db_path)
+
+            daemon = MagicMock(spec=HermesDaemon)
+            daemon.cfg = MagicMock()
+            daemon.cfg.symbol = "XAUUSD"
+            daemon.dry_run = True
+            daemon.led = ledger
+            daemon.notify = MagicMock()
+            cfg = PositionCfg(trailing_start_rr=1.5, breakeven_rr=1.0, max_hold_hours=24, partial_tp_rr=1.5, partial_enabled=True)
+            daemon.exits = ExitManager(cfg)
+            daemon.exits.register_initial_sl(999, 1990.0)
+            daemon.mt5 = MagicMock()
+            # positions is empty list -> ticket 999 has disappeared/closed
+            daemon.mt5.get_open_positions.return_value = []
+            pos = BrokerPosition(
+                ticket=999,
+                symbol="XAUUSD",
+                side=Side.BUY,
+                volume=0.1,
+                open_price=2000.0,
+                current_price=2010.0,
+                sl=1990.0,
+                tp=2030.0,
+                profit=100.0,
+                swap=0.0,
+                commission=-0.7,
+                open_time=1700000000,
+                comment="hms-dry-run",
+            )
+            daemon._tracked_positions = {999: pos}
+
+            # Run real _reconcile_broker_closed_positions
+            HermesDaemon._reconcile_broker_closed_positions(daemon, [999])
+
+            # Verify trade recorded in ledger
+            trades = ledger.get_trades(limit=10)
+            self.assertEqual(len(trades), 1)
+            self.assertEqual(trades[0].ticket, 999)
+            self.assertEqual(trades[0].pnl, 99.3)  # 100 - 0.7 = 99.3
+            self.assertEqual(trades[0].exit_reason, ExitReason.MANUAL)
+
+            # Verify ticket cleanup in ExitManager
+            self.assertNotIn(999, daemon.exits._initial_sl)
+
+            ledger.close()
+
 
 if __name__ == "__main__":
     unittest.main()

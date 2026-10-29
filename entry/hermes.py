@@ -402,7 +402,7 @@ class HermesDaemon:
         # اگر پوزیشنی در چرخه قبل باز بوده ولی اکنون بسته شده، اطلاعات خروج را از هیستوری دیل‌ها استخراج و در ژورنال ثبت می‌کنیم.
         current_map = {p.ticket: p for p in (positions or []) if not p.comment or p.comment.startswith("hms")}
         closed_tickets = [t for t in self._tracked_positions if t not in current_map]
-        if closed_tickets and not self.dry_run:
+        if closed_tickets:
             self._reconcile_broker_closed_positions(closed_tickets)
         self._tracked_positions = current_map
 
@@ -558,11 +558,12 @@ class HermesDaemon:
 
     def _reconcile_broker_closed_positions(self, closed_tickets: list[int]) -> None:
         """تطبیق و ثبت معاملات بسته‌شده توسط بروکر (SL/TP) در ژورنال، اعلان و پاکسازی حافظه."""
-        try:
-            deals = self.mt5.get_history_deals(days=1, symbol=self.cfg.symbol)
-        except Exception as e:
-            log.warning("عدم دسترسی به تاریخچه دیل‌های بروکر جهت تطبیق خروج: %s", e)
-            deals = []
+        deals = []
+        if not self.dry_run:
+            try:
+                deals = self.mt5.get_history_deals(days=1, symbol=self.cfg.symbol)
+            except Exception as e:
+                log.warning("عدم دسترسی به تاریخچه دیل‌های بروکر جهت تطبیق خروج: %s", e)
 
         deal_by_pos: dict[int, dict] = {}
         for d in deals:
