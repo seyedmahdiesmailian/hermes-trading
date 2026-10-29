@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from adapters.mt5 import BridgeError, Mt5Adapter
 from adapters.notify import NotifyAdapter
 from adapters.signals import SignalsAdapter
+from adapters.watchdog import load_watchdog_from_env
 from core.db import Ledger
 from core.engine import Engine
 from core.entities import (
@@ -154,6 +155,9 @@ class HermesDaemon:
         self.exits = ExitManager(self.cfg.position, on_modify=_on_modify, on_partial=_on_partial)
         self.learner = AdaptiveLearner()
 
+        self.watchdog = load_watchdog_from_env()
+        self._bridge_error_count = 0
+
         # سیگنال‌های قدیمی را رد کن — فقط آینده پردازش می‌شود
         self.signals.skip_backlog()
 
@@ -162,6 +166,18 @@ class HermesDaemon:
         self._last_exit_loop = 0.0
         self._last_atr = 0.0  # آخرین ATR زنده — trailing تحلیلی
         self._tracked_positions: dict[int, BrokerPosition] = {}
+
+    def _handle_bridge_error(self, e: Exception) -> None:
+        self._bridge_error_count += 1
+        log.warning("خطای ارتباط با بریج MT5 (#%d): %s", self._bridge_error_count, e)
+        if self._bridge_error_count >= 3:
+            log.error("۳ خطای متوالی در بریج MT5! فعال‌سازی نگهبان خودکار و احیا...")
+            ok, msg = self.watchdog.revive()
+            if ok:
+                self._bridge_error_count = 0
+                self.notify.status(f"🔄 <b>نگهبان هوشمند هرمس:</b> ارتباط با متاتریدر ۵ در سرور ویندوز احیا شد.\n{msg}")
+            else:
+                self.notify.status(f"🚨 <b>هشدار بحرانی:</b> تلاش برای احیای خودکار متاتریدر ۵ ناموفق بود:\n{msg}")
 
     # ───────────────────────────────────────────────────
     # چرخه حیات
@@ -191,8 +207,9 @@ class HermesDaemon:
             if now - self._last_entry_loop >= self.cfg.loop.entry_interval_s:
                 try:
                     self._entry_loop()
+                    self._bridge_error_count = 0
                 except BridgeError as e:
-                    log.warning("entry loop: bridge خطا: %s", e)
+                    self._handle_bridge_error(e)
                 except Exception:
                     log.exception("entry loop خطای پیش‌بینی‌نشده")
                 self._last_entry_loop = now
@@ -201,8 +218,9 @@ class HermesDaemon:
             if now - self._last_exit_loop >= self.cfg.loop.exit_interval_s:
                 try:
                     self._exit_loop()
+                    self._bridge_error_count = 0
                 except BridgeError as e:
-                    log.warning("exit loop: bridge خطا: %s", e)
+                    self._handle_bridge_error(e)
                 except Exception:
                     log.exception("exit loop خطای پیش‌بینی‌نشده")
                 self._last_exit_loop = now
