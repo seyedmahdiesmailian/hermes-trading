@@ -155,8 +155,10 @@ class GatesEngine:
             elif plan.source.startswith("smc") or plan.source.startswith("rtm") or plan.source in ("smc_ob", "smc_judas", "smc_fvg", "rtm_qml", "rtm_ftr"):
                 mult = getattr(self._g, "min_atr_stop_mult_smc", 1.2)
             elif plan.source == "watchlist_pullback":
-                # در ورودهای پولبک، استاپ به دلیل ورود در قیمت بهتر فشرده‌تر شده و ضریب ۰.۸ ملاک است
                 mult = getattr(self._g, "min_atr_stop_mult_watchlist", 0.8)
+            elif plan.source in ("signal",) or plan.source.startswith("sig_"):
+                sig_mult = getattr(self._g, "min_atr_stop_mult_signal", 0.0)
+                mult = sig_mult if sig_mult > 0 else self._g.min_atr_stop_mult
             min_dist = round(atr * mult, 2)
             if sl_dist < min_dist:
                 reasons.append(f"stop_too_tight({sl_dist:.2f}<{min_dist:.2f})")

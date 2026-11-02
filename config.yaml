@@ -23,7 +23,8 @@ gates:
   max_daily_loss_pct: 5.0       # ضرر روزانه → توقف کامل
   min_rr: 1.0                  # حداقل reward/risk
   min_grade: B                  # حداقل گرید برنامه
-  min_atr_stop_mult: 2.0        # استاپ حداقل ATR×۲
+  min_atr_stop_mult: 2.0        # استاپ حداقل ATR×۲ برای تحلیل کلاسیک
+  min_atr_stop_mult_signal: 1.2 # استاپ حداقل ATR×۱.۲ برای سیگنال‌های کانال تلگرام
   max_spread_points: 3.0
   loss_cooldown_minutes: 45     # دوره استراحت پس از هر استاپ (دقیقه)
 
