@@ -2415,6 +2415,54 @@ class TestWatchlistEngine:
         # Gaps under 1.2 should be filtered out
         assert len([f for f in detected_fvgs if (f.top - f.bottom) < 1.2]) == 0
 
+    def test_b253_defcon_sizing_and_channel_autoprune(self):
+        """b253: Test DEFCON dynamic drawdown risk sizing and channel scorecard auto-pruning."""
+        from core.gates import GatesEngine
+        from core.params import Gates
+        gates = GatesEngine(Gates(
+            max_open_positions=1, max_daily_trades=5, risk_per_trade_pct=2.0,
+            max_daily_loss_pct=5.0, min_rr=1.0, min_grade="B", min_atr_stop_mult=2.0,
+            max_spread_points=3.0,
+        ))
+        account = AccountState(balance=10000.0, equity=10000.0, margin=0.0, margin_free=10000.0)
+        # Plan with 10 points SL distance: volume at 2% ($200 risk) = 200 / (10 * 100) = 0.20 lots
+        plan = Plan(
+            plan_id="p-253", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2070.0,
+            volume=0.1, grade=SetupGrade.A, source="smc_fvg", rr=2.0,
+        )
+
+        # 1) Normal state (daily_pnl = 0) -> Full size 0.20 lots
+        res_normal = gates.evaluate(plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5)
+        assert res_normal.allowed is True
+        assert res_normal.volume == 0.20
+
+        # 2) DEFCON 3 (daily_pnl = -$250 = -2.5%) -> 0.75x risk ($150) = 0.15 lots
+        res_defcon3 = gates.evaluate(plan, account, [], 1, daily_pnl=-250.0, atr=5.0, spread=0.5)
+        assert res_defcon3.allowed is True
+        assert res_defcon3.volume == 0.15
+
+        # 3) DEFCON 2 (daily_pnl = -$400 = -4.0%) -> 0.50x risk ($100) = 0.10 lots
+        res_defcon2 = gates.evaluate(plan, account, [], 2, daily_pnl=-400.0, atr=5.0, spread=0.5)
+        assert res_defcon2.allowed is True
+        assert res_defcon2.volume == 0.10
+
+        # 4) Channel Scorecard Auto-Pruning:
+        sig_plan = Plan(
+            plan_id="p-sig-bad", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2070.0,
+            volume=0.1, grade=SetupGrade.A, source="sig_BadChannel", rr=2.0,
+        )
+        bad_channel_stats = {"total": 12, "wins": 3, "win_rate": 25.0, "net_pnl": -350.0}
+        res_pruned = gates.evaluate(sig_plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, channel_stats=bad_channel_stats)
+        assert res_pruned.allowed is False
+        assert any("channel_pruned" in r for r in res_pruned.reasons)
+
+        good_channel_stats = {"total": 12, "wins": 8, "win_rate": 66.7, "net_pnl": 450.0}
+        res_good = gates.evaluate(sig_plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, channel_stats=good_channel_stats)
+        assert res_good.allowed is True
+
+
 
 
 

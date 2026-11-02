@@ -73,7 +73,8 @@ class GatesEngine:
         learning_min_rr: float = 0.0,
         learning_min_grade: str = "",
         last_loss_ts: float = 0.0,
-        now_ts: Optional[float] = None,
+        now_ts: float = 0.0,
+        channel_stats: dict | None = None,
     ) -> GuardOutcome:
         """ارزیابی کامل plan → مجاز با حجم، یا ممنوع با دلایل.
 
@@ -162,12 +163,21 @@ class GatesEngine:
                (plan.side == Side.SELL and plan.take_profit >= plan.entry_price):
                 reasons.append("invalid_stops")
 
+        # ۱۰) فیلتر کیفیت منبع سیگنال (Channel Scorecard / Auto-Pruning)
+        if plan.source.startswith("sig_"):
+            ch_stats = channel_stats or {}
+            src_total = ch_stats.get("total", 0)
+            src_wr = ch_stats.get("win_rate", 50.0)
+            src_pnl = ch_stats.get("net_pnl", 0.0)
+            if src_total >= 10 and (src_wr < 40.0 or src_pnl < -250.0):
+                reasons.append(f"channel_pruned({plan.source}:{src_wr:.1f}%_pnl={src_pnl:.1f})")
+
         if reasons:
             log.warning("GUARD DENY %s: %s", plan.plan_id, reasons)
             return GuardOutcome(allowed=False, reasons=reasons)
 
         # ── مجاز → محاسبه حجم بر اساس ریسک ───────────
-        volume = self._size_position(plan, account)
+        volume = self._size_position(plan, account, daily_pnl=daily_pnl)
         if volume <= 0:
             return GuardOutcome(allowed=False, reasons=["size_failed"])
 
@@ -176,7 +186,7 @@ class GatesEngine:
 
     # ── private ───────────────────────────────────────
 
-    def _size_position(self, plan: Plan, account: AccountState | None) -> float:
+    def _size_position(self, plan: Plan, account: AccountState | None, daily_pnl: float = 0.0) -> float:
         """حجم بر اساس درصد ریسک: risk = equity × risk% / فاصله SL.
 
         volume_lots = risk_amount / (sl_distance × contract_size)
@@ -193,6 +203,16 @@ class GatesEngine:
                 eff_risk = base_risk * 0.5     # ۱.۰٪ برای ستاپ‌های استاندارد روند گرید B
             else:
                 eff_risk = base_risk * 0.25    # ۰.۵٪ برای سایر موارد
+
+            # مقیاس‌پذیری دفاعی دراودان (DEFCON Drawdown Sizing)
+            if account and account.balance > 0 and daily_pnl < 0:
+                dd_pct = (abs(daily_pnl) / account.balance) * 100.0
+                if dd_pct >= 3.5:
+                    eff_risk *= 0.50  # DEFCON 2: کاهش ۵۰٪ ریسک در دراودان بالا
+                    log.info("DEFCON 2 فعال شد: دراودان %.2f%% — ریسک به %.2f%% کاهش یافت", dd_pct, eff_risk)
+                elif dd_pct >= 2.0:
+                    eff_risk *= 0.75  # DEFCON 3: کاهش ۲۵٪ ریسک در دراودان ملایم
+                    log.info("DEFCON 3 فعال شد: دراودان %.2f%% — ریسک به %.2f%% کاهش یافت", dd_pct, eff_risk)
 
             risk_pct = Decimal(str(eff_risk)) / Decimal("100")
             risk_amount = Decimal(str(account.equity)) * risk_pct

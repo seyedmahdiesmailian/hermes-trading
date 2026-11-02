@@ -186,13 +186,13 @@ def load_watchdog_from_env() -> RemoteMT5Watchdog:
                 v = v.strip()
                 if k == "HERMES_BRIDGE_TOKEN":
                     token = v
-                elif k == "WIN_PASS":
+                elif k in ("WIN_PASS", "HERMES_WIN_PASS"):
                     win_pass = v
-                elif k == "HERMES_WIN_IP":
+                elif k in ("WIN_IP", "HERMES_WIN_IP"):
                     win_host = v
-                elif k == "HERMES_WIN_USER":
+                elif k in ("WIN_USER", "HERMES_WIN_USER"):
                     win_user = v
-                elif k == "HERMES_BRIDGE_URL":
+                elif k in ("BRIDGE_URL", "HERMES_BRIDGE_URL"):
                     bridge_url = v
 
     return RemoteMT5Watchdog(

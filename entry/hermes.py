@@ -405,12 +405,14 @@ class HermesDaemon:
         # هر دو مسیر ورود (سیگنال کانال/واچ‌لیست و تحلیل خودکار) منحصراً از این گیت زنده ارزیابی می‌شوند.
         # بریج خاموش یا اطلاعات ناقص به هیچ وجه چراغ سبز دریافت نمی‌کند (رد fail-closed).
         last_loss = self.led.get_last_loss_time()
+        ch_stats = self.led.get_source_stats(plan.source) if plan.source.startswith("sig_") else None
         outcome = self.gates.evaluate(
             plan, account, positions, trades_today, today_pnl,
             atr=view.atr, spread=view.spread,
             learning_min_rr=float(self.led.get_param("min_rr", "0") or 0),
             learning_min_grade=self.led.get_param("min_grade", ""),
             last_loss_ts=last_loss,
+            channel_stats=ch_stats,
         )
 
         # ۹) ثبت در دفتر کل (شفافیت کامل)

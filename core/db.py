@@ -405,3 +405,27 @@ class Ledger:
             "SELECT max(closed_at) as last_loss FROM trades WHERE pnl < 0"
         ).fetchone()
         return float(row["last_loss"]) if row and row["last_loss"] else 0.0
+
+    def get_source_stats(self, source: str) -> dict:
+        """کارنامه آماری عملکرد یک کانال یا منبع سیگنال."""
+        row = self._con.execute(
+            """
+            SELECT count(*) as total,
+                   sum(case when pnl > 0 then 1 else 0 end) as wins,
+                   sum(pnl) as net_pnl
+            FROM trades
+            WHERE source = ?
+            """,
+            (source,),
+        ).fetchone()
+        if not row or row["total"] == 0:
+            return {"total": 0, "wins": 0, "win_rate": 0.0, "net_pnl": 0.0}
+        total = int(row["total"])
+        wins = int(row["wins"] or 0)
+        net_pnl = float(row["net_pnl"] or 0.0)
+        return {
+            "total": total,
+            "wins": wins,
+            "win_rate": round(wins / total * 100, 1),
+            "net_pnl": round(net_pnl, 2),
+        }
