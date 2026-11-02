@@ -99,6 +99,63 @@ def save_forwarded_messages():
     except Exception as e:
         logger.error(f"⛔ Error saving forwarded messages: {e}")
 
+def pipe_to_hermes(source_name: str, msg_id: int, text: str) -> None:
+    """انتقال مستقیم سیگنال‌های متنی به پایپ‌لاین و دیتابیس هرمس."""
+    if not text or not text.strip():
+        return
+    try:
+        import re
+        import sqlite3
+        from datetime import datetime, timezone
+        from pathlib import Path
+
+        hermes_dir = Path("/home/ai/hermes-trading")
+        sig_file = hermes_dir / "data" / "signals" / "signals_log.json"
+        db_file = hermes_dir / "data" / "hermes.db"
+
+        # بررسی اینکه آیا پیام حاوی نماد یا کلمات معاملاتی است
+        if not re.search(r"XAU|GOLD|طلا|BUY|SELL|خرید|فروش", text, re.IGNORECASE):
+            return
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        entry = {
+            "id": f"tg-{msg_id}",
+            "timestamp": now_iso,
+            "source": source_name,
+            "raw_text": text.strip(),
+        }
+
+        # ۱. ذخیره در signals_log.json
+        items = []
+        if sig_file.exists():
+            try:
+                raw = json.loads(sig_file.read_text(encoding="utf-8"))
+                items = raw if isinstance(raw, list) else raw.get("data", [])
+            except Exception:
+                items = []
+
+        items.append(entry)
+        if len(items) > 300:
+            items = items[-300:]
+
+        sig_file.parent.mkdir(parents=True, exist_ok=True)
+        sig_file.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+        logger.info(f"⚡ سیگنال کانال «{source_name}» به پایپ‌لاین هرمس ارسال شد.")
+
+        # ۲. ذخیره در جدول signals دیتابیس hermes.db
+        if db_file.exists():
+            con = sqlite3.connect(db_file, timeout=5)
+            con.execute(
+                """INSERT OR IGNORE INTO signals (signal_id, raw_text, timestamp)
+                   VALUES (?, ?, ?)""",
+                (f"tg-{msg_id}", text.strip(), now_iso)
+            )
+            con.commit()
+            con.close()
+    except Exception as e:
+        logger.warning(f"pipe_to_hermes error: {e}")
+
+
 # ---------------------------
 # هندلر پیام جدید
 # ---------------------------
@@ -150,6 +207,8 @@ async def forward_one(msg, source_id):
         forwarded_messages[(source_id, msg.id)] = sent.id
         save_forwarded_messages()
         logger.info(f"✅ Forwarded message from {source_name} (ID {msg.id})")
+        if caption_text:
+            pipe_to_hermes(source_name, msg.id, caption_text)
         return sent.id
     except Exception as e:
         logger.error(f"⛔ Error while sending message: {e}")
