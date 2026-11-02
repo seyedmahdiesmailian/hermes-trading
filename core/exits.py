@@ -60,6 +60,7 @@ class ExitManager:
         atr: float = 0.0,
         atr_sl_mult: float = 1.5,
         atr_trail_mult: float = 2.5,
+        swing_sl: float = 0.0,
     ) -> Optional[tuple[ExitReason, float]]:
         """ارزیابی گام‌به‌گام پوزیشن باز جهت بستن کامل، بستن پله‌ای یا تعدیل استاپ.
 
@@ -109,8 +110,8 @@ class ExitManager:
             if self._cfg.partial_enabled and r_achieved >= self._cfg.partial_tp_rr:
                 self._trigger_partial_if_needed(pos)
 
-            # ۱.ب) ترلینگ چندمرحله‌ای بر مبنای ATR
-            self._manage_dynamic_atr_trail(pos, r_achieved, atr)
+            # ۱.ب) ترلینگ چندمرحله‌ای بر مبنای ATR و سوئینگ ساختاری
+            self._manage_dynamic_atr_trail(pos, r_achieved, atr, swing_sl=swing_sl)
             return None
 
         # ── پلن‌های دارای TP و SL (سیگنال کانال / واچ‌لیست) ──
@@ -121,7 +122,14 @@ class ExitManager:
         # ۳ و ۴) مدیریت استاپ: ترلینگ استاپ یا انتقال به نقطه ورود (Breakeven)
         if pos.tp > 0 and pos.sl > 0 and r_mult >= self._cfg.trailing_start_rr:
             new_sl = self._trail_sl_with_tp(pos)
-            if new_sl is not None:
+            # b251: پشتیبانی از تریلینگ ساختاری سوئینگ در صورت سود بالاتر
+            if swing_sl > 0:
+                if pos.is_buy and swing_sl < pos.current_price:
+                    new_sl = max(new_sl or 0.0, swing_sl)
+                elif not pos.is_buy and swing_sl > pos.current_price:
+                    new_sl = min(new_sl or 999999.0, swing_sl) if (new_sl or 0.0) > 0 else swing_sl
+
+            if new_sl is not None and new_sl > 0:
                 self._modify(pos, new_sl, reason="trailing")
             else:
                 self._apply_breakeven_with_buffer(pos)
@@ -130,10 +138,12 @@ class ExitManager:
 
         return None
 
-    # ── ترلینگ چندمرحله‌ای ATR (Multi-Stage Trailing) ───────
+    # ── ترلینگ چندمرحله‌ای ATR و ساختاری (Multi-Stage Trailing) ─
 
-    def _manage_dynamic_atr_trail(self, pos: BrokerPosition, r_achieved: float, atr: float) -> None:
-        """ترلینگ داینامیک و پلکانی در رالی‌های بزرگ طلا برای پوزیشن‌های بدون TP."""
+    def _manage_dynamic_atr_trail(
+        self, pos: BrokerPosition, r_achieved: float, atr: float, swing_sl: float = 0.0
+    ) -> None:
+        """ترلینگ داینامیک و پلکانی در رالی‌های بزرگ طلا با پشتیبانی از استاپ ساختاری سوئینگ."""
         be_rr = self._cfg.breakeven_rr
         trail_rr = self._cfg.trailing_start_rr
 
@@ -154,7 +164,9 @@ class ExitManager:
         buffer = BREAKEVEN_BUFFER_POINTS
         if pos.is_buy:
             new_sl = round(pos.current_price - trail_dist, 2)
-            # تضمین راچت: استاپ ترلینگ هرگز نباید عقب‌تر از Breakeven+buffer برود
+            # b251: اگر استاپ ساختاری سوئینگ معتبر باشد، استاپ را به بالاترین سطح ایمن ارتقا بده
+            if swing_sl > 0 and swing_sl < pos.current_price:
+                new_sl = max(new_sl, swing_sl)
             target_be = round(pos.open_price + buffer, 2)
             if new_sl < target_be and target_be < pos.current_price:
                 new_sl = target_be
@@ -162,7 +174,9 @@ class ExitManager:
                 self._modify(pos, new_sl, reason="trailing")
         else:
             new_sl = round(pos.current_price + trail_dist, 2)
-            # تضمین راچت: استاپ ترلینگ هرگز نباید عقب‌تر از Breakeven-buffer برود
+            # b251: اگر استاپ ساختاری سوئینگ معتبر باشد، استاپ را به پایین‌ترین سطح ایمن ارتقا بده
+            if swing_sl > 0 and swing_sl > pos.current_price:
+                new_sl = min(new_sl, swing_sl)
             target_be = round(pos.open_price - buffer, 2)
             if new_sl > target_be and target_be > pos.current_price:
                 new_sl = target_be

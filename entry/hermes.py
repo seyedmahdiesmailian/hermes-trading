@@ -480,6 +480,7 @@ class HermesDaemon:
         # ATR زنده برای مسیر trailing تحلیلی (پلن‌های بدون TP)
         # وقتی پوزیشن باز است entry loop رد می‌شود → اینجا تازه‌سازی می‌کنیم
         tick = None
+        candles = []
         try:
             candles = self.mt5.get_candles(
                 self.cfg.symbol, self.cfg.analysis.timeframe, self.cfg.analysis.candle_count
@@ -530,9 +531,18 @@ class HermesDaemon:
                     self._close_position(pos, ExitReason.TAKE_PROFIT, hit)
                     continue
 
-            # ATR زنده برای مسیر trailing تحلیلی (پلن‌های بدون TP)
+            # ATR زنده و استاپ ساختاری سوئینگ برای تریلینگ پیشرفته
+            swing_sl = 0.0
+            if candles and len(candles) >= 12:
+                recent_closed = candles[-12:-1]  # ۳ ساعت اخیر کندل‌های بسته‌شده M15
+                buffer = round(self._last_atr * 0.15, 2) if self._last_atr > 0 else 0.5
+                if pos.is_buy:
+                    swing_sl = round(min(c.low for c in recent_closed) - buffer, 2)
+                else:
+                    swing_sl = round(max(c.high for c in recent_closed) + buffer, 2)
+
             # منطق خروج مشترک — همان کدی که بک‌تستر اجرا می‌کند
-            decision = self.exits.manage(pos, now, atr=self._last_atr)
+            decision = self.exits.manage(pos, now, atr=self._last_atr, swing_sl=swing_sl)
             if decision is not None:
                 exit_reason, exit_price = decision
                 self._close_position(pos, exit_reason, exit_price)

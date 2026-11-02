@@ -203,6 +203,7 @@ class Signal:
     confidence: float
     timestamp: str            # ISO utc
     parsed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    source: str = ""
 
     @property
     def is_valid(self) -> bool:

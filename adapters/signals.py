@@ -170,6 +170,7 @@ class SignalsAdapter:
                 rr=round(rr, 2),
                 confidence=confidence,
                 timestamp=ts_str or datetime.now(timezone.utc).isoformat(),
+                source=str(item.get("source", "")),
             )
         except Exception as e:
             log.warning("خطا در پردازش سیگنال: %s", e)

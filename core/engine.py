@@ -732,7 +732,7 @@ class Engine:
             take_profit=sig.tp,
             volume=0.0,
             grade=grade,
-            source="signal",
+            source=f"sig_{sig.source}" if getattr(sig, "source", "") else "signal",
             timeframe=timeframe,
             rr=round(rr, 3),
             confidence=sig.confidence,

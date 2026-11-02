@@ -2323,6 +2323,52 @@ class TestWatchlistEngine:
         assert res_max_concurrent.allowed is False
         assert any("max_concurrent_limit" in r for r in res_max_concurrent.reasons)
 
+    def test_b251_structural_swing_trailing_and_signal_source(self):
+        """b251: Test structural swing trailing stop tightening and signal channel attribution."""
+        from core.exits import ExitManager
+        from core.params import PositionCfg
+        from core.engine import Engine, MarketView
+
+        pos_cfg = PositionCfg(
+            trailing_start_rr=1.5, breakeven_rr=1.0, max_hold_hours=24,
+            partial_tp_rr=1.5, partial_enabled=True,
+        )
+        modified_tickets = {}
+
+        def _on_modify(ticket, sl, tp=0.0, reason="modify"):
+            modified_tickets[ticket] = (sl, reason)
+
+        exits = ExitManager(pos_cfg, on_modify=_on_modify)
+
+        # 1) Position in profit (BUY open=2000, current=2040, SL=2015, ATR=5.0)
+        # ATR trail would set: 2040 - 2.0*5.0 = 2030.0
+        # Swing Low is 2033.0 (higher structural protection) -> Swing trail tightens to 2033.0!
+        buy_pos = BrokerPosition(
+            ticket=201, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2040.0, sl=2015.0, tp=0.0,
+            profit=400.0, swap=0.0, open_time=int(time.time()), initial_sl=1990.0,
+        )
+        exits.manage(buy_pos, time.time(), atr=5.0, swing_sl=2033.0)
+        assert 201 in modified_tickets
+        sl_set, reason = modified_tickets[201]
+        assert sl_set == 2033.0  # Uses higher swing SL instead of 2030.0!
+
+        # 2) Channel source attribution on Signal -> Plan
+        engine = Engine()
+        sig = Signal(
+            signal_id="sig-radin-1", raw_text="BUY GOLD 2050", symbol="XAUUSD",
+            side=Side.BUY, entry=2050.0, sl=2040.0, tp=2070.0, rr=2.0,
+            confidence=0.9, timestamp="2026-11-02T12:00:00Z", source="RADIN VIP NEW ⚡",
+        )
+        view = MarketView(
+            trend="bullish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2050.5, support=2030.0, resistance=2080.0,
+        )
+        plan = engine.plan_from_signal(sig, view)
+        assert plan is not None
+        assert plan.source == "sig_RADIN VIP NEW ⚡"
+
+
 
 
 
