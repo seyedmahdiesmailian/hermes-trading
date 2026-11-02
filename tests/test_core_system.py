@@ -2218,6 +2218,52 @@ class TestWatchlistEngine:
         assert plan_approved.side == Side.SELL
         assert plan_approved.source == "smc_fvg"
 
+    def test_b249_multi_timeframe_h4_and_flat_range_filter(self):
+        """b249: Engine integrates H4 macro trend, rejects flat range (trend_strength < 0.15), and uses H1 dealing range."""
+        from core.engine import Engine, MarketView
+        from core.smc import SMCAnalyzer, ZoneType
+        engine = Engine()
+        base_t = 1700000000
+
+        # 1) Rejection of flat market when trend_strength < 0.15
+        flat_candles = [
+            Candle(time=base_t + i*900, open=2000.0, high=2001.0, low=1999.0, close=2000.0, volume=100)
+            for i in range(65)
+        ]
+        flat_tick = Tick(symbol="XAUUSD", bid=2000.0, ask=2000.2, time=base_t + 65*900)
+        flat_view = engine.analyze(flat_candles, flat_tick, check_news=False)
+        assert flat_view.trend_strength < 0.15
+        flat_plan = engine.plan_from_analysis(flat_candles, flat_view)
+        assert flat_plan is None  # Blocked by trend_strength filter!
+
+        # 2) H4 candles integration in analyze() and plan_from_analysis()
+        m15_bull_candles = [
+            Candle(time=base_t + i*900, open=2000.0 + i*0.5, high=2002.0 + i*0.5, low=1998.0 + i*0.5, close=2001.0 + i*0.5, volume=100)
+            for i in range(65)
+        ]
+        h4_bear_candles = [
+            Candle(time=base_t + i*14400, open=2100.0 - i*3.0, high=2102.0 - i*3.0, low=2095.0 - i*3.0, close=2097.0 - i*3.0, volume=1000)
+            for i in range(30)
+        ]
+        view_with_h4 = engine.analyze(
+            m15_bull_candles, Tick("XAUUSD", 2033.0, 2033.2, base_t + 65*900),
+            h4_candles=h4_bear_candles, check_news=False,
+        )
+        assert view_with_h4.h4_bias == "BEARISH"
+        # M15 is bullish, but H4 is strongly BEARISH -> BUY must be rejected by H4 macro veto!
+        plan_blocked_by_h4 = engine.plan_from_analysis(m15_bull_candles, view_with_h4, h4_candles=h4_bear_candles)
+        assert plan_blocked_by_h4 is None
+
+        # 3) SMC detect_premium_discount uses H1 candles for dealing range
+        h1_candles = [
+            Candle(time=base_t + i*3600, open=2000.0, high=2080.0 if i == 10 else 2020.0, low=1920.0 if i == 15 else 1980.0, close=1990.0, volume=500)
+            for i in range(30)
+        ]
+        zone, fib, swing_h, swing_l = SMCAnalyzer.detect_premium_discount(flat_candles, h1_candles=h1_candles)
+        assert swing_h == 2080.0
+        assert swing_l == 1920.0
+
+
 
 
 

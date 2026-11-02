@@ -386,11 +386,16 @@ class SMCAnalyzer:
         candles: list[Candle],
         h1_candles: Optional[list[Candle]] = None
     ) -> tuple[ZoneType, float, float, float]:
-        """محاسبه موقعیت قیمت نسبت به رنج سوئینگ درون‌روز اخیر (۰ تا ۱)."""
-        # رنج سوئینگ درون‌روز: ۲۸ کندل اخیر M15 (۷ ساعت معاملاتی اخیر)
-        ref_candles = candles[-28:] if len(candles) >= 28 else candles
-        highs = [c.high for c in ref_candles]
-        lows = [c.low for c in ref_candles]
+        """محاسبه موقعیت قیمت نسبت به رنج سوئینگ درون‌روز یا کلان (۰ تا ۱)."""
+        # b248: استفاده از دامنه ۲۴ ساعته H1 در صورت دسترسی، در غیر این صورت تا ۴۸ کندل M15 (۱۲ ساعت)
+        if h1_candles and len(h1_candles) >= 24:
+            ref_candles = h1_candles[-24:]
+            highs = [c.high for c in ref_candles]
+            lows = [c.low for c in ref_candles]
+        else:
+            ref_candles = candles[-48:] if len(candles) >= 48 else candles
+            highs = [c.high for c in ref_candles]
+            lows = [c.low for c in ref_candles]
 
         swing_high = max(highs)
         swing_low = min(lows)

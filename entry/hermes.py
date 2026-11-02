@@ -250,6 +250,13 @@ class HermesDaemon:
             except Exception as e:
                 log.warning("H1 candles fetch failed: %s", e)
 
+        h4_candles = []
+        if "H4" in self.cfg.analysis.higher_timeframes:
+            try:
+                h4_candles = self.mt5.get_candles(self.cfg.symbol, "H4", 50)
+            except Exception as e:
+                log.warning("H4 candles fetch failed: %s", e)
+
         tick = self.mt5.get_tick(self.cfg.symbol)
         account = self.mt5.get_account()
         positions = self.mt5.get_open_positions(self.cfg.symbol)
@@ -291,7 +298,8 @@ class HermesDaemon:
 
         view = self.eng.analyze(
             candles, tick, h1_candles=h1_candles,
-            eur_candles=eur_candles, jpy_candles=jpy_candles
+            eur_candles=eur_candles, jpy_candles=jpy_candles,
+            h4_candles=h4_candles,
         )
         self._last_atr = view.atr  # برای trailing تحلیلی در exit loop
         log.info(
@@ -369,13 +377,17 @@ class HermesDaemon:
 
         if plan is None and not positions and auto_allowed:
             # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
-            plan = self.eng.plan_from_smc(candles, view, h1_candles, self.cfg.analysis.timeframe)
+            plan = self.eng.plan_from_smc(
+                candles, view, h1_candles, self.cfg.analysis.timeframe, h4_candles=h4_candles
+            )
             if plan is not None:
                 log.info("تحلیل خودکار: ستاپ سازمانی SMC %s (%s) تشخیص داده شد", plan.side.value, plan.reasoning)
 
-            # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (گرید B با تاییدیه H1)
+            # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (گرید B با تاییدیه H1 و H4)
             if plan is None:
-                plan = self.eng.plan_from_analysis(candles, view, self.cfg.analysis.timeframe, h1_candles=h1_candles)
+                plan = self.eng.plan_from_analysis(
+                    candles, view, self.cfg.analysis.timeframe, h1_candles=h1_candles, h4_candles=h4_candles
+                )
                 if plan is not None:
                     log.info("تحلیل خودکار: ستاپ روند-EMA %s تشخیص داده شد", plan.side.value)
 

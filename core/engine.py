@@ -41,6 +41,7 @@ class MarketView:
     divergence: Optional[str] = None  # نوع واگرایی (BULLISH_REGULAR, BEARISH_REGULAR, ...)
     div_strength: float = 0.0   # قدرت واگرایی 0.0 .. 1.0
     usd_bias: str = "NEUTRAL"   # وضعیت شاخص دلار: "BULLISH" | "BEARISH" | "NEUTRAL"
+    h4_bias: str = "NEUTRAL"    # وضعیت روند ماژور ۴ ساعته: "BULLISH" | "BEARISH" | "NEUTRAL"
     smc: Optional[SMCView] = None
     news_blackout: bool = False
     news_reason: str = ""
@@ -94,6 +95,7 @@ class Engine:
         check_news: bool = True,
         eur_candles: Optional[list[Candle]] = None,
         jpy_candles: Optional[list[Candle]] = None,
+        h4_candles: Optional[list[Candle]] = None,
     ) -> MarketView:
         """تحلیل کامل بازار از داده‌های کندل، تیک و تقویم اقتصادی."""
         if len(candles) < 30:
@@ -148,7 +150,18 @@ class Engine:
         # ۵. وضعیت بین‌بازاری شاخص دلار (DXY Proxy)
         usd_bias = self.calculate_usd_bias(eur_candles, jpy_candles)
 
-        notes = f"ema20={ema_fast:.2f} ema50={ema_slow:.2f} rsi={current_rsi:.1f} div={div_type or 'none'} usd={usd_bias} smc_bias={smc_view.bias} kz={smc_view.killzone}"
+        # ۶. روند ماژور تایم‌فریم ۴ ساعته (H4 Macro Trend)
+        h4_bias = "NEUTRAL"
+        if h4_candles and len(h4_candles) >= 20:
+            h4_closes = [c.close for c in h4_candles]
+            h4_e20 = _ema(h4_closes, 20)
+            h4_e50 = _ema(h4_closes, 50)
+            if h4_closes[-1] > h4_e20 > h4_e50:
+                h4_bias = "BULLISH"
+            elif h4_closes[-1] < h4_e20 < h4_e50:
+                h4_bias = "BEARISH"
+
+        notes = f"ema20={ema_fast:.2f} ema50={ema_slow:.2f} rsi={current_rsi:.1f} div={div_type or 'none'} usd={usd_bias} h4={h4_bias} smc_bias={smc_view.bias} kz={smc_view.killzone}"
 
         return MarketView(
             trend=trend,
@@ -162,6 +175,7 @@ class Engine:
             divergence=div_type,
             div_strength=div_strength,
             usd_bias=usd_bias,
+            h4_bias=h4_bias,
             smc=smc_view,
             news_blackout=news_blackout,
             news_reason=news_reason,
@@ -176,6 +190,7 @@ class Engine:
         view: MarketView,
         timeframe: str = "M15",
         h1_candles: Optional[list[Candle]] = None,
+        h4_candles: Optional[list[Candle]] = None,
     ) -> Optional[Plan]:
         """ساخت پلن ورود بر مبنای تلفیق ستاپ روند-EMA و تاییدیه SMC/ICT."""
         # فیلتر ۱: مسدود بودن در زمان اخبار داغ
@@ -184,6 +199,11 @@ class Engine:
             return None
 
         if len(candles) < 60 or view.atr <= 0:
+            return None
+
+        # b248: فیلتر کف قدرت روند — وتوی ورود در فاز رنج بدون روند
+        if view.trend_strength < 0.15:
+            log.info("تحلیل خودکار رد شد: قدرت روند ضعیف است (%.2f < 0.15) — بازار در فاز رنج", view.trend_strength)
             return None
 
         closes = [c.close for c in candles[-60:]]
@@ -209,6 +229,18 @@ class Engine:
                 return None
             if side == Side.BUY and h1_closes[-1] < h1_e20 < h1_e50:
                 log.info("تحلیل خودکار رد شد: خرید در M15 در تضاد با روند نزولی قدرتمند H1")
+                return None
+
+        # فیلتر روند ماژور ۴ ساعته (H4 Macro Trend Filter)
+        if h4_candles and len(h4_candles) >= 20:
+            h4_closes = [c.close for c in h4_candles]
+            h4_e20 = _ema(h4_closes, 20)
+            h4_e50 = _ema(h4_closes, 50)
+            if side == Side.SELL and h4_closes[-1] > h4_e20 > h4_e50:
+                log.info("تحلیل خودکار رد شد: فروش در M15 در تضاد با روند صعودی ماژور H4")
+                return None
+            if side == Side.BUY and h4_closes[-1] < h4_e20 < h4_e50:
+                log.info("تحلیل خودکار رد شد: خرید در M15 در تضاد با روند نزولی ماژور H4")
                 return None
 
         # فیلتر ۲: عدم تعقیب قیمت امتدادیافته (Anti-Chasing Mean Reversion Filter)
@@ -300,7 +332,8 @@ class Engine:
         candles: list[Candle],
         view: MarketView,
         h1_candles: Optional[list[Candle]] = None,
-        timeframe: str = "M15"
+        timeframe: str = "M15",
+        h4_candles: Optional[list[Candle]] = None,
     ) -> Optional[Plan]:
         """ساخت ستاپ‌های اختصاصی و سازمانی پرایس‌اکشن هوشمند SMC/ICT (گرید A+)."""
         if view.news_blackout or not view.smc or len(candles) < 30:
@@ -320,6 +353,16 @@ class Engine:
                 h1_bias = "BULLISH"
             elif h1_closes[-1] < h1_e20 < h1_e50:
                 h1_bias = "BEARISH"
+
+        h4_bias = view.h4_bias if hasattr(view, "h4_bias") else "NEUTRAL"
+        if h4_bias == "NEUTRAL" and h4_candles and len(h4_candles) >= 20:
+            h4_closes = [c.close for c in h4_candles]
+            h4_e20 = _ema(h4_closes, 20)
+            h4_e50 = _ema(h4_closes, 50)
+            if h4_closes[-1] > h4_e20 > h4_e50:
+                h4_bias = "BULLISH"
+            elif h4_closes[-1] < h4_e20 < h4_e50:
+                h4_bias = "BEARISH"
 
         # ── ۱. ستاپ شکار نقدینگی سشن آسیا (Judas Swing) ──
         if smc.judas_swing == "BEARISH_JUDAS":
