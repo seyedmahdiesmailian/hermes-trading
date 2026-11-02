@@ -1,0 +1,308 @@
+# مستند جامع معماری، زیرساخت و مهندسی سیستم معاملاتی هرمس (Hermes Trading Master Architecture)
+
+این سند مرجع نهایی و جامع (Single Source of Truth) برای درک کامل ساختار، معماری، فایل‌ها، ارتباطات شبکه و منطق اجرایی کل سیستم معاملاتی هرمس در هر دو سرور لینوکس و ویندوز است. این مستند به طور ویژه برای بررسی انسانی و هدایت ایجنت‌های هوش مصنوعی (AI Agents) آینده تدوین شده تا بدون خطا و با شناخت عمیق از ریشه‌ها و جزئیات سیستم عمل کنند.
+
+---
+
+## ۱. فلسفه کلان و اصول بنیادین معماری (Core Architecture Philosophy)
+
+۱. **تفکیک قطعی مغز از بازوی اجرایی (Brain on Linux, Execution Slave on Windows):**
+   - **سرور لینوکس (Ubuntu 24 - 192.168.10.18):** مغز متفکر، تحلیل‌گر، ریسک‌سنج، پایگاه داده و هماهنگ‌کننده تمام فرآیندها.
+   - **سرور ویندوز (Windows VM - 192.168.10.51):** صرفاً یک بازوی فیزیکی (Slave) برای اجرای دستورات در ترمینال MetaTrader 5 از طریق یک وب‌سرویس سبک (Bridge). هیچ تصمیم‌گیری، استراتژی یا تحلیلی روی ویندوز انجام نمی‌شود.
+۲. **قانون «یک پروسه، یک حلقه، یک حقیقت» (One Daemon, One Loop, One Truth):**
+   - کل سامانه لایو در قالب یک پروسه دیمن متمرکز به نام `hermes-daemon.service` اجرا می‌شود.
+   - تمام فرآیندهای تحلیل، ارزیابی، مدیریت ریسک، ارسال سفارش و خروج در یک حلقه خطی بدون ریسک قفل پایگاه‌داده (Database Locking) یا تداخل چند پروسه پردازش می‌شوند.
+۳. **قانون مسیر مشترک خروج (Unified Exits for Live and Backtest):**
+   - منطق مدیریت پوزیشن و خروج (`core/exits.py`) بین دیمن زنده و شبیه‌ساز بک‌تست ۱۰۰٪ مشترک است. بک‌تستر دقیقاً همان کلاسی را صدا می‌زند که دیمن زنده برای Trailing Stop، Breakeven، Partial TP و خروج زمانی صدا می‌زند.
+۴. **معماری محافظتی Fail-Closed (دروازه‌های بدون تعارف):**
+   - در صورت قطع ارتباط با بریج، تاخیر بالای شبکه، اسپرد نامتعارف، اخبار با تاثیر بالا یا نقص داده، سیستم در وضعیت «ورود ممنوع» (Fail-Closed) قفل می‌شود. هیچ سفارشی با داده ناقص یا نامطمئن تایید نخواهد شد.
+۵. **حذف کامل دخالت دستی (100% Fully Autonomous):**
+   - هیچ فرمانی برای تایید انسانی، دکمه ورود دستی یا تایید تلگرامی وجود ندارد. سیستم کامپیوتر-محور است و به صورت خودکار تصمیم می‌گیرد و گزارش می‌دهد.
+
+---
+
+## ۲. توپولوژی زیرساخت شبکه و سرورها (Infrastructure & Topology)
+
+```
+                       ┌────────────────────────────────────────────────────────┐
+                       │                   TELEGRAM ECOSYSTEM                   │
+                       │  • VIP Signal Channels (Raw Signals)                   │
+                       │  • User Control Chat (Notifications & Ops Commands)    │
+                       └───────────────────▲─────────────────▲──────────────────┘
+                                           │                 │
+                           MTProto (Listen)│                 │ Bot API / Webhook
+                                           │                 │
+┌──────────────────────────────────────────▼─────────────────▼────────────────────────────────────────┐
+│ LINUX HOST: Ubuntu 24.04 LTS (192.168.10.18) — "THE BRAIN"                                          │
+│                                                                                                     │
+│  [ hermes-forwarder.service ]                                                                       │
+│    └─ python main.py (Telethon MTProto listener)                                                    │
+│        └─ Streams & parses raw channel messages -> writes to data/signals/signals_log.json         │
+│                                                                                                     │
+│  [ hermes-daemon.service ] (MAIN ENGINE)                                                            │
+│    └─ entry/hermes.py (HermesDaemon)                                                                │
+│        ├─ Entry Loop (every 300s): M15 Analysis + H1/H4 Multi-Timeframe + SMC Setups                │
+│        │    ├─ core/engine.py (Technical & SMC Confluence)                                          │
+│        │    ├─ core/smc.py (Order Blocks, FVG, Liquidity Sweeps, Judas Swing, Dealing Range)        │
+│        │    ├─ core/gates.py (Fail-Closed Risk Gatekeeper, Sizing, Cooldown Circuit)               │
+│        │    └─ adapters/mt5.py (HTTP Client w/ Retries & Bearer Auth)                               │
+│        ├─ Exit Loop (every 15s): Active Trade Management                                            │
+│        │    ├─ core/exits.py (Dynamic ATR Trailing, 1.0R Breakeven, 1.5R Partial TP, Time Exit)     │
+│        │    └─ Broker Deal Reconciliation                                                           │
+│        └─ Persistence & Notify                                                                      │
+│             ├─ core/db.py (SQLite: hermes.db — WAL mode)                                            │
+│             └─ adapters/notify.py (Telegram alerts on entry, partial, exit, guard denial)           │
+│                                                                                                     │
+│  [ hermes-command-bot.service ] & [ hermes-dashboard.service ]                                      │
+│    └─ Telegram interactive controls (/status, /stats) and read-only ops metric broadaster           │
+│                                                                                                     │
+│  [ hermes-webui.service ]                                                                           │
+│    └─ FastAPI LAN dashboard at http://192.168.10.18:9119 (Basic Auth)                               │
+│                                                                                                     │
+│  [ omniroute.service ]                                                                              │
+│    └─ Local AI Router on port 20128 (antigravity/gemini-3.8-flash-high proxy)                      │
+└──────────────────────────────────────────▲──────────────────────────────────────────────────────────┘
+                                           │ HTTP REST (Port 5050)
+                                           │ Bearer Auth: $HERMES_BRIDGE_TOKEN
+                                           │ WinRM (Management / Port 5985)
+┌──────────────────────────────────────────▼──────────────────────────────────────────────────────────┐
+│ WINDOWS VM: Windows Server (192.168.10.51 - SRV-TRADING) — "EXECUTION SLAVE"                        │
+│                                                                                                     │
+│  Session 1 (Interactive GUI Desktop Session — Autologon Administrator):                             │
+│    ├─ terminal64.exe (MetaTrader 5 Build 4400+, Broker: CapitalxtendLLC-MU, Acct: 10382667)         │
+│    └─ C:\Hermes\Bridge\bridge.py (Waitress WSGI Production Server listening on 0.0.0.0:5050)        │
+│                                                                                                     │
+│  Endpoints Exposed:                                                                                 │
+│    GET  /health              -> Liveness probe (no auth required)                                   │
+│    GET  /api/account         -> Balance, Equity, Margin, Free Margin                                │
+│    GET  /api/tick/<symbol>   -> Bid, Ask, Spread, Last Price                                        │
+│    GET  /api/ohlc/<symbol>   -> High-speed Candle array (M1, M5, M15, H1, H4, D1)                   │
+│    GET  /api/positions       -> Live Open Positions (Ticket, Magic, Lots, SL, TP, Open Price)       │
+│    GET  /api/history/deals   -> Closed Deals & Realized PnL / Swaps / Commissions                   │
+│    POST /api/order           -> Market Orders (BUY/SELL with initial SL & TP)                       │
+│    POST /api/close           -> Full Position Market Close                                          │
+│    POST /api/partial         -> Partial Lot Close (e.g. 50% lot closure)                            │
+│    POST /api/modify          -> Dynamic SL/TP Modification                                          │
+│                                                                                                     │
+│  Disks: C:\ (33.7 GB Free - Primary System & Backups), D:\ (FULL - Frozen/Unused)                    │
+│  Startup: C:\Users\Administrator\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup       │
+│           ├── MT5.lnk (Terminal Autostart)                                                          │
+│           └── Start_Hermes_Bridge.bat (Bridge Autostart via Waitress)                               │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ۳. تاریخچه دگرگونی معماری هرمس (Evolution Eras)
+
+برای اینکه هر ایجنتی متوجه چرایی ساختار فعلی شود، شناخت سه دوره تاریخی الزامی است:
+
+### دوره اول: معماری مونولیت ویندوز (قبل از شهریور ۱۴۰۵ / August 2026)
+- **وضعیت:** تمام سیستم (تحلیل، اسکریپت‌ها، پایتون و متاتریدر) روی یک دسکتاپ ویندوز سرور قرار داشت (`Hermes_Full_Backup_20260813_171201`).
+- **مشکلات و سقوط:** فایل‌های CSV برای ذخیره وضعیت، ساب‌ایجنت‌های کران‌جاب که هنگ می‌کردند، کرش‌های مکرر درایور متاتریدر، و در نهایت ۶ ضرر سنگین متوالی که منجر به نابودی بالانس اکانت شد.
+- **نتیجه:** کاربر مهدی تصمیم به بازنویسی کامل گرفت: لینوکس به عنوان مغز اصلی انتخاب شد و ویندوز صرفاً به یک مجری ساده تبدیل شد.
+
+### دوره دوم: فاز افراط در مهندسی و لایه‌های پوچ (شهریور تا مهر ۱۴۰۵ / Sept - Oct 2026)
+- **وضعیت:** توسعه‌دهندگان قبلی سیستم را وارد پیچیدگی افراطی کردند: تفکیک به ۵ سرویس سیستمی مجزا (`hermes-trading.service`، `hermes-position.service`، `hermes-signal.service`، `hermes-telegram-listener.service` و تایمرها)، استفاده از پروتکل‌های پیچیده ZeroMQ، WinRM برای هر معامله، و لایه‌بندی‌های تئوریک تمیز معماری پیاز (Onion Architecture).
+- **مشکلات:** سرویس پوزیشن با سرویس ورود بر سر فایل SQLite با خطای `database is locked` می‌جنگید؛ تایمرها از هم عقب می‌افتادند؛ اسکریپت بک‌تست یک فرمول برای خروج داشت و دیمن زنده فرمولی دیگر. کاربر مهدی با عصبانیت این ساختار را پس زد: *"گرفتی منو تو با این ساختارت!"*
+
+### دوره سوم: معماری ریست ۲۵ مهر (Modern Unified Architecture - Oct 16, 2026 تا امروز)
+- **وضعیت:** بازگشت به سادگی و کارآمدی اصیل. تمام سرویس‌های تکه‌تکه متوقف (`retired`) شدند.
+- **دستاورد:**
+  - یک پروسه واحد: `hermes-daemon.service` که توسط `entry/hermes.py` اجرا می‌شود.
+  - یک ماژول برای خروج: `core/exits.py` که هم در لایو و هم در بک‌تست عیناً اجرا می‌شود.
+  - ارتباط لینوکس با ویندوز فقط از طریق HTTP REST روی پورت ۵۰۵۰ با توکن پایدار Bearer.
+  - مدیریت ریسک Fail-Closed با محاسبه ارزش واقعی نوسان (ATR) و مدارهای محافظتی Cooldown.
+
+---
+
+## ۴. ساختار درختی فایل‌ها و تشریح تک‌تک پوشه‌ها و ماژول‌ها
+
+در ادامه، جزئیات هر پوشه، فایل و وظیفه خط به خط آن در مخزن `/home/ai/hermes-trading` شرح داده شده است:
+
+### ۱. پوشه هسته محاسباتی (`core/`) — خالص و مستقل از فریمورک
+این پوشه قلب الگوریتمی سیستم است و هیچ وابستگی به شبکه یا تلگرام ندارد:
+- `entities.py`: موجودیت‌های بنیادی سیستم در قالب Dataclassهای منجمد و Enumها:
+  - `Candle` (کندل قیمت با اوپن، های، لو، کلوز و زمان)، `Tick` (تیک زنده بازار و اسپرد).
+  - `Side` (BUY / SELL)، `OrderStatus` (PENDING, FILLED, REJECTED, CANCELLED).
+  - `BrokerPosition` (پوزیشن باز در متاتریدر با حجم، استاپ، تارگت و سود شناور).
+  - `Trade` (ژورنال معامله بسته‌شده با PnL قطعی، کمیسیون، سواپ و دلیل خروج).
+  - `ExitReason` (STOP_LOSS, TAKE_PROFIT, TRAILING_STOP, BREAKEVEN, PARTIAL_TP, TIME_EXIT, MANUAL).
+  - `SetupGrade` (A+, A, B, C برای رتبه‌بندی کیفیت ورود)، `Plan` (نقشه کامل معامله قبل از ورود).
+- `params.py`: ساختار پیکربندی شیءگرا و اعتبارسنجی تنظیمات:
+  - کلاس‌های `BridgeCfg`، `LoopCfg`، `Gates`، `PositionCfg`، `AnalysisCfg`، `LearningCfg` و `Config`.
+  - تابع `load_config(path, token)` که فایل `config.yaml` را پارس کرده و مقادیر حیاتی را Fail-Closed بررسی می‌کند.
+- `engine.py`: موتور ارزیابی چندبعدی بازار (`Engine`):
+  - `analyze(...)`: محاسبه EMA20/50، نوسان ATR(14)، خطوط حمایت/مقاومت کلاسیک، واگرایی مومنتوم RSI، شاخص بین‌بازاری دلار (DXY Proxy بر مبنای EURUSD/USDJPY)، ادغام ساختار SMC و سنجش ترند H1 و H4.
+  - `plan_from_analysis(...)`: استراتژی روند EMA روی M15 با تاییدیه H1 و H4 و فیلتر کف قدرت روند (`trend_strength >= 0.15`).
+  - `plan_from_smc(...)`: استراتژی‌های پیشرفته سازمانی Smart Money با گرید A+ (شکار نقدینگی Judas، اردر بلاک‌ها، FTR، FVG با تاییدیه Consequent Encroachment 50%).
+  - `plan_from_signal(...)`: اعتبارسنجی و تبدیل سیگنال‌های کانال‌های تلگرامی به پلن معاملاتی.
+- `smc.py`: تحلیلگر مفاهیم اسمارت مانی و پرایس‌اکشن سازمانی (`SMCAnalyzer`):
+  - شناسایی Break of Structure (BOS) و Change of Character (CHOCH).
+  - شناسایی Order Blockهای صعودی و نزولی و بررسی میتیگیشن (Mitigated / Unmitigated).
+  - شناسایی گپ‌های ارزش منصفانه (Fair Value Gaps - FVG) و محاسبه تراز تعادل ۵۰٪ (Midpoint / Consequent Encroachment).
+  - تشخیص هانت نقدینگی (Liquidity Sweep) در سقف و کف‌های سوئینگ.
+  - تشخیص الگوی شکار سشن آسیا در آغاز سشن لندن (Judas Swing).
+  - محاسبه محدوده Dealing Range (Premium vs Discount) بر مبنای رنج ۲۴ ساعته H1 یا ۴۸ کندل M15.
+  - الگوهای RTM: کوازیمودو (Quasimodo Pattern - QML) و نواحی شکست FTR (Failure To Return).
+- `gates.py`: دروازه‌بان ریسک و ایمنی سرمایه (`GatesEngine`):
+  - اجرای فیلترهای نفوذناپذیر قبل از ارسال هر اردر:
+    ۱. مدار قفل استراحت ۴۵ دقیقه‌ای پس از هر ضرر (`loss_cooldown_minutes`).
+    ۲. سقف پوزیشن‌های باز همزمان (حداکثر ۱ پوزیشن در طلا).
+    ۳. سقف تعداد معاملات روزانه (حداکثر ۵ معامله در روز).
+    ۴. سقف ضرر مجاز روزانه (حداکثر ۵٪ موجودی -> قفل کامل روز).
+    ۵. کف نسبت ریوارد به ریسک (`min_rr: 1.0`).
+    ۶. حداقل گرید مورد قبول (`min_grade: B`).
+    ۷. حداقل فاصله مجاز استاپ‌لاس بر مبنای نوسان (`min_atr_stop_mult: 2.0`).
+    ۸. حداکثر اسپرد مجاز بروکر (`max_spread_points: 3.0`).
+  - تعیین حجم پویا (Position Sizing) بر اساس گرید معامله و درصد ریسک مجاز از اکوئیتی حساب.
+- `exits.py`: مدیر خروج واحد و یکپارچه (`ExitManager`):
+  - `manage(...)`: بررسی خروج زمانی (`max_hold_hours: 24`).
+  - مدیریت Trailing Stop داینامیک بر اساس مضرب ATR و R-Multiple.
+  - انتقال استاپ‌لاس به نقطه ورود با بافر امنیتی (Breakeven) پس از دستیابی به ۱.۰R سود.
+  - بستن ۵۰٪ از حجم پوزیشن و سیو سود پله‌ای (Partial TP) در سود ۱.۵R.
+- `db.py`: انبار داده و ژورنال معاملات SQLite (`Ledger`):
+  - مدیریت جداول: `plans`، `orders`، `trades`، `signals`، `guard_log`، `equity_snapshots`، `watchlist` و `params`.
+  - فعال‌سازی حالت WAL (Write-Ahead Logging) و timeout بهینه برای مقاومت در برابر قفل شدن دیتابیس.
+  - ثبت شفاف تمام تصمیمات گیت‌های محافظتی در جدول `guard_log`.
+- `news.py`: رادار اخبار داغ اقتصادی (`NewsGuard`):
+  - خواندن تقویم اقتصادی Forex Factory و اعمال بلک‌اوت (Blackout) در دقایق قبل و بعد از انتشار اخبار با تاثیر بالا (High Impact USD).
+- `learning.py`: ماژول یادگیری تطبیقی (`AdaptiveLearner`):
+  - تحلیل آماری نتایج معاملات بسته شده در دفتر کل؛ افزایش خودکار کف R/R یا گرید ورود در صورت افت وین‌ریت (پیاده‌سازی اصل: پارامترها فقط می‌توانند سخت‌تر شوند، هرگز شل‌تر نمی‌شوند).
+
+---
+
+### ۲. پوشه آداپتورها (`adapters/`) — تعامل با دنیای خارج
+- `mt5.py`: کلاینت ارتباطی با وب‌سرویس متاتریدر (`Mt5Adapter`):
+  - اتصال به `http://192.168.10.51:5050` با هدر `Authorization: Bearer <token>`.
+  - مجهز به Retry خودکار، مدیریت Session و نگاشت ارورهای متاتریدر (RETCODE 10004 تا 10044).
+  - توابع: `get_account`، `get_tick`، `get_candles`، `get_open_positions`، `get_history_deals`، `place_order`، `modify_position`، `partial_close`، `close_position`.
+- `signals.py`: آداپتور پردازش سیگنال‌های تلگرام (`SignalsAdapter`):
+  - خواندن بلادرنگ فایل لاگ سیگنال‌های فرواردر، حذف کاراکترهای زائد، پارس عبارات اختصاری، استخراج Entry/SL/TP و ذخیره در جدول واچ‌لیست.
+- `notify.py`: آداپتور اعلانات تلگرام (`NotifyAdapter`):
+  - ارسال پیام‌های شفاف، زیبا و بدون حاشیه در تلگرام برای باز شدن معامله، سیو سود پله‌ای، فعال شدن تریلینگ، خروج نهایی و رد شدن ستاپ توسط گیت‌های ریسک.
+- `watchdog.py`: سگ نگهبان سلامت سیستم (`SystemWatchdog`):
+  - بررسی ارتباط با متاتریدر، پینگ لیتنسی و زنده بودن دیمن.
+
+---
+
+### ۳. پوشه نقاط ورود (`entry/`) — فرآیندهای اجرایی
+- `hermes.py`: دیمن اصلی تولید و استقرار لایو (`HermesDaemon`):
+  - نقطه شروع: اجرای `main()` توسط سیستم‌دی `hermes-daemon.service`.
+  - اجرای دو حلقه موازی/زمان‌بندی‌شده:
+    - **حلقه ورود (`_entry_loop` هر ۵ دقیقه):** واکشی دیتای زنده M15/H1/H4 طلا -> آپدیت اکوئیتی -> بررسی سیگنال‌های جدید کانال -> بررسی سشن معاملاتی -> تحلیل بازار -> تولید پلن SMC یا کلاسیک -> ارزیابی گیت‌های ریسک -> صدور اردر مستقیم در بروکر.
+    - **حلقه خروج (`_exit_loop` هر ۱۵ ثانیه):** رصد پوزیشن باز -> چک کردن استاپ/تارگت -> مدیریت تریلینگ، بریک‌ایون و خروج پله‌ای توسط `ExitManager` -> تطبیق لحظه‌ای دیل‌های خروج با متاتریدر و ژورنال در SQLite.
+- `backtest.py`: موتور شبیه‌سازی تاریخی (`Backtester`):
+  - اجرای استراتژی روی آرایه‌ای از کندل‌های گذشته با تضمین ۱۰۰٪ انطباق منطقی با رفتار دیمن لایو.
+
+---
+
+### ۴. پوشه اسکریپت‌های عملیاتی (`scripts/`)
+- `command_bot.py`: ربات تعاملی تلگرام کاربر مهدی (پاسخ به دستورات `/status`، `/stats`، `/equity`، `/positions` و `/history`).
+- `dashboard_bot.py`: ربات ناظر عملیات (ارسال پنل‌های وضعیت فنی سیستم در تلگرام).
+- `git_sync.sh`: اسکریپت خودکار Bash که هر ۱۵ دقیقه تغییرات، داکیومنت‌ها و کدها را به ریپازیتوری گیت‌هاب Push می‌کند.
+- `bridge_health_monitor.py`: پایش پیوسته پینگ و وضعیت سلامت وب‌سرویس ویندوز.
+- `offsite_backup.py`: پشتیبان‌گیری خودکار روزانه از دیتابیس `hermes.db` و کانفیگ‌ها به پوشه امن `C:\HermesBackups` در ویندوز.
+- `weekly_report.py`: تحلیل آماری عملکرد هفتگی معاملات، محاسبه Sharpe Ratio و فاکتور سود.
+- `system_health.py`: بررسی منابع سرور لینوکس (CPU, RAM, Disk, Systemd Units).
+- `verify_head.sh`: کنترل سلامت آخرین کامیت و اجرای پیش‌فرض تست‌ها قبل از مرج.
+
+---
+
+### ۵. پوشه مخازن داده (`data/`)
+- `hermes.db`: دیتابیس اصلی تراکنش‌ها، پلن‌ها، اردرها و تاریخچه سود/زیان.
+- `signals/`: حاوی فایل‌های لاگ سیگنال‌های تلگرام (`signals_log.json`) و وضعیت شنونده (`listener_state.json`).
+- `calendar/`: آرشیو رویدادهای تقویم اقتصادی فارکس برای فیلتر اخبار داغ.
+- `backtest/`: ذخیره صدها سند نتایج تست‌های کمی (Ablation Tests) از نسخه b54 تا b267.
+- `radin175/`: تاریخچه استخراج‌شده از کانال‌های سیگنال تلگرام جهت ارزیابی استراتژی‌های کانال.
+
+---
+
+### ۶. پوشه پروژه‌های جانبی لینوکس (`/home/ai/projects/`)
+- `forwarder-telegram-dockerized/`: پروژه مستقل پایتونی با کتابخانه Telethon (سرویس `hermes-forwarder.service`).
+  - گوش دادن به اکانت تلگرام کاربر -> مانیتور کانال‌های مبدا سیگنال VIP -> فوروارد پیام‌های خام به کانال میانی `-1003805320011` و نوشتن پیام‌ها در `data/signals/signals_log.json`.
+- `Bot-Telegram-Forwarder`: نسخه آرشیوشده فورواردر قبلی تلگرام.
+
+---
+
+### ۷. پوشه مستندات (`docs/`)
+- شامل ۳۸ فایل مستند جامع از مراحل مختلف توسعه (تحلیل SMC فاز ۱، گزارش‌های پرفورمنس، داکیومنت باگ‌ها و راه‌اندازی). این پوشه تاریخچه کامل تصمیم‌گیری‌ها را در خود دارد.
+
+---
+
+### ۸. پوشه آرشیو و کدهای قدیمی (`archive/`) — تفکیک‌شده و ایزوله
+برای حفظ تاریخچه و عدم پاک کردن بدون پشتوانه، کدهای غیرفعال در اینجا نگهداری می‌شوند:
+- `v1_legacy/`: کدهای قدیمی مبتنی بر اسکریپت‌های مستقل ویندوزی.
+- `v2_dead/`: کدهای لایه‌بندی پیچیده پیاز و ZeroMQ که در ریست ۲۵ مهر کنار گذاشته شدند.
+- `legacy_backup/`: بک‌آپ کامل ویندوز سرور از مرداد ۱۴۰۵.
+- `legacy_data_xau_plan/`: داده‌های متنی و لاگ‌های سیستمی منسوخ‌شده.
+
+---
+
+### ۹. ساختار و فایل‌های سرور ویندوز (`192.168.10.51`)
+- `C:\Hermes\Bridge\bridge.py`: کد کنونیکال و فعال وب‌سرویس متاتریدر. با وب‌سرور پروداکشن Waitress اجرا شده و توکن Bearer را اعتبارسنجی می‌کند.
+- `C:\Users\Administrator\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`:
+  - `MT5.lnk`: شورت‌کات اجرای ترمینال MetaTrader 5 در نشست کاربر (Session 1).
+  - `Start_Hermes_Bridge.bat`: اسکریپت اجرای وب‌سرویس پایتون در استارت‌آپ.
+- `C:\HermesBackups`: مقصد بک‌آپ‌های روزانه دیتابیس لینوکس.
+- `C:\Temp`: پوشه موقت شامل فایل‌های قدیمی بریج، لاگ‌ها و بک‌آپ‌های قبلی.
+
+---
+
+## ۵. جریان داده و مسیر اجرای زنده معامله (Execution Walkthrough)
+
+چرخه کامل یک معامله در هرمس به ترتیب زیر بدون دخالت انسانی رخ می‌دهد:
+
+```
+[هر ۵ دقیقه (حلقه ورود)]
+  1. Mt5Adapter.get_candles() -> دریافت ۲۰۰ کندل M15 + ۱۰۰ کندل H1 + ۵۰ کندل H4 از سرور ویندوز.
+  2. Engine.analyze() -> محاسبه میانگین‌ها، RSI، واگرایی، ساختار SMC، سوگیری دلار و اخبار.
+  3. SMC/ICT Analysis ->
+       - آیا شکار سقف/کف آسیا رخ داده؟ (Judas Swing)
+       - آیا اردر بلاک میتیگیت‌نشده داریم؟
+       - آیا برخورد به FVG با حفظ تراز ۵۰٪ (Consequent Encroachment) داریم؟
+  4. در صورت عدم وجود ستاپ SMC -> بررسی ستاپ روند-EMA مشروط به قدرت روند (trend_strength >= 0.15).
+  5. GatesEngine.evaluate() ->
+       - چک کردن قفل استراحت ۴۵ دقیقه‌ای ضرر قبلی (Loss Cooldown).
+       - چک کردن سقف ریسک، اسپرد، و تعارض با روند کلان H1 و H4.
+       - تعیین حجم دقیق معامله (Volume Sizing).
+  6. در صورت تایید -> Mt5Adapter.place_order() -> ارسال دستور مارکت به ویندوز و دریافت Ticket.
+  7. Ledger.save_order() و Ledger.save_plan() -> ثبت آنی در دیتابیس hermes.db.
+  8. NotifyAdapter.trade_opened() -> ارسال اعلان ورود با تارگت و استاپ در تلگرام کاربر.
+
+[هر ۱۵ ثانیه (حلقه خروج)]
+  1. Mt5Adapter.get_open_positions() -> خواندن وضعیت زنده پوزیشن از ویندوز.
+  2. ExitManager.manage() ->
+       - اگر سود به ۱.۰R رسید -> جابجایی استاپ به قیمت ورود (Breakeven).
+       - اگر سود به ۱.۵R رسید -> ارسال دستور Partial Close برای بستن ۵۰٪ حجم و سیو سود پله‌ای.
+       - اگر سود فراتر رفت -> حرکت پله‌ای استاپ پشت نوسان ATR (Dynamic Trailing Stop).
+       - اگر زمان نگهداری از ۲۴ ساعت گذشت -> خروج زمانی (Time Exit).
+  3. در صورت لمس SL یا TP توسط بروکر -> _reconcile_broker_closed_positions() ->
+       - خواندن دیل نهایی از تاریخچه متاتریدر.
+       - ثبت سود/زیان قطعی با کمیسیون و سواپ در جدول trades دیتابیس.
+       - ارسال پیام خروج در تلگرام.
+       - در صورت زیان -> فعال‌سازی اتوماتیک مدار استراحت ۴۵ دقیقه‌ای.
+```
+
+---
+
+## ۶. قوانین کلیدی، هشدارها و نکات حیاتی برای ایجنت‌های هوش مصنوعی (Rules for AI Agents)
+
+هر ایجنت هوش مصنوعی که در این محیط کد می‌نویسد، دیباگ می‌کند یا تغییراتی می‌دهد **باید** الزامات زیر را رعایت کند:
+
+۱. **متاتریدر و سشن ۱ ویندوز (The Session 1 Law):**
+   - ترمینال MetaTrader 5 و اسکریپت `bridge.py` **حتماً باید در Session 1 (دسکتاپ تعاملی کاربر Administrator)** اجرا شوند.
+   - اگر از طریق ابزارهای ریموت سرویس را در Session 0 اجرا کنید، متاتریدر فریز خاموش (Silent Freeze) می‌کند و قیمت‌ها آپدیت نخواهند شد.
+۲. **درایو D در ویندوز پر است (D: Drive is FULL):**
+   - هرگز فایلی روی درایو `D:\` ویندوز ننویسید. فقط از درایو `C:\` استفاده کنید.
+۳. **پوشه data/ops و پرچم‌های عملیاتی:**
+   - فایل‌های متنی مثل `autopilot_paused` نشان‌دهنده دستورات مدیریتی کاربر برای متوقف نگه‌داشتن ابزارهای خاص هستند و نباید بدون دستور کاربر دستکاری شوند.
+۴. **دیسیپلین تغییرات بک‌تست و استراتژی:**
+   - هرگز گیت‌های معاملاتی را شل نکنید (مثلاً کاهش Min R/R یا افزایش ریسک روزانه).
+   - هرگونه قانون جدید در انجین معاملاتی باید حداقل با ۲۰ ترید شبیه‌سازی‌شده پشتیبانی شود و تست‌های `pytest` آن پاس شود.
+۵. **حفظ استقلال دیمن لایو:**
+   - هیچ‌گاه سرویس‌های متعدد لینوکسی جدید نسازید. تمام منطق سیستم در داخل `hermes-daemon.service` قرار دارد.
+   - از تغییر مدل LLM در Omniroute (پورت ۲۰۱۲۸) بدون هماهنگی صریح کاربر خودداری کنید.
+
+---
+**وضعیت نهایی:** سیستم معاملاتی هرمس در تاریخ ۱۲ آبان ۱۴۰۵ (Nov 02, 2026) در سلامت کامل، پایداری ۱۰۰٪، پوشش مولتی‌تایم‌فریم M15/H1/H4 و دیتابیس بهینه فعال است.

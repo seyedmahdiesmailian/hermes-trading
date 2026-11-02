@@ -31,6 +31,7 @@ requirements.lock.txt
 /data/ops/dashboard_state.json
 /data/ops/head_verified.json
 /data/ops/daemon_code_drift.json
+/data/ops/autopilot_paused
 
 
 # b255 strategy research: cached bridge data (311d H1, 26d M5)
