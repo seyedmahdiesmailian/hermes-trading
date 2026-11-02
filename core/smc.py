@@ -546,7 +546,8 @@ class SMCAnalyzer:
             if lows_between and lows_after:
                 l1 = lows_between[0][1]
                 l2 = min(l[1] for l in lows_after)
-                if h2 > h1 and l2 < l1:
+                # b255: فیلتر کف شکار نقدینگی سازمانی (حداقل ۱.۰ دلار اختلاف) — ممانعت از الگوهای فیک نویز
+                if (h2 - h1) >= 1.0 and (l1 - l2) >= 1.0:
                     return QuasimodoPattern(
                         qml_type="BEARISH_QML",
                         level=round(h1, 2),
@@ -564,7 +565,8 @@ class SMCAnalyzer:
             if highs_between and highs_after:
                 h1 = highs_between[0][1]
                 h2 = max(h[1] for h in highs_after)
-                if l2 < l1 and h2 > h1:
+                # b255: فیلتر کف شکار نقدینگی سازمانی (حداقل ۱.۰ دلار اختلاف) — ممانعت از الگوهای فیک نویز
+                if (l1 - l2) >= 1.0 and (h2 - h1) >= 1.0:
                     return QuasimodoPattern(
                         qml_type="BULLISH_QML",
                         level=round(l1, 2),

@@ -368,9 +368,17 @@ class Engine:
         if smc.qml is not None:
             qml = smc.qml
             retesting_qml = abs(entry - qml.level) <= view.atr * 0.50
+            last_c = candles[-1]
+            c_range = max(0.01, last_c.high - last_c.low)
+            upper_wick = last_c.high - max(last_c.open, last_c.close)
+            lower_wick = min(last_c.open, last_c.close) - last_c.low
+            is_bullish_thrust = (last_c.close > last_c.open) and ((last_c.close - last_c.open) > view.atr * 0.35) and (upper_wick < c_range * 0.20)
+            is_bearish_thrust = (last_c.close < last_c.open) and ((last_c.open - last_c.close) > view.atr * 0.35) and (lower_wick < c_range * 0.20)
 
             if qml.qml_type == "BEARISH_QML" and retesting_qml:
-                if h1_bias != "BULLISH":
+                if is_bullish_thrust:
+                    log.info("ستاپ QML رد شد: کندل نفوذ صعودی قدرتمند بدون شادو ریجکشن در شانه چپ")
+                elif h1_bias != "BULLISH":
                     min_stop = round(view.atr * 1.2, 2)
                     max_stop = round(view.atr * 2.5, 2)
                     sl = round(qml.invalidation + buffer, 2)
@@ -396,7 +404,9 @@ class Engine:
                         )
 
             elif qml.qml_type == "BULLISH_QML" and retesting_qml:
-                if h1_bias != "BEARISH":
+                if is_bearish_thrust:
+                    log.info("ستاپ QML رد شد: کندل ریزش سنگین نزولی بدون شادو ریجکشن در شانه چپ")
+                elif h1_bias != "BEARISH":
                     min_stop = round(view.atr * 1.2, 2)
                     max_stop = round(view.atr * 2.5, 2)
                     sl = round(qml.invalidation - buffer, 2)

@@ -2508,6 +2508,57 @@ class TestWatchlistEngine:
         assert res_lock.allowed is True
         assert res_lock.volume == 0.10  # Capital preservation risk halved!
 
+    def test_b255_qml_sweep_clearance_and_thrust_rejection(self):
+        """b255: Test QML requires minimum 1.0 clearance (rejects 14-cent noise) and thrust candle rejection."""
+        from core.smc import SMCAnalyzer, SMCView, QuasimodoPattern, MarketPhase, ZoneType
+        from core.engine import Engine, MarketView
+        engine = Engine()
+        base_t = 1700000000
+
+        # 1) Equal Highs noise (H1=2050.0, H2=2050.14 -> 14 cents diff) MUST NOT trigger QML!
+        noise_candles = [
+            Candle(time=base_t + i*900, open=2040.0, high=2041.0, low=2039.0, close=2040.0, volume=100)
+            for i in range(40)
+        ]
+        # H1 at bar 10: high=2050.0
+        noise_candles[10] = Candle(time=base_t + 10*900, open=2040.0, high=2050.0, low=2039.0, close=2045.0, volume=100)
+        # Low between at bar 15: low=2030.0
+        noise_candles[15] = Candle(time=base_t + 15*900, open=2035.0, high=2037.0, low=2030.0, close=2035.0, volume=100)
+        # H2 at bar 20: high=2050.14 (only 14 cents above H1!)
+        noise_candles[20] = Candle(time=base_t + 20*900, open=2040.0, high=2050.14, low=2039.0, close=2045.0, volume=100)
+        # Low after at bar 25: low=2028.0 (below 2030)
+        noise_candles[25] = Candle(time=base_t + 25*900, open=2032.0, high=2034.0, low=2028.0, close=2030.0, volume=100)
+
+        qml_detected = SMCAnalyzer.detect_quasimodo(noise_candles)
+        # 14-cent difference is rejected by the >= 1.0 clearance requirement!
+        assert qml_detected is None
+
+        # 2) Valid QML with H2 >= H1 + 2.5 (True Liquidity Sweep) IS DETECTED
+        noise_candles[20] = Candle(time=base_t + 20*900, open=2040.0, high=2052.5, low=2039.0, close=2045.0, volume=100)
+        qml_valid = SMCAnalyzer.detect_quasimodo(noise_candles)
+        assert qml_valid is not None
+        assert qml_valid.qml_type == "BEARISH_QML"
+        assert qml_valid.level == 2050.0
+
+        # 3) When price is in retest of Left Shoulder, but forming bar is a strong bullish thrust candle -> REJECTED!
+        candles = [
+            Candle(time=base_t + i*900, open=2000.0, high=2002.0, low=1998.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        # Current bar 49 is a strong green thrust candle (open 2042, close 2050, high 2050.2)
+        candles[49] = Candle(time=base_t + 49*900, open=2042.0, high=2050.2, low=2041.5, close=2050.0, volume=100)
+        smc = SMCView(
+            bias="bearish", confidence=0.94, phase=MarketPhase.BOS_BEARISH,
+            zone=ZoneType.PREMIUM, fib_level=0.75, killzone="london", qml=qml_valid,
+        )
+        view = MarketView(
+            trend="bearish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2050.0, support=2020.0, resistance=2060.0, smc=smc,
+        )
+        plan_thrust = engine.plan_from_smc(candles, view)
+        assert plan_thrust is None  # Blocked because selling into an active green thrust candle without rejection!
+
+
 
 
 
