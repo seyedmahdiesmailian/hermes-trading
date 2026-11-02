@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -384,6 +384,13 @@ class Ledger:
             (symbol,)).fetchall()
         return [dict(r) for r in rows]
 
+    def get_watchlist_item(self, item_id: str) -> dict | None:
+        """یافتن یک آیتم در واچ‌لیست با item_id."""
+        row = self._con.execute(
+            "SELECT * FROM watchlist WHERE item_id = ?", (item_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
     def update_watchlist_status(self, item_id: str, status: str) -> None:
         """به‌روزرسانی وضعیت آیتم واچ‌لیست (executed, expired, invalidated)."""
         self._con.execute(
@@ -429,3 +436,21 @@ class Ledger:
             "win_rate": round(wins / total * 100, 1),
             "net_pnl": round(net_pnl, 2),
         }
+
+    def get_weekly_pnl(self, now_ts: float | None = None) -> float:
+        """محاسبه مجموع PnL خالص معاملات بسته‌شده از آغاز هفته جاری (دوشنبه ۰۰:۰۰ UTC)."""
+        ts = now_ts or time.time()
+        dt = datetime.fromtimestamp(ts, timezone.utc)
+        start_of_week = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_of_week = start_of_week - timedelta(days=dt.weekday())
+        week_ts = start_of_week.timestamp()
+
+        row = self._con.execute(
+            """
+            SELECT sum(pnl) as week_pnl
+            FROM trades
+            WHERE closed_at >= ?
+            """,
+            (week_ts,),
+        ).fetchone()
+        return float(row["week_pnl"] or 0.0) if row and row["week_pnl"] is not None else 0.0

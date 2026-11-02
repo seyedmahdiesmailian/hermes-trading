@@ -2462,6 +2462,53 @@ class TestWatchlistEngine:
         res_good = gates.evaluate(sig_plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, channel_stats=good_channel_stats)
         assert res_good.allowed is True
 
+    def test_b254_friday_weekend_rollover_and_weekly_profit_lock(self):
+        """b254: Test Friday cutoff, weekend gate, rollover spread shield, and weekly profit lock."""
+        from core.gates import GatesEngine
+        from core.params import Gates
+        from datetime import datetime, timezone
+        gates = GatesEngine(Gates(
+            max_open_positions=1, max_daily_trades=5, risk_per_trade_pct=2.0,
+            max_daily_loss_pct=5.0, min_rr=1.0, min_grade="B", min_atr_stop_mult=2.0,
+            max_spread_points=3.0,
+        ))
+        account = AccountState(balance=10000.0, equity=10000.0, margin=0.0, margin_free=10000.0)
+        plan = Plan(
+            plan_id="p-254", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2070.0,
+            volume=0.1, grade=SetupGrade.A, source="rtm_qml", rr=2.0,
+        )
+
+        # 1) Friday Cutoff (Friday 2026-10-30 20:00 UTC) -> friday_cutoff
+        fri_ts = datetime(2026, 10, 30, 20, 0, tzinfo=timezone.utc).timestamp()
+        res_fri = gates.evaluate(plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, now_ts=fri_ts)
+        assert res_fri.allowed is False
+        assert any("friday_cutoff" in r for r in res_fri.reasons)
+
+        # 2) Saturday Closed (Saturday 2026-10-31 12:00 UTC) -> weekend_closed
+        sat_ts = datetime(2026, 10, 31, 12, 0, tzinfo=timezone.utc).timestamp()
+        res_sat = gates.evaluate(plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, now_ts=sat_ts)
+        assert res_sat.allowed is False
+        assert any("weekend_closed" in r for r in res_sat.reasons)
+
+        # 3) Rollover Spread Shield (Tuesday 2026-10-27 21:30 UTC) -> nightly_rollover
+        tue_roll_ts = datetime(2026, 10, 27, 21, 30, tzinfo=timezone.utc).timestamp()
+        res_roll = gates.evaluate(plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, now_ts=tue_roll_ts)
+        assert res_roll.allowed is False
+        assert any("nightly_rollover" in r for r in res_roll.reasons)
+
+        # 4) Normal Open Hours (Tuesday 2026-10-27 14:00 UTC) -> Allowed!
+        tue_open_ts = datetime(2026, 10, 27, 14, 0, tzinfo=timezone.utc).timestamp()
+        res_open = gates.evaluate(plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, now_ts=tue_open_ts)
+        assert res_open.allowed is True
+        assert res_open.volume == 0.20  # Standard 2% ($200) / 1000 = 0.20 lots
+
+        # 5) Weekly Profit Lock (Weekly PnL = +$900 >= 8% of $10,000) -> Risk halved to 1.0% ($100 / 1000 = 0.10 lots)
+        res_lock = gates.evaluate(plan, account, [], 0, daily_pnl=0.0, atr=5.0, spread=0.5, now_ts=tue_open_ts, weekly_pnl=900.0)
+        assert res_lock.allowed is True
+        assert res_lock.volume == 0.10  # Capital preservation risk halved!
+
+
 
 
 

@@ -75,6 +75,7 @@ class GatesEngine:
         last_loss_ts: float = 0.0,
         now_ts: float = 0.0,
         channel_stats: dict | None = None,
+        weekly_pnl: float = 0.0,
     ) -> GuardOutcome:
         """ارزیابی کامل plan → مجاز با حجم، یا ممنوع با دلایل.
 
@@ -88,6 +89,20 @@ class GatesEngine:
         if last_loss_ts > 0 and 0 <= (now - last_loss_ts) < cooldown_s:
             rem_m = int(round((cooldown_s - (now - last_loss_ts)) / 60))
             reasons.append(f"loss_cooldown({rem_m}m_left)")
+
+        # ۰.ب) گیت پایان هفته و تعطیلی بروکر (Weekend / Friday Cutoff Gate)
+        gm = time.gmtime(now)
+        weekday = gm.tm_wday  # 0=Monday, 4=Friday, 5=Saturday, 6=Sunday
+        time_decimal = gm.tm_hour + gm.tm_min / 60.0
+
+        if weekday == 4 and time_decimal >= 19.5:
+            reasons.append("friday_cutoff")
+        elif weekday == 5 or (weekday == 6 and time_decimal < 22.0):
+            reasons.append("weekend_closed")
+
+        # ۰.ج) سپر اسپرد رول‌اوور شبانه بانکی (Rollover Spread Shield: 21:00 - 22:30 UTC)
+        if weekday in (0, 1, 2, 3) and (21.0 <= time_decimal < 22.5):
+            reasons.append("nightly_rollover")
 
         # ۱) پوزیشن‌های باز — حقیقت زنده bridge (قرارداد b221: fail-closed)
         if positions is None:
@@ -177,7 +192,7 @@ class GatesEngine:
             return GuardOutcome(allowed=False, reasons=reasons)
 
         # ── مجاز → محاسبه حجم بر اساس ریسک ───────────
-        volume = self._size_position(plan, account, daily_pnl=daily_pnl)
+        volume = self._size_position(plan, account, daily_pnl=daily_pnl, weekly_pnl=weekly_pnl)
         if volume <= 0:
             return GuardOutcome(allowed=False, reasons=["size_failed"])
 
@@ -186,7 +201,9 @@ class GatesEngine:
 
     # ── private ───────────────────────────────────────
 
-    def _size_position(self, plan: Plan, account: AccountState | None, daily_pnl: float = 0.0) -> float:
+    def _size_position(
+        self, plan: Plan, account: AccountState | None, daily_pnl: float = 0.0, weekly_pnl: float = 0.0
+    ) -> float:
         """حجم بر اساس درصد ریسک: risk = equity × risk% / فاصله SL.
 
         volume_lots = risk_amount / (sl_distance × contract_size)
@@ -213,6 +230,12 @@ class GatesEngine:
                 elif dd_pct >= 2.0:
                     eff_risk *= 0.75  # DEFCON 3: کاهش ۲۵٪ ریسک در دراودان ملایم
                     log.info("DEFCON 3 فعال شد: دراودان %.2f%% — ریسک به %.2f%% کاهش یافت", dd_pct, eff_risk)
+
+            # قفل سود هفتگی و حفظ سرمایه (Weekly Profit Lock)
+            # اگر سود هفته جاری به بالای ۸٪ اکوئیتی رسید، ریسک را برای حفظ سود انباشته نصف کن
+            if account and account.balance > 0 and weekly_pnl >= account.balance * 0.08:
+                eff_risk = min(eff_risk, base_risk * 0.50)
+                log.info("قفل سود هفتگی فعال شد: سود هفته %.2f دلار — سقف ریسک به %.2f%% محدود شد", weekly_pnl, eff_risk)
 
             risk_pct = Decimal(str(eff_risk)) / Decimal("100")
             risk_amount = Decimal(str(account.equity)) * risk_pct

@@ -394,6 +394,32 @@ class HermesDaemon:
                 if plan is not None:
                     log.info("تحلیل خودکار: ستاپ روند-EMA %s تشخیص داده شد", plan.side.value)
 
+        # b254: ثبت پیش‌دستانه ستاپ‌های QML در واچ‌لیست (Proactive SMC Watchlist)
+        if plan is None and view.smc and view.smc.qml and not view.news_blackout and auto_allowed:
+            qml = view.smc.qml
+            dist_to_qml = abs(tick.mid - qml.level)
+            if view.atr * 0.50 < dist_to_qml <= view.atr * 2.5:
+                qml_side = Side.SELL if qml.qml_type == "BEARISH_QML" else Side.BUY
+                item_id = f"wl-qml-{int(candles[-1].time)}"
+                now_cur = time.time()
+                if not self.led.get_watchlist_item(item_id):
+                    wl_item = {
+                        "item_id": item_id,
+                        "signal_id": item_id,
+                        "symbol": self.cfg.symbol,
+                        "side": qml_side.value,
+                        "entry_price": qml.level,
+                        "trigger_price": qml.level,
+                        "sl": qml.invalidation,
+                        "tp": qml.target,
+                        "added_at": now_cur,
+                        "expires_at": now_cur + 7200.0,
+                        "status": "waiting",
+                        "reason": f"SMC QML Proactive: پولبک به شانه چپ {qml.level:,.2f}",
+                    }
+                    self.led.add_to_watchlist(wl_item)
+                    log.info("ستاپ سازمانی QML به واچ‌لیست اضافه شد: %s (فاصله: %.2f)", item_id, dist_to_qml)
+
         if plan is None:
             return  # ستاپی وجود ندارد → منتظر می‌مانیم
 
@@ -406,6 +432,7 @@ class HermesDaemon:
         # بریج خاموش یا اطلاعات ناقص به هیچ وجه چراغ سبز دریافت نمی‌کند (رد fail-closed).
         last_loss = self.led.get_last_loss_time()
         ch_stats = self.led.get_source_stats(plan.source) if plan.source.startswith("sig_") else None
+        weekly_pnl = self.led.get_weekly_pnl()
         outcome = self.gates.evaluate(
             plan, account, positions, trades_today, today_pnl,
             atr=view.atr, spread=view.spread,
@@ -413,6 +440,7 @@ class HermesDaemon:
             learning_min_grade=self.led.get_param("min_grade", ""),
             last_loss_ts=last_loss,
             channel_stats=ch_stats,
+            weekly_pnl=weekly_pnl,
         )
 
         # ۹) ثبت در دفتر کل (شفافیت کامل)
@@ -532,6 +560,15 @@ class HermesDaemon:
                 if hit is not None:
                     self._close_position(pos, ExitReason.TAKE_PROFIT, hit)
                     continue
+
+            # b254: محافظت در برابر گپ آخر هفته (Friday Weekend Close Protection)
+            # در روز جمعه ساعت ۲۰:۱۵ به بعد UTC قبل از بسته شدن بروکر، پوزیشن‌های باز بسته می‌شوند
+            gm = time.gmtime(now)
+            if gm.tm_wday == 4 and (gm.tm_hour + gm.tm_min / 60.0) >= 20.25:
+                log.info("خروج قبل از تعطیلی آخر هفته (Friday Weekend Close Protection): ticket=%d", pos.ticket)
+                self._close_position(pos, ExitReason.TIME_EXIT, pos.current_price)
+                self.notify.status(f"🔒 بستن پوزیشن #{pos.ticket} به دلیل تعطیلی آخر هفته مارکت طلا (Friday Close)")
+                continue
 
             # ATR زنده و استاپ ساختاری سوئینگ برای تریلینگ پیشرفته
             swing_sl = 0.0
