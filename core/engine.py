@@ -201,7 +201,7 @@ class Engine:
 
         # فیلتر ۲: هماهنگی با روند تایم‌فریم بالاتر (H1 Trend Filter)
         if h1_candles and len(h1_candles) >= 30:
-            h1_closes = [c.close for c in h1_candles[-30:]]
+            h1_closes = [c.close for c in h1_candles]
             h1_e20 = _ema(h1_closes, 20)
             h1_e50 = _ema(h1_closes, 50)
             if side == Side.SELL and h1_closes[-1] > h1_e20 > h1_e50:
@@ -313,7 +313,7 @@ class Engine:
         # هماهنگی با روند کلان تایم‌فریم بالاتر (H1 Trend Filter)
         h1_bias = "NEUTRAL"
         if h1_candles and len(h1_candles) >= 30:
-            h1_closes = [c.close for c in h1_candles[-30:]]
+            h1_closes = [c.close for c in h1_candles]
             h1_e20 = _ema(h1_closes, 20)
             h1_e50 = _ema(h1_closes, 50)
             if h1_closes[-1] > h1_e20 > h1_e50:
@@ -567,7 +567,8 @@ class Engine:
                     if h1_bias == "BEARISH":
                         log.info("ستاپ SMC رد شد: خرید FVG در تضاد با روند نزولی قدرتمند H1")
                         continue
-                    if last_c.low <= fvg.top and last_c.close >= fvg.bottom:
+                    # b247: Consequent Encroachment 50% - عدم بسته‌شدن زیر نقطه تعادل FVG
+                    if last_c.low <= fvg.top and last_c.close >= fvg.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
                         sl = round(fvg.bottom - buffer, 2)
@@ -596,7 +597,8 @@ class Engine:
                     if h1_bias == "BULLISH":
                         log.info("ستاپ SMC رد شد: فروش FVG در تضاد با روند صعودی قدرتمند H1")
                         continue
-                    if last_c.high >= fvg.bottom and last_c.close <= fvg.top:
+                    # b247: Consequent Encroachment 50% - عدم بسته‌شدن بالای نقطه تعادل FVG
+                    if last_c.high >= fvg.bottom and last_c.close <= fvg.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
                         sl = round(fvg.top + buffer, 2)

@@ -246,7 +246,7 @@ class HermesDaemon:
         h1_candles = []
         if "H1" in self.cfg.analysis.higher_timeframes:
             try:
-                h1_candles = self.mt5.get_candles(self.cfg.symbol, "H1", 50)
+                h1_candles = self.mt5.get_candles(self.cfg.symbol, "H1", 100)
             except Exception as e:
                 log.warning("H1 candles fetch failed: %s", e)
 

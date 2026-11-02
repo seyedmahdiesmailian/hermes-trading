@@ -2179,6 +2179,46 @@ class TestWatchlistEngine:
         executed_sig_trades = [t for t in bt.trades if t.plan_id == "plan-sig-b247-tp-first"]
         assert len(executed_sig_trades) == 0
 
+    def test_b248_fvg_consequent_encroachment_and_full_h1_ema(self):
+        """b248: FVG retest enforces 50% Consequent Encroachment (midpoint) rejection, and uses full H1 candles."""
+        from core.smc import FairValueGap, FVGType, SMCView, MarketPhase, ZoneType
+        from core.engine import Engine, MarketView
+        engine = Engine()
+        base_t = 1700000000
+        candles = [
+            Candle(time=base_t + i*900, open=2000.0, high=2002.0, low=1998.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        # Bearish FVG between 2010.0 (top) and 2005.0 (bottom), midpoint = 2007.5
+        fvg = FairValueGap(
+            fvg_type=FVGType.BEARISH, top=2010.0, bottom=2005.0,
+            bar_index=45, time=base_t + 45*900, filled=False,
+        )
+        smc = SMCView(
+            bias="bearish", confidence=0.85, phase=MarketPhase.BOS_BEARISH,
+            zone=ZoneType.PREMIUM, fib_level=0.75, killzone="london", unfilled_fvgs=[fvg],
+        )
+        # 1) Candle penetrates deeply above midpoint (close = 2009.0 > 2007.5) -> Rejected by CE 50%
+        candles[49] = Candle(time=base_t + 49*900, open=2002.0, high=2009.5, low=2001.0, close=2009.0, volume=100)
+        view_rejected = MarketView(
+            trend="bearish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2009.0, support=1990.0, resistance=2020.0, smc=smc,
+        )
+        plan_rejected = engine.plan_from_smc(candles, view_rejected)
+        assert plan_rejected is None
+
+        # 2) Candle touches FVG but respects midpoint (high = 2007.0 >= bottom 2005.0, close = 2006.0 <= midpoint 2007.5) -> Approved
+        candles[49] = Candle(time=base_t + 49*900, open=2004.0, high=2007.0, low=2003.0, close=2006.0, volume=100)
+        view_approved = MarketView(
+            trend="bearish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2006.0, support=1990.0, resistance=2020.0, smc=smc,
+        )
+        plan_approved = engine.plan_from_smc(candles, view_approved)
+        assert plan_approved is not None
+        assert plan_approved.side == Side.SELL
+        assert plan_approved.source == "smc_fvg"
+
+
 
 
 
