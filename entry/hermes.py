@@ -270,8 +270,10 @@ class HermesDaemon:
         for sig in new_signals:
             self.led.save_signal(sig)
 
-        # ۴) اگر پوزیشن باز داریم → ورود جدید ممنوع (یک کلیک = یک معامله)
-        if positions:
+        # ۴) پوزیشن‌های در معرض ریسک و سقف همزمانی (Risk-Free Concurrency)
+        max_concurrent = getattr(self.cfg.gates, "max_concurrent_positions", 2)
+        risky_positions = [p for p in positions if not getattr(p, "is_risk_free", False)]
+        if len(risky_positions) >= self.cfg.gates.max_open_positions or len(positions) >= max_concurrent:
             return
 
         # ۵) سشن معاملاتی برای تحلیل خودکار — فقط در session_hours (UTC).
@@ -375,7 +377,8 @@ class HermesDaemon:
                     self.led.update_watchlist_status(item["item_id"], "invalidated")
                     log.info("سیگنال واچ‌لیست ابطال شد (لمس SL): %s", item["item_id"])
 
-        if plan is None and not positions and auto_allowed:
+        can_open_auto = (len(risky_positions) < self.cfg.gates.max_open_positions and len(positions) < max_concurrent)
+        if plan is None and can_open_auto and auto_allowed:
             # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
             plan = self.eng.plan_from_smc(
                 candles, view, h1_candles, self.cfg.analysis.timeframe, h4_candles=h4_candles

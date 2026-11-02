@@ -16,7 +16,8 @@ loop:
 
 # ─ـ دروازه‌های ریسک (fail-closed) ──────────────────────
 gates:
-  max_open_positions: 1
+  max_open_positions: 1         # حداکثر پوزیشن‌های در معرض ریسک همزمان
+  max_concurrent_positions: 2   # سقف کل پوزیشن‌ها مشروط به ریسک‌فری بودن پوزیشن اول
   max_daily_trades: 5
   risk_per_trade_pct: 2.0       # درصد equity ریسک هر معامله
   max_daily_loss_pct: 5.0       # ضرر روزانه → توقف کامل

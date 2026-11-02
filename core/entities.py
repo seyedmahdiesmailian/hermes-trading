@@ -161,6 +161,15 @@ class BrokerPosition:
         return self.side == Side.BUY
 
     @property
+    def is_risk_free(self) -> bool:
+        """بررسی اینکه آیا پوزیشن ریسک‌فری شده است (استاپ در نقطه ورود یا بهتر)."""
+        if self.sl <= 0:
+            return False
+        if self.is_buy:
+            return self.sl >= self.open_price
+        return self.sl <= self.open_price
+
+    @property
     def rr_progress(self) -> float:
         """پیشرفت نسبت R-risk: چقدر به TP نزدیک شدیم.
 

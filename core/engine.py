@@ -885,10 +885,19 @@ class Engine:
         if view.usd_bias != "NEUTRAL":
             if (side == Side.BUY and view.usd_bias == "BEARISH") or \
                (side == Side.SELL and view.usd_bias == "BULLISH"):
-                score += 0.15  # تاییدیه قوی همبستگی دلار و طلا
+                score += 0.15
             elif (side == Side.BUY and view.usd_bias == "BULLISH") or \
                  (side == Side.SELL and view.usd_bias == "BEARISH"):
-                score -= 0.20  # تله نقدینگی ناشی از تقابل با جهت کلان دلار
+                score -= 0.20
+
+        # پاداش همگرایی کلان تایم‌فریم ۴ ساعته (H4 Macro Trend Confluence)
+        if hasattr(view, "h4_bias") and view.h4_bias != "NEUTRAL":
+            if (side == Side.BUY and view.h4_bias == "BULLISH") or \
+               (side == Side.SELL and view.h4_bias == "BEARISH"):
+                score += 0.15  # تاییدیه قوی هم‌راستایی کلان H4 + H1 + M15
+            elif (side == Side.BUY and view.h4_bias == "BEARISH") or \
+                 (side == Side.SELL and view.h4_bias == "BULLISH"):
+                score -= 0.20  # جریمه تقابل با روند ماژور ۴ ساعته
 
         if score >= 0.85:
             return SetupGrade.A
@@ -933,6 +942,15 @@ class Engine:
             elif (sig.side == Side.BUY and view.divergence == "BEARISH_REGULAR") or \
                  (sig.side == Side.SELL and view.divergence == "BULLISH_REGULAR"):
                 score -= 0.20
+
+        # پاداش همگرایی کلان تایم‌فریم ۴ ساعته (H4 Macro Trend Confluence)
+        if hasattr(view, "h4_bias") and view.h4_bias != "NEUTRAL":
+            if (sig.side == Side.BUY and view.h4_bias == "BULLISH") or \
+               (sig.side == Side.SELL and view.h4_bias == "BEARISH"):
+                score += 0.15  # تایید هم‌راستایی سیگنال با روند ماژور ۴ ساعته
+            elif (sig.side == Side.BUY and view.h4_bias == "BEARISH") or \
+                 (sig.side == Side.SELL and view.h4_bias == "BULLISH"):
+                score -= 0.20  # جریمه سیگنال خلاف روند ماژور ۴ ساعته
 
         if score >= 0.80:
             return SetupGrade.A

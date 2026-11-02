@@ -2263,6 +2263,67 @@ class TestWatchlistEngine:
         assert swing_h == 2080.0
         assert swing_l == 1920.0
 
+    def test_b250_risk_free_concurrency_and_h4_grade_confluence(self):
+        """b250: Test risk-free concurrency (allows 2nd trade if 1st is breakeven/in-profit) and H4 grade confluence."""
+        from core.gates import GatesEngine
+        from core.params import Gates
+        gates = GatesEngine(Gates(
+            max_open_positions=1, max_daily_trades=5, risk_per_trade_pct=2.0,
+            max_daily_loss_pct=5.0, min_rr=1.0, min_grade="B", min_atr_stop_mult=2.0,
+            max_spread_points=3.0, max_concurrent_positions=2,
+        ))
+        account = AccountState(balance=5000.0, equity=5000.0, margin=0.0, margin_free=5000.0)
+        plan = Plan(
+            plan_id="p-250", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2050.0, stop_loss=2040.0, take_profit=2070.0,
+            volume=0.1, grade=SetupGrade.A, source="smc_fvg", rr=2.0,
+        )
+
+        # 1) When existing position has SL below entry (risky) -> 2nd trade BLOCKED
+        risky_pos = BrokerPosition(
+            ticket=101, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2050.0, current_price=2052.0, sl=2040.0, tp=2070.0,
+            profit=20.0, swap=0.0, open_time=int(time.time()),
+        )
+        assert risky_pos.is_risk_free is False
+        res_blocked = gates.evaluate(
+            plan=plan, account=account,
+            positions=[risky_pos], trades_today=0, daily_pnl=0.0,
+            atr=5.0, spread=0.5,
+        )
+        assert res_blocked.allowed is False
+        assert any("position_limit" in r for r in res_blocked.reasons)
+
+        # 2) When existing position has SL at or above entry (Breakeven/Trailing) -> 2nd trade ALLOWED!
+        risk_free_pos = BrokerPosition(
+            ticket=102, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2050.0, current_price=2065.0, sl=2051.0, tp=2070.0,
+            profit=150.0, swap=0.0, open_time=int(time.time()),
+        )
+        assert risk_free_pos.is_risk_free is True
+        res_allowed = gates.evaluate(
+            plan=plan, account=account,
+            positions=[risk_free_pos], trades_today=0, daily_pnl=0.0,
+            atr=5.0, spread=0.5,
+        )
+        assert res_allowed.allowed is True
+        assert res_allowed.reasons == ["ok"]
+
+        # 3) When 2 positions already exist (max_concurrent_positions = 2) -> 3rd trade BLOCKED
+        another_pos = BrokerPosition(
+            ticket=103, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2060.0, current_price=2062.0, sl=2060.0, tp=2080.0,
+            profit=20.0, swap=0.0, open_time=int(time.time()),
+        )
+        res_max_concurrent = gates.evaluate(
+            plan=plan, account=account,
+            positions=[risk_free_pos, another_pos], trades_today=0, daily_pnl=0.0,
+            atr=5.0, spread=0.5,
+        )
+        assert res_max_concurrent.allowed is False
+        assert any("max_concurrent_limit" in r for r in res_max_concurrent.reasons)
+
+
 
 
 

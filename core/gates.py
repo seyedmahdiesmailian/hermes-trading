@@ -91,8 +91,15 @@ class GatesEngine:
         # ۱) پوزیشن‌های باز — حقیقت زنده bridge (قرارداد b221: fail-closed)
         if positions is None:
             reasons.append("positions_unreadable")
-        elif len(positions) >= self._g.max_open_positions:
-            reasons.append(f"position_limit({len(positions)}/{self._g.max_open_positions})")
+        else:
+            # b250: همزمانی بدون ریسک (Risk-Free Concurrency)
+            # پوزیشن‌هایی که استاپ آن‌ها در نقطه ورود یا بهتر قرار دارد ریسک حساب را صفر کرده‌اند
+            risky_positions = [p for p in positions if not getattr(p, "is_risk_free", False)]
+            max_concurrent = getattr(self._g, "max_concurrent_positions", 2)
+            if len(risky_positions) >= self._g.max_open_positions:
+                reasons.append(f"position_limit({len(risky_positions)}/{self._g.max_open_positions})")
+            elif len(positions) >= max_concurrent:
+                reasons.append(f"max_concurrent_limit({len(positions)}/{max_concurrent})")
 
         # ۲) سقف ترید روزانه
         if trades_today >= self._g.max_daily_trades:

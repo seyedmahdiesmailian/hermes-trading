@@ -32,6 +32,7 @@ class Gates:
     min_atr_stop_mult_smc: float = 1.2        # ستاپ سازمانی هوشمند SMC/ICT → کف ۱.۲
     max_volume_lots: float = 2.0              # حداکثر سقف حجم مجاز هر معامله
     loss_cooldown_minutes: int = 45           # توقف معاملاتی پس از هر استاپ (دقیقه)
+    max_concurrent_positions: int = 2         # سقف کل پوزیشن‌های همزمان (مشروط به ریسک‌فری بودن پوزیشن اول)
 
 
 @dataclass(frozen=True)
@@ -132,6 +133,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
             min_atr_stop_mult_smc=_float(g, "min_atr_stop_mult_smc") if "min_atr_stop_mult_smc" in g else 1.2,
             max_volume_lots=_float(g, "max_volume_lots") if "max_volume_lots" in g else 2.0,
             loss_cooldown_minutes=_int(g, "loss_cooldown_minutes") if "loss_cooldown_minutes" in g else 45,
+            max_concurrent_positions=_int(g, "max_concurrent_positions") if "max_concurrent_positions" in g else 2,
             )
 
         pos = raw["position"]
