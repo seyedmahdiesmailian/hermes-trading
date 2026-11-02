@@ -386,8 +386,8 @@ class HermesDaemon:
             if plan is not None:
                 log.info("تحلیل خودکار: ستاپ سازمانی SMC %s (%s) تشخیص داده شد", plan.side.value, plan.reasoning)
 
-            # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (گرید B با تاییدیه H1 و H4)
-            if plan is None:
+            # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (فقط در روندهای قدرتمند و تثبیت‌شده)
+            if plan is None and view.is_trending and view.trend_strength >= 0.30:
                 plan = self.eng.plan_from_analysis(
                     candles, view, self.cfg.analysis.timeframe, h1_candles=h1_candles, h4_candles=h4_candles
                 )

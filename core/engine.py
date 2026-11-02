@@ -364,7 +364,64 @@ class Engine:
             elif h4_closes[-1] < h4_e20 < h4_e50:
                 h4_bias = "BEARISH"
 
-        # ── ۱. ستاپ شکار نقدینگی سشن آسیا (Judas Swing) ──
+        # ── ۱. ستاپ فوق‌العاده بازگشتی RTM Quasimodo (QML - گرید ممتاز ۶۸٪ وین‌ریت) ──
+        if smc.qml is not None:
+            qml = smc.qml
+            retesting_qml = abs(entry - qml.level) <= view.atr * 0.50
+
+            if qml.qml_type == "BEARISH_QML" and retesting_qml:
+                if h1_bias != "BULLISH":
+                    min_stop = round(view.atr * 1.2, 2)
+                    max_stop = round(view.atr * 2.5, 2)
+                    sl = round(qml.invalidation + buffer, 2)
+                    if (sl - entry) < min_stop:
+                        sl = round(entry + min_stop, 2)
+                    if (sl - entry) <= max_stop:
+                        tp = round(min(qml.target, entry - (sl - entry) * 2.5), 2)
+                        rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                        return Plan(
+                            plan_id=f"rtm-qml-{int(candles[-1].time)}",
+                            symbol="XAUUSD",
+                            side=Side.SELL,
+                            entry_price=round(entry, 2),
+                            stop_loss=sl,
+                            take_profit=tp,
+                            volume=0.0,
+                            grade=SetupGrade.A,
+                            source="rtm_qml",
+                            timeframe=timeframe,
+                            rr=rr,
+                            confidence=0.94,
+                            reasoning=f"RTM Quasimodo (QML) Bearish: پولبک به شانه چپ {qml.level:,.2f} پس از شکار سقف {qml.invalidation:,.2f}",
+                        )
+
+            elif qml.qml_type == "BULLISH_QML" and retesting_qml:
+                if h1_bias != "BEARISH":
+                    min_stop = round(view.atr * 1.2, 2)
+                    max_stop = round(view.atr * 2.5, 2)
+                    sl = round(qml.invalidation - buffer, 2)
+                    if (entry - sl) < min_stop:
+                        sl = round(entry - min_stop, 2)
+                    if (entry - sl) <= max_stop:
+                        tp = round(max(qml.target, entry + (entry - sl) * 2.5), 2)
+                        rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
+                        return Plan(
+                            plan_id=f"rtm-qml-{int(candles[-1].time)}",
+                            symbol="XAUUSD",
+                            side=Side.BUY,
+                            entry_price=round(entry, 2),
+                            stop_loss=sl,
+                            take_profit=tp,
+                            volume=0.0,
+                            grade=SetupGrade.A,
+                            source="rtm_qml",
+                            timeframe=timeframe,
+                            rr=rr,
+                            confidence=0.94,
+                            reasoning=f"RTM Quasimodo (QML) Bullish: پولبک به شانه چپ {qml.level:,.2f} پس از شکار کف {qml.invalidation:,.2f}",
+                        )
+
+        # ── ۲. ستاپ شکار نقدینگی سشن آسیا (Judas Swing) ──
         if smc.judas_swing == "BEARISH_JUDAS":
             if h1_bias == "BULLISH":
                 log.info("ستاپ SMC رد شد: فروش Judas در تضاد با روند صعودی قدرتمند H1")
@@ -485,63 +542,6 @@ class Engine:
                                 confidence=0.88,
                                 reasoning=f"Bearish Order Block در ناحیه گران ({ob.bottom}-{ob.top})",
                             )
-
-        # ── ۳. ستاپ فوق‌العاده بازگشتی RTM Quasimodo (QML) ──
-        if smc.qml is not None:
-            qml = smc.qml
-            retesting_qml = abs(entry - qml.level) <= view.atr * 0.50
-
-            if qml.qml_type == "BEARISH_QML" and retesting_qml:
-                if h1_bias != "BULLISH":
-                    min_stop = round(view.atr * 1.2, 2)
-                    max_stop = round(view.atr * 2.5, 2)
-                    sl = round(qml.invalidation + buffer, 2)
-                    if (sl - entry) < min_stop:
-                        sl = round(entry + min_stop, 2)
-                    if (sl - entry) <= max_stop:
-                        tp = round(min(qml.target, entry - (sl - entry) * 2.5), 2)
-                        rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
-                        return Plan(
-                            plan_id=f"rtm-qml-{int(candles[-1].time)}",
-                            symbol="XAUUSD",
-                            side=Side.SELL,
-                            entry_price=round(entry, 2),
-                            stop_loss=sl,
-                            take_profit=tp,
-                            volume=0.0,
-                            grade=SetupGrade.A,
-                            source="rtm_qml",
-                            timeframe=timeframe,
-                            rr=rr,
-                            confidence=0.94,
-                            reasoning=f"RTM Quasimodo (QML) Bearish: پولبک به شانه چپ {qml.level:,.2f} پس از شکار سقف {qml.invalidation:,.2f}",
-                        )
-
-            elif qml.qml_type == "BULLISH_QML" and retesting_qml:
-                if h1_bias != "BEARISH":
-                    min_stop = round(view.atr * 1.2, 2)
-                    max_stop = round(view.atr * 2.5, 2)
-                    sl = round(qml.invalidation - buffer, 2)
-                    if (entry - sl) < min_stop:
-                        sl = round(entry - min_stop, 2)
-                    if (entry - sl) <= max_stop:
-                        tp = round(max(qml.target, entry + (entry - sl) * 2.5), 2)
-                        rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
-                        return Plan(
-                            plan_id=f"rtm-qml-{int(candles[-1].time)}",
-                            symbol="XAUUSD",
-                            side=Side.BUY,
-                            entry_price=round(entry, 2),
-                            stop_loss=sl,
-                            take_profit=tp,
-                            volume=0.0,
-                            grade=SetupGrade.A,
-                            source="rtm_qml",
-                            timeframe=timeframe,
-                            rr=rr,
-                            confidence=0.94,
-                            reasoning=f"RTM Quasimodo (QML) Bullish: پولبک به شانه چپ {qml.level:,.2f} پس از شکار کف {qml.invalidation:,.2f}",
-                        )
 
         # ── ۴. ستاپ شکست ساختار و ادامه روند RTM (Failure to Return - FTR) ──
         if smc.unmitigated_ftrs:

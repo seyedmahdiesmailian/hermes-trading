@@ -2368,6 +2368,54 @@ class TestWatchlistEngine:
         assert plan is not None
         assert plan.source == "sig_RADIN VIP NEW ⚡"
 
+    def test_b252_qml_priority_and_fvg_displacement_filter(self):
+        """b252: Test RTM Quasimodo priority #1 over other setups and FVG minimum gap threshold."""
+        from core.smc import SMCView, QuasimodoPattern, FairValueGap, FVGType, MarketPhase, ZoneType
+        from core.engine import Engine, MarketView
+        engine = Engine()
+        base_t = 1700000000
+        candles = [
+            Candle(time=base_t + i*900, open=2000.0, high=2002.0, low=1998.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        candles[49] = Candle(time=base_t + 49*900, open=2040.0, high=2052.0, low=2038.0, close=2048.0, volume=100)
+
+        # 1) When QML and FVG coexist, QML is picked as Priority #1
+        qml = QuasimodoPattern(
+            qml_type="BEARISH_QML", level=2050.0, invalidation=2060.0, target=2020.0, bar_index=40
+        )
+        fvg = FairValueGap(
+            fvg_type=FVGType.BEARISH, top=2055.0, bottom=2045.0, bar_index=45, time=base_t + 45*900
+        )
+        smc = SMCView(
+            bias="bearish", confidence=0.94, phase=MarketPhase.BOS_BEARISH,
+            zone=ZoneType.PREMIUM, fib_level=0.75, killzone="london",
+            qml=qml, unfilled_fvgs=[fvg],
+        )
+        view = MarketView(
+            trend="bearish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2049.0, support=2020.0, resistance=2060.0, smc=smc,
+        )
+        plan = engine.plan_from_smc(candles, view)
+        assert plan is not None
+        assert plan.source == "rtm_qml"  # Priority #1 selected!
+        assert plan.grade == SetupGrade.A
+
+        # 2) FVG gap < 1.2 points is rejected as noise
+        from core.smc import SMCAnalyzer
+        noisy_candles = [
+            Candle(time=base_t + i*900, open=2000.0, high=2001.0, low=1999.0, close=2000.0, volume=100)
+            for i in range(10)
+        ]
+        # Tiny gap between c0.high (2000.0) and c2.low (2000.5) -> gap = 0.5 < 1.2
+        noisy_candles[5] = Candle(time=base_t + 5*900, open=1999.0, high=2000.0, low=1998.0, close=1999.0, volume=100)
+        noisy_candles[6] = Candle(time=base_t + 6*900, open=1999.0, high=2005.0, low=1999.0, close=2004.0, volume=100)
+        noisy_candles[7] = Candle(time=base_t + 7*900, open=2004.0, high=2006.0, low=2000.5, close=2005.0, volume=100)
+        detected_fvgs = SMCAnalyzer.detect_fvgs(noisy_candles)
+        # Gaps under 1.2 should be filtered out
+        assert len([f for f in detected_fvgs if (f.top - f.bottom) < 1.2]) == 0
+
+
 
 
 

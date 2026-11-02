@@ -326,29 +326,35 @@ class SMCAnalyzer:
             if c2.low > c0.high:
                 bottom = c0.high
                 top = c2.low
-                filled = any(c.low <= bottom for c in candles[i + 1 : -1]) if (i + 1 < n - 1) else False
-                fvgs.append(FairValueGap(
-                    fvg_type=FVGType.BULLISH,
-                    top=round(top, 2),
-                    bottom=round(bottom, 2),
-                    bar_index=i - 1,
-                    time=candles[i - 1].time,
-                    filled=filled,
-                ))
+                gap = top - bottom
+                # b252: کف اندازه گپ منصفانه سازمانی — فیلتر گپ‌های نویز زیر ۱.۲ دلار
+                if gap >= 1.2:
+                    filled = any(c.low <= bottom for c in candles[i + 1 : -1]) if (i + 1 < n - 1) else False
+                    fvgs.append(FairValueGap(
+                        fvg_type=FVGType.BULLISH,
+                        top=round(top, 2),
+                        bottom=round(bottom, 2),
+                        bar_index=i - 1,
+                        time=candles[i - 1].time,
+                        filled=filled,
+                    ))
 
             # Bearish FVG: سقف کندل ۲ پایین‌تر از کف کندل ۰
             if c2.high < c0.low:
                 top = c0.low
                 bottom = c2.high
-                filled = any(c.high >= top for c in candles[i + 1 : -1]) if (i + 1 < n - 1) else False
-                fvgs.append(FairValueGap(
-                    fvg_type=FVGType.BEARISH,
-                    top=round(top, 2),
-                    bottom=round(bottom, 2),
-                    bar_index=i - 1,
-                    time=candles[i - 1].time,
-                    filled=filled,
-                ))
+                gap = top - bottom
+                # b252: کف اندازه گپ منصفانه سازمانی — فیلتر گپ‌های نویز زیر ۱.۲ دلار
+                if gap >= 1.2:
+                    filled = any(c.high >= top for c in candles[i + 1 : -1]) if (i + 1 < n - 1) else False
+                    fvgs.append(FairValueGap(
+                        fvg_type=FVGType.BEARISH,
+                        top=round(top, 2),
+                        bottom=round(bottom, 2),
+                        bar_index=i - 1,
+                        time=candles[i - 1].time,
+                        filled=filled,
+                    ))
 
         return fvgs[-6:]
 
