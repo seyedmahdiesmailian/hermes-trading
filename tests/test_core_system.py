@@ -2558,6 +2558,49 @@ class TestWatchlistEngine:
         plan_thrust = engine.plan_from_smc(candles, view)
         assert plan_thrust is None  # Blocked because selling into an active green thrust candle without rejection!
 
+    def test_b257_smc_trend_continuation_and_htf_alignment(self):
+        """b257: SMC FVG & OB enforce trend continuation and reject counter-trend traps in HTF rally."""
+        from core.smc import SMCView, FairValueGap, FVGType, MarketPhase, ZoneType
+        from core.engine import Engine, MarketView
+        engine = Engine()
+        base_t = 1700000000
+
+        candles = [
+            Candle(time=base_t + i*900, open=2000.0 + i*0.5, high=2002.0 + i*0.5, low=1999.0 + i*0.5, close=2001.0 + i*0.5, volume=100)
+            for i in range(50)
+        ]
+        # Current bar 49
+        candles[49] = Candle(time=base_t + 49*900, open=2040.0, high=2045.0, low=2038.0, close=2042.0, volume=100)
+
+        # 1) In an active Bullish trend, a Bearish FVG test must be strictly REJECTED (no suicidal selling)
+        fvg_bear = FairValueGap(fvg_type=FVGType.BEARISH, top=2044.0, bottom=2040.0, bar_index=45, time=base_t + 45*900)
+        smc_bull = SMCView(
+            bias="bullish", confidence=0.88, phase=MarketPhase.BOS_BULLISH,
+            zone=ZoneType.PREMIUM, fib_level=0.80, killzone="london", unfilled_fvgs=[fvg_bear],
+        )
+        view_bull = MarketView(
+            trend="bullish", trend_strength=0.45, atr=5.0, spread=0.2,
+            last_price=2042.0, support=2010.0, resistance=2060.0, smc=smc_bull,
+        )
+        plan_blocked = engine.plan_from_smc(candles, view_bull)
+        assert plan_blocked is None, "Bearish FVG should be blocked when trend is bullish"
+
+        # 2) In the same Bullish trend, a Bullish FVG continuation test in the upper range is ALLOWED
+        fvg_bull = FairValueGap(fvg_type=FVGType.BULLISH, top=2043.0, bottom=2037.0, bar_index=45, time=base_t + 45*900)
+        smc_bull_with_fvg = SMCView(
+            bias="bullish", confidence=0.88, phase=MarketPhase.BOS_BULLISH,
+            zone=ZoneType.PREMIUM, fib_level=0.80, killzone="london", unfilled_fvgs=[fvg_bull],
+        )
+        view_bull_with_fvg = MarketView(
+            trend="bullish", trend_strength=0.45, atr=5.0, spread=0.2,
+            last_price=2042.0, support=2010.0, resistance=2060.0, smc=smc_bull_with_fvg,
+        )
+        plan_allowed = engine.plan_from_smc(candles, view_bull_with_fvg)
+        assert plan_allowed is not None, "Bullish FVG continuation must be allowed in an uptrend"
+        assert plan_allowed.side == Side.BUY
+        assert plan_allowed.source == "smc_fvg"
+
+
 
 
 

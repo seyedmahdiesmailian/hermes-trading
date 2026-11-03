@@ -224,10 +224,13 @@ class Engine:
             h1_closes = [c.close for c in h1_candles]
             h1_e20 = _ema(h1_closes, 20)
             h1_e50 = _ema(h1_closes, 50)
-            if side == Side.SELL and h1_closes[-1] > h1_e20 > h1_e50:
+            e20_prev = _ema(h1_closes[:-3], 20)
+            is_h1_bull = (h1_closes[-1] > max(h1_e20, h1_e50) and h1_e20 >= e20_prev) or (h1_closes[-1] > h1_e20 > h1_e50)
+            is_h1_bear = (h1_closes[-1] < min(h1_e20, h1_e50) and h1_e20 <= e20_prev) or (h1_closes[-1] < h1_e20 < h1_e50)
+            if side == Side.SELL and is_h1_bull:
                 log.info("تحلیل خودکار رد شد: فروش در M15 در تضاد با روند صعودی قدرتمند H1")
                 return None
-            if side == Side.BUY and h1_closes[-1] < h1_e20 < h1_e50:
+            if side == Side.BUY and is_h1_bear:
                 log.info("تحلیل خودکار رد شد: خرید در M15 در تضاد با روند نزولی قدرتمند H1")
                 return None
 
@@ -349,9 +352,10 @@ class Engine:
             h1_closes = [c.close for c in h1_candles]
             h1_e20 = _ema(h1_closes, 20)
             h1_e50 = _ema(h1_closes, 50)
-            if h1_closes[-1] > h1_e20 > h1_e50:
+            e20_prev = _ema(h1_closes[:-3], 20)
+            if (h1_closes[-1] > max(h1_e20, h1_e50) and h1_e20 >= e20_prev) or (h1_closes[-1] > h1_e20 > h1_e50):
                 h1_bias = "BULLISH"
-            elif h1_closes[-1] < h1_e20 < h1_e50:
+            elif (h1_closes[-1] < min(h1_e20, h1_e50) and h1_e20 <= e20_prev) or (h1_closes[-1] < h1_e20 < h1_e50):
                 h1_bias = "BEARISH"
 
         h4_bias = view.h4_bias if hasattr(view, "h4_bias") else "NEUTRAL"
@@ -363,6 +367,25 @@ class Engine:
                 h4_bias = "BULLISH"
             elif h4_closes[-1] < h4_e20 < h4_e50:
                 h4_bias = "BEARISH"
+
+        # اجماع جهت‌نمای چندگانه (Multi-Timeframe Trend Consensus)
+        bullish_signals = (
+            (1 if view.trend == "bullish" else 0) +
+            (1 if view.trend_strength >= 0.15 and view.trend == "bullish" else 0) +
+            (1 if (smc.bias == "bullish" or getattr(smc, "trend", "") == "bullish") else 0) +
+            (1 if h1_bias == "BULLISH" else 0) +
+            (1 if h4_bias == "BULLISH" else 0)
+        )
+        bearish_signals = (
+            (1 if view.trend == "bearish" else 0) +
+            (1 if view.trend_strength >= 0.15 and view.trend == "bearish" else 0) +
+            (1 if (smc.bias == "bearish" or getattr(smc, "trend", "") == "bearish") else 0) +
+            (1 if h1_bias == "BEARISH" else 0) +
+            (1 if h4_bias == "BEARISH" else 0)
+        )
+
+        is_overall_bullish = bullish_signals >= 2 and bearish_signals == 0
+        is_overall_bearish = bearish_signals >= 2 and bullish_signals == 0
 
         # ── ۱. ستاپ فوق‌العاده بازگشتی RTM Quasimodo (QML - گرید ممتاز ۶۸٪ وین‌ریت) ──
         if smc.qml is not None:
@@ -378,7 +401,9 @@ class Engine:
             if qml.qml_type == "BEARISH_QML" and retesting_qml:
                 if is_bullish_thrust:
                     log.info("ستاپ QML رد شد: کندل نفوذ صعودی قدرتمند بدون شادو ریجکشن در شانه چپ")
-                elif h1_bias != "BULLISH":
+                elif is_overall_bullish or h1_bias == "BULLISH":
+                    log.info("ستاپ QML رد شد: فروش در تضاد با اجماع صعودی قدرتمند بازار")
+                else:
                     min_stop = round(view.atr * 1.2, 2)
                     max_stop = round(view.atr * 2.5, 2)
                     sl = round(qml.invalidation + buffer, 2)
@@ -406,7 +431,9 @@ class Engine:
             elif qml.qml_type == "BULLISH_QML" and retesting_qml:
                 if is_bearish_thrust:
                     log.info("ستاپ QML رد شد: کندل ریزش سنگین نزولی بدون شادو ریجکشن در شانه چپ")
-                elif h1_bias != "BEARISH":
+                elif is_overall_bearish or h1_bias == "BEARISH":
+                    log.info("ستاپ QML رد شد: خرید در تضاد با اجماع نزولی قدرتمند بازار")
+                else:
                     min_stop = round(view.atr * 1.2, 2)
                     max_stop = round(view.atr * 2.5, 2)
                     sl = round(qml.invalidation - buffer, 2)
@@ -433,7 +460,7 @@ class Engine:
 
         # ── ۲. ستاپ شکار نقدینگی سشن آسیا (Judas Swing) ──
         if smc.judas_swing == "BEARISH_JUDAS":
-            if h1_bias == "BULLISH":
+            if is_overall_bullish or h1_bias == "BULLISH":
                 log.info("ستاپ SMC رد شد: فروش Judas در تضاد با روند صعودی قدرتمند H1")
             else:
                 sweep_ref = max(candles[-1].high, smc.asia_high) if smc.asia_high > 0 else smc.swing_high
@@ -462,7 +489,7 @@ class Engine:
                     )
 
         elif smc.judas_swing == "BULLISH_JUDAS":
-            if h1_bias == "BEARISH":
+            if is_overall_bearish or h1_bias == "BEARISH":
                 log.info("ستاپ SMC رد شد: خرید Judas در تضاد با روند نزولی قدرتمند H1")
             else:
                 sweep_ref = min(candles[-1].low, smc.asia_low) if smc.asia_low > 0 else smc.swing_low
@@ -495,9 +522,12 @@ class Engine:
         if unmitigated_obs:
             last_c = candles[-1]
             for ob in unmitigated_obs[::-1]:
-                if ob.ob_type.value == "BULLISH" and smc.zone == ZoneType.DISCOUNT:
-                    if h1_bias == "BEARISH":
-                        log.info("ستاپ SMC رد شد: خرید Order Block در تضاد با روند نزولی قدرتمند H1")
+                allow_buy_ob = (is_overall_bullish or (view.trend == "bullish" and h1_bias != "BEARISH")) or smc.zone == ZoneType.DISCOUNT
+                allow_sell_ob = (is_overall_bearish or (view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
+
+                if ob.ob_type.value == "BULLISH" and allow_buy_ob:
+                    if is_overall_bearish or h1_bias == "BEARISH":
+                        log.info("ستاپ SMC رد شد: خرید Order Block در تضاد با روند نزولی بازار")
                         continue
                     if last_c.low <= ob.top and last_c.close >= ob.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
@@ -521,12 +551,12 @@ class Engine:
                                 timeframe=timeframe,
                                 rr=rr,
                                 confidence=0.88,
-                                reasoning=f"Bullish Order Block در ناحیه ارزان ({ob.bottom}-{ob.top})",
+                                reasoning=f"Bullish Order Block در روند صعودی ({ob.bottom}-{ob.top})",
                             )
 
-                elif ob.ob_type.value == "BEARISH" and smc.zone == ZoneType.PREMIUM:
-                    if h1_bias == "BULLISH":
-                        log.info("ستاپ SMC رد شد: فروش Order Block در تضاد با روند صعودی قدرتمند H1")
+                elif ob.ob_type.value == "BEARISH" and allow_sell_ob:
+                    if is_overall_bullish or h1_bias == "BULLISH":
+                        log.info("ستاپ SMC رد شد: فروش Order Block در تضاد با روند صعودی بازار")
                         continue
                     if last_c.high >= ob.bottom and last_c.close <= ob.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
@@ -616,9 +646,12 @@ class Engine:
         if unfilled_fvgs:
             last_c = candles[-1]
             for fvg in unfilled_fvgs[::-1]:
-                if fvg.fvg_type.value == "BULLISH" and smc.zone == ZoneType.DISCOUNT:
-                    if h1_bias == "BEARISH":
-                        log.info("ستاپ SMC رد شد: خرید FVG در تضاد با روند نزولی قدرتمند H1")
+                allow_buy_fvg = (is_overall_bullish or (view.trend == "bullish" and h1_bias != "BEARISH")) or smc.zone == ZoneType.DISCOUNT
+                allow_sell_fvg = (is_overall_bearish or (view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
+
+                if fvg.fvg_type.value == "BULLISH" and allow_buy_fvg:
+                    if is_overall_bearish or h1_bias == "BEARISH" or view.trend == "bearish":
+                        log.info("ستاپ SMC رد شد: خرید FVG در تضاد با روند نزولی بازار")
                         continue
                     # b247: Consequent Encroachment 50% - عدم بسته‌شدن زیر نقطه تعادل FVG
                     if last_c.low <= fvg.top and last_c.close >= fvg.midpoint:
@@ -643,12 +676,12 @@ class Engine:
                                 timeframe=timeframe,
                                 rr=rr,
                                 confidence=0.90,
-                                reasoning=f"SMC Bullish FVG: تست عدم تعادل نقدینگی [{fvg.bottom:,.2f} - {fvg.top:,.2f}] در محدوده تخفیف",
+                                reasoning=f"SMC Bullish FVG Continuation: تست عدم تعادل نقدینگی [{fvg.bottom:,.2f} - {fvg.top:,.2f}]",
                             )
 
-                elif fvg.fvg_type.value == "BEARISH" and smc.zone == ZoneType.PREMIUM:
-                    if h1_bias == "BULLISH":
-                        log.info("ستاپ SMC رد شد: فروش FVG در تضاد با روند صعودی قدرتمند H1")
+                elif fvg.fvg_type.value == "BEARISH" and allow_sell_fvg:
+                    if is_overall_bullish or h1_bias == "BULLISH" or view.trend == "bullish":
+                        log.info("ستاپ SMC رد شد: فروش FVG در تضاد با روند صعودی بازار")
                         continue
                     # b247: Consequent Encroachment 50% - عدم بسته‌شدن بالای نقطه تعادل FVG
                     if last_c.high >= fvg.bottom and last_c.close <= fvg.midpoint:
