@@ -2600,6 +2600,44 @@ class TestWatchlistEngine:
         assert plan_allowed.side == Side.BUY
         assert plan_allowed.source == "smc_fvg"
 
+    def test_b258_trailing_stop_one_way_ratchet(self):
+        """b258: Trailing stop ratchet invariant prevents backward jumps (loosening risk)."""
+        from core.exits import ExitManager
+        from core.params import PositionCfg
+
+        modified = {}
+        def _on_modify(ticket, sl, tp=0.0, reason=""):
+            modified[ticket] = sl
+
+        cfg = PositionCfg(
+            trailing_start_rr=1.0, breakeven_rr=1.0, max_hold_hours=24,
+            partial_tp_rr=1.5, partial_enabled=True,
+        )
+        exits = ExitManager(cfg, on_modify=_on_modify)
+
+        # 1) SELL position with SL=3940.0, current=3935.0 (in profit)
+        sell_pos = BrokerPosition(
+            ticket=301, symbol="XAUUSD", side=Side.SELL, volume=0.1,
+            open_price=3950.0, current_price=3935.0, sl=3940.0, tp=3925.0,
+            profit=150.0, swap=0.0, open_time=int(time.time()), initial_sl=3955.0,
+        )
+        # Attempt to pass an adverse swing_sl = 3965.0 (above current SL!)
+        exits.manage(sell_pos, time.time(), atr=5.0, swing_sl=3965.0)
+        if 301 in modified:
+            assert modified[301] < 3940.0, f"Ratchet violated! SL moved higher to {modified[301]}"
+
+        # 2) BUY position with SL=2015.0, current=2020.0 (in profit)
+        buy_pos = BrokerPosition(
+            ticket=302, symbol="XAUUSD", side=Side.BUY, volume=0.1,
+            open_price=2000.0, current_price=2020.0, sl=2015.0, tp=2035.0,
+            profit=200.0, swap=0.0, open_time=int(time.time()), initial_sl=1995.0,
+        )
+        # Attempt to pass an adverse swing_sl = 1990.0 (below current SL!)
+        exits.manage(buy_pos, time.time(), atr=5.0, swing_sl=1990.0)
+        if 302 in modified:
+            assert modified[302] > 2015.0, f"Ratchet violated! SL moved lower to {modified[302]}"
+
+
 
 
 

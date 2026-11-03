@@ -125,9 +125,15 @@ class ExitManager:
             # b251: پشتیبانی از تریلینگ ساختاری سوئینگ در صورت سود بالاتر
             if swing_sl > 0:
                 if pos.is_buy and swing_sl < pos.current_price:
-                    new_sl = max(new_sl or 0.0, swing_sl)
+                    if new_sl is not None:
+                        new_sl = max(new_sl, swing_sl)
+                    elif swing_sl > pos.sl:
+                        new_sl = swing_sl
                 elif not pos.is_buy and swing_sl > pos.current_price:
-                    new_sl = min(new_sl or 999999.0, swing_sl) if (new_sl or 0.0) > 0 else swing_sl
+                    if new_sl is not None:
+                        new_sl = min(new_sl, swing_sl)
+                    elif pos.sl == 0 or swing_sl < pos.sl:
+                        new_sl = swing_sl
 
             if new_sl is not None and new_sl > 0:
                 self._modify(pos, new_sl, reason="trailing")
@@ -217,6 +223,19 @@ class ExitManager:
         rounded_sl = round(new_sl, 2)
         if round(pos.sl, 2) == rounded_sl:
             return  # عدم تغییر — جلوگیری از درخواست تکراری به بروکر
+
+        # راچت یک‌طرفه قطعی (Trailing Ratchet Invariant):
+        # استاپ در معامله خرید فقط به سمت بالا و در معامله فروش فقط به سمت پایین حرکت می‌کند
+        if pos.is_buy:
+            if pos.sl > 0 and rounded_sl <= pos.sl:
+                return  # استاپ خرید هرگز عقب‌گرد نمی‌کند
+            if rounded_sl >= pos.current_price:
+                return  # استاپ نمی‌تواند بالاتر از قیمت فعلی باشد
+        else:
+            if pos.sl > 0 and rounded_sl >= pos.sl:
+                return  # استاپ فروش هرگز عقب‌گرد نمی‌کند
+            if rounded_sl <= pos.current_price:
+                return  # استاپ نمی‌تواند پایین‌تر از قیمت فعلی باشد
         if self._on_modify is not None:
             try:
                 self._on_modify(pos.ticket, rounded_sl, pos.tp, reason=reason)

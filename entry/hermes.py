@@ -572,13 +572,19 @@ class HermesDaemon:
 
             # ATR زنده و استاپ ساختاری سوئینگ برای تریلینگ پیشرفته
             swing_sl = 0.0
-            if candles and len(candles) >= 12:
-                recent_closed = candles[-12:-1]  # ۳ ساعت اخیر کندل‌های بسته‌شده M15
+            if candles and len(candles) >= 6:
+                # محاسبه سوئینگ محلی بر مبنای کندل‌های پس از ورود (تا سقف ۸ کندل اخیر)
+                bars_since_open = max(3, min(8, int((now - pos.open_time) / 900))) if pos.open_time > 0 else 4
+                recent_closed = candles[-bars_since_open:-1] if len(candles) > bars_since_open else candles[:-1]
                 buffer = round(self._last_atr * 0.15, 2) if self._last_atr > 0 else 0.5
                 if pos.is_buy:
-                    swing_sl = round(min(c.low for c in recent_closed) - buffer, 2)
+                    calc_swing = round(min(c.low for c in recent_closed) - buffer, 2)
+                    if calc_swing < pos.current_price and (pos.sl == 0 or calc_swing > pos.sl):
+                        swing_sl = calc_swing
                 else:
-                    swing_sl = round(max(c.high for c in recent_closed) + buffer, 2)
+                    calc_swing = round(max(c.high for c in recent_closed) + buffer, 2)
+                    if calc_swing > pos.current_price and (pos.sl == 0 or calc_swing < pos.sl):
+                        swing_sl = calc_swing
 
             # منطق خروج مشترک — همان کدی که بک‌تستر اجرا می‌کند
             decision = self.exits.manage(pos, now, atr=self._last_atr, swing_sl=swing_sl)
