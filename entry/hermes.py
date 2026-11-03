@@ -166,6 +166,7 @@ class HermesDaemon:
         self._last_exit_loop = 0.0
         self._last_atr = 0.0  # آخرین ATR زنده — trailing تحلیلی
         self._tracked_positions: dict[int, BrokerPosition] = {}
+        self._pending_signals: list[Signal] = []
 
     def _handle_bridge_error(self, e: Exception) -> None:
         self._bridge_error_count += 1
@@ -265,16 +266,29 @@ class HermesDaemon:
         self.led.snapshot_equity(account)
         self.learner.adapt(self.led)
 
-        # ۳) سیگنال‌های جدید کانال (تطبیق اختصارات با قیمت زنده)
+        # ۳) سیگنال‌های جدید کانال (تطبیق اختصارات با قیمت زنده) و بافر انتظار
         new_signals = self.signals.read_new(current_price=tick.mid if tick else 0.0)
         for sig in new_signals:
             self.led.save_signal(sig)
+            if sig.is_valid:
+                self._pending_signals.append(sig)
+
+        # پاکسازی سیگنال‌های منقضی‌شده از بافر (بیش از ۲۰ دقیقه گذشته)
+        now_ts = time.time()
+        valid_pending = []
+        for s in self._pending_signals:
+            try:
+                sig_age = now_ts - datetime.fromisoformat(s.timestamp.replace("Z", "+00:00")).timestamp()
+            except Exception:
+                sig_age = 0.0
+            if sig_age <= 1200:  # ۲۰ دقیقه مهلت اعتبار سیگنال
+                valid_pending.append(s)
+        self._pending_signals = valid_pending
 
         # ۴) پوزیشن‌های در معرض ریسک و سقف همزمانی (Risk-Free Concurrency)
         max_concurrent = getattr(self.cfg.gates, "max_concurrent_positions", 2)
         risky_positions = [p for p in positions if not getattr(p, "is_risk_free", False)]
-        if len(risky_positions) >= self.cfg.gates.max_open_positions or len(positions) >= max_concurrent:
-            return
+        can_open = (len(risky_positions) < self.cfg.gates.max_open_positions and len(positions) < max_concurrent)
 
         # ۵) سشن معاملاتی برای تحلیل خودکار — فقط در session_hours (UTC).
         #    خارج از سشن نقدینگی کم است و اسپرد/اسلیپیج بالا.
@@ -314,22 +328,32 @@ class HermesDaemon:
             f"BLACKOUT ({view.news_reason})" if view.news_blackout else "CLEAR",
         )
 
-        # ۶) ساخت plan — اولویت با سیگنال کانال (اجرا یا واچ‌لیست)، سپس واچ‌لیست فعال، سپس تحلیل خودکار
+        # ۷) ساخت plan — اولویت اول: سیگنال‌های بافر کانال تلگرام
         self.led.prune_expired_watchlist(time.time())
         plan = None
+        executed_sig = None
 
-        for sig in new_signals:
+        for sig in self._pending_signals:
             decision, plan_cand, wl_item = self.eng.evaluate_signal(
                 sig, view, tick, self.cfg.analysis.timeframe
             )
             if decision == "EXECUTE" and plan_cand is not None:
-                plan = plan_cand
-                log.info("سیگنال کانال تایید شد و آماده اجراست: %s", sig.signal_id)
-                break
+                if can_open:
+                    plan = plan_cand
+                    executed_sig = sig
+                    log.info("سیگنال کانال تایید شد و آماده اجراست: %s", sig.signal_id)
+                    break
+                else:
+                    log.info("سیگنال معتبر %s در انتظار بسته/ریسک‌فری شدن پوزیشن باز باقی می‌ماند", sig.signal_id)
             elif decision == "WATCHLIST" and wl_item is not None:
                 self.led.add_to_watchlist(wl_item)
+                executed_sig = sig
                 log.info("سیگنال به واچ‌لیست رفت: %s — %s", sig.signal_id, wl_item.get("reason"))
                 self.notify.status(f"⏳ سیگنال به واچ‌لیست رفت:\n{wl_item.get('reason')}")
+                break
+
+        if executed_sig is not None:
+            self._pending_signals.remove(executed_sig)
 
         # اگر پلنی از سیگنال‌های جدید نیامده، واچ‌لیست‌های گذشته را چک کن
         wl_executed_item_id = None
