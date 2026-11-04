@@ -342,6 +342,11 @@ class Engine:
         if view.news_blackout or not view.smc or len(candles) < 30:
             return None
 
+        # فیلتر فاز رنج مرده (Dead Range Filter): وتوی ورود ستاپ‌های خودکار در رنج‌های فلت با نوسان ضعیف
+        if view.trend == "ranging" and view.trend_strength < 0.12:
+            log.info("ستاپ SMC رد شد: بازار در فاز رنج مرده (str=%.2f < 0.12)", view.trend_strength)
+            return None
+
         entry = view.last_price
         smc = view.smc
         buffer = round(view.atr * 0.15, 2)
