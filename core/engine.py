@@ -348,6 +348,13 @@ class Engine:
             log.info("ستاپ SMC رد شد: بازار در فاز رنج مرده (str=%.2f < 0.12)", view.trend_strength)
             return None
 
+        # فیلتر ساعات پرریسک نوسانی و اخبار کلان (12, 15, 18, 20 UTC)
+        if candles[-1].time > 100000000:
+            t_utc = int(candles[-1].time // 3600 % 24)
+            if t_utc in (12, 15, 18, 20):
+                log.info("ستاپ SMC رد شد: ساعت پرریسک اقتصادی یا افت نقدینگی (%02d:00 UTC)", t_utc)
+                return None
+
         entry = view.last_price
         smc = view.smc
         buffer = round(view.atr * 0.15, 2)
@@ -542,7 +549,7 @@ class Engine:
                         if (entry - sl) < min_stop:
                             sl = round(entry - min_stop, 2)
                         if (entry - sl) <= max_stop:
-                            tp = round(entry + (entry - sl) * 2.5, 2)
+                            tp = round(entry + (entry - sl) * 2.0, 2)
                             rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
                             return Plan(
                                 plan_id=f"smc-ob-{int(candles[-1].time)}",
@@ -571,7 +578,7 @@ class Engine:
                         if (sl - entry) < min_stop:
                             sl = round(entry + min_stop, 2)
                         if (sl - entry) <= max_stop:
-                            tp = round(entry - (sl - entry) * 2.5, 2)
+                            tp = round(entry - (sl - entry) * 2.0, 2)
                             rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
                             return Plan(
                                 plan_id=f"smc-ob-{int(candles[-1].time)}",
@@ -667,7 +674,7 @@ class Engine:
                         if (entry - sl) < min_stop:
                             sl = round(entry - min_stop, 2)
                         if (entry - sl) <= max_stop:
-                            tp = round(entry + (entry - sl) * 2.5, 2)
+                            tp = round(entry + (entry - sl) * 2.0, 2)
                             rr = round(abs(tp - entry) / max(0.1, abs(entry - sl)), 2)
                             return Plan(
                                 plan_id=f"smc-fvg-{int(candles[-1].time)}",
@@ -697,7 +704,7 @@ class Engine:
                         if (sl - entry) < min_stop:
                             sl = round(entry + min_stop, 2)
                         if (sl - entry) <= max_stop:
-                            tp = round(entry - (sl - entry) * 2.5, 2)
+                            tp = round(entry - (sl - entry) * 2.0, 2)
                             rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
                             return Plan(
                                 plan_id=f"smc-fvg-{int(candles[-1].time)}",

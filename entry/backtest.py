@@ -295,8 +295,8 @@ class Backtester:
                 h1_candles = _aggregate_h1_candles(candles[:i+1])
                 # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
                 plan = self.eng.plan_from_smc(candles[:i+1], view, h1_candles=h1_candles, timeframe=self.cfg.analysis.timeframe, enable_judas=False)
-                # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (گرید B با تاییدیه H1)
-                if plan is None and view.is_trending and view.trend_strength >= 0.40:
+                # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (فقط در روندهای استثنایی و پرقدرت)
+                if plan is None and view.is_trending and view.trend_strength >= 0.50:
                     plan = self.eng.plan_from_analysis(candles[:i+1], view,
                                                        self.cfg.analysis.timeframe,
                                                        h1_candles=h1_candles)
