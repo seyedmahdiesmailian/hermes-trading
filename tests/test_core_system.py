@@ -2637,6 +2637,16 @@ class TestWatchlistEngine:
         if 302 in modified:
             assert modified[302] > 2015.0, f"Ratchet violated! SL moved lower to {modified[302]}"
 
+    def test_b265_multi_target_tp_selection(self):
+        """b265: Signals with multiple TPs promote to TP2 when TP1 RR is below 1.0."""
+        from adapters.signals import SignalsAdapter
+        # A tight TP1 signal where TP1 gives RR < 1.0 (Entry 3910, SL 3895 -> risk 15; TP1 3918 -> reward 8, RR 0.53)
+        text = "3910 خرید استاپ 3895 تی پی 3918 ، 3935 ، 3950"
+        d = SignalsAdapter.parse_text_to_dict(text, current_price=3910.0)
+        assert d["tp"] == 3935.0  # Promoted to TP2!
+        assert (d["tp"] - d["entry"]) / (d["entry"] - d["sl"]) >= 1.0
+
+
 
 
 
