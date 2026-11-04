@@ -405,13 +405,13 @@ class HermesDaemon:
         if plan is None and can_open_auto and auto_allowed:
             # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
             plan = self.eng.plan_from_smc(
-                candles, view, h1_candles, self.cfg.analysis.timeframe, h4_candles=h4_candles
+                candles, view, h1_candles, self.cfg.analysis.timeframe, h4_candles=h4_candles, enable_judas=False
             )
             if plan is not None:
                 log.info("تحلیل خودکار: ستاپ سازمانی SMC %s (%s) تشخیص داده شد", plan.side.value, plan.reasoning)
 
-            # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (فقط در روندهای قدرتمند و تثبیت‌شده)
-            if plan is None and view.is_trending and view.trend_strength >= 0.30:
+            # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (فقط در روندهای بسیار قدرتمند و تثبیت‌شده)
+            if plan is None and view.is_trending and view.trend_strength >= 0.40:
                 plan = self.eng.plan_from_analysis(
                     candles, view, self.cfg.analysis.timeframe, h1_candles=h1_candles, h4_candles=h4_candles
                 )

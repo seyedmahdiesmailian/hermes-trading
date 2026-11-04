@@ -246,16 +246,6 @@ class SignalsAdapter:
         if sl_match:
             sl = cls._expand_abbreviated_price(sl_match.group(1), current_price)
 
-        # استخراج حد سود (Take Profit)
-        tp = None
-        tp_match = re.search(
-            r"(?:TP1?|TARGET1?|تارگت|تی\s*پی|حد\s*سود)[\s:=]*([0-9]{1,5}(?:\.[0-9]+)?)",
-            clean,
-            re.IGNORECASE,
-        )
-        if tp_match:
-            tp = cls._expand_abbreviated_price(tp_match.group(1), current_price)
-
         # استخراج نقطه یا بازه ورود (Entry)
         entry = None
         range_match = re.search(r"([0-9]{1,5}(?:\.[0-9]+)?)\s*(?:و|تا|-)\s*([0-9]{1,5}(?:\.[0-9]+)?)", clean)
@@ -275,9 +265,36 @@ class SignalsAdapter:
                 nums = [n for n in re.findall(r"\b[0-9]{1,5}(?:\.[0-9]+)?\b", clean)]
                 for n in nums:
                     candidate = cls._expand_abbreviated_price(n, current_price)
-                    if candidate != sl and candidate != tp:
+                    if candidate != sl:
                         entry = candidate
                         break
+
+        # استخراج حد سود (Take Profit) — پشتیبانی از چند تارگت (TP1, TP2, TP3)
+        tp = None
+        tp_candidates = []
+        multi_tp_matches = re.findall(
+            r"(?:TP[0-9]|TARGET[0-9])[\s:=]*([0-9]{1,5}(?:\.[0-9]+)?)", clean, re.IGNORECASE
+        )
+        if multi_tp_matches:
+            tp_candidates = [cls._expand_abbreviated_price(m, current_price) for m in multi_tp_matches]
+        else:
+            tp_section = re.search(
+                r"(?:تی\s*پی|تارگت|حد\s*سود)[\s:=]*([0-9\s\.,،]+)", clean, re.IGNORECASE
+            )
+            if tp_section:
+                nums = re.findall(r"[0-9]{1,5}(?:\.[0-9]+)?", tp_section.group(1))
+                if nums:
+                    tp_candidates = [cls._expand_abbreviated_price(n, current_price) for n in nums]
+
+        if tp_candidates:
+            tp = tp_candidates[0]
+            # اگر ۲ یا چند تارگت وجود دارد، از TP2 برای دستیابی به حداقل RR مجاز استفاده کن (در صورت کمتر بودن RR با TP1 از 1.0)
+            ref_entry = entry or current_price
+            if len(tp_candidates) >= 2 and sl and ref_entry:
+                calc_risk = abs(ref_entry - sl)
+                calc_reward = abs(tp - ref_entry)
+                if calc_risk > 0 and (calc_reward / calc_risk) < 1.0:
+                    tp = tp_candidates[1]
 
         if not entry or not sl:
             return {}

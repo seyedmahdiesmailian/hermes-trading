@@ -337,6 +337,7 @@ class Engine:
         h1_candles: Optional[list[Candle]] = None,
         timeframe: str = "M15",
         h4_candles: Optional[list[Candle]] = None,
+        enable_judas: bool = True,
     ) -> Optional[Plan]:
         """ساخت ستاپ‌های اختصاصی و سازمانی پرایس‌اکشن هوشمند SMC/ICT (گرید A+)."""
         if view.news_blackout or not view.smc or len(candles) < 30:
@@ -464,7 +465,7 @@ class Engine:
                         )
 
         # ── ۲. ستاپ شکار نقدینگی سشن آسیا (Judas Swing) ──
-        if smc.judas_swing == "BEARISH_JUDAS":
+        if enable_judas and smc.judas_swing == "BEARISH_JUDAS":
             if is_overall_bullish or h1_bias == "BULLISH":
                 log.info("ستاپ SMC رد شد: فروش Judas در تضاد با روند صعودی قدرتمند H1")
             else:
@@ -493,7 +494,7 @@ class Engine:
                         reasoning=f"Judas Swing: شکار سقف آسیا ({smc.asia_high or smc.swing_high}) در آغاز لندن و برگشت نزولی",
                     )
 
-        elif smc.judas_swing == "BULLISH_JUDAS":
+        elif enable_judas and smc.judas_swing == "BULLISH_JUDAS":
             if is_overall_bearish or h1_bias == "BEARISH":
                 log.info("ستاپ SMC رد شد: خرید Judas در تضاد با روند نزولی قدرتمند H1")
             else:
