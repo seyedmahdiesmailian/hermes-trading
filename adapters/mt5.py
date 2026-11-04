@@ -341,19 +341,24 @@ class Mt5Adapter:
         tp: float,
     ) -> Order:
         """ارسال سفارش به بازار همراه با Idempotency Key."""
+        tick = self.get_tick(symbol)
+        price_ref = tick.ask if side == Side.BUY else tick.bid
+
+        # بریج ویندوز منحصراً با حروف کوچک "buy" جهت تشخیص صحیح ORDER_TYPE_BUY کار می‌کند
+        order_type_str = "buy" if side == Side.BUY else "sell"
+
         body = {
             "symbol": symbol,
-            "type": side.value,
+            "type": order_type_str,
+            "price": price_ref,
             "volume": volume,
             "comment": order_id,
             "magic": 20260901,
         }
         if sl > 0:
-            body["sl"] = sl
+            body["sl"] = round(sl, 2)
         if tp > 0:
-            body["tp"] = tp
-
-        price_ref = self.get_tick(symbol).mid
+            body["tp"] = round(tp, 2)
 
         if self._dry_run:
             self._sim_ticket += 1
@@ -412,6 +417,23 @@ class Mt5Adapter:
         ticket = int(d.get("ticket", 0))
         if ticket == 0:
             raise BridgeError(f"/api/order: ticket=0 retcode={d.get('retcode')}", retcode=d.get("retcode"))
+
+        # بازرسی ایمنی قطعی جهت معامله و استاپ‌ها (Direction & SL/TP Verification)
+        if ticket > 0 and not self._dry_run:
+            try:
+                time.sleep(0.2)
+                verified_positions = [p for p in self.get_open_positions(symbol) if p.ticket == ticket]
+                if verified_positions:
+                    vp = verified_positions[0]
+                    if vp.side != side:
+                        log.critical("🚨 تضاد بحرانی جهت معامله! پوزیشن تیکت %d با جهت اشتباه %s باز شده (درخواست: %s). بستن آنی...", ticket, vp.side.value, side.value)
+                        self.close_position(ticket)
+                        raise BridgeError(f"CRITICAL: Position opened with inverted side {vp.side.value} != {side.value}. Emergency closed.")
+                    if (sl > 0 and vp.sl == 0) or (tp > 0 and vp.tp == 0):
+                        log.warning("پوزیشن تیکت %d فاقد SL/TP است؛ اصلاح آنی...", ticket)
+                        self.modify_position(ticket, sl, tp)
+            except Exception as e:
+                log.error("خطا در بازرسی نهایی سفارش ثبت‌شده: %s", e)
 
         return Order(
             order_id=order_id,
