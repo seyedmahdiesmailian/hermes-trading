@@ -391,7 +391,24 @@ class Mt5Adapter:
             )
 
         d = self._post("/api/order", body)
-        self._requireOk(d, "/api/order")
+        if not d.get("ok", False) and d.get("retcode") == 10016:
+            log.warning("بروکر سفارش با SL/TP اولیه را رد کرد (10016 INVALID_STOPS) — اجرای خودکار ورود دو مرحله‌ای Market Execution...")
+            fallback_body = dict(body)
+            fallback_body.pop("sl", None)
+            fallback_body.pop("tp", None)
+            d = self._post("/api/order", fallback_body)
+            self._requireOk(d, "/api/order (market fallback)")
+            ticket = int(d.get("ticket", 0))
+            if ticket > 0 and (sl > 0 or tp > 0):
+                log.info("سفارش مارکت ثبت شد (ticket=%d)؛ در حال اعمال آنی استاپ و تارگت (sl=%.2f, tp=%.2f)...", ticket, sl, tp)
+                try:
+                    time.sleep(0.15)
+                    self.modify_position(ticket, sl, tp)
+                except Exception as ex:
+                    log.error("خطا در اعمال استاپ پس از ورود دو مرحله‌ای: %s", ex)
+        else:
+            self._requireOk(d, "/api/order")
+
         ticket = int(d.get("ticket", 0))
         if ticket == 0:
             raise BridgeError(f"/api/order: ticket=0 retcode={d.get('retcode')}", retcode=d.get("retcode"))
