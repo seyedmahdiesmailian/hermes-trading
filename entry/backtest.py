@@ -293,7 +293,7 @@ class Backtester:
                     continue
 
                 view = self.eng.analyze(past, tick, check_news=False)
-                h1_candles = _aggregate_h1_candles(candles[:i+1])
+                h1_candles = _aggregate_h1_candles(candles[max(0, i - 600):i + 1])
                 # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
                 plan = self.eng.plan_from_smc(candles[:i+1], view, h1_candles=h1_candles, timeframe=self.cfg.analysis.timeframe, enable_judas=False)
                 # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (فقط در روندهای استثنایی و پرقدرت)

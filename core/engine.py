@@ -542,6 +542,12 @@ class Engine:
                 if ob.bar_index + 1 >= n_candles - 1:
                     continue
 
+                # فیلتر ساعات کم‌حجم لندن فیکس / بعدازظهر نیویورک برای Order Block (ساعت ۱۷ UTC)
+                if candles[-1].time > 100000000:
+                    t_utc = int(candles[-1].time // 3600 % 24)
+                    if t_utc == 17:
+                        continue
+
                 allow_buy_ob = (is_overall_bullish or (view.trend == "bullish" and h1_bias != "BEARISH")) or smc.zone == ZoneType.DISCOUNT
                 allow_sell_ob = (is_overall_bearish or (view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
 
@@ -670,11 +676,21 @@ class Engine:
         # ── ۵. ستاپ برخورد به شکاف ارزش منصفانه (Fair Value Gap - FVG Retest) ──
         unfilled_fvgs = [f for f in smc.unfilled_fvgs if not f.filled]
         if unfilled_fvgs and (view.trend != "ranging" or is_overall_bullish or is_overall_bearish or view.trend_strength >= 0.30):
+            # فیلتر ساعات کم‌حجم و رنج نوسانی آسیا برای FVG ادامه‌دهنده (ساعات ۰۲، ۰۳، ۰۴ UTC)
+            if candles[-1].time > 100000000:
+                t_utc = int(candles[-1].time // 3600 % 24)
+                if t_utc in (2, 3, 4):
+                    return None
+
             last_c = candles[-1]
             n_candles = len(candles)
             for fvg in unfilled_fvgs[::-1]:
                 # شکاف نباید در کندل جاری یا بلافاصله قبل از آن تشکیل شده باشد (جلوگیری از ورود زودهنگام روی کندل ضربه‌ای)
                 if fvg.bar_index + 1 >= n_candles - 1:
+                    continue
+
+                # در فاز رنج، شتاب روند باید حداقل ۰.۲۰ باشد تا مانع گیرافتادن در تله‌های نقدینگی شود
+                if view.trend == "ranging" and view.trend_strength < 0.20:
                     continue
 
                 allow_buy_fvg = (is_overall_bullish or (view.is_trending and view.trend == "bullish" and h1_bias != "BEARISH")) or smc.zone == ZoneType.DISCOUNT
