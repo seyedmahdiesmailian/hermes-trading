@@ -34,6 +34,7 @@ class Gates:
     max_volume_lots: float = 2.0              # حداکثر سقف حجم مجاز هر معامله
     loss_cooldown_minutes: int = 45           # توقف معاملاتی پس از هر استاپ (دقیقه)
     max_concurrent_positions: int = 2         # سقف کل پوزیشن‌های همزمان (مشروط به ریسک‌فری بودن پوزیشن اول)
+    max_consecutive_losses: int = 3           # سقف باخت‌های متوالی روزانه → توقف اضطراری (circuit breaker)
 
 
 @dataclass(frozen=True)
@@ -136,6 +137,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH, bridge_token: str = "") -> Con
             max_volume_lots=_float(g, "max_volume_lots") if "max_volume_lots" in g else 2.0,
             loss_cooldown_minutes=_int(g, "loss_cooldown_minutes") if "loss_cooldown_minutes" in g else 45,
             max_concurrent_positions=_int(g, "max_concurrent_positions") if "max_concurrent_positions" in g else 2,
+            max_consecutive_losses=_int(g, "max_consecutive_losses") if "max_consecutive_losses" in g else 3,
             )
 
         pos = raw["position"]

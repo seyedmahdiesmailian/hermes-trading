@@ -255,6 +255,7 @@ class Backtester:
                             atr=view.atr, spread=view.spread,
                             last_loss_ts=self._last_loss_ts,
                             now_ts=now_ts,
+                            consecutive_losses=self._consecutive_losses_today(now_ts),
                         )
                         n_entry_cycles += 1
 
@@ -296,7 +297,7 @@ class Backtester:
                 # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
                 plan = self.eng.plan_from_smc(candles[:i+1], view, h1_candles=h1_candles, timeframe=self.cfg.analysis.timeframe, enable_judas=False)
                 # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (فقط در روندهای استثنایی و پرقدرت)
-                if plan is None and view.is_trending and view.trend_strength >= 0.50:
+                if plan is None and view.is_trending and view.trend_strength >= 0.70:
                     plan = self.eng.plan_from_analysis(candles[:i+1], view,
                                                        self.cfg.analysis.timeframe,
                                                        h1_candles=h1_candles)
@@ -313,6 +314,7 @@ class Backtester:
                     atr=view.atr, spread=view.spread,
                     last_loss_ts=self._last_loss_ts,
                     now_ts=now_ts,
+                    consecutive_losses=self._consecutive_losses_today(now_ts),
                 )
                 if not outcome.allowed:
                     self.denied.append({
@@ -488,6 +490,19 @@ class Backtester:
         day = datetime.fromtimestamp(now_ts, timezone.utc).date()
         return sum(t.pnl for t in self.trades
                    if datetime.fromtimestamp(t.closed_at, timezone.utc).date() == day)
+
+    def _consecutive_losses_today(self, now_ts: float) -> int:
+        day = datetime.fromtimestamp(now_ts, timezone.utc).date()
+        today_trades = [t for t in self.trades if datetime.fromtimestamp(t.closed_at, timezone.utc).date() == day]
+        streak = 0
+        for t in reversed(today_trades):
+            if hasattr(t, "exit_reason") and "BREAKEVEN" in str(t.exit_reason) or abs(t.pnl) < 2.0:
+                continue
+            if t.pnl < 0:
+                streak += 1
+            elif t.pnl > 0:
+                break
+        return streak
 
     @staticmethod
     def _r_multiple(ot: OpenTrade, exit_price: float) -> float:

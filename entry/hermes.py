@@ -349,7 +349,21 @@ class HermesDaemon:
                 self.led.add_to_watchlist(wl_item)
                 executed_sig = sig
                 log.info("سیگنال به واچ‌لیست رفت: %s — %s", sig.signal_id, wl_item.get("reason"))
-                self.notify.status(f"⏳ سیگنال به واچ‌لیست رفت:\n{wl_item.get('reason')}")
+                channel_name = getattr(sig, "source", "") or "کانال تلگرام"
+                self.notify.signal_evaluated(
+                    channel=channel_name, signal_id=sig.signal_id, side=sig.side.value,
+                    text=sig.raw_text, status="WATCHLIST", reason=wl_item.get("reason", "")
+                )
+                break
+            elif decision == "REJECT":
+                executed_sig = sig
+                reason_str = wl_item.get("reason", "رد بر اساس فیلترهای ریسک") if wl_item else "رد بر اساس فیلترهای ریسک"
+                log.info("سیگنال کانال رد شد: %s — %s", sig.signal_id, reason_str)
+                channel_name = getattr(sig, "source", "") or "کانال تلگرام"
+                self.notify.signal_evaluated(
+                    channel=channel_name, signal_id=sig.signal_id, side=sig.side.value,
+                    text=sig.raw_text, status="REJECTED", reason=reason_str
+                )
                 break
 
         if executed_sig is not None:
@@ -357,6 +371,7 @@ class HermesDaemon:
 
         # اگر پلنی از سیگنال‌های جدید نیامده، واچ‌لیست‌های گذشته را چک کن
         wl_executed_item_id = None
+        wl_executed_item = None
         if plan is None:
             active_wl = self.led.get_active_watchlist(self.cfg.symbol)
             for item in active_wl:
@@ -386,6 +401,7 @@ class HermesDaemon:
                         reasoning=f"واچ‌لیست پولبک فعال شد: {item['reason']}",
                     )
                     wl_executed_item_id = item["item_id"]
+                    wl_executed_item = item
                     log.info("سیگنال واچ‌لیست پولبک زد و تبدیل به پلن شد: %s", plan.plan_id)
                     break
 
@@ -411,7 +427,7 @@ class HermesDaemon:
                 log.info("تحلیل خودکار: ستاپ سازمانی SMC %s (%s) تشخیص داده شد", plan.side.value, plan.reasoning)
 
             # ۲) اولویت دوم: ستاپ تاییدشده روند EMA (فقط در روندهای استثنایی و پرقدرت)
-            if plan is None and view.is_trending and view.trend_strength >= 0.50:
+            if plan is None and view.is_trending and view.trend_strength >= 0.70:
                 plan = self.eng.plan_from_analysis(
                     candles, view, self.cfg.analysis.timeframe, h1_candles=h1_candles, h4_candles=h4_candles
                 )
@@ -457,6 +473,7 @@ class HermesDaemon:
         last_loss = self.led.get_last_loss_time()
         ch_stats = self.led.get_source_stats(plan.source) if plan.source.startswith("sig_") else None
         weekly_pnl = self.led.get_weekly_pnl()
+        consecutive_losses = self.led.get_today_consecutive_losses()
         outcome = self.gates.evaluate(
             plan, account, positions, trades_today, today_pnl,
             atr=view.atr, spread=view.spread,
@@ -465,6 +482,7 @@ class HermesDaemon:
             last_loss_ts=last_loss,
             channel_stats=ch_stats,
             weekly_pnl=weekly_pnl,
+            consecutive_losses=consecutive_losses,
         )
 
         # ۹) ثبت در دفتر کل (شفافیت کامل)
@@ -498,9 +516,29 @@ class HermesDaemon:
         if order.ticket > 0 and plan.stop_loss > 0:
             self.exits.register_initial_sl(order.ticket, plan.stop_loss)
 
+        channel_name = ""
+        signal_id = ""
+        if executed_sig is not None:
+            channel_name = getattr(executed_sig, "source", "")
+            signal_id = executed_sig.signal_id
+        elif wl_executed_item:
+            channel_name = wl_executed_item.get("channel", "")
+            signal_id = wl_executed_item.get("signal_id", "")
+
         self.notify.trade_opened(
-            plan.side.value, plan.symbol, outcome.volume,
-            plan.entry_price, plan.stop_loss, plan.take_profit, self.dry_run,
+            side=plan.side.value,
+            symbol=plan.symbol,
+            volume=outcome.volume,
+            entry=plan.entry_price,
+            sl=plan.stop_loss,
+            tp=plan.take_profit,
+            dry_run=self.dry_run,
+            source=plan.source,
+            reasoning=plan.reasoning,
+            channel=channel_name,
+            signal_id=signal_id,
+            rr=plan.rr,
+            grade=plan.grade.value if hasattr(plan.grade, "value") else str(plan.grade),
         )
         log.info("سفارش ثبت شد: ticket=%s vol=%.2f", order.ticket, order.volume)
 
@@ -535,6 +573,7 @@ class HermesDaemon:
         # وقتی پوزیشن باز است entry loop رد می‌شود → اینجا تازه‌سازی می‌کنیم
         tick = None
         candles = []
+        view_now = None
         try:
             candles = self.mt5.get_candles(
                 self.cfg.symbol, self.cfg.analysis.timeframe, self.cfg.analysis.candle_count
@@ -593,6 +632,22 @@ class HermesDaemon:
                 self._close_position(pos, ExitReason.TIME_EXIT, pos.current_price)
                 self.notify.status(f"🔒 بستن پوزیشن #{pos.ticket} به دلیل تعطیلی آخر هفته مارکت طلا (Friday Close)")
                 continue
+
+            # محافظت اخبار داغ (News Risk-Free Protection): در صورت فعال بودن بلک‌اوت خبر، پوزیشن‌های در سود ریسک‌فری می‌شوند
+            if view_now and view_now.news_blackout and pos.ticket not in self.exits._partial_executed:
+                buffer = 0.20
+                if pos.is_buy and pos.current_price > pos.open_price + buffer:
+                    be_sl = round(pos.open_price + buffer, 2)
+                    if pos.sl < be_sl:
+                        self.mt5.modify_position(pos.ticket, be_sl, pos.tp)
+                        log.info("محافظت اخبار داغ: استاپ پوزیشن #%d به نقطه ورود امن منتقل شد (News Risk-Free)", pos.ticket)
+                        self.notify.status(f"🛡 *محافظت در برابر اسپایک خبر:* استاپ پوزیشن `#{pos.ticket}` به نقطه ورود امن `{be_sl:.2f}` منتقل شد.")
+                elif not pos.is_buy and pos.current_price < pos.open_price - buffer:
+                    be_sl = round(pos.open_price - buffer, 2)
+                    if pos.sl == 0 or pos.sl > be_sl:
+                        self.mt5.modify_position(pos.ticket, be_sl, pos.tp)
+                        log.info("محافظت اخبار داغ: استاپ پوزیشن #%d به نقطه ورود امن منتقل شد (News Risk-Free)", pos.ticket)
+                        self.notify.status(f"🛡 *محافظت در برابر اسپایک خبر:* استاپ پوزیشن `#{pos.ticket}` به نقطه ورود امن `{be_sl:.2f}` منتقل شد.")
 
             # ATR زنده و استاپ ساختاری سوئینگ برای تریلینگ پیشرفته
             swing_sl = 0.0

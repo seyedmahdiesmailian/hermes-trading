@@ -76,6 +76,7 @@ class GatesEngine:
         now_ts: float = 0.0,
         channel_stats: dict | None = None,
         weekly_pnl: float = 0.0,
+        consecutive_losses: int = 0,
     ) -> GuardOutcome:
         """ارزیابی کامل plan → مجاز با حجم، یا ممنوع با دلایل.
 
@@ -89,6 +90,11 @@ class GatesEngine:
         if last_loss_ts > 0 and 0 <= (now - last_loss_ts) < cooldown_s:
             rem_m = int(round((cooldown_s - (now - last_loss_ts)) / 60))
             reasons.append(f"loss_cooldown({rem_m}m_left)")
+
+        # ۰.الف) سقف باخت‌های متوالی روزانه (Consecutive Losses Circuit Breaker)
+        max_losses = getattr(self._g, "max_consecutive_losses", 3)
+        if consecutive_losses >= max_losses:
+            reasons.append(f"consecutive_losses({consecutive_losses}/{max_losses})")
 
         # ۰.ب) گیت پایان هفته و تعطیلی بروکر (Weekend / Friday Cutoff Gate)
         gm = time.gmtime(now)
@@ -152,7 +158,7 @@ class GatesEngine:
             if plan.source == "analysis":
                 mult = getattr(self._g, "min_atr_stop_mult_analysis",
                                self._g.min_atr_stop_mult)
-            elif plan.source.startswith("smc") or plan.source.startswith("rtm") or plan.source in ("smc_ob", "smc_judas", "smc_fvg", "rtm_qml", "rtm_ftr"):
+            elif plan.source.startswith("smc") or plan.source.startswith("rtm") or plan.source.startswith("ict") or plan.source in ("smc_ob", "smc_judas", "smc_fvg", "rtm_qml", "rtm_ftr"):
                 mult = getattr(self._g, "min_atr_stop_mult_smc", 1.2)
             elif plan.source == "watchlist_pullback":
                 mult = getattr(self._g, "min_atr_stop_mult_watchlist", 0.8)

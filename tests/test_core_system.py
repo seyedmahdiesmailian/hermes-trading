@@ -2646,6 +2646,88 @@ class TestWatchlistEngine:
         assert d["tp"] == 3935.0  # Promoted to TP2!
         assert (d["tp"] - d["entry"]) / (d["entry"] - d["sl"]) >= 1.0
 
+    def test_b266_smc_fvg_anti_instant_trigger_and_zone_filters(self):
+        """b266: FVG formation bar must not self-trigger, and extreme range boundaries must be guarded."""
+        from core.smc import SMCView, MarketPhase, ZoneType, FairValueGap, FVGType
+        from core.engine import Engine
+        engine = Engine()
+        base_t = 100000
+        candles = [
+            Candle(time=base_t + i*900, open=2000.0, high=2005.0, low=1995.0, close=2000.0, volume=100)
+            for i in range(50)
+        ]
+        # 1) FVG created by bar 47, 48, 49 (bar_index = 48, c2 = 49 which is candles[-1])
+        # This MUST NOT be treated as a retest (it's the formation bar itself!)
+        fvg_forming = FairValueGap(fvg_type=FVGType.BULLISH, top=2010.0, bottom=2000.0, bar_index=48, time=base_t + 48*900)
+        smc_forming = SMCView(
+            bias="bullish", confidence=0.85, phase=MarketPhase.BOS_BULLISH,
+            zone=ZoneType.DISCOUNT, fib_level=0.30, killzone="london", unfilled_fvgs=[fvg_forming],
+        )
+        view_forming = MarketView(
+            trend="bullish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2008.0, support=1990.0, resistance=2030.0, smc=smc_forming,
+        )
+        plan_blocked_instant = engine.plan_from_smc(candles, view_forming)
+        assert plan_blocked_instant is None, "FVG on current formation bar must not self-trigger!"
+
+        # 2) SELL FVG in extreme DISCOUNT (fib=0.10) must be rejected
+        fvg_past = FairValueGap(fvg_type=FVGType.BEARISH, top=2005.0, bottom=1998.0, bar_index=40, time=base_t + 40*900)
+        smc_discount_sell = SMCView(
+            bias="bearish", confidence=0.85, phase=MarketPhase.BOS_BEARISH,
+            zone=ZoneType.DISCOUNT, fib_level=0.10, killzone="london", unfilled_fvgs=[fvg_past],
+        )
+        view_discount_sell = MarketView(
+            trend="bearish", trend_strength=0.4, atr=5.0, spread=0.2,
+            last_price=2000.0, support=1980.0, resistance=2020.0, smc=smc_discount_sell,
+        )
+        candles[49] = Candle(time=base_t + 49*900, open=2002.0, high=2004.0, low=1998.0, close=2000.0, volume=100)
+        plan_blocked_discount = engine.plan_from_smc(candles, view_discount_sell)
+        assert plan_blocked_discount is None, "SELL FVG in extreme DISCOUNT must be blocked!"
+
+        # 3) Bullish FVG with price chasing above top (entry > fvg.top + buffer)
+        fvg_bull_past = FairValueGap(fvg_type=FVGType.BULLISH, top=2002.0, bottom=1995.0, bar_index=40, time=base_t + 40*900)
+        smc_chase = SMCView(
+            bias="bullish", confidence=0.85, phase=MarketPhase.BOS_BULLISH,
+            zone=ZoneType.DISCOUNT, fib_level=0.40, killzone="london", unfilled_fvgs=[fvg_bull_past],
+        )
+        view_chase = MarketView(
+            trend="bullish", trend_strength=0.5, atr=5.0, spread=0.2,
+            last_price=2015.0, support=1990.0, resistance=2030.0, smc=smc_chase,  # 2015 is far above top 2002
+        )
+        plan_blocked_chase = engine.plan_from_smc(candles, view_chase)
+        assert plan_blocked_chase is None, "Bullish FVG with price chasing high above zone must be blocked!"
+
+    def test_b266_consecutive_losses_circuit_breaker(self):
+        """b266: Gates evaluate halts trading when consecutive losses today reach threshold."""
+        from core.gates import GatesEngine
+        from core.params import Gates
+        from core.entities import Plan, Side, SetupGrade, AccountState
+        gates_cfg = Gates(
+            max_open_positions=1, max_daily_trades=7, risk_per_trade_pct=2.0,
+            max_daily_loss_pct=5.0, min_rr=1.0, min_grade="B", min_atr_stop_mult=2.0,
+            max_spread_points=3.0, max_consecutive_losses=3,
+        )
+        engine = GatesEngine(gates_cfg)
+        plan = Plan(
+            plan_id="p-test", symbol="XAUUSD", side=Side.BUY,
+            entry_price=2000.0, stop_loss=1990.0, take_profit=2020.0,
+            volume=0.0, grade=SetupGrade.A, source="smc_fvg", timeframe="M15", rr=2.0, confidence=0.9,
+        )
+        account = AccountState(balance=10000.0, equity=10000.0, margin=0.0, margin_free=10000.0)
+
+        # 2 consecutive losses -> ALLOWED
+        outcome_allowed = engine.evaluate(
+            plan, account, [], trades_today=2, daily_pnl=-200.0, atr=5.0, spread=0.2, consecutive_losses=2,
+        )
+        assert outcome_allowed.allowed is True
+
+        # 3 consecutive losses -> CIRCUIT BREAKER HALTS TRADING
+        outcome_denied = engine.evaluate(
+            plan, account, [], trades_today=3, daily_pnl=-300.0, atr=5.0, spread=0.2, consecutive_losses=3,
+        )
+        assert outcome_denied.allowed is False
+        assert any("consecutive_losses" in r for r in outcome_denied.reasons)
+
 
 
 

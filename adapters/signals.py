@@ -288,13 +288,15 @@ class SignalsAdapter:
 
         if tp_candidates:
             tp = tp_candidates[0]
-            # اگر ۲ یا چند تارگت وجود دارد، از TP2 برای دستیابی به حداقل RR مجاز استفاده کن (در صورت کمتر بودن RR با TP1 از 1.0)
+            # اگر چند تارگت وجود دارد، تارگتی را انتخاب کن که حداقل RR مجاز (1.0) را تامین کند
             ref_entry = entry or current_price
             if len(tp_candidates) >= 2 and sl and ref_entry:
                 calc_risk = abs(ref_entry - sl)
-                calc_reward = abs(tp - ref_entry)
-                if calc_risk > 0 and (calc_reward / calc_risk) < 1.0:
-                    tp = tp_candidates[1]
+                if calc_risk > 0:
+                    for cand_tp in tp_candidates:
+                        if (abs(cand_tp - ref_entry) / calc_risk) >= 1.0:
+                            tp = cand_tp
+                            break
 
         if not entry or not sl:
             return {}

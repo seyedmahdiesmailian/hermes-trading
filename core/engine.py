@@ -534,7 +534,12 @@ class Engine:
         unmitigated_obs = [ob for ob in smc.unmitigated_obs if not ob.mitigated]
         if unmitigated_obs:
             last_c = candles[-1]
+            n_candles = len(candles)
             for ob in unmitigated_obs[::-1]:
+                # اردر بلاک نباید در کندل جاری یا بلافاصله قبل از آن تشکیل شده باشد
+                if ob.bar_index + 1 >= n_candles - 1:
+                    continue
+
                 allow_buy_ob = (is_overall_bullish or (view.trend == "bullish" and h1_bias != "BEARISH")) or smc.zone == ZoneType.DISCOUNT
                 allow_sell_ob = (is_overall_bearish or (view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
 
@@ -542,7 +547,10 @@ class Engine:
                     if is_overall_bearish or h1_bias == "BEARISH":
                         log.info("ستاپ SMC رد شد: خرید Order Block در تضاد با روند نزولی بازار")
                         continue
-                    if last_c.low <= ob.top and last_c.close >= ob.midpoint:
+                    if smc.zone == ZoneType.PREMIUM and smc.fib_level > 0.80:
+                        log.info("ستاپ SMC رد شد: خرید Order Block در سقف رنج (Fib %.2f) پرریسک است", smc.fib_level)
+                        continue
+                    if (ob.bottom - buffer <= entry <= ob.top + buffer) and last_c.low <= ob.top and last_c.close >= ob.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
                         sl = round(ob.bottom - buffer, 2)
@@ -571,7 +579,10 @@ class Engine:
                     if is_overall_bullish or h1_bias == "BULLISH":
                         log.info("ستاپ SMC رد شد: فروش Order Block در تضاد با روند صعودی بازار")
                         continue
-                    if last_c.high >= ob.bottom and last_c.close <= ob.midpoint:
+                    if smc.zone == ZoneType.DISCOUNT and smc.fib_level < 0.20:
+                        log.info("ستاپ SMC رد شد: فروش Order Block در کف رنج (Fib %.2f) پرریسک است", smc.fib_level)
+                        continue
+                    if (ob.bottom - buffer <= entry <= ob.top + buffer) and last_c.high >= ob.bottom and last_c.close <= ob.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
                         sl = round(ob.top + buffer, 2)
@@ -656,18 +667,26 @@ class Engine:
 
         # ── ۵. ستاپ برخورد به شکاف ارزش منصفانه (Fair Value Gap - FVG Retest) ──
         unfilled_fvgs = [f for f in smc.unfilled_fvgs if not f.filled]
-        if unfilled_fvgs:
+        if unfilled_fvgs and (view.trend != "ranging" or is_overall_bullish or is_overall_bearish or view.trend_strength >= 0.30):
             last_c = candles[-1]
+            n_candles = len(candles)
             for fvg in unfilled_fvgs[::-1]:
-                allow_buy_fvg = (is_overall_bullish or (view.trend == "bullish" and h1_bias != "BEARISH")) or smc.zone == ZoneType.DISCOUNT
-                allow_sell_fvg = (is_overall_bearish or (view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
+                # شکاف نباید در کندل جاری یا بلافاصله قبل از آن تشکیل شده باشد (جلوگیری از ورود زودهنگام روی کندل ضربه‌ای)
+                if fvg.bar_index + 1 >= n_candles - 1:
+                    continue
+
+                allow_buy_fvg = (is_overall_bullish or (view.is_trending and view.trend == "bullish" and h1_bias != "BEARISH")) or smc.zone == ZoneType.DISCOUNT
+                allow_sell_fvg = (is_overall_bearish or (view.is_trending and view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
 
                 if fvg.fvg_type.value == "BULLISH" and allow_buy_fvg:
                     if is_overall_bearish or h1_bias == "BEARISH" or view.trend == "bearish":
                         log.info("ستاپ SMC رد شد: خرید FVG در تضاد با روند نزولی بازار")
                         continue
-                    # b247: Consequent Encroachment 50% - عدم بسته‌شدن زیر نقطه تعادل FVG
-                    if last_c.low <= fvg.top and last_c.close >= fvg.midpoint:
+                    if smc.zone == ZoneType.PREMIUM and smc.fib_level > 0.80:
+                        log.info("ستاپ SMC رد شد: خرید FVG در سقف رنج (Fib %.2f) پرریسک است", smc.fib_level)
+                        continue
+                    # b247: Consequent Encroachment 50% و ورود در مجاورت گپ بدون تعقیب قیمت در اوج
+                    if (fvg.bottom <= entry <= fvg.top + buffer) and last_c.low <= fvg.top and last_c.close >= fvg.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
                         sl = round(fvg.bottom - buffer, 2)
@@ -696,8 +715,11 @@ class Engine:
                     if is_overall_bullish or h1_bias == "BULLISH" or view.trend == "bullish":
                         log.info("ستاپ SMC رد شد: فروش FVG در تضاد با روند صعودی بازار")
                         continue
-                    # b247: Consequent Encroachment 50% - عدم بسته‌شدن بالای نقطه تعادل FVG
-                    if last_c.high >= fvg.bottom and last_c.close <= fvg.midpoint:
+                    if smc.zone == ZoneType.DISCOUNT and smc.fib_level < 0.20:
+                        log.info("ستاپ SMC رد شد: فروش FVG در کف رنج (Fib %.2f) پرریسک است", smc.fib_level)
+                        continue
+                    # b247: Consequent Encroachment 50% و ورود در مجاورت گپ بدون تعقیب قیمت در کف
+                    if (fvg.bottom - buffer <= entry <= fvg.top) and last_c.high >= fvg.bottom and last_c.close <= fvg.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
                         sl = round(fvg.top + buffer, 2)
@@ -706,6 +728,7 @@ class Engine:
                         if (sl - entry) <= max_stop:
                             tp = round(entry - (sl - entry) * 2.0, 2)
                             rr = round(abs(entry - tp) / max(0.1, abs(sl - entry)), 2)
+                            zone_desc = "پرمیوم" if smc.zone == ZoneType.PREMIUM else "تعادلی"
                             return Plan(
                                 plan_id=f"smc-fvg-{int(candles[-1].time)}",
                                 symbol="XAUUSD",
@@ -719,7 +742,7 @@ class Engine:
                                 timeframe=timeframe,
                                 rr=rr,
                                 confidence=0.90,
-                                reasoning=f"SMC Bearish FVG: تست عدم تعادل نقدینگی [{fvg.bottom:,.2f} - {fvg.top:,.2f}] در محدوده پرمیوم",
+                                reasoning=f"SMC Bearish FVG: تست عدم تعادل نقدینگی [{fvg.bottom:,.2f} - {fvg.top:,.2f}] در محدوده {zone_desc}",
                             )
 
         return None

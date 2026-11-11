@@ -27,6 +27,7 @@ gates:
   min_atr_stop_mult_signal: 1.2 # استاپ حداقل ATR×۱.۲ برای سیگنال‌های کانال تلگرام
   max_spread_points: 3.0
   loss_cooldown_minutes: 45     # دوره استراحت پس از هر استاپ (دقیقه)
+  max_consecutive_losses: 3     # سقف باخت‌های متوالی روزانه → توقف اضطراری (circuit breaker)
 
 # ─ـ مدیریت پوزیشن ─────────────────────────────────────
 position:

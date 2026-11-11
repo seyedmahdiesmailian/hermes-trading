@@ -6,8 +6,13 @@
 from __future__ import annotations
 
 import logging
+import socket
+import urllib3.util.connection as urllib3_cn
 
 import requests
+
+# اجبار استفاده از IPv4 برای ارتباط با تلگرام در لینوکس (حل ارور Errno 101 Network unreachable روی سرور)
+urllib3_cn.allowed_gai_family = lambda: socket.AF_INET
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +41,14 @@ class NotifyAdapter:
                       "parse_mode": "Markdown", "disable_web_page_preview": True},
                 timeout=10,
             )
+            if r.status_code != 200:
+                # تلاش مجدد بدون parse_mode در صورت خطای کاراکترهای مارک‌داون
+                r = requests.post(
+                    f"{self._base}/sendMessage",
+                    json={"chat_id": self._chat, "text": text,
+                          "disable_web_page_preview": True},
+                    timeout=10,
+                )
             return r.status_code == 200
         except Exception as e:
             log.warning("notify failed: %s", e)
@@ -43,15 +56,98 @@ class NotifyAdapter:
 
     # ── پیام‌های آماده ─────────────────────────────────
 
-    def trade_opened(self, side: str, symbol: str, volume: float,
-                     entry: float, sl: float, tp: float, dry_run: bool = False) -> None:
+    def trade_opened(
+        self,
+        side: str,
+        symbol: str,
+        volume: float,
+        entry: float,
+        sl: float,
+        tp: float,
+        dry_run: bool = False,
+        source: str = "",
+        reasoning: str = "",
+        channel: str = "",
+        signal_id: str = "",
+        rr: float = 0.0,
+        grade: str = "",
+    ) -> None:
         tag = "🧪 DRY-RUN " if dry_run else ""
         arrow = "🟢 BUY" if side.upper() == "BUY" else "🔴 SELL"
-        self.send(
-            f"{tag}*{arrow} {symbol}*\n"
-            f"Volume: `{volume:.2f}`\n"
-            f"Entry: `{entry:.2f}` | SL: `{sl:.2f}` | TP: `{tp:.2f}`"
+
+        is_signal = source.startswith("sig_") or source == "signal" or bool(channel)
+        is_watchlist = source == "watchlist_pullback"
+
+        lines = [f"{tag}*{arrow} {symbol}*"]
+
+        if is_signal:
+            lines.append("📡 *منبع معامله:* سیگنال کانال تلگرام")
+            if channel:
+                lines.append(f"📢 *کانال مبدأ:* `{channel}`")
+            if signal_id:
+                lines.append(f"🆔 *کد سیگنال:* `{signal_id}`")
+            if reasoning:
+                lines.append(f"📝 *تاییدیه ساختار:* {reasoning}")
+        elif is_watchlist:
+            if channel or "کانال" in reasoning or (signal_id and "tg" in signal_id):
+                lines.append("⏳ *منبع معامله:* پولبک سیگنال کانال (از صف واچ‌لیست)")
+                if channel:
+                    lines.append(f"📢 *کانال مبدأ:* `{channel}`")
+                if signal_id:
+                    lines.append(f"🆔 *کد سیگنال:* `{signal_id}`")
+            else:
+                lines.append("🎯 *منبع معامله:* پولبک ستاپ واچ‌لیست (RTM QML Pullback)")
+            if reasoning:
+                lines.append(f"📝 *جزئیات فعال‌سازی:* {reasoning}")
+        else:
+            setup_title = "تحلیل خودکار پرایس‌اکشن نهادی (SMC/ICT)"
+            if source == "smc_fvg":
+                setup_title = "شکاف نقدینگی (SMC FVG)"
+            elif source == "smc_ob":
+                setup_title = "بلاک سفارش نهادی (SMC Order Block)"
+            elif source == "rtm_qml":
+                setup_title = "الگوی کوازیمودو (RTM QML)"
+            elif source == "rtm_judas":
+                setup_title = "شکار نقدینگی آسیا (ICT Judas Swing)"
+            elif source == "analysis":
+                setup_title = "روند ماژور EMA"
+
+            lines.append(f"🤖 *منبع معامله:* تحلیل اختصاصی سیستم ({setup_title})")
+            if reasoning:
+                lines.append(f"🔍 *دلیل و ستاپ چارت:* {reasoning}")
+
+        rr_str = f" | R:R: `{rr:.2f}`" if rr > 0 else ""
+        grade_str = f" (گرید {grade})" if grade else ""
+        lines.append(
+            f"📊 *مشخصات سفارش{grade_str}:*\n"
+            f"• Volume: `{volume:.2f}`\n"
+            f"• Entry: `{entry:.2f}` | SL: `{sl:.2f}` | TP: `{tp:.2f}`{rr_str}"
         )
+        self.send("\n".join(lines))
+
+    def signal_evaluated(
+        self, channel: str, signal_id: str, side: str, text: str, status: str, reason: str = ""
+    ) -> None:
+        """گزارش پردازش و تصمیم‌گیری روی سیگنال‌های کانال تلگرام."""
+        if status == "REJECTED":
+            emoji = "🛡"
+            title = "سیگنال کانال رد شد (محافظت از سرمایه)"
+        elif status == "WATCHLIST":
+            emoji = "⏳"
+            title = "سیگنال به واچ‌لیست رفت (در کمین پولبک)"
+        else:
+            emoji = "⚡"
+            title = "سیگنال تایید شد و به سمت اجرا رفت"
+
+        clean_text = text.replace("\n", " ").strip()[:65]
+        lines = [
+            f"{emoji} *{title}*",
+            f"📢 *کانال:* `{channel}` | کد: `{signal_id}` ({side})",
+            f"💬 *متن سیگنال:* _{clean_text}_",
+        ]
+        if reason:
+            lines.append(f"🔍 *دلیل ارزیابی:* {reason}")
+        self.send("\n".join(lines))
 
     def trade_closed(self, side: str, symbol: str, pnl: float, reason: str) -> None:
         emoji = "✅" if pnl >= 0 else "❌"

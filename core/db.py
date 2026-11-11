@@ -413,6 +413,31 @@ class Ledger:
         ).fetchone()
         return float(row["last_loss"]) if row and row["last_loss"] else 0.0
 
+    def get_today_consecutive_losses(self, now_ts: float | None = None) -> int:
+        """تعداد باخت‌های متوالی امروز (UTC) جهت محافظت از سرمایه و اعمال circuit breaker."""
+        now = datetime.fromtimestamp(now_ts or time.time(), timezone.utc)
+        start_of_day = datetime(now.year, now.month, now.day, tzinfo=timezone.utc).timestamp()
+        rows = self._con.execute(
+            """
+            SELECT pnl, exit_reason
+            FROM trades
+            WHERE closed_at >= ?
+            ORDER BY closed_at DESC
+            """,
+            (start_of_day,),
+        ).fetchall()
+        streak = 0
+        for r in rows:
+            pnl = float(r["pnl"])
+            reason = str(r["exit_reason"] or "")
+            if "BREAKEVEN" in reason or abs(pnl) < 2.0:
+                continue
+            if pnl < 0:
+                streak += 1
+            elif pnl > 0:
+                break
+        return streak
+
     def get_source_stats(self, source: str) -> dict:
         """کارنامه آماری عملکرد یک کانال یا منبع سیگنال."""
         row = self._con.execute(

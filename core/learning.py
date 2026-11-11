@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from core.db import Ledger
-from core.entities import Trade
+from core.entities import Trade, ExitReason
 
 log = logging.getLogger(__name__)
 
@@ -71,6 +71,8 @@ class AdaptiveLearner:
         sorted_recent = sorted(trades, key=lambda t: t.closed_at, reverse=True)
         streak = 0
         for t in sorted_recent:
+            if getattr(t, "exit_reason", None) == ExitReason.BREAKEVEN or abs(t.pnl) < 2.0:
+                continue
             if t.pnl < 0:
                 streak += 1
             elif t.pnl > 0:
