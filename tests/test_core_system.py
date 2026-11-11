@@ -842,7 +842,7 @@ class TestEngineHybrid:
     def test_plan_from_smc_judas_setup(self):
         from core.smc import SMCView, MarketPhase, ZoneType
         engine = Engine()
-        now = time.time()
+        now = 1762851600  # 09:00 UTC (deterministic hour outside blackout windows)
         candles = [
             Candle(time=int(now - (35-i)*900), open=2040.0, high=2042.0, low=2038.0, close=2040.0, volume=100)
             for i in range(35)
@@ -868,7 +868,7 @@ class TestEngineHybrid:
 
     def test_plan_from_analysis_h1_trend_conflict(self):
         engine = Engine()
-        now = time.time()
+        now = 1762851600
         # M15 looks bearish: last < e20 < e50
         m15_candles = [
             Candle(time=int(now - (65-i)*900), open=2050.0-i*0.5, high=2051.0-i*0.5, low=2049.0-i*0.5, close=2050.0-i*0.5, volume=100)
@@ -888,7 +888,7 @@ class TestEngineHybrid:
     def test_plan_from_smc_h1_trend_conflict(self):
         from core.smc import SMCView, MarketPhase, ZoneType
         engine = Engine()
-        now = time.time()
+        now = 1762851600
         m15_candles = [
             Candle(time=int(now - (35-i)*900), open=2040.0, high=2042.0, low=2038.0, close=2040.0, volume=100)
             for i in range(35)
@@ -925,7 +925,7 @@ class TestEngineHybrid:
     def test_rtm_quasimodo_plan_generation(self):
         from core.smc import SMCView, MarketPhase, ZoneType, QuasimodoPattern
         engine = Engine()
-        now = time.time()
+        now = 1762851600
         candles = [
             Candle(time=int(now - (35-i)*900), open=2040.0, high=2042.0, low=2038.0, close=2040.0, volume=100)
             for i in range(35)

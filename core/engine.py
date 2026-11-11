@@ -343,9 +343,9 @@ class Engine:
         if view.news_blackout or not view.smc or len(candles) < 30:
             return None
 
-        # فیلتر فاز رنج مرده (Dead Range Filter): وتوی ورود ستاپ‌های خودکار در رنج‌های فلت با نوسان ضعیف
+        # فیلتر فاز رنج مرده (Dead Range Filter): وتوی ورود ستاپ‌های خودکار در رنج‌های فلت بدون جهت
         if view.trend == "ranging" and view.trend_strength < 0.12:
-            log.info("ستاپ SMC رد شد: بازار در فاز رنج مرده (str=%.2f < 0.12)", view.trend_strength)
+            log.info("ستاپ SMC رد شد: بازار در فاز رنج مرده یا شتاب ضعیف (str=%.2f < 0.12)", view.trend_strength)
             return None
 
         # فیلتر ساعات پرریسک نوسانی و اخبار کلان (12, 15, 18, 20 UTC)
@@ -358,6 +358,8 @@ class Engine:
         entry = view.last_price
         smc = view.smc
         buffer = round(view.atr * 0.15, 2)
+        sl_buf_buy = max(round(view.atr * 0.25, 2), 0.40)
+        sl_buf_sell = max(round(view.atr * 0.25, 2), 0.40) + round(view.spread, 2)
 
         # هماهنگی با روند کلان تایم‌فریم بالاتر (H1 Trend Filter)
         h1_bias = "NEUTRAL"
@@ -419,7 +421,7 @@ class Engine:
                 else:
                     min_stop = round(view.atr * 1.2, 2)
                     max_stop = round(view.atr * 2.5, 2)
-                    sl = round(qml.invalidation + buffer, 2)
+                    sl = round(qml.invalidation + sl_buf_sell, 2)
                     if (sl - entry) < min_stop:
                         sl = round(entry + min_stop, 2)
                     if (sl - entry) <= max_stop:
@@ -449,7 +451,7 @@ class Engine:
                 else:
                     min_stop = round(view.atr * 1.2, 2)
                     max_stop = round(view.atr * 2.5, 2)
-                    sl = round(qml.invalidation - buffer, 2)
+                    sl = round(qml.invalidation - sl_buf_buy, 2)
                     if (entry - sl) < min_stop:
                         sl = round(entry - min_stop, 2)
                     if (entry - sl) <= max_stop:
@@ -544,7 +546,7 @@ class Engine:
                 allow_sell_ob = (is_overall_bearish or (view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
 
                 if ob.ob_type.value == "BULLISH" and allow_buy_ob:
-                    if is_overall_bearish or h1_bias == "BEARISH":
+                    if is_overall_bearish or h1_bias == "BEARISH" or smc.bias == "bearish":
                         log.info("ستاپ SMC رد شد: خرید Order Block در تضاد با روند نزولی بازار")
                         continue
                     if smc.zone == ZoneType.PREMIUM and smc.fib_level > 0.80:
@@ -553,7 +555,7 @@ class Engine:
                     if (ob.bottom - buffer <= entry <= ob.top + buffer) and last_c.low <= ob.top and last_c.close >= ob.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
-                        sl = round(ob.bottom - buffer, 2)
+                        sl = round(ob.bottom - sl_buf_buy, 2)
                         if (entry - sl) < min_stop:
                             sl = round(entry - min_stop, 2)
                         if (entry - sl) <= max_stop:
@@ -576,7 +578,7 @@ class Engine:
                             )
 
                 elif ob.ob_type.value == "BEARISH" and allow_sell_ob:
-                    if is_overall_bullish or h1_bias == "BULLISH":
+                    if is_overall_bullish or h1_bias == "BULLISH" or smc.bias == "bullish":
                         log.info("ستاپ SMC رد شد: فروش Order Block در تضاد با روند صعودی بازار")
                         continue
                     if smc.zone == ZoneType.DISCOUNT and smc.fib_level < 0.20:
@@ -585,7 +587,7 @@ class Engine:
                     if (ob.bottom - buffer <= entry <= ob.top + buffer) and last_c.high >= ob.bottom and last_c.close <= ob.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
-                        sl = round(ob.top + buffer, 2)
+                        sl = round(ob.top + sl_buf_sell, 2)
                         if (sl - entry) < min_stop:
                             sl = round(entry + min_stop, 2)
                         if (sl - entry) <= max_stop:
@@ -616,7 +618,7 @@ class Engine:
                         if h1_bias != "BEARISH":
                             min_stop = round(view.atr * 1.2, 2)
                             max_stop = round(view.atr * 2.2, 2)
-                            sl = round(ftr.base_bottom - buffer, 2)
+                            sl = round(ftr.base_bottom - sl_buf_buy, 2)
                             if (entry - sl) < min_stop:
                                 sl = round(entry - min_stop, 2)
                             if (entry - sl) <= max_stop:
@@ -643,7 +645,7 @@ class Engine:
                         if h1_bias != "BULLISH":
                             min_stop = round(view.atr * 1.2, 2)
                             max_stop = round(view.atr * 2.2, 2)
-                            sl = round(ftr.base_top + buffer, 2)
+                            sl = round(ftr.base_top + sl_buf_sell, 2)
                             if (sl - entry) < min_stop:
                                 sl = round(entry + min_stop, 2)
                             if (sl - entry) <= max_stop:
@@ -679,7 +681,7 @@ class Engine:
                 allow_sell_fvg = (is_overall_bearish or (view.is_trending and view.trend == "bearish" and h1_bias != "BULLISH")) or smc.zone == ZoneType.PREMIUM
 
                 if fvg.fvg_type.value == "BULLISH" and allow_buy_fvg:
-                    if is_overall_bearish or h1_bias == "BEARISH" or view.trend == "bearish":
+                    if is_overall_bearish or h1_bias == "BEARISH" or view.trend == "bearish" or smc.bias == "bearish":
                         log.info("ستاپ SMC رد شد: خرید FVG در تضاد با روند نزولی بازار")
                         continue
                     if smc.zone == ZoneType.PREMIUM and smc.fib_level > 0.80:
@@ -689,7 +691,7 @@ class Engine:
                     if (fvg.bottom <= entry <= fvg.top + buffer) and last_c.low <= fvg.top and last_c.close >= fvg.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
-                        sl = round(fvg.bottom - buffer, 2)
+                        sl = round(fvg.bottom - sl_buf_buy, 2)
                         if (entry - sl) < min_stop:
                             sl = round(entry - min_stop, 2)
                         if (entry - sl) <= max_stop:
@@ -712,7 +714,7 @@ class Engine:
                             )
 
                 elif fvg.fvg_type.value == "BEARISH" and allow_sell_fvg:
-                    if is_overall_bullish or h1_bias == "BULLISH" or view.trend == "bullish":
+                    if is_overall_bullish or h1_bias == "BULLISH" or view.trend == "bullish" or smc.bias == "bullish":
                         log.info("ستاپ SMC رد شد: فروش FVG در تضاد با روند صعودی بازار")
                         continue
                     if smc.zone == ZoneType.DISCOUNT and smc.fib_level < 0.20:
@@ -722,7 +724,7 @@ class Engine:
                     if (fvg.bottom - buffer <= entry <= fvg.top) and last_c.high >= fvg.bottom and last_c.close <= fvg.midpoint:
                         min_stop = round(view.atr * 1.2, 2)
                         max_stop = round(view.atr * 2.2, 2)
-                        sl = round(fvg.top + buffer, 2)
+                        sl = round(fvg.top + sl_buf_sell, 2)
                         if (sl - entry) < min_stop:
                             sl = round(entry + min_stop, 2)
                         if (sl - entry) <= max_stop:

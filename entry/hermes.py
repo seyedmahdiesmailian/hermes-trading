@@ -164,6 +164,7 @@ class HermesDaemon:
         self._running = True
         self._last_entry_loop = 0.0
         self._last_exit_loop = 0.0
+        self._last_loss_time = 0.0
         self._last_atr = 0.0  # آخرین ATR زنده — trailing تحلیلی
         self._tracked_positions: dict[int, BrokerPosition] = {}
         self._pending_signals: list[Signal] = []
@@ -240,6 +241,9 @@ class HermesDaemon:
 
     def _entry_loop(self) -> None:
         """تحلیل بازار → ساخت plan → دروازه → ثبت سفارش."""
+        # ۰) بررسی خروج‌ها و تطبیق پوزیشن‌های بسته‌شده قبل از هر ارزیابی ورود
+        self._exit_loop()
+
         # ۱) داده زنده از bridge
         candles = self.mt5.get_candles(
             self.cfg.symbol, self.cfg.analysis.timeframe, self.cfg.analysis.candle_count
@@ -418,6 +422,14 @@ class HermesDaemon:
                     log.info("سیگنال واچ‌لیست ابطال شد (لمس SL): %s", item["item_id"])
 
         can_open_auto = (len(risky_positions) < self.cfg.gates.max_open_positions and len(positions) < max_concurrent)
+        last_loss = max(self.led.get_last_loss_time(), self._last_loss_time)
+        loss_cd_s = getattr(self.cfg.gates, "loss_cooldown_minutes", 45) * 60
+        now_ts = time.time()
+        if last_loss > 0 and 0 <= (now_ts - last_loss) < loss_cd_s:
+            rem_m = int(round((loss_cd_s - (now_ts - last_loss)) / 60))
+            log.info("کول‌داون فعال است (%d دقیقه باقی‌مانده) — تحلیل و ورود خودکار متوقف شد", rem_m)
+            auto_allowed = False
+
         if plan is None and can_open_auto and auto_allowed:
             # ۱) اولویت نخست: ستاپ سازمانی هوشمند SMC/ICT (گرید A+)
             plan = self.eng.plan_from_smc(
@@ -470,7 +482,7 @@ class HermesDaemon:
         # ۸) دروازه — fail-closed (قرارداد b221)
         # هر دو مسیر ورود (سیگنال کانال/واچ‌لیست و تحلیل خودکار) منحصراً از این گیت زنده ارزیابی می‌شوند.
         # بریج خاموش یا اطلاعات ناقص به هیچ وجه چراغ سبز دریافت نمی‌کند (رد fail-closed).
-        last_loss = self.led.get_last_loss_time()
+        last_loss = max(self.led.get_last_loss_time(), self._last_loss_time)
         ch_stats = self.led.get_source_stats(plan.source) if plan.source.startswith("sig_") else None
         weekly_pnl = self.led.get_weekly_pnl()
         consecutive_losses = self.led.get_today_consecutive_losses()
@@ -759,6 +771,9 @@ class HermesDaemon:
             r_multiple=r_mult,
         )
         self.led.save_trade(trade)
+        if pnl < 0 or reason == ExitReason.STOP_LOSS:
+            self._last_loss_time = max(self._last_loss_time, trade.closed_at)
+            log.info("کول‌داون ضرر فعال شد: آخرین استاپ در ts=%.0f ثبت شد", self._last_loss_time)
         self.notify.trade_closed(pos.side.value, pos.symbol, pnl, reason.value)
         self.exits.cleanup_ticket(pos.ticket)
         self._tracked_positions.pop(pos.ticket, None)
@@ -865,6 +880,9 @@ class HermesDaemon:
                 r_multiple=r_mult,
             )
             self.led.save_trade(trade)
+            if pnl < 0 or reason == ExitReason.STOP_LOSS:
+                self._last_loss_time = max(self._last_loss_time, trade.closed_at)
+                log.info("کول‌داون ضرر فعال شد (تطبیق بروکر): آخرین استاپ در ts=%.0f ثبت شد", self._last_loss_time)
             self.notify.trade_closed(old_pos.side.value, old_pos.symbol, pnl, reason.value)
             self.exits.cleanup_ticket(ticket)
             log.info("پوزیشن بسته شده توسط بروکر تطبیق و در ژورنال ثبت شد: ticket=%s pnl=%.2f reason=%s", ticket, pnl, reason.value)
